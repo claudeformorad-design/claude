@@ -75,8 +75,16 @@ export type RoleRow = Audit & {
 export type HotelMemberRow = Audit & {
   hotel_id: string;
   user_id: string;
-  role_id: string;
   is_active: boolean;
+};
+
+/** أدوار المستخدم في الفندق (متعدد لمتعدد) — الصلاحيات = اتحاد صلاحيات الأدوار */
+export type UserHotelRoleRow = {
+  hotel_id: string;
+  user_id: string;
+  role_id: string;
+  created_at: string;
+  created_by: string | null;
 };
 
 export type CurrencyRow = {
@@ -193,7 +201,8 @@ export type Database = {
       hotels: Table<HotelRow, "name_ar" | "country_code" | "base_currency">;
       users_profiles: Table<UserProfileRow, "id">;
       roles: Table<RoleRow, "code" | "name_ar" | "name_en">;
-      hotel_members: Table<HotelMemberRow, "hotel_id" | "user_id" | "role_id">;
+      hotel_members: Table<HotelMemberRow, "hotel_id" | "user_id">;
+      user_hotel_roles: Table<UserHotelRoleRow, "hotel_id" | "user_id" | "role_id">;
       currencies: Table<CurrencyRow, "code" | "name_ar" | "name_en" | "symbol">;
       departments: Table<DepartmentRow, "hotel_id" | "code" | "name_ar" | "kind">;
       chart_of_accounts: Table<AccountRow, "hotel_id" | "code" | "name_ar" | "account_type" | "account_subtype">;

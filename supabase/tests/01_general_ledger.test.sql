@@ -12,7 +12,8 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000000a2', 'auditor@hotel.test',  '{}'),
   ('00000000-0000-0000-0000-0000000000a3', 'outsider@other.test', '{}'),
   ('00000000-0000-0000-0000-0000000000a4', 'acct@hotel.test',     '{}'),
-  ('00000000-0000-0000-0000-0000000000a5', 'clerk@hotel.test',    '{}');
+  ('00000000-0000-0000-0000-0000000000a5', 'clerk@hotel.test',    '{}'),
+  ('00000000-0000-0000-0000-0000000000a6', 'multi@hotel.test',    '{}');
 
 -- أداة مساعدة: توقع فشل عبارة SQL برسالة تحتوي نصًا معينًا
 create or replace function pg_temp.expect_error(p_sql text, p_contains text)
@@ -56,10 +57,15 @@ begin
   assert (select level from public.chart_of_accounts where hotel_id = h and code = '1101') = 3, 'account level computed';
 end $$;
 
--- أعضاء إضافيون (بواسطة المدير العام)
-insert into public.hotel_members (hotel_id, user_id, role_id)
+-- أعضاء إضافيون (بواسطة المدير العام): العضوية أولًا ثم الأدوار في user_hotel_roles
+insert into public.hotel_members (hotel_id, user_id)
+select hotel_id, u from ctx, unnest(array[
+  '00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000a4',
+  '00000000-0000-0000-0000-0000000000a5', '00000000-0000-0000-0000-0000000000a6'
+]::uuid[]) u;
+insert into public.user_hotel_roles (hotel_id, user_id, role_id)
 select (select hotel_id from ctx), '00000000-0000-0000-0000-0000000000a2', id from public.roles where is_system and code = 'auditor';
-insert into public.hotel_members (hotel_id, user_id, role_id)
+insert into public.user_hotel_roles (hotel_id, user_id, role_id)
 select (select hotel_id from ctx), '00000000-0000-0000-0000-0000000000a4', id from public.roles where is_system and code = 'accountant';
 
 -- دور مخصص: كاتب قيود (إنشاء بدون ترحيل)
@@ -68,14 +74,65 @@ select hotel_id, 'journal_clerk', 'كاتب قيود', 'Journal Clerk' from ctx;
 insert into public.role_permissions (role_id, permission_code)
 select r.id, p from public.roles r, unnest(array['gl.journal.view', 'gl.journal.create', 'coa.accounts.view']) p
 where r.code = 'journal_clerk';
-insert into public.hotel_members (hotel_id, user_id, role_id)
+insert into public.user_hotel_roles (hotel_id, user_id, role_id)
 select (select hotel_id from ctx), '00000000-0000-0000-0000-0000000000a5', id from public.roles where code = 'journal_clerk';
+
+-- مستخدم بدورين (كاشير + مدير قسم): الصلاحيات = اتحاد صلاحيات الدورين
+insert into public.user_hotel_roles (hotel_id, user_id, role_id)
+select (select hotel_id from ctx), '00000000-0000-0000-0000-0000000000a6', id
+from public.roles where is_system and code in ('cashier', 'department_manager');
+
+-- لا يُسند دور لغير عضو في الفندق
+select pg_temp.expect_error($q$
+  insert into public.user_hotel_roles (hotel_id, user_id, role_id)
+  select (select hotel_id from ctx), '00000000-0000-0000-0000-0000000000a3', id from public.roles where is_system and code = 'auditor'
+$q$, 'foreign key');
 
 -- لا يمكن تعديل صلاحيات الأدوار النظامية
 select pg_temp.expect_error($q$
   insert into public.role_permissions (role_id, permission_code)
   select id, 'audit.logs.view' from public.roles where is_system and code = 'cashier'
 $q$, 'System roles cannot be modified');
+
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a6');
+do $$
+declare h uuid := (select hotel_id from ctx);
+begin
+  assert (select count(*) from public.my_permissions(h)) = 3, 'union of cashier + department_manager, no duplicates';
+  assert app.has_permission(h, 'gl.journal.view'), 'permission from department_manager role';
+  assert app.has_permission(h, 'coa.accounts.view'), 'permission shared by both roles';
+  assert not app.has_permission(h, 'gl.journal.create'), 'no permission outside both roles';
+end $$;
+
+-- إزالة أحد الدورين تُسقط صلاحياته فقط
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+delete from public.user_hotel_roles
+ where user_id = '00000000-0000-0000-0000-0000000000a6'
+   and role_id = (select id from public.roles where is_system and code = 'department_manager');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a6');
+do $$
+begin
+  assert not app.has_permission((select hotel_id from ctx), 'gl.journal.view'), 'removed role permissions revoked';
+  assert app.has_permission((select hotel_id from ctx), 'coa.accounts.view'), 'remaining role still effective';
+end $$;
+
+-- لا يمكن إزالة آخر مدير عام (حذف الدور، تعطيل العضوية، حذف العضوية)
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.expect_error($q$
+  delete from public.user_hotel_roles where user_id = '00000000-0000-0000-0000-0000000000a1'
+$q$, 'last active general manager');
+select pg_temp.expect_error($q$
+  update public.hotel_members set is_active = false where user_id = '00000000-0000-0000-0000-0000000000a1'
+$q$, 'last active general manager');
+select pg_temp.expect_error($q$
+  delete from public.hotel_members where user_id = '00000000-0000-0000-0000-0000000000a1'
+$q$, 'last active general manager');
+-- بوجود مدير عام آخر تصبح الإزالة ممكنة
+insert into public.user_hotel_roles (hotel_id, user_id, role_id)
+select (select hotel_id from ctx), '00000000-0000-0000-0000-0000000000a6', id from public.roles where is_system and code = 'general_manager';
+delete from public.user_hotel_roles
+ where user_id = '00000000-0000-0000-0000-0000000000a6'
+   and role_id = (select id from public.roles where is_system and code = 'general_manager');
 
 -- -----------------------------------------------------------------------------
 -- 2) سلامة شجرة الحسابات
