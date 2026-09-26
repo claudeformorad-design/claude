@@ -247,7 +247,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
           <p className="text-[13px] text-muted-foreground">{businessDate}</p>
-          <h1 className="text-[26px] font-bold leading-tight text-ink">{t.dashboard.title}</h1>
+          <h1 className="type-display text-[32px] text-ink">{t.dashboard.title}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {quick.map((q, i) => (
@@ -470,7 +470,7 @@ function Kpi({
         </span>
         <Link href={href} aria-label={`تفاصيل ${label}`} className="text-[13px] text-slate-500 transition-colors hover:text-ink"><span className="hidden sm:inline">التفاصيل </span>←</Link>
       </div>
-      <p className={cn("truncate text-[19px] font-bold leading-tight text-ink sm:text-[24px]", tone === "neg" && "text-urgent")}>
+      <p className={cn("display-num truncate text-[21px] font-bold leading-tight text-ink sm:text-[28px]", tone === "neg" && "text-urgent")}>
         <AnimatedNumber value={value.toNumber()} text={formatAmount(value)} />
         <span className="ms-1.5 text-[13px] font-normal text-slate-500">{currency}</span>
       </p>

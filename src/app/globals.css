@@ -129,7 +129,14 @@
   body {
     color: #111111;
     font-family: var(--font-sans);
-    line-height: 1.5;
+    line-height: 1.55;
+    /* دليل جماليات «ثمانية»: لا تباعد أحرف في العربية (يكسر الاتصال)، ولا ضبط سطر (يُدخل كشيدة تلقائية)،
+       والأحرف المرسلة معطلة افتراضيًا (تُستخدم باعتدال في العناوين فقط) */
+    letter-spacing: 0;
+    text-align: start;
+    font-kerning: normal;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
   }
   ::selection {
@@ -163,6 +170,17 @@
   }
   input[type="checkbox"]:not(.sr-only):focus-visible { box-shadow: 0 0 0 4px rgba(17, 17, 17, 0.1); outline: none; }
 }
+
+/* ---- سُلّم الطباعة (مستخلص من دليل جماليات ثمانية) ----
+   عناوين ثقيلة بتباعد أسطر محكم، ونصوص بتباعد مريح، ولا كشيدة في النصوص الطويلة */
+.type-display { font-weight: 900; line-height: 1.12; }
+.type-title { font-weight: 700; line-height: 1.25; }
+.type-body { font-weight: 500; line-height: 1.75; }
+/* حرف مرسل واحد في عنوان قصير — لا يُستخدم في كلمتين متجاورتين ولا أكثر من مرة في الجملة */
+.swash { font-feature-settings: "swsh" 1; }
+
+/* الأرقام الكبيرة المستقلة (بطاقات الإحصاء): أرقام ثمانية كما في الدليل */
+.display-num, .display-num .num { font-family: var(--font-sans); font-variant-numeric: normal; font-feature-settings: normal; }
 
 /* الأرقام: عرض متساوٍ واتجاه LTR داخل النص العربي */
 .num {

@@ -19,7 +19,7 @@ export function CardTitle({ className, ...props }: React.ComponentProps<"h3">) {
   return (
     <h3
       className={cn(
-        "flex items-center gap-2 text-[16px] font-semibold leading-tight text-ink",
+        "type-title flex items-center gap-2 text-[16.5px] text-ink",
         className,
       )}
       {...props}
