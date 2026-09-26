@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/select";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { addBankLineAction, bankMatchAction } from "../_payables/actions";
+import { actionErrorText } from "@/lib/action-error";
 
 type T = Pick<Dictionary, "payables" | "common" | "errors" | "folio">;
 
@@ -21,7 +22,7 @@ export function AddBankLine({ t, accountId, today }: { t: T; accountId: string; 
     <form className="space-y-2" onSubmit={handleSubmit((v) => start(async () => {
       const r = await addBankLineAction({ ...v, account_id: accountId });
       if (r.ok) { reset({ txn_date: v.txn_date, description: "", reference: "", amount: "" }); router.refresh(); }
-      else setError(r.error === "validation" ? t.errors.validation : t.errors[r.error]);
+      else setError(actionErrorText(t.errors, r));
     }))}>
       {error && <Alert variant="destructive">{error}</Alert>}
       <div className="flex flex-wrap gap-2">
@@ -46,7 +47,7 @@ export function LineActions({ t, lineId, matched, candidates }: { t: T; lineId: 
   const [pending, start] = useTransition();
   const [sel, setSel] = useState("");
   const run = (op: "match" | "unmatch" | "delete", ledgerLineId?: string) =>
-    start(async () => { const r = await bankMatchAction(op, { lineId, ledgerLineId }); if (!r.ok) alert(t.errors[r.error as keyof T["errors"]] ?? t.errors.unknown); router.refresh(); });
+    start(async () => { const r = await bankMatchAction(op, { lineId, ledgerLineId }); if (!r.ok) alert(actionErrorText(t.errors, r)); router.refresh(); });
   if (matched) return <Button size="sm" variant="ghost" disabled={pending} onClick={() => run("unmatch")}>✕</Button>;
   return (
     <div className="flex gap-1">

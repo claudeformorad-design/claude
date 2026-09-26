@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/select";
 import type { ActionResult } from "@/services/errors";
+import { actionErrorText } from "@/lib/action-error";
 
 export type Field =
   | { name: string; label: string; type?: "text" | "date" | "number" | "month"; ltr?: boolean }
@@ -41,7 +42,7 @@ export function SimpleForm({
         setError(null);
         const r = await action(v);
         if (r.ok) { if (onDone) router.push(onDone); else { reset(initial); router.refresh(); } }
-        else setError(errors[r.error] ?? errors.unknown ?? r.error);
+        else setError(actionErrorText(errors, r));
       }))}
     >
       {error && <Alert variant="destructive" className="md:col-span-full">{error}</Alert>}

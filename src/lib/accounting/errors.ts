@@ -82,3 +82,128 @@ export function mapDatabaseError(message: string | null | undefined): Accounting
   for (const [pattern, key] of PATTERNS) if (pattern.test(message)) return key;
   return "unknown";
 }
+
+// =============================================================================
+// رسائل قواعد العمل التي لا تقابلها مفاتيح ترجمة عامة: تُعرض بنص عربي دقيق
+// (مع القيم الواردة في الرسالة كالكمية المتوفرة وحد الاعتماد) بدل «خطأ غير متوقع».
+// =============================================================================
+const ACCOUNT_TYPES_AR: Record<string, string> = {
+  asset: "أصول", liability: "خصوم", equity: "حقوق ملكية", revenue: "إيرادات", expense: "مصروفات",
+};
+const typesAr = (s: string) =>
+  s.replace(/[{}"]/g, "").split(",").map((x) => ACCOUNT_TYPES_AR[x.trim()] ?? x.trim()).join(" أو ");
+
+const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
+  // المستندات والبنود
+  [/A bill needs at least one line/i, "فاتورة المورد تحتاج إلى بند واحد على الأقل"],
+  [/A purchase order needs at least one line/i, "أمر الشراء يحتاج إلى بند واحد على الأقل"],
+  [/An invoice needs at least one line/i, "الفاتورة تحتاج إلى بند واحد على الأقل"],
+  [/Payroll needs at least one employee line/i, "مسيّر الرواتب يحتاج إلى موظف واحد على الأقل"],
+  [/Select at least one bill to pay/i, "اختر فاتورة مورد واحدة على الأقل للسداد"],
+  [/Invalid quantity or price \(line (\d+)\)/i, (m) => `الكمية أو السعر غير صحيح في البند ${m[1]}`],
+  [/Invalid quantity or price/i, "الكمية أو السعر غير صحيح"],
+  [/Invalid date range/i, "نطاق التاريخ غير صحيح: تاريخ البداية بعد تاريخ النهاية"],
+  [/Description is required/i, "الوصف مطلوب"],
+  // الأسباب
+  [/A reason is required for allowances/i, "سبب الخصم مطلوب"],
+  [/A reason is required to void a transaction/i, "سبب إلغاء الحركة مطلوب"],
+  [/A reason is required to void a voucher/i, "سبب إلغاء السند مطلوب"],
+  [/A reason is required/i, "السبب مطلوب"],
+  // المبالغ
+  [/Amount must be positive with at most (\S+) decimals/i, (m) => `المبلغ يجب أن يكون أكبر من صفر وبحد أقصى ${m[1]} منازل عشرية`],
+  [/Amount must not be negative/i, "المبلغ لا يمكن أن يكون سالبًا"],
+  [/Allocation for bill (\S+) must be between 0 and ([\d.]+)/i, (m) => `مبلغ السداد لفاتورة المورد ${m[1]} يجب أن يكون بين 0 و${m[2]}`],
+  [/Allocations exceed the invoice amount due/i, "مجموع التخصيصات يتجاوز المستحق على الفاتورة"],
+  [/Credit note must be between 0 and the outstanding amount \(([\d.]+)\)/i, (m) => `مبلغ الإشعار الدائن يجب أن يكون أكبر من صفر ولا يتجاوز المتبقي على الفاتورة (${m[1]})`],
+  [/Proceeds must not be negative/i, "متحصلات البيع لا يمكن أن تكون سالبة"],
+  [/Unit cost cannot be negative/i, "تكلفة الوحدة لا يمكن أن تكون سالبة"],
+  // الاعتماد والفصل بين المهام
+  [/Entry total ([\d.]+) requires approval \(threshold ([\d.]+)\)/i, (m) => `إجمالي القيد ${m[1]} يتجاوز حد الاعتماد (${m[2]}) — يتطلب صلاحية الاعتماد`],
+  [/Payment voucher of ([\d.]+) requires approval \(threshold ([\d.]+)\)/i, (m) => `سند الصرف بمبلغ ${m[1]} يتجاوز حد الاعتماد (${m[2]}) — يتطلب صلاحية الاعتماد`],
+  [/must be posted by a different user/i, "القيد يتجاوز حد الاعتماد؛ يرحّله مستخدم آخر غير من أنشأه (الفصل بين المُعِد والمعتمِد)"],
+  // الحسابات
+  [/Account (\S+) has type (\S+) but (.+) is required/i, (m) => `الحساب ${m[1]} من نوع «${typesAr(m[2]!)}» والمطلوب «${typesAr(m[3]!)}»`],
+  [/Account does not belong to this hotel/i, "الحساب لا ينتمي لهذا الفندق"],
+  [/Account hierarchy too deep/i, "تجاوزت شجرة الحسابات أقصى عدد مستويات مسموح"],
+  [/Account with children cannot be postable/i, "الحساب الذي له حسابات فرعية يكون تجميعيًا ولا يقبل القيود"],
+  [/Cannot change type of an account that has children/i, "لا يمكن تغيير نوع حساب له حسابات فرعية"],
+  [/System account "([^"]+)" is not configured/i, (m) => `حساب النظام «${m[1]}» غير مُعرّف في دليل الحسابات — راجع إعدادات الحسابات`],
+  [/System keys are managed by the system/i, "مفاتيح حسابات النظام يديرها النظام"],
+  [/Counter account is required/i, "الحساب المقابل مطلوب"],
+  [/Specify either the vendor bill or the counter account/i, "حدد فاتورة المورد أو الحساب المقابل (أحدهما فقط)"],
+  [/Base currency cannot change after entries are posted/i, "لا يمكن تغيير العملة الأساسية بعد ترحيل قيود"],
+  // القيود والفترات
+  [/Journal entries must be created as drafts/i, "يُنشأ القيد مسودةً ثم يُرحّل"],
+  [/Only posted entries can be reversed/i, "يمكن عكس القيود المرحّلة فقط"],
+  [/Entry cannot be reversed/i, "لا يمكن عكس هذا القيد"],
+  [/Cannot move a line to another entry/i, "لا يمكن نقل سطر إلى قيد آخر"],
+  [/Posting must not change other fields/i, "الترحيل لا يغيّر حقول القيد الأخرى"],
+  [/Cannot reopen a period of a closed fiscal year/i, "لا يمكن إعادة فتح فترة في سنة مالية مقفلة"],
+  [/Period must fall within its fiscal year/i, "يجب أن تقع الفترة داخل سنتها المالية"],
+  [/Fiscal year is already closed/i, "السنة المالية مقفلة مسبقًا"],
+  [/Post or delete draft entries in this year before closing/i, "رحّل أو احذف القيود المسودة في هذه السنة قبل إقفالها"],
+  // الفوليو والسندات والعملاء
+  [/Folio status and numbering are managed by the system/i, "حالة الفوليو وترقيمه يديرهما النظام"],
+  [/Folios are opened through open_folio/i, "يُفتح الفوليو من شاشة «فتح فوليو» فقط"],
+  [/Folios belong to different hotels/i, "الفوليوهان يتبعان فندقين مختلفين"],
+  [/Cannot transfer to the same folio/i, "لا يمكن التحويل إلى نفس الفوليو"],
+  [/Transfers are corrected by transferring back/i, "يُصحَّح التحويل بتحويل عكسي إلى الفوليو الأصلي"],
+  [/Only folios without transactions can be cancelled/i, "يُلغى الفوليو فقط إذا لم تُسجَّل عليه أي حركة"],
+  [/Master folio not found or not open/i, "الفوليو الرئيسي غير موجود أو غير مفتوح"],
+  [/Original charge not found or voided/i, "البند الأصلي غير موجود أو ملغى"],
+  [/Credit \(city ledger\) can only settle a folio balance/i, "التحويل إلى الآجل يسوّي الرصيد المستحق على الفوليو فقط"],
+  [/Only posted customer receipts can be allocated/i, "يُخصَّص على الفواتير سند قبض مرحّل من العميل فقط"],
+  [/Payment method is already used/i, "طريقة الدفع مستخدمة؛ لا يمكن تغيير نوعها أو حسابها — أنشئ طريقة جديدة"],
+  // المخزون والأصول والمشتريات
+  [/Insufficient stock for (.+) \(on hand ([-\d.]+)\)/i, (m) => `الكمية غير كافية للصنف ${m[1]} (المتوفر ${m[2]})`],
+  [/Issue quantity must be positive/i, "كمية الصرف يجب أن تكون أكبر من صفر"],
+  [/Quantity must not be zero/i, "الكمية لا يمكن أن تكون صفرًا"],
+  [/Receipts need a positive quantity and a unit cost/i, "الاستلام يتطلب كمية أكبر من صفر وتكلفة وحدة"],
+  [/Receipts exceed the vendor bill amount .*\(billed ([\d.]+), already received ([\d.]+)\)/i,
+    (m) => `الاستلام يتجاوز المفوتر على حساب المخزون هذا (المفوتر ${m[1]}، المستلم سابقًا ${m[2]})`],
+  [/Only receipts can reference a vendor bill/i, "يُربط استلام المخزون فقط بفاتورة مورد"],
+  [/The vendor bill has no line on this item/i, "فاتورة المورد لا تحتوي بندًا لهذا الصنف"],
+  [/The vendor bill has no line on this asset account/i, "فاتورة المورد لا تحتوي بندًا على حساب هذا الأصل"],
+  [/Department is required for issues/i, "حدد القسم المستهلك عند صرف المخزون"],
+  [/Item already has movements/i, "للصنف حركات مسجلة؛ لا يمكن تغيير حساباته"],
+  [/Stock quantity and cost change only through inventory movements/i, "كمية المخزون وتكلفته تتغيران عبر حركات المخزون فقط"],
+  [/Asset account must be a fixed-asset account/i, "حساب الأصل يجب أن يكون من حسابات الأصول الثابتة"],
+  [/Choose the asset cost account, not accumulated depreciation/i, "اختر حساب تكلفة الأصل وليس مجمع الإهلاك"],
+  [/Asset already disposed/i, "الأصل مستبعد مسبقًا"],
+  [/Depreciation was posted after the disposal date/i, "يوجد إهلاك مرحّل بعد تاريخ الاستبعاد — اختر تاريخًا لاحقًا"],
+  [/Proceeds account is required/i, "حساب متحصلات البيع مطلوب"],
+  [/Purchase order not found or not open/i, "أمر الشراء غير موجود أو غير مفتوح"],
+  [/Unmatch the statement line before deleting it/i, "ألغِ مطابقة سطر كشف الحساب قبل حذفه"],
+  [/Matched ledger line must be a posted line on the same account/i, "سطر الأستاذ المطابق يجب أن يكون مرحّلًا وعلى نفس الحساب وبنفس المبلغ"],
+  // المستخدمون والأدوار
+  [/Cannot remove the last active general manager/i, "لا يمكن إزالة آخر مدير عام فعّال للفندق"],
+  [/No registered user with this email/i, "لا يوجد مستخدم مسجّل بهذا البريد — اطلب منه إنشاء حساب أولًا"],
+  [/Role belongs to another hotel/i, "الدور يتبع فندقًا آخر"],
+  [/Authentication required/i, "يجب تسجيل الدخول"],
+  [/Audit log is append-only/i, "سجل التدقيق للإضافة فقط ولا يمكن تعديله"],
+  [/is maintained by the system and cannot be changed directly/i, "هذه البيانات يديرها النظام ولا تُعدَّل مباشرة"],
+  // عناصر غير موجودة
+  [/Bill not found for this vendor/i, "فاتورة المورد غير موجودة لهذا المورد"],
+  [/Invoice not found for this customer/i, "الفاتورة غير موجودة لهذا العميل"],
+  [/Draft journal entry not found/i, "القيد المسودة غير موجود"],
+  [/Parent account not found/i, "الحساب الأب غير موجود"],
+  [/^(?:ERROR:\s*)?(Asset|Customer|Department|Folio|Hotel|Item|Journal entry|Vendor|Voucher) not found/i, (m) => `${NOT_FOUND_M[m[1]!.toLowerCase()]} غير موجود`],
+  [/^(?:ERROR:\s*)?(Fiscal year|Invoice|Period|Transaction) not found/i, (m) => `${NOT_FOUND_F[m[1]!.toLowerCase()]} غير موجودة`],
+];
+const NOT_FOUND_M: Record<string, string> = {
+  asset: "الأصل", customer: "العميل", department: "القسم", folio: "الفوليو", hotel: "الفندق",
+  item: "الصنف", "journal entry": "القيد", vendor: "المورد", voucher: "السند",
+};
+const NOT_FOUND_F: Record<string, string> = {
+  "fiscal year": "السنة المالية", invoice: "الفاتورة", period: "الفترة", transaction: "الحركة",
+};
+
+/** نص عربي دقيق لرسالة قاعدة البيانات، أو null إن لم تكن من رسائل قواعد العمل المعروفة */
+export function describeDatabaseError(message: string | null | undefined): string | null {
+  if (!message) return null;
+  for (const [pattern, text] of MESSAGES) {
+    const m = message.match(pattern);
+    if (m) return typeof text === "string" ? text : text(m);
+  }
+  return null;
+}

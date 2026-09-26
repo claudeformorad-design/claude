@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { saveRoleAction, setMemberRolesAction } from "../../_admin/actions";
+import { actionErrorText } from "@/lib/action-error";
 
 type T = Pick<Dictionary, "admin" | "common" | "errors">;
 type Role = { id: string; label: string; system: boolean };
@@ -39,7 +40,7 @@ export function MemberRow({ t, userId, email, name, active, roleIds, roles, isSe
       <div className="flex gap-2">
         <Button size="sm" disabled={pending} onClick={() => start(async () => {
           const r = await setMemberRolesAction(userId, [...sel], isActive);
-          if (r.ok) router.refresh(); else setError(t.errors[r.error as keyof T["errors"]] ?? r.details ?? t.errors.unknown);
+          if (r.ok) router.refresh(); else setError(actionErrorText(t.errors, r));
         })}>{t.admin.saveRoles}</Button>
         {!isSelf && <Button size="sm" variant="ghost" onClick={() => setActive(!isActive)}>{isActive ? t.admin.deactivate : t.admin.activate}</Button>}
       </div>
@@ -80,7 +81,7 @@ export function RoleEditor({ t, role, permissions }: {
       </div>
       <Button disabled={pending} onClick={() => start(async () => {
         const r = await saveRoleAction({ ...v, permissions: [...sel] });
-        if (r.ok) router.push("/settings/users"); else setError(r.error === "validation" ? t.errors.validation : t.errors[r.error]);
+        if (r.ok) router.push("/settings/users"); else setError(actionErrorText(t.errors, r));
       })}>{t.common.save}</Button>
     </div>
   );

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { voidVoucherAction } from "../actions";
+import { actionErrorText } from "@/lib/action-error";
 
 export function VoidVoucher({ id, t }: { id: string; t: Pick<Dictionary, "vouchers" | "errors"> }) {
   const router = useRouter();
@@ -25,7 +26,7 @@ export function VoidVoucher({ id, t }: { id: string; t: Pick<Dictionary, "vouche
             start(async () => {
               const r = await voidVoucherAction(id, reason);
               if (r.ok) router.refresh();
-              else setError(r.error === "validation" ? t.errors.validation : t.errors[r.error]);
+              else setError(actionErrorText(t.errors, r));
             })
           }
         >

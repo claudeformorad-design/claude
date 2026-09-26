@@ -20,6 +20,7 @@ import {
 } from "@/lib/validation/journal-entry";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { saveJournalEntryAction } from "./actions";
+import { actionErrorText } from "@/lib/action-error";
 
 export interface JournalFormProps {
   t: Pick<Dictionary, "journal" | "common" | "errors">;
@@ -67,7 +68,7 @@ export function JournalForm({
       startTransition(async () => {
         const result = await saveJournalEntryAction(values, { entryId, post });
         if (result.ok) router.push(`/journal/${result.data}`);
-        else setServerError(result.error === "validation" ? t.errors.validation : t.errors[result.error]);
+        else setServerError(actionErrorText(t.errors, result));
       });
     });
 

@@ -13,6 +13,7 @@ import { formatMoney, isValidAmount } from "@/lib/accounting/money";
 import type { VoucherInput } from "@/lib/validation/revenue";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { createVoucherAction } from "../actions";
+import { actionErrorText } from "@/lib/action-error";
 
 interface OpenInvoiceOption { id: string; number: string; customer_id: string | null; amount_due: string; amount_paid: string; issue_date: string }
 
@@ -65,7 +66,7 @@ export function VoucherForm({
       const v = getValues();
       const r = await createVoucherAction({ ...v, allocations: (v.allocations ?? []).filter((a) => a.amount && a.amount.trim() !== "") });
       if (r.ok) router.push(`/vouchers/${r.data}`);
-      else setError(r.error === "validation" ? t.errors.validation : t.errors[r.error]);
+      else setError(actionErrorText(t.errors, r));
     });
 
   const row = (label: string, el: React.ReactNode, id?: string) => <div className="space-y-1.5"><Label htmlFor={id}>{label}</Label>{el}</div>;

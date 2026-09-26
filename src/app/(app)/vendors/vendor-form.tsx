@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { saveVendorAction } from "../_payables/actions";
+import { actionErrorText } from "@/lib/action-error";
 
 type V = Record<string, string | boolean | undefined>;
 
@@ -26,7 +27,7 @@ export function VendorForm({ t, initial }: { t: Pick<Dictionary, "customers" | "
       onSubmit={handleSubmit((v) => start(async () => {
         const r = await saveVendorAction(v);
         if (r.ok) router.push("/vendors");
-        else setError(r.error === "validation" ? t.errors.validation : t.errors[r.error]);
+        else setError(actionErrorText(t.errors, r));
       }))}
     >
       {error && <Alert variant="destructive">{error}</Alert>}

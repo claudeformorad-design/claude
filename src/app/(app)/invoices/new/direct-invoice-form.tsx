@@ -15,6 +15,7 @@ import { ZERO, formatMoney, isValidAmount, toMoney } from "@/lib/accounting/mone
 import { type DirectInvoiceInput, directInvoiceSchema } from "@/lib/validation/revenue";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { createDirectInvoiceAction } from "../actions";
+import { actionErrorText } from "@/lib/action-error";
 
 export function DirectInvoiceForm({
   t, locale, decimals, customers, chargeCodes, today,
@@ -59,7 +60,7 @@ export function DirectInvoiceForm({
       setError(null);
       const r = await createDirectInvoiceAction(getValues());
       if (r.ok) router.push(`/invoices/${r.data}`);
-      else setError(r.error === "validation" ? t.errors.validation : t.errors[r.error]);
+      else setError(actionErrorText(t.errors, r));
     });
 
   return (

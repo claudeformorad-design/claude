@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { periodAction } from "../_admin/actions";
+import { actionErrorText } from "@/lib/action-error";
 
 export function PeriodButton({ op, id, label, confirmText, startDate, variant = "outline", errorLabels }: {
   op: "close" | "open" | "closeYear" | "newYear"; id: string; label: string; confirmText?: string; startDate?: string;
@@ -16,7 +17,7 @@ export function PeriodButton({ op, id, label, confirmText, startDate, variant = 
       if (confirmText && !confirm(confirmText)) return;
       start(async () => {
         const r = await periodAction(op, id, startDate);
-        if (!r.ok) alert(errorLabels[r.error] ?? r.details ?? errorLabels.unknown);
+        if (!r.ok) alert(actionErrorText(errorLabels, r));
         router.refresh();
       });
     }}>{label}</Button>

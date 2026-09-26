@@ -12,10 +12,13 @@ export function ResetHotelDataButton() {
   const [confirmed, setConfirmed] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [success, setSuccess] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const handleReset = () => {
     startTransition(async () => {
+      setFailed(false);
       const res = await resetHotelDataAction();
+      if (!res.ok) setFailed(true);
       if (res.ok) {
         setSuccess(true);
         setTimeout(() => { router.replace("/onboarding"); router.refresh(); }, 800);
@@ -43,7 +46,7 @@ export function ResetHotelDataButton() {
             onClick={() => setOpen(true)}
             className="shrink-0 rounded-xl bg-red-600 hover:bg-red-700 text-xs font-bold text-white shadow-xs"
           >
-            <RotateCcw className="size-3.5 mr-1" />
+            <RotateCcw className="size-3.5 me-1" />
             تصفير بيانات النظام
           </Button>
         ) : (
@@ -71,7 +74,7 @@ export function ResetHotelDataButton() {
               >
                 {success ? (
                   <>
-                    <Check className="size-3.5 mr-1" />
+                    <Check className="size-3.5 me-1" />
                     تم التصفير بنجاح!
                   </>
                 ) : isPending ? (
@@ -90,6 +93,7 @@ export function ResetHotelDataButton() {
               />
               أنا متأكد من حذف جميع بيانات التجربة
             </label>
+            {failed && <p className="text-[11px] text-red-700">تعذّر التصفير — أعد المحاولة، وإن تكرر فأعد تشغيل الخادم.</p>}
           </div>
         )}
       </div>

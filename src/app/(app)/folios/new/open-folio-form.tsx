@@ -11,6 +11,7 @@ import { NativeSelect } from "@/components/ui/select";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import type { OpenFolioInput } from "@/lib/validation/revenue";
 import { openFolioAction } from "../actions";
+import { actionErrorText } from "@/lib/action-error";
 
 export function OpenFolioForm({
   t, customers, masters, today,
@@ -35,7 +36,7 @@ export function OpenFolioForm({
       setError(null);
       const r = await openFolioAction(v);
       if (r.ok) router.push(`/folios/${r.data}`);
-      else setError(r.error === "validation" ? t.errors.validation : t.errors[r.error]);
+      else setError(actionErrorText(t.errors, r));
     });
 
   const field = (name: keyof OpenFolioInput, label: string, props: React.ComponentProps<"input"> = {}) => (

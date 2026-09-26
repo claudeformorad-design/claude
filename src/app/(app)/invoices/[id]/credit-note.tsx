@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { creditNoteAction } from "../../_payables/actions";
+import { actionErrorText } from "@/lib/action-error";
 
 export function CreditNoteForm({ invoiceId, t }: { invoiceId: string; t: Pick<Dictionary, "payables" | "folio" | "errors"> }) {
   const router = useRouter();
@@ -23,7 +24,7 @@ export function CreditNoteForm({ invoiceId, t }: { invoiceId: string; t: Pick<Di
         <Input className="w-72" placeholder={t.folio.reason} value={reason} onChange={(e) => setReason(e.target.value)} />
         <Button variant="outline" disabled={pending || !amount || !reason} onClick={() => start(async () => {
           const r = await creditNoteAction(invoiceId, amount, reason);
-          if (r.ok) { setAmount(""); setReason(""); router.refresh(); } else setError(r.error === "validation" ? t.errors.validation : t.errors[r.error]);
+          if (r.ok) { setAmount(""); setReason(""); router.refresh(); } else setError(actionErrorText(t.errors, r));
         })}>{t.payables.creditNote}</Button>
       </div>
     </div>

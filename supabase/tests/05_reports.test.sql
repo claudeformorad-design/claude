@@ -96,6 +96,10 @@ begin
     assert r.difference = 0, format('reconciliation %s (%s): gl %s, subledger %s, reconciling %s',
       r.control, r.name_ar, r.gl_balance, r.subledger_balance, r.reconciling_items);
   end loop;
+  -- أوصاف القيود والحركات الآلية عربية فقط
+  assert not exists (select 1 from public.journal_entries where description ~ '[ء-ي] / [A-Z][a-z]+')
+     and not exists (select 1 from public.folio_transactions where description ~ '[ء-ي] / [A-Z][a-z]+'),
+    'system-generated descriptions are Arabic only';
 end $$;
 
 \o

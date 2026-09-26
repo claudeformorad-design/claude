@@ -13,6 +13,7 @@ import { formatMoney, isValidAmount, toMoney } from "@/lib/accounting/money";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { cn } from "@/lib/utils";
 import { cancelFolioAction, checkoutAction, folioAction } from "../actions";
+import { actionErrorText } from "@/lib/action-error";
 
 type Kind = "charge" | "payment" | "deposit" | "allowance" | "refund" | "depositRefund" | "transfer" | "void";
 
@@ -62,7 +63,7 @@ export function FolioActions(p: FolioActionsProps) {
   }, [kind, values.charge_code_id, values.unit_price, values.quantity, p.chargeCodes, p.decimals]);
 
   const fmt = (v: Parameters<typeof formatMoney>[0]) => formatMoney(v, { locale: p.locale, decimals: p.decimals });
-  const fail = (e: string) => setError(e === "validation" ? t.errors.validation : t.errors[e as keyof typeof t.errors] ?? t.errors.unknown);
+  const fail = (r: { error: string; message?: string }) => setError(actionErrorText(t.errors, r));
 
   const submit = (v: FormValues) =>
     start(async () => {
@@ -71,7 +72,7 @@ export function FolioActions(p: FolioActionsProps) {
       if (r.ok) {
         reset({ quantity: "1", customer_id: p.defaultCustomerId ?? "" });
         router.refresh();
-      } else fail(r.error);
+      } else fail(r);
     });
 
   const checkout = () => {
@@ -80,7 +81,7 @@ export function FolioActions(p: FolioActionsProps) {
       setError(null);
       const r = await checkoutAction(p.folioId);
       if (r.ok) router.push(`/invoices/${r.data}`);
-      else fail(r.error);
+      else fail(r);
     });
   };
 
@@ -88,7 +89,7 @@ export function FolioActions(p: FolioActionsProps) {
     start(async () => {
       const r = await cancelFolioAction(p.folioId);
       if (r.ok) router.push("/folios");
-      else fail(r.error);
+      else fail(r);
     });
 
   const select = (name: string, options: { id: string; label: string }[], allowEmpty = false) => (

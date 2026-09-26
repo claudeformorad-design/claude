@@ -12,6 +12,7 @@ import { NativeSelect } from "@/components/ui/select";
 import { ZERO, formatMoney, isValidAmount, toMoney } from "@/lib/accounting/money";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { postPayrollAction } from "../../_payables/actions";
+import { actionErrorText } from "@/lib/action-error";
 
 const empty = { employee_name: "", employee_code: "", department_id: "", basic: "", allowances: "", deductions: "", insurance_employee: "", insurance_employer: "" };
 const nums = ["basic", "allowances", "deductions", "insurance_employee", "insurance_employer"] as const;
@@ -34,7 +35,7 @@ export function PayrollForm({ t, locale, month, departments }: {
   return (
     <form className="space-y-5" onSubmit={handleSubmit((v) => start(async () => {
       const r = await postPayrollAction(v);
-      if (r.ok) router.push("/payroll"); else setError(r.error === "validation" ? t.errors.validation : t.errors[r.error]);
+      if (r.ok) router.push("/payroll"); else setError(actionErrorText(t.errors, r));
     }))}>
       {error && <Alert variant="destructive">{error}</Alert>}
       <div className="grid max-w-md gap-4 sm:grid-cols-2">

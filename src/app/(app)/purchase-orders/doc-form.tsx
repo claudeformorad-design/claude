@@ -11,6 +11,7 @@ import { NativeSelect } from "@/components/ui/select";
 import { PurchaseLines, emptyPurchaseLine } from "@/components/forms/purchase-lines";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { createBillAction, createPurchaseOrderAction } from "../_payables/actions";
+import { actionErrorText } from "@/lib/action-error";
 
 type Opt = { id: string; label: string };
 
@@ -39,7 +40,7 @@ export function PurchaseDocForm({
       ? await createPurchaseOrderAction({ vendor_id: v.vendor_id, order_date: v.date, notes: v.notes, lines: v.lines })
       : await createBillAction({ vendor_id: v.vendor_id, bill_date: v.date, vendor_invoice_no: v.vendor_invoice_no, notes: v.notes, po_id: "", lines: v.lines });
     if (r.ok) router.push(kind === "po" ? "/purchase-orders" : `/bills/${r.data}`);
-    else setError(r.error === "validation" ? t.errors.validation : t.errors[r.error]);
+    else setError(actionErrorText(t.errors, r));
   }));
   return (
     <form onSubmit={submit} className="space-y-5">

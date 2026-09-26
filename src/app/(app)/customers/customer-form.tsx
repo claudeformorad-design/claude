@@ -11,6 +11,7 @@ import { NativeSelect } from "@/components/ui/select";
 import type { CustomerFormInput } from "@/lib/validation/revenue";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { saveCustomerAction } from "./actions";
+import { actionErrorText } from "@/lib/action-error";
 
 export function CustomerForm({ t, initial }: { t: Pick<Dictionary, "customers" | "common" | "errors">; initial: CustomerFormInput }) {
   const router = useRouter();
@@ -23,7 +24,7 @@ export function CustomerForm({ t, initial }: { t: Pick<Dictionary, "customers" |
       setError(null);
       const r = await saveCustomerAction(v);
       if (r.ok) router.push("/customers");
-      else setError(r.error === "validation" ? t.errors.validation : t.errors[r.error]);
+      else setError(actionErrorText(t.errors, r));
     });
 
   const f = (name: keyof CustomerFormInput, label: string, props: React.ComponentProps<"input"> = {}) => (

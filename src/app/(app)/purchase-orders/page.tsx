@@ -35,7 +35,7 @@ export default async function PurchaseOrdersPage() {
                 <TableCell><Badge variant={p.status === "open" ? "default" : "secondary"}>{t.payables.statuses[p.status]}</Badge></TableCell>
                 <TableCell className="text-end">
                   {p.status === "open" && ctx.can(PERMISSIONS.billsCreate) && (
-                    <ConvertToBill poId={p.id} vendorId={p.vendor_id} label={t.payables.toBill} errorLabel={t.errors.unknown} />
+                    <ConvertToBill poId={p.id} vendorId={p.vendor_id} label={t.payables.toBill} errors={t.errors} />
                   )}
                 </TableCell>
               </TableRow>

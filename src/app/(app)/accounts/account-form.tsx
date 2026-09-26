@@ -13,6 +13,7 @@ import { ACCOUNT_SUBTYPES, ACCOUNT_TYPES, validateAccountPlacement, type Account
 import { accountFormSchema, type AccountFormInput, type AccountFormValues } from "@/lib/validation/account";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { saveAccountAction } from "./actions";
+import { actionErrorText } from "@/lib/action-error";
 
 export interface AccountOption {
   id: string;
@@ -70,7 +71,7 @@ export function AccountForm({
     startTransition(async () => {
       const result = await saveAccountAction(form.getValues());
       if (result.ok) router.push("/accounts");
-      else setServerError(result.error === "validation" ? t.errors.validation : t.errors[result.error]);
+      else setServerError(actionErrorText(t.errors, result));
     });
   };
 

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import type { ActionResult } from "@/services/errors";
 import { deleteDraftAction, postJournalEntryAction, reverseJournalEntryAction } from "../actions";
+import { actionErrorText } from "@/lib/action-error";
 
 export function EntryActions({
   t,
@@ -37,7 +38,7 @@ export function EntryActions({
     startTransition(async () => {
       const result = await fn();
       if (result.ok) onOk(result.data);
-      else setError(result.error === "validation" ? t.errors.validation : t.errors[result.error]);
+      else setError(actionErrorText(t.errors, result));
     });
   };
 

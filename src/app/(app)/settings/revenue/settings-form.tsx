@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/select";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { type RevenueSettingKind, saveRevenueSettingAction } from "./actions";
+import { actionErrorText } from "@/lib/action-error";
 
 type Option = { id: string; label: string };
 
@@ -36,7 +37,7 @@ export function RevenueSettingForm({
       const payload = { ...v, tax_rate_ids: kind === "charge" ? ((v.tax_rate_ids as string[] | false) || []) : undefined };
       const r = await saveRevenueSettingAction(kind, payload);
       if (r.ok) router.push("/settings/revenue");
-      else setError(r.error === "validation" ? t.errors.validation : t.errors[r.error]);
+      else setError(actionErrorText(t.errors, r));
     });
 
   const text = (name: string, label: string, props: React.ComponentProps<"input"> = {}) => (
