@@ -410,6 +410,11 @@ export type Database = {
       };
     };
     Functions: {
+      room_statistics: { Args: { p_hotel_id: string; p_from: string; p_to: string }; Returns: { business_date: string; room_nights: string; room_revenue: string; rooms_available: number }[] };
+      cash_flow_lines: { Args: { p_hotel_id: string; p_from: string; p_to: string }; Returns: { activity: "operating" | "investing" | "financing"; account_id: string; amount: string }[] };
+      cash_balance: { Args: { p_hotel_id: string; p_as_of: string }; Returns: string };
+      daily_cash_report: { Args: { p_hotel_id: string; p_date: string }; Returns: { payment_method_id: string; method_name: string; source: string; receipts: string; payments: string }[] };
+      monthly_pnl: { Args: { p_hotel_id: string; p_from: string; p_to: string }; Returns: { month: string; revenue: string; expenses: string }[] };
       register_fixed_asset: {
         Args: {
           p_hotel_id: string; p_name: string; p_category: string; p_asset_account_id: string; p_cost: string; p_useful_life_months: number;

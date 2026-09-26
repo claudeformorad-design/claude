@@ -10,3 +10,5 @@ export * from "./receivables";
 export * from "./aging";
 export * from "./depreciation";
 export * from "./profitability";
+export * from "./statements";
+export * from "./kpi";

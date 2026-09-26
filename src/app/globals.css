@@ -68,3 +68,11 @@
     unicode-bidi: isolate;
   }
 }
+
+/* الطباعة / حفظ PDF من المتصفح: إخفاء الشريط الجانبي والترويسة */
+@media print {
+  aside, header { display: none !important; }
+  main { overflow: visible !important; padding: 0 !important; }
+  body { background: white; }
+  @page { size: A4; margin: 14mm; }
+}

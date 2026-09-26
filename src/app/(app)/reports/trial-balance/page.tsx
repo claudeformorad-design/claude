@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/layout/page-header";
+import { FileSpreadsheet } from "lucide-react";
 import { Money } from "@/components/money";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,8 @@ export default async function TrialBalancePage({
 
   return (
     <>
-      <PageHeader title={t.trialBalance.title} description={`${t.trialBalance.subtitle} (${ctx.hotel.base_currency})`} />
+      <PageHeader title={t.trialBalance.title} description={`${t.trialBalance.subtitle} (${ctx.hotel.base_currency})`}
+        actions={<Button asChild variant="outline"><a href={`/api/export/trial-balance?from=${from}&to=${to}`}><FileSpreadsheet />{t.reports.exportExcel}</a></Button>} />
 
       <form className="mb-4 flex flex-wrap items-end gap-2">
         <label className="space-y-1 text-sm">

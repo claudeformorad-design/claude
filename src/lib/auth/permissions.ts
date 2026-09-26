@@ -43,6 +43,8 @@ export const PERMISSIONS = {
   inventoryView: "inventory.view",
   inventoryManage: "inventory.manage",
   profitabilityView: "reports.profitability.view",
+  financialView: "reports.financial.view",
+  cashReportView: "reports.cash.view",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

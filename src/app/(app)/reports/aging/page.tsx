@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
+import { FileSpreadsheet } from "lucide-react";
 import { Money } from "@/components/money";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -25,7 +26,8 @@ export default async function AgingPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <PageHeader title={t.nav.aging} description={t.payables.agingSubtitle} />
+      <PageHeader title={t.nav.aging} description={t.payables.agingSubtitle}
+        actions={<Button asChild variant="outline"><a href={`/api/export/aging-${kind}?to=${asOf}`}><FileSpreadsheet />{t.reports.exportExcel}</a></Button>} />
       <form className="mb-4 flex flex-wrap gap-2">
         <NativeSelect name="kind" defaultValue={kind} className="w-56">
           <option value="receivable">{t.payables.receivable}</option><option value="payable">{t.payables.payable}</option>

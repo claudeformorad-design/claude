@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/layout/page-header";
+import { FileSpreadsheet } from "lucide-react";
 import { Money } from "@/components/money";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -41,7 +42,8 @@ export default async function ProfitabilityPage({ searchParams }: { searchParams
   );
   return (
     <>
-      <PageHeader title={t.nav.profitability} description={p.subtitle} />
+      <PageHeader title={t.nav.profitability} description={p.subtitle}
+        actions={<Button asChild variant="outline"><a href={`/api/export/profitability?from=${from}&to=${to}`}><FileSpreadsheet />{t.reports.exportExcel}</a></Button>} />
       <form className="mb-4 flex flex-wrap gap-2">
         <Input type="date" name="from" defaultValue={from} dir="ltr" className="w-40" aria-label={t.common.from} />
         <Input type="date" name="to" defaultValue={to} dir="ltr" className="w-40" aria-label={t.common.to} />

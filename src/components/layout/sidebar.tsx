@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BedDouble, BookOpen, Boxes, Building2, FileSpreadsheet, FileText, LayoutDashboard, ListTree,
-  Landmark, PieChart, Receipt, Scale, Settings, ShoppingCart, Truck, UserCog, Users, Wallet, Clock,
+  Landmark, PieChart, TrendingUp, Waves, ListChecks, Banknote, Receipt, Scale, Settings, ShoppingCart, Truck, UserCog, Users, Wallet, Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +41,11 @@ export interface NavLabels {
   fixedAssets: string;
   stock: string;
   profitability: string;
+  incomeStatement: string;
+  balanceSheet: string;
+  cashFlow: string;
+  dailyCash: string;
+  roomStats: string;
 }
 
 type Item = { href: string; label: string; icon: React.ComponentType<{ className?: string }>; soon?: boolean };
@@ -85,7 +90,12 @@ export function Sidebar({ labels, hotelName }: { labels: NavLabels; hotelName: s
     {
       title: labels.groupReports,
       items: [
-        { href: "/reports/trial-balance", label: labels.trialBalance, icon: Scale },
+        { href: "/reports/income-statement", label: labels.incomeStatement, icon: TrendingUp },
+        { href: "/reports/balance-sheet", label: labels.balanceSheet, icon: Scale },
+        { href: "/reports/cash-flow", label: labels.cashFlow, icon: Waves },
+        { href: "/reports/trial-balance", label: labels.trialBalance, icon: ListChecks },
+        { href: "/reports/rooms", label: labels.roomStats, icon: BedDouble },
+        { href: "/reports/daily-cash", label: labels.dailyCash, icon: Banknote },
         { href: "/reports/aging", label: labels.aging, icon: Clock },
         { href: "/reports/profitability", label: labels.profitability, icon: PieChart },
       ],
