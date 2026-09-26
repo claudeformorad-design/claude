@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
  * solid/outline للتصنيفات (مثل تجميعي/تفصيلي في شجرة الحسابات).
  */
 const badgeVariants = cva(
-  "inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-0.5 text-[14px] font-medium leading-5",
+  "inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-0.5 text-[15.5px] font-medium leading-5",
   {
     variants: {
       variant: {

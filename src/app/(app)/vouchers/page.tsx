@@ -18,8 +18,9 @@ import { ZERO, toMoney } from "@/lib/accounting/money";
 import { Stat, StatGrid } from "@/components/ui/stat";
 import { EntityCell } from "@/components/ui/entity";
 import { FilterTabs } from "@/components/ui/filter-tabs";
+import { Pager, pageSlice } from "@/components/ui/pager";
 
-export default async function VouchersPage({ searchParams }: { searchParams: Promise<{ type?: string; q?: string }> }) {
+export default async function VouchersPage({ searchParams }: { searchParams: Promise<{ type?: string; q?: string; page?: string }> }) {
   const ctx = await requireAppContext(PERMISSIONS.paymentsView);
   const { locale, t } = await getI18n();
   const sp = await searchParams;
@@ -35,6 +36,8 @@ export default async function VouchersPage({ searchParams }: { searchParams: Pro
     const q = p.toString();
     return q ? `/vouchers?${q}` : "/vouchers";
   };
+
+  const shown = pageSlice(vouchers, sp.page);
 
   return (
     <>
@@ -95,13 +98,13 @@ export default async function VouchersPage({ searchParams }: { searchParams: Pro
                 </TableCell>
               </TableRow>
             )}
-            {vouchers.map((v) => (
+            {shown.rows.map((v) => (
               <TableRow key={v.id} className={v.status === "voided" ? "opacity-60" : ""}>
                 <TableCell><Link href={`/vouchers/${v.id}`} className="num font-semibold text-ink hover:underline">{v.voucher_number}</Link></TableCell>
                 <TableCell className="num">{v.payment_date}</TableCell>
                 <TableCell><Badge variant={v.voucher_type === "receipt" ? "success" : "warning"}>{t.vouchers.types[v.voucher_type]}</Badge></TableCell>
-                <TableCell>{v.party_name ? <EntityCell name={v.party_name} /> : <span className="text-slate-400">—</span>}</TableCell>
-                <TableCell className="max-w-sm truncate">{v.description}</TableCell>
+                <TableCell>{v.party_name ? <div className="max-w-52"><EntityCell name={v.party_name} /></div> : <span className="text-slate-400">—</span>}</TableCell>
+                <TableCell className="cell-fluid">{v.description}</TableCell>
                 <TableCell className={`text-end font-semibold ${v.voucher_type === "receipt" ? "text-success" : "text-ink"}`}><Money value={v.amount} locale={locale} /></TableCell>
                 <TableCell><Badge variant={v.status === "voided" ? "destructive" : "secondary"}>{t.vouchers.statuses[v.status]}</Badge></TableCell>
               </TableRow>
@@ -109,6 +112,7 @@ export default async function VouchersPage({ searchParams }: { searchParams: Pro
           </TableBody>
         </Table>
       </Card>
+      <Pager page={shown.page} pages={shown.pages} total={vouchers.length} basePath="/vouchers" params={{ type: sp.type, q: sp.q }} />
     </>
   );
 }

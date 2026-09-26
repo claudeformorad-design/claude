@@ -18,8 +18,9 @@ import { AlarmClock, FileText, Hourglass, Receipt } from "lucide-react";
 import { Stat, StatGrid } from "@/components/ui/stat";
 import { EntityCell } from "@/components/ui/entity";
 import { FilterTabs } from "@/components/ui/filter-tabs";
+import { Pager, pageSlice } from "@/components/ui/pager";
 
-export default async function InvoicesPage({ searchParams }: { searchParams: Promise<{ status?: string; q?: string; customer?: string }> }) {
+export default async function InvoicesPage({ searchParams }: { searchParams: Promise<{ status?: string; q?: string; customer?: string; page?: string }> }) {
   const ctx = await requireAppContext(PERMISSIONS.invoicesView);
   const { locale, t } = await getI18n();
   const sp = await searchParams;
@@ -38,6 +39,8 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
     const q = p.toString();
     return q ? `/invoices?${q}` : "/invoices";
   };
+
+  const shown = pageSlice(invoices, sp.page);
 
   return (
     <>
@@ -94,14 +97,14 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
                 </TableCell>
               </TableRow>
             )}
-            {invoices.map((i) => (
+            {shown.rows.map((i) => (
               <TableRow key={i.id}>
                 <TableCell>
                   <Link href={`/invoices/${i.id}`} className="num block font-semibold text-ink hover:underline">{i.invoice_number}</Link>
-                  <span className="text-[14px] text-slate-500">{t.invoices.types[i.invoice_type]}</span>
+                  <span className="text-[15.5px] text-slate-500">{t.invoices.types[i.invoice_type]}</span>
                 </TableCell>
                 <TableCell className="num">{i.issue_date}</TableCell>
-                <TableCell><EntityCell name={i.bill_to_name} /></TableCell>
+                <TableCell className="cell-fluid"><EntityCell name={i.bill_to_name} /></TableCell>
                 <TableCell><InvoiceStatusBadge status={i.status} labels={t.invoices.statuses} /></TableCell>
                 <TableCell className="text-end font-semibold"><Money value={i.total} locale={locale} /></TableCell>
                 <TableCell className="text-end"><Money value={toMoney(i.amount_due).minus(toMoney(i.amount_paid))} locale={locale} blankZero /></TableCell>
@@ -111,6 +114,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
           </TableBody>
         </Table>
       </Card>
+      <Pager page={shown.page} pages={shown.pages} total={invoices.length} basePath="/invoices" params={{ status: sp.status, q: sp.q, customer: sp.customer }} />
     </>
   );
 }

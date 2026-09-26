@@ -59,7 +59,7 @@ export default async function AgingPage({ searchParams }: { searchParams: Promis
             {parties.length === 0 && <TableRow><TableCell colSpan={7} className="py-8"><EmptyState title="لا توجد أرصدة قائمة" description="تظهر هنا المستندات غير المسددة موزعة حسب مدة تأخرها." icon={Clock} /></TableCell></TableRow>}
             {parties.map((p) => (
               <TableRow key={p.partyId}>
-                <TableCell>
+                <TableCell className="cell-fluid">
                   <EntityCell name={p.partyName} sub={
                     <>{p.documents.map((d) => <Link key={d.document_id} href={`${docBase}/${d.document_id}`} className="num me-2 hover:underline">{d.document_number}</Link>)}</>
                   } />

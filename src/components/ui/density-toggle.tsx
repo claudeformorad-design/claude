@@ -17,7 +17,7 @@ export function DensityToggle({ initial }: { initial: "comfortable" | "compact" 
     <div className="inline-flex items-center gap-1 rounded-lg bg-subtle p-1" role="group" aria-label="كثافة الجدول">
       {([["comfortable", "مريح"], ["compact", "مضغوط"]] as const).map(([k, label]) => (
         <button key={k} type="button" onClick={() => set(k)} aria-pressed={v === k}
-          className={cn("rounded-md px-3.5 py-1.5 text-[15px] font-medium transition-colors",
+          className={cn("rounded-md px-3.5 py-1.5 text-[16.5px] font-medium transition-colors",
             v === k ? "bg-ink text-white" : "text-slate-600 hover:text-ink")}>
           {label}
         </button>

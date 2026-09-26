@@ -11,7 +11,7 @@ export default async function Forbidden() {
         <ShieldAlert className="size-6 stroke-[1.5]" />
       </div>
       <p className="animate-rise text-5xl font-bold text-ink">403</p>
-      <p className="animate-rise text-[17px] text-muted-foreground">{t.errors.permission_denied}</p>
+      <p className="animate-rise text-[18.5px] text-muted-foreground">{t.errors.permission_denied}</p>
       <Button asChild variant="outline">
         <Link href="/">{t.nav.dashboard}</Link>
       </Button>

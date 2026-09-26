@@ -50,8 +50,8 @@ export function AccountsTree({ rows, canManage, density, labels }: {
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="flex items-baseline gap-2">
-          <span className="type-title text-[21px] text-ink">شجرة الحسابات</span>
-          <span className="num text-[15px] text-slate-500">{rows.length} حساب</span>
+          <span className="type-title text-[22px] text-ink">شجرة الحسابات</span>
+          <span className="num text-[16.5px] text-slate-500">{rows.length} حساب</span>
         </h2>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => setCollapsed(new Set())}>توسيع الكل</Button>

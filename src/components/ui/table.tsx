@@ -8,13 +8,13 @@ import { cn } from "@/lib/utils";
 export function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div data-slot="table" className="relative w-full overflow-x-auto rounded-lg border border-line bg-white">
-      <table className={cn("w-full caption-bottom border-collapse text-[16px]", className)} {...props} />
+      <table className={cn("w-full caption-bottom border-collapse text-[17.5px]", className)} {...props} />
     </div>
   );
 }
 
 export function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
-  return <thead className={cn("bg-thead text-[15px] text-thead-text [&_tr]:border-0 [&_tr]:hover:bg-thead", className)} {...props} />;
+  return <thead className={cn("bg-thead text-[16.5px] text-thead-text [&_tr]:border-0 [&_tr]:hover:bg-thead", className)} {...props} />;
 }
 
 export function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
@@ -22,7 +22,7 @@ export function TableBody({ className, ...props }: React.ComponentProps<"tbody">
 }
 
 export function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
-  return <tfoot className={cn("border-t border-line-strong bg-group-row text-[16px] font-bold text-ink [&_tr]:hover:bg-group-row", className)} {...props} />;
+  return <tfoot className={cn("border-t border-line-strong bg-group-row text-[17.5px] font-bold text-ink [&_tr]:hover:bg-group-row", className)} {...props} />;
 }
 
 export function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
@@ -30,9 +30,9 @@ export function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
 }
 
 export function TableHead({ className, ...props }: React.ComponentProps<"th">) {
-  return <th className={cn("th-cell whitespace-nowrap px-5 text-start align-middle font-bold first:ps-6 last:pe-6", className)} {...props} />;
+  return <th className={cn("th-cell whitespace-nowrap px-4 text-start align-middle font-bold first:ps-5 last:pe-5", className)} {...props} />;
 }
 
 export function TableCell({ className, ...props }: React.ComponentProps<"td">) {
-  return <td className={cn("td-cell px-5 align-middle text-ink first:ps-6 last:pe-6", className)} {...props} />;
+  return <td className={cn("td-cell px-4 align-middle text-ink first:ps-5 last:pe-5", className)} {...props} />;
 }

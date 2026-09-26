@@ -2,11 +2,11 @@ import Link from "@/components/link";
 import { cn } from "@/lib/utils";
 
 const TINTS = [
-  "bg-accent1-tint text-accent1",
-  "bg-accent2-tint text-accent2",
-  "bg-sky-tint text-sky",
-  "bg-amber-tint text-amber",
-  "bg-info-tint text-info",
+  "bg-accent1-tint text-sky",
+  "bg-accent2-tint text-ink",
+  "bg-success-tint text-success",
+  "bg-[#ebe4f6] text-[#5f3f99]",
+  "bg-urgent-tint text-urgent",
 ];
 
 /** لون ثابت لكل اسم (نفس الاسم = نفس اللون دائمًا) */
@@ -25,7 +25,7 @@ export function initials(name: string): string {
 
 export function Avatar({ name, className }: { name: string; className?: string }) {
   return (
-    <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-md text-[14px] font-semibold", tintOf(name), className)} aria-hidden>
+    <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-md text-[15.5px] font-semibold", tintOf(name), className)} aria-hidden>
       {initials(name)}
     </span>
   );
@@ -38,7 +38,7 @@ export function EntityCell({ name, sub, href }: { name: string; sub?: React.Reac
       <Avatar name={name} />
       <span className="min-w-0 leading-tight">
         <span className="block truncate font-medium text-ink group-hover:underline">{name}</span>
-        {sub && <span className="block truncate text-[14px] text-slate-500">{sub}</span>}
+        {sub && <span className="block truncate text-[15.5px] text-slate-500">{sub}</span>}
       </span>
     </span>
   );

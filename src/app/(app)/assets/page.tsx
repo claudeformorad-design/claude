@@ -83,9 +83,9 @@ export default async function AssetsPage() {
                 <TableCell className="num font-semibold">{x.asset_number}</TableCell>
                 <TableCell>
                   <p className="font-medium">{x.name}</p>
-                  <p className="text-[14px] text-slate-500">{x.category} · {x.useful_life_months} شهرًا</p>
+                  <p className="text-[15.5px] text-slate-500">{x.category} · {x.useful_life_months} شهرًا</p>
                   {can && x.status !== "disposed" && (
-                    <details className="mt-1 text-sm"><summary className="cursor-pointer text-[14px] font-medium text-accent2">{a.dispose}</summary>
+                    <details className="mt-1 text-sm"><summary className="cursor-pointer text-[15.5px] font-medium text-accent2">{a.dispose}</summary>
                       <div className="mt-2">
                         <SimpleForm columns={4} submitLabel={a.dispose} errors={t.errors}
                           action={async (v) => { "use server"; return disposeAssetAction({ ...v, asset_id: x.id }); }}

@@ -49,15 +49,16 @@
   --color-accent1: #2483e1;
   --color-accent1-soft: #7fb3ec;
   --color-accent1-tint: #cee3f8;
-  --color-accent2: #b27a17;
-  --color-accent2-soft: #d9b46c;
-  --color-accent2-tint: #f6e3ae;
+  /* اللون الثاني: أسود النص نفسه (يتناغم مع الأزرق؛ لا بني) */
+  --color-accent2: #312f2e;
+  --color-accent2-soft: #9b9b9b;
+  --color-accent2-tint: #edece8;
 
   /* الحالات: خلفية Tint فاتحة + نقطة/نص Shade من نفس درجة اللون */
   --color-success: #4e8763;
   --color-success-tint: #d5e9d6;
   --color-success-dot: #5d9773;
-  --color-amber: #9a6a14;
+  --color-amber: #3a3a3a;         /* نص الوسم الأصفر داكن محايد (لا بني) */
   --color-amber-tint: #f6e3ae;
   --color-amber-dot: #ca912f;
   --color-sky: #1f6fbf;
@@ -106,14 +107,14 @@
   --radius-card: 0.625rem;
 
   /* أحجام أكبر قليلًا من الافتراضي (خط ثمانية مريح للقراءة بحجم 14–15px) */
-  --text-xs: 0.875rem;
+  --text-xs: 0.9375rem;
   --text-xs--line-height: 1.5;
-  --text-sm: 1rem;
+  --text-sm: 1.0625rem;
   --text-sm--line-height: 1.55;
-  --text-base: 1.125rem;
-  --text-lg: 1.1875rem;
-  --text-xl: 1.3125rem;
-  --text-2xl: 1.625rem;
+  --text-base: 1.1875rem;
+  --text-lg: 1.3125rem;
+  --text-xl: 1.4375rem;
+  --text-2xl: 1.75rem;
 
   --shadow-soft: 0 1px 2px rgba(49, 47, 46, 0.04);
   --shadow-lift: 0 8px 24px -8px rgba(49, 47, 46, 0.16);
@@ -207,7 +208,7 @@
     border: 1px solid #dfdcd3;
     background-color: #ffffff;
     padding-inline: 0.875rem;
-    font-size: 15.5px;
+    font-size: 17px;
     font-weight: 500;
     color: var(--color-ink);
     outline: none;
@@ -256,9 +257,11 @@
 /* كثافة الجداول: مريح (افتراضي) / مضغوط — تُحفظ في كوكي وتُطبق على كل الجداول */
 .th-cell { height: 3.5rem; }
 .td-cell { padding-block: 1rem; }
+/* عمود نصي مرن (وصف/اسم): يأخذ ما تبقى من عرض الجدول ويُقتطع بنقاط عند الضيق بدل دفع الجدول للتمرير الأفقي */
+td.cell-fluid { width: 100%; max-width: 0; min-width: 10rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 html[data-density="compact"] .th-cell { height: 2.75rem; }
 html[data-density="compact"] .td-cell { padding-block: 0.5rem; }
-html[data-density="compact"] [data-slot="table"] table { font-size: 15px; }
+html[data-density="compact"] [data-slot="table"] table { font-size: 16px; }
 
 /* جدول داخل بطاقة: البطاقة هي السطح، فلا يتكرر الإطار ولا الظل */
 [data-slot="card"] [data-slot="table"] {
@@ -293,28 +296,25 @@ html[data-density="compact"] [data-slot="table"] table { font-size: 15px; }
 :root {
   --ease-precise: cubic-bezier(0.22, 1, 0.36, 1);
 }
+/* حركة التنقل قصيرة: المحتوى يظهر فورًا تقريبًا (لا تأخير يوحي بالبطء) */
 .page-enter {
-  animation: page-enter 0.55s var(--ease-precise) backwards;
+  animation: page-enter 0.22s var(--ease-precise) backwards;
 }
 .stagger > * {
-  animation: rise 0.7s var(--ease-precise) backwards;
+  animation: rise 0.32s var(--ease-precise) backwards;
 }
-.stagger > *:nth-child(1) { animation-delay: 0.03s; }
-.stagger > *:nth-child(2) { animation-delay: 0.09s; }
-.stagger > *:nth-child(3) { animation-delay: 0.15s; }
-.stagger > *:nth-child(4) { animation-delay: 0.21s; }
-.stagger > *:nth-child(5) { animation-delay: 0.27s; }
-.stagger > *:nth-child(6) { animation-delay: 0.33s; }
-.stagger > *:nth-child(7) { animation-delay: 0.38s; }
-.stagger > *:nth-child(n + 8) { animation-delay: 0.42s; }
+.stagger > *:nth-child(1) { animation-delay: 0s; }
+.stagger > *:nth-child(2) { animation-delay: 0.02s; }
+.stagger > *:nth-child(3) { animation-delay: 0.04s; }
+.stagger > *:nth-child(4) { animation-delay: 0.06s; }
+.stagger > *:nth-child(5) { animation-delay: 0.08s; }
+.stagger > *:nth-child(n + 6) { animation-delay: 0.1s; }
 
 /* بطاقات الإحصاء داخل الصفوف تظهر تباعًا */
-.stat-grid > * { animation: rise 0.65s var(--ease-precise) backwards; }
-.stat-grid > *:nth-child(1) { animation-delay: 0.08s; }
-.stat-grid > *:nth-child(2) { animation-delay: 0.14s; }
-.stat-grid > *:nth-child(3) { animation-delay: 0.2s; }
-.stat-grid > *:nth-child(4) { animation-delay: 0.26s; }
-.stat-grid > *:nth-child(n + 5) { animation-delay: 0.32s; }
+.stat-grid > * { animation: rise 0.32s var(--ease-precise) backwards; }
+.stat-grid > *:nth-child(2) { animation-delay: 0.03s; }
+.stat-grid > *:nth-child(3) { animation-delay: 0.06s; }
+.stat-grid > *:nth-child(n + 4) { animation-delay: 0.09s; }
 /* تمرير هادئ: الحافة تغمق قليلًا فقط، دون أي حركة للبطاقة */
 .lift {
   transition: border-color 0.25s ease, background-color 0.25s ease;
@@ -327,19 +327,8 @@ html[data-density="compact"] [data-slot="table"] table { font-size: 15px; }
 
 /* صفوف الجداول: تتابع سريع لأول 14 صفًا، وعلامة داكنة على بداية الصف عند المرور */
 tbody.rows-animate > tr {
-  animation: row-in 0.45s var(--ease-precise) backwards;
+  animation: row-in 0.25s var(--ease-precise) backwards;
 }
-tbody.rows-animate > tr:nth-child(1) { animation-delay: 0.12s; }
-tbody.rows-animate > tr:nth-child(2) { animation-delay: 0.15s; }
-tbody.rows-animate > tr:nth-child(3) { animation-delay: 0.18s; }
-tbody.rows-animate > tr:nth-child(4) { animation-delay: 0.21s; }
-tbody.rows-animate > tr:nth-child(5) { animation-delay: 0.24s; }
-tbody.rows-animate > tr:nth-child(6) { animation-delay: 0.27s; }
-tbody.rows-animate > tr:nth-child(7) { animation-delay: 0.3s; }
-tbody.rows-animate > tr:nth-child(8) { animation-delay: 0.33s; }
-tbody.rows-animate > tr:nth-child(9) { animation-delay: 0.36s; }
-tbody.rows-animate > tr:nth-child(10) { animation-delay: 0.39s; }
-tbody.rows-animate > tr:nth-child(n + 11) { animation-delay: 0.42s; }
 tbody.rows-animate > tr > td:first-child { transition: box-shadow 0.2s ease; }
 tbody.rows-animate > tr:hover > td:first-child { box-shadow: inset -2px 0 0 var(--color-action); }
 [dir="ltr"] tbody.rows-animate > tr:hover > td:first-child { box-shadow: inset 2px 0 0 var(--color-action); }
@@ -391,16 +380,16 @@ tbody.rows-animate > tr:hover > td:first-child { box-shadow: inset -2px 0 0 var(
 }
 
 @keyframes page-enter {
-  from { opacity: 0; transform: translateY(10px); filter: blur(6px); }
-  to { opacity: 1; transform: none; filter: blur(0); }
-}
-@keyframes rise {
-  from { opacity: 0; transform: translateY(16px) scale(0.985); filter: blur(4px); }
-  to { opacity: 1; transform: none; filter: blur(0); }
-}
-@keyframes row-in {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes row-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 @keyframes fade {
   from { opacity: 0; transform: translateY(4px); }

@@ -17,8 +17,9 @@ import { Stat, StatGrid } from "@/components/ui/stat";
 import { EntityCell } from "@/components/ui/entity";
 import { FilterTabs } from "@/components/ui/filter-tabs";
 import { ZERO, toMoney } from "@/lib/accounting/money";
+import { Pager, pageSlice } from "@/components/ui/pager";
 
-export default async function FoliosPage({ searchParams }: { searchParams: Promise<{ status?: string; q?: string }> }) {
+export default async function FoliosPage({ searchParams }: { searchParams: Promise<{ status?: string; q?: string; page?: string }> }) {
   const ctx = await requireAppContext(PERMISSIONS.folioView);
   const { locale, t } = await getI18n();
   const sp = await searchParams;
@@ -29,6 +30,8 @@ export default async function FoliosPage({ searchParams }: { searchParams: Promi
   const totalDeposits = folios.reduce((a, f) => a.plus(toMoney(f.deposit_balance)), ZERO);
   const withBalance = folios.filter((f) => !toMoney(f.balance).isZero()).length;
   const tabHref = (k: string) => `/folios?status=${k}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}`;
+
+  const shown = pageSlice(folios, sp.page);
 
   return (
     <>
@@ -87,11 +90,11 @@ export default async function FoliosPage({ searchParams }: { searchParams: Promi
                 </TableCell>
               </TableRow>
             )}
-            {folios.map((f) => (
+            {shown.rows.map((f) => (
               <TableRow key={f.id}>
                 <TableCell><Link href={`/folios/${f.id}`} className="num font-medium text-primary hover:underline">{f.folio_number}</Link></TableCell>
-                <TableCell><EntityCell name={f.guest_name} sub={f.departure_date ? `مغادرة ${f.departure_date}` : undefined} /></TableCell>
-                <TableCell>{f.room_number ? <span className="num inline-flex h-7 min-w-10 items-center justify-center rounded-lg bg-subtle px-2 text-[14px] font-semibold text-ink">{f.room_number}</span> : <span className="text-slate-400">—</span>}</TableCell>
+                <TableCell className="cell-fluid"><EntityCell name={f.guest_name} sub={f.departure_date ? `مغادرة ${f.departure_date}` : undefined} /></TableCell>
+                <TableCell>{f.room_number ? <span className="num inline-flex h-7 min-w-10 items-center justify-center rounded-lg bg-subtle px-2 text-[15.5px] font-semibold text-ink">{f.room_number}</span> : <span className="text-slate-400">—</span>}</TableCell>
                 <TableCell>{t.folio.types[f.folio_type]}</TableCell>
                 <TableCell className="num">{f.arrival_date ?? "—"}</TableCell>
                 <TableCell className="text-end"><Money value={f.deposit_balance} locale={locale} blankZero /></TableCell>
@@ -104,6 +107,7 @@ export default async function FoliosPage({ searchParams }: { searchParams: Promi
           </TableBody>
         </Table>
       </Card>
+      <Pager page={shown.page} pages={shown.pages} total={folios.length} basePath="/folios" params={{ status: sp.status, q: sp.q }} />
     </>
   );
 }

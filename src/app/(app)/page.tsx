@@ -11,6 +11,7 @@ import { Money } from "@/components/money";
 import { Scale, TrendingDown, TrendingUp, Wallet, Plus } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { RecentEntries } from "@/components/dashboard/recent-entries";
 import { FilterTabs } from "@/components/ui/filter-tabs";
 import { Button } from "@/components/ui/button";
 import { requireAppContext } from "@/lib/auth/context";
@@ -129,7 +130,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       ctx.can(PERMISSIONS.journalView)
         ? supabase.from("journal_entries").select("id, entry_number, entry_date, description, source")
             .eq("hotel_id", hotel.id).eq("status", "posted")
-            .order("entry_date", { ascending: false }).order("entry_number", { ascending: false }).limit(6)
+            .order("entry_date", { ascending: false }).order("entry_number", { ascending: false }).limit(7)
         : null,
       ctx.can(PERMISSIONS.folioView)
         ? supabase.from("guest_folios").select("id", { count: "exact", head: true }).eq("hotel_id", hotel.id).eq("status", "open")
@@ -186,7 +187,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const deptSegments = deptSummary
     .filter((d) => d.revenue.gt(0))
     .sort((a, b) => b.revenue.comparedTo(a.revenue))
-    .map((d) => ({ label: deptLabel(d.departmentId), value: d.revenue.toNumber(), display: d.revenue.toFixed(2) }));
+    .map((d) => ({ label: deptLabel(d.departmentId), value: d.revenue.toNumber(), display: formatAmount(d.revenue) }));
   const negativeDepts = deptSummary.filter((d) => d.revenue.isNegative());
 
   // ---- المطابقة والأرصدة ----
@@ -200,7 +201,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const agingRows = AGING_BUCKETS.map((b) => {
     const docs = (aging ?? []).filter((x) => x.bucket === b);
     const amount = docs.reduce((s, x) => s.plus(toMoney(x.outstanding)), ZERO);
-    return { label: BUCKET_META[b].label, color: BUCKET_META[b].color, count: docs.length, amount: amount.toNumber(), amountText: amount.toFixed(2) };
+    return { label: BUCKET_META[b].label, color: BUCKET_META[b].color, count: docs.length, amount: amount.toNumber(), amountText: formatAmount(amount) };
   });
   const agingTotal = (aging ?? []).reduce((s, x) => s.plus(toMoney(x.outstanding)), ZERO);
 
@@ -246,8 +247,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {/* العنوان + الإجراء الأساسي الوحيد + الإجراءات الثانوية */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
-          <p className="text-[14px] text-muted-foreground">{businessDate}</p>
-          <h1 className="type-display text-[32px] text-ink">{t.dashboard.title}</h1>
+          <p className="text-[15.5px] text-muted-foreground">{businessDate}</p>
+          <h1 className="type-display text-[34px] text-ink">{t.dashboard.title}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {quick.map((q, i) => (
@@ -267,9 +268,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           {alerts.map((a) => (
             <Link key={a.title} href={a.href} className="group flex items-center gap-3 py-2.5">
               <Badge variant={a.tone === "red" ? "destructive" : a.tone === "amber" ? "warning" : "info"}>{a.tone === "red" ? "عاجل" : a.tone === "amber" ? "تنبيه" : "للعلم"}</Badge>
-              <span className="text-[15px] font-medium text-ink group-hover:underline">{a.title}</span>
-              <span className="hidden text-[15px] text-muted-foreground sm:inline">{a.text}</span>
-              <span className="ms-auto text-[14px] text-slate-500">←</span>
+              <span className="text-[16.5px] font-medium text-ink group-hover:underline">{a.title}</span>
+              <span className="hidden text-[16.5px] text-muted-foreground sm:inline">{a.text}</span>
+              <span className="ms-auto text-[15.5px] text-slate-500">←</span>
             </Link>
           ))}
         </section>
@@ -299,23 +300,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
             <Card2 className="xl:col-span-4" title="آخر القيود المرحّلة" link={ctx.can(PERMISSIONS.journalView) ? { href: "/journal", label: t.nav.journal } : undefined}>
               {!ctx.can(PERMISSIONS.journalView) ? <NoAccess text={t.errors.permission_denied} /> : recentEntries.length === 0 ? (
-                <p className="py-6 text-[15px] text-muted-foreground">لم يُرحَّل أي قيد بعد.</p>
+                <p className="py-6 text-[16.5px] text-muted-foreground">لم يُرحَّل أي قيد بعد.</p>
               ) : (
-                <ul className="-my-1 divide-y divide-line">
-                  {recentEntries.map((e) => (
-                    <li key={e.id}>
-                      <Link href={`/journal/${e.id}`} className="group flex items-center gap-3 py-2.5">
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[15px] text-ink group-hover:underline">{e.description}</span>
-                          <span className="block truncate text-[13.5px] text-muted-foreground">
-                            <span className="num">{e.entry_number}</span> · {e.entry_date} · {t.journal.sources[e.source as keyof typeof t.journal.sources] ?? e.source}
-                          </span>
-                        </span>
-                        <span className="num shrink-0 text-[15px] text-ink"><Money value={recentTotal.get(e.id) ?? "0"} locale="ar" /></span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                <RecentEntries today={today} sources={t.journal.sources}
+                  entries={recentEntries.map((e) => ({ ...e, total: recentTotal.get(e.id) ?? "0" }))} />
               )}
             </Card2>
           </div>
@@ -328,7 +316,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   emptyTitle="لم تُصدر أي فاتورة بعد" emptyHint="تُصدر الفواتير عند مغادرة النزيل أو كفاتورة آجلة لعميل." />
               ) : <NoAccess text={t.errors.permission_denied} />}
             </Card2>
-            <Card2 title="أعمار الذمم المدينة" note={canAging ? `${agingTotal.toFixed(2)} ${currency}` : undefined} link={canAging ? { href: "/reports/aging", label: t.nav.aging } : undefined}>
+            <Card2 title="أعمار الذمم المدينة" note={canAging ? `${formatAmount(agingTotal)} ${currency}` : undefined} link={canAging ? { href: "/reports/aging", label: t.nav.aging } : undefined}>
               {canAging ? (
                 <StripedBars rows={agingRows} currency={currency} emptyTitle="لا توجد ذمم مدينة قائمة" emptyHint="تظهر هنا الفواتير الآجلة غير المسددة حسب تاريخ استحقاقها." />
               ) : <NoAccess text={t.errors.permission_denied} />}
@@ -338,9 +326,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           {/* الأرصدة والمطابقة + الأقسام والغرف */}
           <div className="grid gap-5 xl:grid-cols-5">
             <Card2 className="flex flex-col xl:col-span-3" title="الأرصدة ومطابقتها مع الأستاذ" note={unreconciled.length ? `${unreconciled.length} فرق` : "مطابقة"} noteTone={unreconciled.length ? "neg" : "pos"}>
-              <table className="mb-3 w-full text-[15px]" id="reconciliation">
+              <table className="mb-3 w-full text-[16.5px]" id="reconciliation">
                 <thead>
-                  <tr className="bg-thead text-[14px] font-bold text-thead-text">
+                  <tr className="bg-thead text-[15.5px] font-bold text-thead-text">
                     <th className="rounded-s-lg px-3 py-2.5 text-start">الحساب</th>
                     <th className="px-3 py-2.5 text-end">الرصيد ({currency})</th>
                     <th className="w-28 rounded-e-lg px-3 py-2.5 text-end">الأستاذ العام</th>
@@ -363,14 +351,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   <tr>
                     <td className="px-3 py-2.5"><Link href="/journal?status=draft" className="text-ink hover:underline">قيود مسودة غير مرحّلة</Link></td>
                     <td className="num px-3 py-2.5 text-end font-semibold text-ink">{draftCount}</td>
-                    <td className="px-3 py-2.5 text-end text-[14px] text-muted-foreground">—</td>
+                    <td className="px-3 py-2.5 text-end text-[15.5px] text-muted-foreground">—</td>
                   </tr>
                 </tbody>
               </table>
               {(() => {
                 const tb = reconRows.find((x) => x.control === "trial_balance");
                 return tb ? (
-                  <p className="mt-auto border-t border-line pt-3 text-[14px] text-muted-foreground">
+                  <p className="mt-auto border-t border-line pt-3 text-[15.5px] text-muted-foreground">
                     ميزان المراجعة: مدين <span className="num text-ink"><Money value={tb.gl_balance} locale="ar" /></span> · دائن <span className="num text-ink"><Money value={tb.subledger_balance} locale="ar" /></span>
                     <span className={tb.diff.isZero() ? "text-success" : "text-urgent"}> — {tb.diff.isZero() ? "متوازن" : "غير متوازن"}</span>
                   </p>
@@ -380,16 +368,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             <div className="flex min-w-0 flex-col gap-5 xl:col-span-2">
               <Card2 title="الإيرادات حسب القسم" note={rangeLabel} link={canProfit ? { href: "/reports/profitability", label: t.nav.profitability } : undefined}>
                 {!canProfit ? <NoAccess text={t.errors.permission_denied} /> : deptSegments.length === 0 ? (
-                  <p className="py-6 text-[15px] text-muted-foreground">لا توجد إيرادات مرحّلة في هذه الفترة.</p>
+                  <p className="py-6 text-[16.5px] text-muted-foreground">لا توجد إيرادات مرحّلة في هذه الفترة.</p>
                 ) : (
                   <>
                     <StripedBars rows={deptSegments.map((d) => ({ label: d.label, count: 0, amount: d.value, amountText: d.display, color: CHART_COLORS.revenue }))}
                       currency={currency} emptyTitle="" emptyHint="" />
-                    <p className="mt-4 border-t border-line pt-3 text-[14px] text-muted-foreground">
-                      المجموع <span className="num text-ink">{deptTotal.toFixed(2)}</span> من إيراد الفترة <span className="num text-ink">{revenue.toFixed(2)}</span> {currency}
+                    <p className="mt-4 border-t border-line pt-3 text-[15.5px] text-muted-foreground">
+                      المجموع <span className="num text-ink">{formatAmount(deptTotal)}</span> من إيراد الفترة <span className="num text-ink">{formatAmount(revenue)}</span> {currency}
                       {negativeDepts.length > 0 && (
                         <span className="block text-amber">
-                          تسويات صافية سالبة: {negativeDepts.map((d) => `${deptLabel(d.departmentId)} (${d.revenue.toFixed(2)})`).join("، ")}
+                          تسويات صافية سالبة: {negativeDepts.map((d) => `${deptLabel(d.departmentId)} (${formatAmount(d.revenue)})`).join("، ")}
                         </span>
                       )}
                     </p>
@@ -399,11 +387,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               <Card2 className="flex flex-1 flex-col" title="الغرف" note={rangeLabel} link={{ href: "/reports/rooms", label: t.nav.roomStats }}>
                 <dl className="mb-5 grid grid-cols-2 gap-x-6 gap-y-5">
                   <Figure label="نسبة الإشغال" value={pct(rangeRooms.occupancy)} />
-                  <Figure label="متوسط سعر الغرفة" value={rangeRooms.adr ? rangeRooms.adr.toFixed(2) : "—"} unit={rangeRooms.adr ? currency : undefined} />
-                  <Figure label="RevPAR" value={rangeRooms.revpar ? rangeRooms.revpar.toFixed(2) : "—"} unit={rangeRooms.revpar ? currency : undefined} />
+                  <Figure label="متوسط سعر الغرفة" value={rangeRooms.adr ? formatAmount(rangeRooms.adr) : "—"} unit={rangeRooms.adr ? currency : undefined} />
+                  <Figure label="RevPAR" value={rangeRooms.revpar ? formatAmount(rangeRooms.revpar) : "—"} unit={rangeRooms.revpar ? currency : undefined} />
                   <Figure label="الليالي المباعة" value={`${rangeRooms.roomNightsSold.toString()} / ${rangeRooms.roomNightsAvailable.toString()}`} />
                 </dl>
-                <p className="mt-auto border-t border-line pt-3 text-[14px] text-muted-foreground">
+                <p className="mt-auto border-t border-line pt-3 text-[15.5px] text-muted-foreground">
                   {totalRooms > 0 ? `${totalRooms} غرفة متاحة للبيع · ${openFolios?.count ?? 0} فوليو مفتوح` : "حدّد عدد الغرف في إعدادات الفندق لحساب الإشغال."}
                 </p>
               </Card2>
@@ -431,16 +419,16 @@ function Card2({
   return (
     <section className={cn("surface min-w-0 p-6", className)}>
       <header className="mb-5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h2 className="flex items-baseline gap-2 text-[17px] font-semibold text-ink">
+        <h2 className="flex items-baseline gap-2 text-[18.5px] font-semibold text-ink">
           {title}
           {note && (
-            <span className={cn("text-[14px] font-normal", noteTone === "neg" ? "text-urgent" : noteTone === "pos" ? "text-success" : "text-muted-foreground")}>
+            <span className={cn("text-[15.5px] font-normal", noteTone === "neg" ? "text-urgent" : noteTone === "pos" ? "text-success" : "text-muted-foreground")}>
               {note}
             </span>
           )}
         </h2>
         {link && (
-          <Link href={link.href} className="shrink-0 text-[14px] text-slate-500 transition-colors hover:text-ink">
+          <Link href={link.href} className="shrink-0 text-[15.5px] text-slate-500 transition-colors hover:text-ink">
             {link.label} ←
           </Link>
         )}
@@ -468,15 +456,15 @@ function Kpi({
         <span className="lift-icon flex size-9 items-center justify-center rounded-[10px] bg-ink text-white">
           <Icon className="size-[17px] stroke-[1.75]" />
         </span>
-        <Link href={href} aria-label={`تفاصيل ${label}`} className="text-[14px] text-slate-500 transition-colors hover:text-ink"><span className="hidden sm:inline">التفاصيل </span>←</Link>
+        <Link href={href} aria-label={`تفاصيل ${label}`} className="text-[15.5px] text-slate-500 transition-colors hover:text-ink"><span className="hidden sm:inline">التفاصيل </span>←</Link>
       </div>
-      <p className={cn("display-num truncate text-[21px] font-bold leading-tight text-ink sm:text-[28px]", tone === "neg" && "text-urgent")}>
+      <p className={cn("display-num truncate text-[22px] font-bold leading-tight text-ink sm:text-[30px]", tone === "neg" && "text-urgent")}>
         <AnimatedNumber value={value.toNumber()} text={formatAmount(value)} />
-        <span className="ms-1.5 text-[14px] font-normal text-slate-500">{currency}</span>
+        <span className="ms-1.5 text-[15.5px] font-normal text-slate-500">{currency}</span>
       </p>
-      <p className="mt-1 truncate text-[15px] text-slate-600">{label} · {sub}</p>
+      <p className="mt-1 truncate text-[16.5px] text-slate-600">{label} · {sub}</p>
       <div className="mt-3">
-        {spark ? <Sparkline values={spark.values} months={spark.months} color={spark.color} currency={currency} /> : <p className="flex h-10 items-end text-[13.5px] text-slate-500">رصيد الصندوق والبنوك في الأستاذ</p>}
+        {spark ? <Sparkline values={spark.values} months={spark.months} color={spark.color} currency={currency} /> : <p className="flex h-10 items-end text-[15px] text-slate-500">رصيد الصندوق والبنوك في الأستاذ</p>}
       </div>
     </div>
   );
@@ -490,15 +478,15 @@ function formatAmount(v: MoneyValue): string {
 function Figure({ label, value, unit }: { label: string; value: string; unit?: string }) {
   return (
     <div>
-      <dt className="text-[14px] text-muted-foreground">{label}</dt>
-      <dd className="mt-1.5 text-[21px] font-bold leading-none text-ink">
+      <dt className="text-[15.5px] text-muted-foreground">{label}</dt>
+      <dd className="mt-1.5 text-[22px] font-bold leading-none text-ink">
         <span className="num">{value}</span>
-        {unit && <span className="ms-1 text-[13px] text-slate-500">{unit}</span>}
+        {unit && <span className="ms-1 text-[14.5px] text-slate-500">{unit}</span>}
       </dd>
     </div>
   );
 }
 
 function NoAccess({ text }: { text: string }) {
-  return <p className="py-6 text-[15px] text-muted-foreground">{text}</p>;
+  return <p className="py-6 text-[16.5px] text-muted-foreground">{text}</p>;
 }

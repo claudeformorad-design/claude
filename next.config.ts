@@ -42,9 +42,9 @@ const nextConfig: NextConfig = {
   experimental: {
     // يتيح forbidden() لصفحات الصلاحيات (403)
     authInterrupts: true,
-    // الصفحات المجلوبة مسبقًا عند الوقوف على الرابط تبقى صالحة 30 ثانية فقط (دقة الأرقام أولًا)؛
-    // أي عملية حفظ تُبطلها فورًا عبر revalidatePath
-    staleTimes: { dynamic: 0, static: 30 },
+    // الصفحات المزارة أو المجلوبة مسبقًا تبقى صالحة 30 ثانية (رجوع وتنقل فوري بين الأقسام)؛
+    // أي عملية حفظ تُبطلها فورًا عبر revalidatePath/router.refresh فلا تظهر أرقام قديمة بعد التعديل
+    staleTimes: { dynamic: 30, static: 30 },
     serverActions: {
       allowedOrigins: trialMode ? previewOrigins : extraOrigins,
     },

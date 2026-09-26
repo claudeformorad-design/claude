@@ -21,8 +21,8 @@ export function EmptyState({
       <div className="animate-pop mb-4 flex size-12 items-center justify-center rounded-lg bg-subtle text-slate-500">
         <Icon className="size-6 stroke-[1.5]" />
       </div>
-      <h3 className="text-[17px] font-semibold text-ink">{title}</h3>
-      <p className="mt-1 max-w-md text-[15px] leading-relaxed text-muted-foreground">{description}</p>
+      <h3 className="text-[18.5px] font-semibold text-ink">{title}</h3>
+      <p className="mt-1 max-w-md text-[16.5px] leading-relaxed text-muted-foreground">{description}</p>
       {actionHref && actionLabel && (
         <Button asChild className="mt-5" size="sm" variant="outline">
           <Link href={actionHref}>{actionLabel}</Link>

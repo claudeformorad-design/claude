@@ -29,13 +29,13 @@ export function DemoDataCard({ active, errors }: { active: boolean; errors: Reco
           <Sparkles className="size-5 stroke-[1.75]" />
         </span>
         <div className="space-y-1">
-          <h3 className="text-[17px] font-semibold text-ink">بيانات تجريبية مؤقتة</h3>
-          <p className="max-w-xl text-[15px] leading-relaxed text-slate-600">
+          <h3 className="text-[18.5px] font-semibold text-ink">بيانات تجريبية مؤقتة</h3>
+          <p className="max-w-xl text-[16.5px] leading-relaxed text-slate-600">
             {active
               ? "البيانات التجريبية محمّلة الآن. الحذف يعيد النظام كما كان قبل تحميلها تمامًا — وأي عملية أجريتها بعد التحميل ستُحذف معها."
               : "تولّد ستة أشهر من النشاط (إقامات، مطعم، مناسبات، مشتريات، رواتب) عبر نفس القيود المحاسبية الحقيقية، لتعاين لوحة التحكم والتقارير. تُحذف بالكامل متى شئت."}
           </p>
-          {error && <p className="text-[14px] text-urgent">{error}</p>}
+          {error && <p className="text-[15.5px] text-urgent">{error}</p>}
         </div>
       </div>
       {active ? (

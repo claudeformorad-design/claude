@@ -76,8 +76,8 @@ function barPath(x: number, w: number, y0: number, y1: number, r = 4): string {
 function EmptyChart({ title, hint }: { title: string; hint: string }) {
   return (
     <div className="flex min-h-40 flex-col items-center justify-center px-6 text-center">
-      <p className="text-[15px] font-medium text-ink">{title}</p>
-      <p className="mt-1 max-w-xs text-[14px] leading-relaxed text-slate-600">{hint}</p>
+      <p className="text-[16.5px] font-medium text-ink">{title}</p>
+      <p className="mt-1 max-w-xs text-[15.5px] leading-relaxed text-slate-600">{hint}</p>
     </div>
   );
 }
@@ -89,7 +89,7 @@ function Tooltip({ children, style }: { children: React.ReactNode; style: React.
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.14 }}
-      className="pointer-events-none absolute z-20 min-w-44 rounded-lg bg-white p-3 text-[14px] text-ink shadow-lift"
+      className="pointer-events-none absolute z-20 min-w-44 rounded-lg bg-white p-3 text-[15.5px] text-ink shadow-lift"
       style={style}
     >
       {children}
@@ -160,7 +160,7 @@ export function Sparkline({ values, months, color, currency }: { values: number[
         ))}
       </svg>
       {hover !== null && (
-        <div className="pointer-events-none absolute -top-8 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg bg-ink px-2 py-1 text-[13px] text-white"
+        <div className="pointer-events-none absolute -top-8 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg bg-ink px-2 py-1 text-[14.5px] text-white"
           style={{ left: `${(x(hover) / W) * 100}%` }}>
           {monthLabel(months[hover]!, true)}: <span className="num">{compact(values[hover]!)}</span> {currency}
         </div>
@@ -213,7 +213,7 @@ export function IncomeExpenseChart({
   return (
     <div className="space-y-4" data-chart="financial">
       {/* المفتاح (أزرار إظهار/إخفاء) */}
-      <div className="flex flex-wrap items-center gap-2 text-[14px]">
+      <div className="flex flex-wrap items-center gap-2 text-[15.5px]">
         {series.map((s) => (
           <button key={s.key} type="button" onClick={() => toggle(s.key)} aria-pressed={shown[s.key]}
             className={`flex items-center gap-2 rounded-md px-2.5 py-1 transition-colors ${shown[s.key] ? "bg-subtle text-ink" : "text-slate-500 line-through"}`}>
@@ -229,7 +229,7 @@ export function IncomeExpenseChart({
           {scale.ticks.map((v, k) => (
             <g key={k}>
               <line x1={0} x2={W - axisW} y1={y(v)} y2={y(v)} stroke={v === 0 ? "#cfccc3" : GRID} strokeDasharray={v === 0 ? undefined : "3 5"} />
-              <text x={W - axisW + 8} y={y(v) + 4} fill={AXIS_TEXT} fontSize="13" textAnchor="start">{compact(v)}</text>
+              <text x={W - axisW + 8} y={y(v) + 4} fill={AXIS_TEXT} fontSize="14" textAnchor="start">{compact(v)}</text>
             </g>
           ))}
           {rows.map((d, i) => (
@@ -245,7 +245,7 @@ export function IncomeExpenseChart({
                   initial={{ scaleY: 0 }} animate={{ scaleY: 1 }} transition={{ duration: 0.7, delay: 0.16 + i * 0.06, ease: [0.16, 1, 0.3, 1] }}
                   style={{ transformOrigin: `0px ${y0}px`, transformBox: "view-box" }} opacity={hover === null || hover === i ? 1 : 0.45} />
               )}
-              <text x={cx(i)} y={H - 8} textAnchor="middle" fill={hover === i ? "#312f2e" : AXIS_TEXT} fontSize="13" fontWeight={hover === i ? 600 : 400}>
+              <text x={cx(i)} y={H - 8} textAnchor="middle" fill={hover === i ? "#312f2e" : AXIS_TEXT} fontSize="14" fontWeight={hover === i ? 600 : 400}>
                 {monthLabel(d.month, true)}
               </text>
             </g>
@@ -331,14 +331,14 @@ export function DonutChart({
             })}
           </svg>
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="max-w-24 truncate text-[14px] text-slate-600">{a ? a.label : centerTitle}</span>
-            <span key={a?.label ?? "total"} className="animate-pop num text-[24px] font-bold text-ink">
+            <span className="max-w-24 truncate text-[15.5px] text-slate-600">{a ? a.label : centerTitle}</span>
+            <span key={a?.label ?? "total"} className="animate-pop num text-[26px] font-bold text-ink">
               {a ? `${fmt((a.value / total) * 100, 0)}%` : centerValue}
             </span>
-            {a && <span className="num text-[13px] text-slate-600">{a.display ?? fmt(a.value)}</span>}
+            {a && <span className="num text-[14.5px] text-slate-600">{a.display ?? fmt(a.value)}</span>}
           </div>
         </div>
-        <ul className="w-full space-y-1 text-[15px] @sm:w-52">
+        <ul className="w-full space-y-1 text-[16.5px] @sm:w-52">
           {segments.map((s) => {
             const share = total > 0 ? (s.value / total) * 100 : 0;
             return (
@@ -384,11 +384,11 @@ export function StripedBars({
     <div className="space-y-3.5" data-chart="bars" onMouseLeave={() => setHover(null)}>
       {rows.map((r, i) => (
         <div key={r.label} className="relative" onMouseEnter={() => setHover(i)}>
-          <div className="mb-1.5 flex items-baseline justify-between gap-3 text-[15px]">
+          <div className="mb-1.5 flex items-baseline justify-between gap-3 text-[16.5px]">
             <span className="text-slate-700">{r.label}</span>
             <span>
               <span className="num font-semibold text-ink">{r.amountText}</span>
-              <span className="ms-1 text-[13px] text-slate-500">{currency}</span>
+              <span className="ms-1 text-[14.5px] text-slate-500">{currency}</span>
             </span>
           </div>
           <div className="h-2.5 overflow-hidden rounded-sm bg-subtle">

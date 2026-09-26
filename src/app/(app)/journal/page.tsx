@@ -17,11 +17,12 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { BookOpen, FilePen, CheckCircle2, Undo2 } from "lucide-react";
 import { Stat, StatGrid } from "@/components/ui/stat";
 import { FilterTabs } from "@/components/ui/filter-tabs";
+import { Pager, pageSlice } from "@/components/ui/pager";
 
 export default async function JournalPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; from?: string; to?: string; q?: string }>;
+  searchParams: Promise<{ status?: string; from?: string; to?: string; q?: string; page?: string }>;
 }) {
   const ctx = await requireAppContext(PERMISSIONS.journalView);
   const { locale, t } = await getI18n();
@@ -47,6 +48,8 @@ export default async function JournalPage({
     const q = p.toString();
     return q ? `/journal?${q}` : "/journal";
   };
+
+  const shown = pageSlice(entries, sp.page);
 
   return (
     <>
@@ -109,7 +112,7 @@ export default async function JournalPage({
                 </TableCell>
               </TableRow>
             )}
-            {entries.map((e) => (
+            {shown.rows.map((e) => (
               <TableRow key={e.id}>
                 <TableCell>
                   <Link href={`/journal/${e.id}`} className="num font-semibold text-ink hover:underline">
@@ -117,7 +120,7 @@ export default async function JournalPage({
                   </Link>
                 </TableCell>
                 <TableCell className="num">{e.entry_date}</TableCell>
-                <TableCell className="max-w-md truncate font-medium">{e.description}</TableCell>
+                <TableCell className="cell-fluid font-medium">{e.description}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{t.journal.sources[e.source]}</Badge>
                 </TableCell>
@@ -132,6 +135,7 @@ export default async function JournalPage({
           </TableBody>
         </Table>
       </Card>
+      <Pager page={shown.page} pages={shown.pages} total={entries.length} basePath="/journal" params={{ status: sp.status, from: sp.from, to: sp.to, q: sp.q }} />
     </>
   );
 }
