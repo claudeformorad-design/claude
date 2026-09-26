@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BookOpen, Boxes, Building2, FileSpreadsheet, HandCoins, LayoutDashboard, ListTree, Receipt,
-  Scale, Settings, ShoppingCart, Wallet,
+  BedDouble, BookOpen, Boxes, Building2, FileSpreadsheet, FileText, HandCoins, LayoutDashboard, ListTree,
+  Receipt, Scale, Settings, ShoppingCart, Users, Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +24,12 @@ export interface NavLabels {
   assets: string;
   inventory: string;
   settings: string;
+  groupRevenue: string;
+  folios: string;
+  invoices: string;
+  vouchers: string;
+  customers: string;
+  revenueSettings: string;
 }
 
 type Item = { href: string; label: string; icon: React.ComponentType<{ className?: string }>; soon?: boolean };
@@ -40,13 +46,21 @@ export function Sidebar({ labels, hotelName }: { labels: NavLabels; hotelName: s
       ],
     },
     {
+      title: labels.groupRevenue,
+      items: [
+        { href: "/folios", label: labels.folios, icon: BedDouble },
+        { href: "/invoices", label: labels.invoices, icon: FileText },
+        { href: "/vouchers", label: labels.vouchers, icon: Receipt },
+        { href: "/customers", label: labels.customers, icon: Users },
+      ],
+    },
+    {
       title: labels.groupReports,
       items: [{ href: "/reports/trial-balance", label: labels.trialBalance, icon: Scale }],
     },
     {
       items: [
-        { href: "#", label: labels.revenue, icon: Receipt, soon: true },
-        { href: "#", label: labels.payments, icon: Wallet, soon: true },
+        { href: "/settings/revenue", label: labels.revenueSettings, icon: Wallet },
         { href: "#", label: labels.receivables, icon: HandCoins, soon: true },
         { href: "#", label: labels.payables, icon: FileSpreadsheet, soon: true },
         { href: "#", label: labels.expenses, icon: ShoppingCart, soon: true },

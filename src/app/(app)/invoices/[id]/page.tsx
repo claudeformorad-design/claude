@@ -1,0 +1,143 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Money } from "@/components/money";
+import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { requireAppContext } from "@/lib/auth/context";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { toMoney } from "@/lib/accounting/money";
+import { getInvoice } from "@/services/invoices.service";
+import { listTaxRates } from "@/services/revenue-settings.service";
+import { getI18n } from "@/i18n/server";
+import { InvoiceStatusBadge } from "../status-badge";
+import { PrintButton } from "./print-button";
+
+/** فاتورة ضريبية قابلة للطباعة (تصدير PDF الرسمي في المرحلة 5) */
+export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const ctx = await requireAppContext(PERMISSIONS.invoicesView);
+  const { locale, t } = await getI18n();
+  const [detail, taxes] = await Promise.all([getInvoice(ctx.supabase, ctx.hotel.id, id), listTaxRates(ctx.supabase, ctx.hotel.id)]);
+  if (!detail) notFound();
+  const { invoice: inv, items } = detail;
+  const taxById = new Map(taxes.map((x) => [x.id, x]));
+  const hotel = ctx.hotel;
+  const m = (v: string) => <Money value={v} locale={locale} />;
+
+  return (
+    <div className="mx-auto max-w-4xl space-y-4">
+      <div className="flex items-center justify-between print:hidden">
+        <InvoiceStatusBadge status={inv.status} labels={t.invoices.statuses} />
+        <PrintButton label={t.invoices.print} />
+      </div>
+      <Card className="print:border-0 print:shadow-none">
+        <CardContent className="space-y-6 p-8">
+          <div className="flex flex-wrap items-start justify-between gap-6 border-b pb-6">
+            <div>
+              <p className="text-xl font-bold">{(locale === "en" && hotel.name_en) || hotel.name_ar}</p>
+              {hotel.legal_name && <p className="text-sm">{hotel.legal_name}</p>}
+              {hotel.tax_number && <p className="text-sm text-muted-foreground">{t.invoices.taxNumber}: <span className="num">{hotel.tax_number}</span></p>}
+              {hotel.address && <p className="text-sm text-muted-foreground">{hotel.address}</p>}
+            </div>
+            <div className="text-end">
+              <p className="text-2xl font-bold text-primary">{t.invoices.taxInvoice}</p>
+              <p className="num text-lg">{inv.invoice_number}</p>
+              <p className="text-sm text-muted-foreground">{t.invoices.issueDate}: <span className="num">{inv.issue_date}</span></p>
+              {inv.due_date && <p className="text-sm text-muted-foreground">{t.invoices.dueDate}: <span className="num">{inv.due_date}</span></p>}
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="text-sm text-muted-foreground">{t.invoices.billTo}</p>
+              <p className="font-semibold">{inv.bill_to_name}</p>
+              {inv.bill_to_tax_number && <p className="text-sm">{t.invoices.taxNumber}: <span className="num">{inv.bill_to_tax_number}</span></p>}
+              {inv.bill_to_address && <p className="text-sm">{inv.bill_to_address}</p>}
+            </div>
+            {inv.folio_id && (
+              <div className="sm:text-end">
+                <p className="text-sm text-muted-foreground">{t.nav.folios}</p>
+                <Link href={`/folios/${inv.folio_id}`} className="text-primary hover:underline print:no-underline">{t.folio.folioNumber}</Link>
+              </div>
+            )}
+          </div>
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>#</TableHead>
+                <TableHead>{t.common.date}</TableHead>
+                <TableHead>{t.common.description}</TableHead>
+                <TableHead className="text-end">{t.folio.quantity}</TableHead>
+                <TableHead className="text-end">{t.folio.net}</TableHead>
+                <TableHead className="text-end">{t.folio.tax}</TableHead>
+                <TableHead className="text-end">{t.folio.total}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((it) => (
+                <TableRow key={it.id}>
+                  <TableCell className="num">{it.line_no}</TableCell>
+                  <TableCell className="num">{it.business_date ?? ""}</TableCell>
+                  <TableCell>{it.description}</TableCell>
+                  <TableCell className="num text-end">{toMoney(it.quantity).toString()}</TableCell>
+                  <TableCell className="text-end">{m(it.net_amount)}</TableCell>
+                  <TableCell className="text-end">{m(it.tax_amount)}</TableCell>
+                  <TableCell className="text-end">{m(it.total_amount)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div>
+              <p className="mb-2 text-sm font-semibold">{t.invoices.taxSummary}</p>
+              <table className="w-full text-sm">
+                <tbody>
+                  {detail.taxes.map((x) => {
+                    const rate = taxById.get(x.tax_rate_id);
+                    return (
+                      <tr key={x.tax_rate_id} className="border-b">
+                        <td className="py-1">{rate ? `${(locale === "en" && rate.name_en) || rate.name_ar} (${toMoney(rate.rate).toString()}%)` : "—"}</td>
+                        <td className="py-1 text-end text-muted-foreground">{t.invoices.taxableBase}: {m(x.taxable_base)}</td>
+                        <td className="py-1 text-end">{m(x.amount)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <table className="w-full text-sm">
+              <tbody>
+                <tr><td className="py-1">{t.invoices.subtotal}</td><td className="py-1 text-end">{m(inv.subtotal)}</td></tr>
+                <tr><td className="py-1">{t.invoices.taxTotal}</td><td className="py-1 text-end">{m(inv.tax_total)}</td></tr>
+                <tr className="border-t text-base font-bold"><td className="py-2">{t.invoices.total} ({inv.currency_code})</td><td className="py-2 text-end">{m(inv.total)}</td></tr>
+                {toMoney(inv.amount_due).gt(0) && (
+                  <>
+                    <tr><td className="py-1">{t.invoices.amountDue}</td><td className="py-1 text-end">{m(inv.amount_due)}</td></tr>
+                    <tr><td className="py-1">{t.invoices.amountPaid}</td><td className="py-1 text-end">{m(inv.amount_paid)}</td></tr>
+                    <tr className="font-semibold"><td className="py-1">{t.invoices.outstanding}</td><td className="py-1 text-end"><Money value={toMoney(inv.amount_due).minus(toMoney(inv.amount_paid))} locale={locale} /></td></tr>
+                  </>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {detail.allocations.length > 0 && (
+            <div className="print:hidden">
+              <p className="mb-2 text-sm font-semibold">{t.invoices.settlement}</p>
+              <ul className="space-y-1 text-sm">
+                {detail.allocations.map((a) => (
+                  <li key={a.payment_id} className={a.voucher_status === "voided" ? "text-muted-foreground line-through" : ""}>
+                    <Link href={`/vouchers/${a.payment_id}`} className="num text-primary hover:underline">{a.voucher_number}</Link> — {m(a.amount)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {inv.notes && <p className="text-sm text-muted-foreground">{inv.notes}</p>}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

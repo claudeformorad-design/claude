@@ -1,0 +1,79 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { PageHeader } from "@/components/layout/page-header";
+import { Money } from "@/components/money";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { requireAppContext } from "@/lib/auth/context";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { toMoney, sumMoney } from "@/lib/accounting/money";
+import { getVoucher } from "@/services/vouchers.service";
+import { getI18n } from "@/i18n/server";
+import { VoidVoucher } from "./void-voucher";
+
+export default async function VoucherPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const ctx = await requireAppContext(PERMISSIONS.paymentsView);
+  const { locale, t } = await getI18n();
+  const detail = await getVoucher(ctx.supabase, ctx.hotel.id, id);
+  if (!detail) notFound();
+  const { voucher: v, allocations } = detail;
+  const [method, counter] = await Promise.all([
+    ctx.supabase.from("payment_methods").select("name_ar, name_en").eq("id", v.payment_method_id).single(),
+    v.counter_account_id ? ctx.supabase.from("chart_of_accounts").select("code, name_ar, name_en").eq("id", v.counter_account_id).single() : null,
+  ]);
+  const name = (x: { name_ar: string; name_en: string | null } | null | undefined) => (x ? (locale === "en" && x.name_en) || x.name_ar : "—");
+  const unallocated = toMoney(v.amount).minus(sumMoney(allocations.map((a) => a.amount)));
+
+  const meta: [string, React.ReactNode][] = [
+    [t.common.date, <span key="d" className="num">{v.payment_date}</span>],
+    [t.vouchers.party, v.party_name ?? "—"],
+    [t.folio.method, name(method.data)],
+    [t.folio.amount, <Money key="a" value={v.amount} locale={locale} />],
+    [t.common.reference, v.reference ?? "—"],
+    [t.vouchers.counterAccount, counter?.data ? `${counter.data.code} — ${name(counter.data)}` : "—"],
+  ];
+
+  return (
+    <>
+      <PageHeader
+        title={`${t.vouchers.types[v.voucher_type]} ${v.voucher_number}`}
+        description={v.description}
+        actions={<Badge variant={v.status === "voided" ? "destructive" : "success"}>{t.vouchers.statuses[v.status]}</Badge>}
+      />
+      <Card className="mb-6">
+        <CardContent className="grid gap-4 p-5 text-sm sm:grid-cols-3">
+          {meta.map(([label, value]) => (
+            <div key={label}><p className="text-muted-foreground">{label}</p><div className="font-medium">{value}</div></div>
+          ))}
+          {v.journal_entry_id && (
+            <div><p className="text-muted-foreground">{t.journal.entry}</p><Link className="text-primary hover:underline" href={`/journal/${v.journal_entry_id}`}>{t.journal.entry}</Link></div>
+          )}
+          {v.status === "voided" && (
+            <div className="sm:col-span-2"><p className="text-muted-foreground">{t.vouchers.voidedBecause}</p><p>{v.void_reason}</p></div>
+          )}
+        </CardContent>
+      </Card>
+
+      {allocations.length > 0 && (
+        <Card className="mb-6">
+          <CardContent className="space-y-2 p-5 text-sm">
+            <p className="font-medium">{t.vouchers.allocations}</p>
+            {allocations.map((a) => (
+              <p key={a.invoice_id}>
+                <Link href={`/invoices/${a.invoice_id}`} className="num text-primary hover:underline">{a.invoice_number}</Link> — <Money value={a.amount} locale={locale} />
+              </p>
+            ))}
+            {v.voucher_type === "receipt" && v.party_type === "customer" && (
+              <p className="text-muted-foreground">{t.vouchers.unallocated}: <Money value={unallocated} locale={locale} /></p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {v.status === "posted" && ctx.can(PERMISSIONS.paymentsVoid) && (
+        <VoidVoucher id={v.id} t={{ vouchers: t.vouchers, errors: t.errors }} />
+      )}
+    </>
+  );
+}

@@ -15,6 +15,20 @@ export const PERMISSIONS = {
   periodsPostClosed: "gl.periods.post_closed",
   trialBalanceView: "reports.trial_balance.view",
   auditView: "audit.logs.view",
+  revenueSettingsManage: "settings.revenue.manage",
+  customersView: "customers.view",
+  customersManage: "customers.manage",
+  folioView: "folio.view",
+  folioManage: "folio.manage",
+  folioAllowance: "folio.allowance",
+  folioVoid: "folio.void",
+  folioCheckout: "folio.checkout",
+  invoicesView: "invoices.view",
+  invoicesCreate: "invoices.create",
+  paymentsView: "payments.view",
+  paymentsReceipt: "payments.receipt",
+  paymentsDisbursement: "payments.disbursement",
+  paymentsVoid: "payments.void",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

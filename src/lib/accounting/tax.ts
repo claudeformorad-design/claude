@@ -77,7 +77,7 @@ export function computeTaxes(
   };
 
   let lines = build(net);
-  let taxTotal = lines.reduce((acc, l) => acc.plus(l.amount), ZERO);
+  const taxTotal = lines.reduce((acc, l) => acc.plus(l.amount), ZERO);
 
   if (inclusive) {
     // ضبط فرق التقريب في الصافي حتى يساوي المجموع المبلغ المدخل تمامًا

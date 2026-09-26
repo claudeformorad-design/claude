@@ -28,3 +28,13 @@ describe("mapDatabaseError", () => {
     expect(mapDatabaseError("something else")).toBe("unknown");
   });
 });
+
+describe("mapDatabaseError — المرحلة 2", () => {
+  it("يميز أخطاء الفوليو والآجل والسندات", () => {
+    expect(mapDatabaseError("Folio F-2026-000001 is not open")).toBe("folio_not_open");
+    expect(mapDatabaseError("Closed folios cannot be modified")).toBe("folio_not_open");
+    expect(mapDatabaseError("Credit limit exceeded for customer ACME")).toBe("credit_limit");
+    expect(mapDatabaseError("Folio balance must be zero before checkout (balance: 5)")).toBe("balance_not_zero");
+    expect(mapDatabaseError("System-generated entries must be corrected from their source document")).toBe("system_generated");
+  });
+});
