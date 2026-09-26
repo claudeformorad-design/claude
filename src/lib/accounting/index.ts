@@ -4,3 +4,6 @@ export * from "./journal";
 export * from "./fiscal";
 export * from "./trial-balance";
 export * from "./errors";
+export * from "./tax";
+export * from "./folio";
+export * from "./receivables";

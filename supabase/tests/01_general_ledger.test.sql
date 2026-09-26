@@ -98,7 +98,10 @@ select pg_temp.act_as('00000000-0000-0000-0000-0000000000a6');
 do $$
 declare h uuid := (select hotel_id from ctx);
 begin
-  assert (select count(*) from public.my_permissions(h)) = 3, 'union of cashier + department_manager, no duplicates';
+  assert (select count(*) from public.my_permissions(h)) = (
+    select count(distinct rp.permission_code) from public.role_permissions rp
+    join public.roles r on r.id = rp.role_id where r.is_system and r.code in ('cashier', 'department_manager')
+  ), 'union of cashier + department_manager, no duplicates';
   assert app.has_permission(h, 'gl.journal.view'), 'permission from department_manager role';
   assert app.has_permission(h, 'coa.accounts.view'), 'permission shared by both roles';
   assert not app.has_permission(h, 'gl.journal.create'), 'no permission outside both roles';
