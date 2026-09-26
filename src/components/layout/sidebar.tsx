@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BedDouble, BookOpen, Boxes, Building2, FileSpreadsheet, FileText, LayoutDashboard, ListTree,
-  Landmark, Receipt, Scale, Settings, ShoppingCart, Truck, UserCog, Users, Wallet, Clock,
+  Landmark, PieChart, Receipt, Scale, Settings, ShoppingCart, Truck, UserCog, Users, Wallet, Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +37,10 @@ export interface NavLabels {
   payroll: string;
   bank: string;
   aging: string;
+  groupAssets: string;
+  fixedAssets: string;
+  stock: string;
+  profitability: string;
 }
 
 type Item = { href: string; label: string; icon: React.ComponentType<{ className?: string }>; soon?: boolean };
@@ -72,17 +76,23 @@ export function Sidebar({ labels, hotelName }: { labels: NavLabels; hotelName: s
       ],
     },
     {
+      title: labels.groupAssets,
+      items: [
+        { href: "/assets", label: labels.fixedAssets, icon: Building2 },
+        { href: "/inventory", label: labels.stock, icon: Boxes },
+      ],
+    },
+    {
       title: labels.groupReports,
       items: [
         { href: "/reports/trial-balance", label: labels.trialBalance, icon: Scale },
         { href: "/reports/aging", label: labels.aging, icon: Clock },
+        { href: "/reports/profitability", label: labels.profitability, icon: PieChart },
       ],
     },
     {
       items: [
         { href: "/settings/revenue", label: labels.revenueSettings, icon: Wallet },
-        { href: "#", label: labels.assets, icon: Building2, soon: true },
-        { href: "#", label: labels.inventory, icon: Boxes, soon: true },
         { href: "#", label: labels.settings, icon: Settings, soon: true },
       ],
     },

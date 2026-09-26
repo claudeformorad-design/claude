@@ -320,6 +320,26 @@ export type AgingRow = {
   due_date: string; outstanding: string; days_overdue: number; bucket: "current" | "1_30" | "31_60" | "61_90" | "over_90";
 };
 
+
+// ----------------------------------------------------------------------------- المرحلة 4
+export type FixedAssetRow = {
+  id: string; hotel_id: string; asset_number: string; name: string; category: string; asset_account_id: string;
+  department_id: string | null; acquisition_date: string; cost: string; salvage_value: string; useful_life_months: number;
+  depreciation_start: string; accumulated_depreciation: string; status: "active" | "fully_depreciated" | "disposed";
+  vendor_bill_id: string | null; journal_entry_id: string | null; disposal_date: string | null; disposal_proceeds: string | null;
+  disposal_journal_entry_id: string | null; notes: string | null; created_at: string; created_by: string | null;
+};
+export type InventoryItemRow = Audit & {
+  id: string; hotel_id: string; sku: string; name_ar: string; name_en: string | null; unit: string;
+  inventory_account_id: string; expense_account_id: string; reorder_level: string; quantity_on_hand: string;
+  average_cost: string; is_active: boolean;
+};
+export type InventoryTxnRow = {
+  id: string; hotel_id: string; item_id: string; txn_type: "receipt" | "issue" | "adjustment"; txn_date: string;
+  quantity: string; unit_cost: string; total_cost: string; department_id: string | null; vendor_bill_id: string | null;
+  description: string | null; journal_entry_id: string | null; created_at: string; created_by: string | null;
+};
+
 type FolioMoneyArgs = {
   p_folio_id: string; p_payment_method_id: string; p_amount: string;
   p_business_date?: string | null; p_reference?: string | null; p_description?: string | null;
@@ -356,6 +376,10 @@ export type Database = {
       payments: ReadOnlyTable<PaymentRow>;
       payment_allocations: ReadOnlyTable<PaymentAllocationRow>;
       vendors: Table<VendorRow, "hotel_id" | "code" | "name_ar">;
+      fixed_assets: ReadOnlyTable<FixedAssetRow>;
+      depreciation_schedule: ReadOnlyTable<{ id: string; hotel_id: string; asset_id: string; period_month: string; amount: string; journal_entry_id: string | null; created_at: string }>;
+      inventory_items: Table<InventoryItemRow, "hotel_id" | "sku" | "name_ar" | "inventory_account_id" | "expense_account_id">;
+      inventory_transactions: ReadOnlyTable<InventoryTxnRow>;
       purchase_orders: ReadOnlyTable<PurchaseOrderRow>;
       vendor_bills: ReadOnlyTable<VendorBillRow>;
       vendor_bill_lines: ReadOnlyTable<VendorBillLineRow>;
@@ -386,6 +410,27 @@ export type Database = {
       };
     };
     Functions: {
+      register_fixed_asset: {
+        Args: {
+          p_hotel_id: string; p_name: string; p_category: string; p_asset_account_id: string; p_cost: string; p_useful_life_months: number;
+          p_acquisition_date: string; p_salvage_value?: string; p_department_id?: string | null; p_vendor_bill_id?: string | null;
+          p_counter_account_id?: string | null; p_notes?: string | null;
+        };
+        Returns: string;
+      };
+      run_depreciation: { Args: { p_hotel_id: string; p_month: string }; Returns: number };
+      dispose_fixed_asset: { Args: { p_asset_id: string; p_disposal_date: string; p_proceeds?: string; p_proceeds_account_id?: string | null }; Returns: string };
+      post_inventory_movement: {
+        Args: {
+          p_item_id: string; p_type: "receipt" | "issue" | "adjustment"; p_quantity: string; p_date?: string | null; p_unit_cost?: string | null;
+          p_department_id?: string | null; p_vendor_bill_id?: string | null; p_description?: string | null;
+        };
+        Returns: string;
+      };
+      department_profitability: {
+        Args: { p_hotel_id: string; p_from: string; p_to: string };
+        Returns: { department_id: string | null; account_type: "revenue" | "expense"; account_subtype: string; amount: string }[];
+      };
       create_purchase_order: { Args: { p_hotel_id: string; p_vendor_id: string; p_lines: Json; p_order_date?: string | null; p_notes?: string | null }; Returns: string };
       create_vendor_bill: {
         Args: { p_hotel_id: string; p_vendor_id: string; p_lines?: Json | null; p_po_id?: string | null; p_bill_date?: string | null; p_vendor_invoice_no?: string | null; p_notes?: string | null };

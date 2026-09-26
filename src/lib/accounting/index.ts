@@ -8,3 +8,5 @@ export * from "./tax";
 export * from "./folio";
 export * from "./receivables";
 export * from "./aging";
+export * from "./depreciation";
+export * from "./profitability";

@@ -38,6 +38,11 @@ export const PERMISSIONS = {
   bankReconcile: "bank.reconcile",
   creditNote: "invoices.credit_note",
   agingView: "reports.aging.view",
+  assetsView: "assets.view",
+  assetsManage: "assets.manage",
+  inventoryView: "inventory.view",
+  inventoryManage: "inventory.manage",
+  profitabilityView: "reports.profitability.view",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
