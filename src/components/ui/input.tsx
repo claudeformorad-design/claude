@@ -1,12 +1,20 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { normalizeDigits } from "@/lib/accounting/money";
 
-export function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+export function Input({ className, type, onChange, ...props }: React.ComponentProps<"input">) {
+  const numeric = props.inputMode === "decimal" || props.inputMode === "numeric";
   return (
     <input
       type={type}
       data-slot="input"
-      className={cn("h-10 py-2 flex w-full min-w-0 rounded-[10px] border border-line bg-white px-3.5 text-[13px] text-ink outline-none transition-all duration-200 placeholder:text-slate-400 hover:border-line-strong focus:border-slate-400 focus:ring-4 focus:ring-ink/5 aria-invalid:border-urgent aria-invalid:ring-urgent/15 disabled:cursor-not-allowed disabled:opacity-50", className)}
+      // الحقول الرقمية تقبل الأرقام العربية وتحوّلها فورًا (١٥٠٠٫٥ ⇒ 1500.5)
+      onChange={numeric ? (e) => {
+        const v = normalizeDigits(e.target.value);
+        if (v !== e.target.value) e.target.value = v;
+        onChange?.(e);
+      } : onChange}
+      className={cn("h-11 py-2 flex w-full min-w-0 field disabled:cursor-not-allowed disabled:opacity-50", className)}
       {...props}
     />
   );

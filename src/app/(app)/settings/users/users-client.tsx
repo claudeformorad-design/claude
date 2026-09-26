@@ -10,6 +10,7 @@ import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { saveRoleAction, setMemberRolesAction } from "../../_admin/actions";
 import { actionErrorText } from "@/lib/action-error";
 import { Avatar } from "@/components/ui/entity";
+import { toast } from "@/components/ui/toast";
 
 type T = Pick<Dictionary, "admin" | "common" | "errors">;
 type Role = { id: string; label: string; system: boolean };
@@ -25,27 +26,27 @@ export function MemberRow({ t, userId, email, name, active, roleIds, roles, isSe
   return (
     <div className="space-y-3 border-b border-line p-5 last:border-0">
       <div className="flex flex-wrap items-center gap-3">
-        <Avatar name={name || email} className="size-10 text-[13px]" />
+        <Avatar name={name || email} className="size-10 text-[14px]" />
         <div className="min-w-0 leading-tight">
           <p className="font-semibold text-ink">{name || email}</p>
-          <p className="text-[12px] text-slate-500" dir="ltr">{email}</p>
+          <p className="text-[13px] text-slate-500" dir="ltr">{email}</p>
         </div>
         {!isActive && <Badge variant="secondary">{t.common.inactive}</Badge>}
       </div>
       <div className="flex flex-wrap gap-2">
         {roles.map((r) => (
-          <label key={r.id} className={`flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors ${sel.has(r.id) ? "bg-ink text-white" : "bg-subtle text-slate-700 hover:bg-line"}`}>
+          <label key={r.id} className={`flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-[14px] font-medium transition-colors ${sel.has(r.id) ? "bg-ink text-white" : "bg-subtle text-slate-700 hover:bg-line"}`}>
             <input type="checkbox" className="sr-only" checked={sel.has(r.id)}
               onChange={(e) => { const n = new Set(sel); if (e.target.checked) n.add(r.id); else n.delete(r.id); setSel(n); }} />
-            {r.label}{r.system && <span className={`text-[11px] ${sel.has(r.id) ? "text-white/70" : "text-slate-500"}`}>({t.admin.systemRole})</span>}
+            {r.label}{r.system && <span className={`text-[12px] ${sel.has(r.id) ? "text-white/70" : "text-slate-500"}`}>({t.admin.systemRole})</span>}
           </label>
         ))}
       </div>
       {error && <Alert variant="destructive">{error}</Alert>}
       <div className="flex gap-2">
-        <Button size="sm" disabled={pending} onClick={() => start(async () => {
+        <Button size="sm" loading={pending} onClick={() => start(async () => {
           const r = await setMemberRolesAction(userId, [...sel], isActive);
-          if (r.ok) router.refresh(); else setError(actionErrorText(t.errors, r));
+          if (r.ok) { toast("تم حفظ الأدوار"); router.refresh(); } else setError(actionErrorText(t.errors, r));
         })}>{t.admin.saveRoles}</Button>
         {!isSelf && <Button size="sm" variant="ghost" onClick={() => setActive(!isActive)}>{isActive ? t.admin.deactivate : t.admin.activate}</Button>}
       </div>
@@ -84,9 +85,9 @@ export function RoleEditor({ t, role, permissions }: {
           </div>
         ))}
       </div>
-      <Button disabled={pending} onClick={() => start(async () => {
+      <Button loading={pending} onClick={() => start(async () => {
         const r = await saveRoleAction({ ...v, permissions: [...sel] });
-        if (r.ok) router.push("/settings/users"); else setError(actionErrorText(t.errors, r));
+        if (r.ok) { toast("تم الحفظ"); router.push("/settings/users"); } else setError(actionErrorText(t.errors, r));
       })}>{t.common.save}</Button>
     </div>
   );

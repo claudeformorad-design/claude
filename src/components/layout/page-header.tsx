@@ -18,8 +18,8 @@ export function PageHeader({
       <div className="flex min-w-0 items-center gap-4">
         <SectionIcon />
         <div className="min-w-0 space-y-1">
-          <h1 className="text-[24px] font-bold leading-tight text-ink">{title}</h1>
-          {description && <p className="max-w-3xl text-[13px] leading-relaxed text-slate-600">{description}</p>}
+          <h1 className="text-[26px] font-bold leading-tight text-ink">{title}</h1>
+          {description && <p className="max-w-3xl text-[14px] leading-relaxed text-slate-600">{description}</p>}
         </div>
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}

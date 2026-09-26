@@ -17,7 +17,7 @@ const optionalUuid = z
   .transform((v) => (v === undefined || v === "" ? null : v))
   .pipe(z.uuid().nullable());
 const code = z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{1,20}$/, "code_format");
-const positiveAmount = z.string().trim().refine((v) => isValidAmount(v) && toMoney(v).gt(0), "invalid_amount");
+const positiveAmount = z.string().trim().refine((v) => isValidAmount(v) && toMoney(v).gt(0), "invalid_amount").transform((v) => toMoney(v).toFixed());
 const optionalAmount = z
   .string()
   .trim()
@@ -38,7 +38,7 @@ export const taxRateFormSchema = z.object({
   name_ar: text().min(1),
   name_en: optionalText(200),
   kind: z.enum(["vat", "tourism_fee", "municipality_fee", "service_charge", "other"]),
-  rate: z.string().trim().refine((v) => isValidAmount(v) && toMoney(v).gte(0) && toMoney(v).lte(100), "invalid_amount"),
+  rate: z.string().trim().refine((v) => isValidAmount(v) && toMoney(v).gte(0) && toMoney(v).lte(100), "invalid_amount").transform((v) => toMoney(v).toFixed()),
   is_compound: z.boolean(),
   account_id: z.uuid(),
   is_active: z.boolean(),

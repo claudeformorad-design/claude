@@ -38,3 +38,13 @@ describe("mapDatabaseError — المرحلة 2", () => {
     expect(mapDatabaseError("System-generated entries must be corrected from their source document")).toBe("system_generated");
   });
 });
+
+describe("الأرقام العربية في المبالغ", () => {
+  it("تقبل ٠-٩ و۰-۹ والفاصلة العشرية العربية وفواصل الآلاف", () => {
+    expect(toMoney("١٬٥٠٠٫٧٥").toString()).toBe("1500.75");
+    expect(toMoney("۲۵۰").toString()).toBe("250");
+    expect(toMoney("1,234.50").toString()).toBe("1234.5");
+    expect(isValidAmount("١٢٣")).toBe(true);
+    expect(isValidAmount("abc")).toBe(false);
+  });
+});

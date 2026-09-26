@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 /** وسم حالة: حبة كاملة الاستدارة، خلفية باستيل فاتحة ونص أغمق من نفس العائلة */
 const badgeVariants = cva(
-  "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-medium leading-5",
+  "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[12px] font-medium leading-5",
   {
     variants: {
       variant: {

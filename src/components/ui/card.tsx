@@ -19,7 +19,7 @@ export function CardTitle({ className, ...props }: React.ComponentProps<"h3">) {
   return (
     <h3
       className={cn(
-        "flex items-center gap-2 text-[15px] font-semibold leading-tight text-ink",
+        "flex items-center gap-2 text-[16px] font-semibold leading-tight text-ink",
         className,
       )}
       {...props}
@@ -28,7 +28,7 @@ export function CardTitle({ className, ...props }: React.ComponentProps<"h3">) {
 }
 
 export function CardDescription({ className, ...props }: React.ComponentProps<"p">) {
-  return <p className={cn("text-[13px] leading-relaxed text-muted-foreground", className)} {...props} />;
+  return <p className={cn("text-[14px] leading-relaxed text-muted-foreground", className)} {...props} />;
 }
 
 export function CardContent({ className, ...props }: React.ComponentProps<"div">) {

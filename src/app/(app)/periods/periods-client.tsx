@@ -13,7 +13,7 @@ export function PeriodButton({ op, id, label, confirmText, startDate, variant = 
   const router = useRouter();
   const [pending, start] = useTransition();
   return (
-    <Button size="sm" variant={variant} disabled={pending} onClick={() => {
+    <Button size="sm" variant={variant} loading={pending} onClick={() => {
       if (confirmText && !confirm(confirmText)) return;
       start(async () => {
         const r = await periodAction(op, id, startDate);

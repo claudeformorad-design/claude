@@ -14,6 +14,7 @@ import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { cn } from "@/lib/utils";
 import { cancelFolioAction, checkoutAction, folioAction } from "../actions";
 import { actionErrorText } from "@/lib/action-error";
+import { toast } from "@/components/ui/toast";
 
 type Kind = "charge" | "payment" | "deposit" | "allowance" | "refund" | "depositRefund" | "transfer" | "void";
 
@@ -70,6 +71,7 @@ export function FolioActions(p: FolioActionsProps) {
       setError(null);
       const r = await folioAction(p.folioId, { ...v, kind });
       if (r.ok) {
+        toast("تم التسجيل على الفوليو");
         reset({ quantity: "1", customer_id: p.defaultCustomerId ?? "" });
         router.refresh();
       } else fail(r);
@@ -80,7 +82,7 @@ export function FolioActions(p: FolioActionsProps) {
     start(async () => {
       setError(null);
       const r = await checkoutAction(p.folioId);
-      if (r.ok) router.push(`/invoices/${r.data}`);
+      if (r.ok) { toast("تمت المغادرة وإصدار الفاتورة"); router.push(`/invoices/${r.data}`); }
       else fail(r);
     });
   };
@@ -88,7 +90,7 @@ export function FolioActions(p: FolioActionsProps) {
   const cancel = () =>
     start(async () => {
       const r = await cancelFolioAction(p.folioId);
-      if (r.ok) router.push("/folios");
+      if (r.ok) { toast("تم إلغاء الفوليو"); router.push("/folios"); }
       else fail(r);
     });
 
@@ -100,7 +102,7 @@ export function FolioActions(p: FolioActionsProps) {
   );
   const input = (name: string, props: React.ComponentProps<"input"> = {}) => <Input id={name} {...register(name)} {...props} />;
   const row = (label: string, el: React.ReactNode, name?: string) => (
-    <div className="space-y-1.5"><Label htmlFor={name}>{label}</Label>{el}</div>
+    <div className="field-group space-y-1.5"><Label htmlFor={name}>{label}</Label>{el}</div>
   );
   const moneyMethods = kind === "payment" ? p.methods : p.methods.filter((m) => m.kind !== "city_ledger");
   const isCredit = kind === "payment" && p.methods.find((m) => m.id === values.payment_method_id)?.kind === "city_ledger";
@@ -172,14 +174,14 @@ export function FolioActions(p: FolioActionsProps) {
             </>
           )}
           <div className="md:col-span-4">
-            <Button type="submit" disabled={pending}>{t.common.save}</Button>
+            <Button type="submit" loading={pending}>{t.common.save}</Button>
           </div>
         </form>
       )}
 
       <div className={cn("flex flex-wrap gap-2 border-t pt-4")}>
-        {p.can.checkout && p.hasTransactions && <Button onClick={checkout} disabled={pending}>{t.folio.actions.checkout}</Button>}
-        {p.can.manage && !p.hasTransactions && <Button variant="destructive" onClick={cancel} disabled={pending}>{t.folio.actions.cancel}</Button>}
+        {p.can.checkout && p.hasTransactions && <Button onClick={checkout} loading={pending}>{t.folio.actions.checkout}</Button>}
+        {p.can.manage && !p.hasTransactions && <Button variant="destructive" onClick={cancel} loading={pending}>{t.folio.actions.cancel}</Button>}
       </div>
     </div>
   );

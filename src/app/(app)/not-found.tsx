@@ -6,8 +6,8 @@ export default function NotFound() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
       <p className="num text-5xl font-bold text-ink">404</p>
-      <p className="text-[15px] text-ink">المستند أو الصفحة غير موجودة</p>
-      <p className="max-w-md text-[13px] leading-relaxed text-muted-foreground">
+      <p className="text-[16px] text-ink">المستند أو الصفحة غير موجودة</p>
+      <p className="max-w-md text-[14px] leading-relaxed text-muted-foreground">
         ربما الرابط غير صحيح، أو المستند يخص فندقًا آخر.
       </p>
       <Button asChild variant="outline" className="mt-2">

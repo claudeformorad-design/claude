@@ -32,9 +32,9 @@ export function ResetHotelDataButton() {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <AlertOctagon className="size-4 stroke-[1.75] text-urgent" />
-            <h4 className="text-[14px] font-semibold text-ink">تصفير وضع التجربة بالكامل</h4>
+            <h4 className="text-[15px] font-semibold text-ink">تصفير وضع التجربة بالكامل</h4>
           </div>
-          <p className="max-w-xl text-[13px] leading-relaxed text-muted-foreground">
+          <p className="max-w-xl text-[14px] leading-relaxed text-muted-foreground">
             يحذف قاعدة بيانات التجربة المحلية بالكامل (الفندق، الإعدادات، القيود، الفوليو، الفواتير، السندات وكل الحركات) ويعيدك لشاشة إعداد فندق جديد. متاح في وضع التجربة فقط، ولا يمكن التراجع عنه.
           </p>
         </div>
@@ -84,7 +84,7 @@ export function ResetHotelDataButton() {
                 )}
               </Button>
             </div>
-            <label className="flex cursor-pointer items-center gap-1.5 text-[12px] text-slate-600">
+            <label className="flex cursor-pointer items-center gap-1.5 text-[13px] text-slate-600">
               <input
                 type="checkbox"
                 checked={confirmed}
@@ -93,7 +93,7 @@ export function ResetHotelDataButton() {
               />
               أنا متأكد من حذف جميع بيانات التجربة
             </label>
-            {failed && <p className="text-[12px] text-urgent">تعذّر التصفير — أعد المحاولة، وإن تكرر فأعد تشغيل الخادم.</p>}
+            {failed && <p className="text-[13px] text-urgent">تعذّر التصفير — أعد المحاولة، وإن تكرر فأعد تشغيل الخادم.</p>}
           </div>
         )}
       </div>

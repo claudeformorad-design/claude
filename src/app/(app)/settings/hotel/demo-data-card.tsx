@@ -29,22 +29,22 @@ export function DemoDataCard({ active, errors }: { active: boolean; errors: Reco
           <Sparkles className="size-5 stroke-[1.75]" />
         </span>
         <div className="space-y-1">
-          <h3 className="text-[15px] font-semibold text-ink">بيانات تجريبية مؤقتة</h3>
-          <p className="max-w-xl text-[13px] leading-relaxed text-slate-600">
+          <h3 className="text-[16px] font-semibold text-ink">بيانات تجريبية مؤقتة</h3>
+          <p className="max-w-xl text-[14px] leading-relaxed text-slate-600">
             {active
               ? "البيانات التجريبية محمّلة الآن. الحذف يعيد النظام كما كان قبل تحميلها تمامًا — وأي عملية أجريتها بعد التحميل ستُحذف معها."
               : "تولّد ستة أشهر من النشاط (إقامات، مطعم، مناسبات، مشتريات، رواتب) عبر نفس القيود المحاسبية الحقيقية، لتعاين لوحة التحكم والتقارير. تُحذف بالكامل متى شئت."}
           </p>
-          {error && <p className="text-[12px] text-urgent">{error}</p>}
+          {error && <p className="text-[13px] text-urgent">{error}</p>}
         </div>
       </div>
       {active ? (
-        <Button variant="destructive" disabled={pending} onClick={() => run(removeDemoDataAction, "/settings/hotel")}>
+        <Button variant="destructive" loading={pending} onClick={() => run(removeDemoDataAction, "/settings/hotel")}>
           <Trash2 />
           {pending ? "جارٍ الحذف…" : "حذف البيانات التجريبية"}
         </Button>
       ) : (
-        <Button disabled={pending} onClick={() => run(loadDemoDataAction, "/")}>
+        <Button loading={pending} onClick={() => run(loadDemoDataAction, "/")}>
           <Sparkles />
           {pending ? "جارٍ التوليد… (قد يستغرق دقيقة)" : "إنشاء بيانات تجريبية"}
         </Button>

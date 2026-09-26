@@ -10,7 +10,7 @@
    ============================================================================= */
 
 @theme inline {
-  --font-sans: var(--font-plex), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-thmanyah), ui-sans-serif, system-ui, sans-serif;
 
   /* المحايدات */
   --color-ink: #111111;
@@ -24,16 +24,20 @@
   --color-line-strong: #deded9;
   --color-subtle: #f2f2f0;
   --color-canvas: var(--color-content);
+  /* رأس الجداول: بيج دافئ من هوية النظام، مميز بوضوح عن جسم الجدول */
+  --color-thead: #f1ebdc;
+  --color-thead-line: #e2d7bf;
+  --color-thead-text: #2b2a26;
 
   /* الرماديات دافئة (تعيد تعريف slate في كل النظام) */
   --color-slate-50: #fafaf9;
   --color-slate-100: #f2f2f0;
   --color-slate-200: #e6e6e2;
   --color-slate-300: #cfcfca;
-  --color-slate-400: #9d9d97;
-  --color-slate-500: #75756f;
-  --color-slate-600: #5a5a56;
-  --color-slate-700: #3f3f3c;
+  --color-slate-400: #8c8c86;
+  --color-slate-500: #63635d;
+  --color-slate-600: #4b4b47;
+  --color-slate-700: #333331;
   --color-slate-800: #2b2b2a;
   --color-slate-900: #111111;
 
@@ -83,7 +87,7 @@
   --color-secondary: var(--color-subtle);
   --color-secondary-foreground: #111111;
   --color-muted: var(--color-subtle);
-  --color-muted-foreground: #66665f;
+  --color-muted-foreground: #52524d;
   --color-accent: var(--color-subtle);
   --color-accent-foreground: #111111;
   --color-destructive: var(--color-urgent);
@@ -93,6 +97,16 @@
   --color-ring: var(--color-ink);
 
   --radius-card: 1.25rem;
+
+  /* أحجام أكبر قليلًا من الافتراضي (خط ثمانية مريح للقراءة بحجم 14–15px) */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.5;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.55;
+  --text-base: 1.0625rem;
+  --text-lg: 1.1875rem;
+  --text-xl: 1.3125rem;
+  --text-2xl: 1.625rem;
 
   --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
   --shadow-lift: 0 8px 16px rgba(0, 0, 0, 0.08);
@@ -122,21 +136,81 @@
     background: #111111;
     color: #fff;
   }
-  input[type="checkbox"],
   input[type="radio"] {
     accent-color: #111111;
     width: 1rem;
     height: 1rem;
     cursor: pointer;
   }
+  /* مربع اختيار مخصص: حواف ناعمة، يمتلئ بالأسود مع علامة صح تُرسم */
+  input[type="checkbox"]:not(.sr-only) {
+    appearance: none;
+    width: 1.15rem;
+    height: 1.15rem;
+    flex-shrink: 0;
+    border-radius: 0.35rem;
+    border: 1.5px solid #bdbdb7;
+    background: #fff center / 0.8rem no-repeat;
+    cursor: pointer;
+    transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  input[type="checkbox"]:not(.sr-only):hover { border-color: #111111; }
+  input[type="checkbox"]:not(.sr-only):checked {
+    border-color: #111111;
+    background-color: #111111;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7'/%3E%3C/svg%3E");
+    transform: scale(1.06);
+  }
+  input[type="checkbox"]:not(.sr-only):focus-visible { box-shadow: 0 0 0 4px rgba(17, 17, 17, 0.1); outline: none; }
 }
 
 /* الأرقام: عرض متساوٍ واتجاه LTR داخل النص العربي */
 .num {
+  font-family: var(--font-digits), var(--font-sans);
   font-variant-numeric: tabular-nums;
   direction: ltr;
   unicode-bidi: isolate;
   font-feature-settings: "tnum";
+}
+
+/* ---- حقول الإدخال (موحّدة في كل النظام) ----
+   خلفية دافئة هادئة، حافة رفيعة، وعند التركيز: خلفية بيضاء وحافة داكنة وهالة ناعمة تتسع بحركة */
+@layer components {
+  .field {
+    border-radius: 0.75rem;
+    border: 1px solid #e2e1dc;
+    background-color: #fbfbf9;
+    padding-inline: 0.875rem;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--color-ink);
+    outline: none;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02), 0 0 0 0 rgba(17, 17, 17, 0);
+    transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .field::placeholder { color: var(--color-slate-400); font-weight: 500; }
+  .field:hover { border-color: #cfcec8; background-color: #fff; }
+  .field:focus, .field:focus-visible {
+    border-color: var(--color-ink);
+    background-color: #fff;
+    box-shadow: 0 0 0 4px rgba(17, 17, 17, 0.07);
+  }
+  .field[aria-invalid="true"] { border-color: var(--color-urgent); box-shadow: 0 0 0 4px rgba(226, 102, 92, 0.14); }
+  .field[type="date"], .field[type="month"], .field[type="number"] { font-family: var(--font-digits), var(--font-sans); }
+
+  /* سهم قائمة الاختيار في جهة النهاية (يسارًا في العربية) */
+  .field-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234b4b47' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-size: 16px;
+    background-position: left 0.8rem center;
+    padding-inline-end: 2.4rem;
+  }
+  [dir="ltr"] .field-select { background-position: right 0.8rem center; }
+
+  /* اللافتة تغمق حين يكون حقلها في حالة تركيز */
+  .field-group:focus-within > label { color: var(--color-ink); }
 }
 
 /* ---- الأسطح ---- */
@@ -181,29 +255,66 @@
 }
 
 /* ---- حركة دخول الصفحة وأقسامها (CSS فقط؛ لا تُخفي شيئًا إن لم يعمل JavaScript) ---- */
+/* منحنى واحد للنظام كله: انطلاق سريع وتوقف ناعم دقيق */
+:root {
+  --ease-precise: cubic-bezier(0.22, 1, 0.36, 1);
+}
 .page-enter {
-  animation: page-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation: page-enter 0.55s var(--ease-precise) backwards;
 }
 .stagger > * {
-  animation: var(--animate-rise);
+  animation: rise 0.7s var(--ease-precise) backwards;
 }
-.stagger > *:nth-child(1) { animation-delay: 0.02s; }
-.stagger > *:nth-child(2) { animation-delay: 0.07s; }
-.stagger > *:nth-child(3) { animation-delay: 0.12s; }
-.stagger > *:nth-child(4) { animation-delay: 0.17s; }
-.stagger > *:nth-child(5) { animation-delay: 0.22s; }
-.stagger > *:nth-child(6) { animation-delay: 0.27s; }
-.stagger > *:nth-child(7) { animation-delay: 0.32s; }
-.stagger > *:nth-child(n + 8) { animation-delay: 0.36s; }
+.stagger > *:nth-child(1) { animation-delay: 0.03s; }
+.stagger > *:nth-child(2) { animation-delay: 0.09s; }
+.stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger > *:nth-child(4) { animation-delay: 0.21s; }
+.stagger > *:nth-child(5) { animation-delay: 0.27s; }
+.stagger > *:nth-child(6) { animation-delay: 0.33s; }
+.stagger > *:nth-child(7) { animation-delay: 0.38s; }
+.stagger > *:nth-child(n + 8) { animation-delay: 0.42s; }
 
-tbody.rows-animate > tr {
-  animation: fade 0.4s ease backwards;
+/* بطاقات الإحصاء داخل الصفوف تظهر تباعًا */
+.stat-grid > * { animation: rise 0.65s var(--ease-precise) backwards; }
+.stat-grid > *:nth-child(1) { animation-delay: 0.08s; }
+.stat-grid > *:nth-child(2) { animation-delay: 0.14s; }
+.stat-grid > *:nth-child(3) { animation-delay: 0.2s; }
+.stat-grid > *:nth-child(4) { animation-delay: 0.26s; }
+.stat-grid > *:nth-child(n + 5) { animation-delay: 0.32s; }
+.lift {
+  transition: transform 0.35s var(--ease-precise), box-shadow 0.35s var(--ease-precise);
 }
+.lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 14px 28px -14px rgba(0, 0, 0, 0.18);
+}
+.lift:hover .lift-icon { transform: rotate(-8deg) scale(1.08); }
+.lift-icon { transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* صفوف الجداول: تتابع سريع لأول 14 صفًا، وعلامة داكنة على بداية الصف عند المرور */
+tbody.rows-animate > tr {
+  animation: row-in 0.45s var(--ease-precise) backwards;
+}
+tbody.rows-animate > tr:nth-child(1) { animation-delay: 0.12s; }
+tbody.rows-animate > tr:nth-child(2) { animation-delay: 0.15s; }
+tbody.rows-animate > tr:nth-child(3) { animation-delay: 0.18s; }
+tbody.rows-animate > tr:nth-child(4) { animation-delay: 0.21s; }
+tbody.rows-animate > tr:nth-child(5) { animation-delay: 0.24s; }
+tbody.rows-animate > tr:nth-child(6) { animation-delay: 0.27s; }
+tbody.rows-animate > tr:nth-child(7) { animation-delay: 0.3s; }
+tbody.rows-animate > tr:nth-child(8) { animation-delay: 0.33s; }
+tbody.rows-animate > tr:nth-child(9) { animation-delay: 0.36s; }
+tbody.rows-animate > tr:nth-child(10) { animation-delay: 0.39s; }
+tbody.rows-animate > tr:nth-child(n + 11) { animation-delay: 0.42s; }
+tbody.rows-animate > tr > td:first-child { transition: box-shadow 0.2s ease; }
+tbody.rows-animate > tr:hover > td:first-child { box-shadow: inset -3px 0 0 var(--color-ink); }
+[dir="ltr"] tbody.rows-animate > tr:hover > td:first-child { box-shadow: inset 3px 0 0 var(--color-ink); }
 @supports (animation-timeline: view()) {
-  tbody.rows-animate > tr {
+  tbody.rows-animate > tr:nth-child(n + 15) {
     animation: reveal linear both;
     animation-timeline: view();
-    animation-range: entry 0% entry 70%;
+    animation-range: entry 0% entry 60%;
+    animation-delay: 0s;
   }
 }
 
@@ -246,11 +357,15 @@ tbody.rows-animate > tr {
 }
 
 @keyframes page-enter {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: none; }
+  from { opacity: 0; transform: translateY(10px); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: blur(0); }
 }
 @keyframes rise {
-  from { opacity: 0; transform: translateY(14px); }
+  from { opacity: 0; transform: translateY(16px) scale(0.985); filter: blur(4px); }
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+@keyframes row-in {
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
 }
 @keyframes fade {

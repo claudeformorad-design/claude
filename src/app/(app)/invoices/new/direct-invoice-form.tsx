@@ -16,6 +16,7 @@ import { type DirectInvoiceInput, directInvoiceSchema } from "@/lib/validation/r
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { createDirectInvoiceAction } from "../actions";
 import { actionErrorText } from "@/lib/action-error";
+import { toast } from "@/components/ui/toast";
 
 export function DirectInvoiceForm({
   t, locale, decimals, customers, chargeCodes, today,
@@ -59,7 +60,7 @@ export function DirectInvoiceForm({
     start(async () => {
       setError(null);
       const r = await createDirectInvoiceAction(getValues());
-      if (r.ok) router.push(`/invoices/${r.data}`);
+      if (r.ok) { toast("تم إصدار الفاتورة"); router.push(`/invoices/${r.data}`); }
       else setError(actionErrorText(t.errors, r));
     });
 
@@ -67,18 +68,18 @@ export function DirectInvoiceForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       {error && <Alert variant="destructive">{error}</Alert>}
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="space-y-1.5">
+        <div className="field-group space-y-1.5">
           <Label htmlFor="customer_id">{t.invoices.customer}</Label>
           <NativeSelect id="customer_id" aria-invalid={!!formState.errors.customer_id} {...register("customer_id")}>
             <option value="">—</option>
             {customers.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
           </NativeSelect>
         </div>
-        <div className="space-y-1.5">
+        <div className="field-group space-y-1.5">
           <Label htmlFor="issue_date">{t.invoices.issueDate}</Label>
           <Input id="issue_date" type="date" dir="ltr" {...register("issue_date")} />
         </div>
-        <div className="space-y-1.5">
+        <div className="field-group space-y-1.5">
           <Label htmlFor="notes">{t.folio.notes}</Label>
           <Input id="notes" {...register("notes")} />
         </div>
@@ -111,7 +112,7 @@ export function DirectInvoiceForm({
         <div className="flex justify-between border-t pt-1 font-bold"><span>{t.invoices.total}</span><span className="num">{fmt(totals.total)}</span></div>
       </div>
       {Object.keys(formState.errors).length > 0 && <p className="text-sm text-destructive">{t.errors.validation}</p>}
-      <Button type="submit" disabled={pending}>{t.common.create}</Button>
+      <Button type="submit" loading={pending}>{t.common.create}</Button>
     </form>
   );
 }

@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { saveVendorAction } from "../_payables/actions";
 import { actionErrorText } from "@/lib/action-error";
+import { toast } from "@/components/ui/toast";
 
 type V = Record<string, string | boolean | undefined>;
 
@@ -19,14 +20,14 @@ export function VendorForm({ t, initial }: { t: Pick<Dictionary, "customers" | "
   const [error, setError] = useState<string | null>(null);
   const { register, handleSubmit } = useForm<V>({ defaultValues: initial });
   const f = (name: string, label: string, dir: "ltr" | "rtl" = "ltr") => (
-    <div className="space-y-1.5"><Label htmlFor={name}>{label}</Label><Input id={name} dir={dir} {...register(name)} /></div>
+    <div className="field-group space-y-1.5"><Label htmlFor={name}>{label}</Label><Input id={name} dir={dir} {...register(name)} /></div>
   );
   return (
     <form
       className="space-y-3"
       onSubmit={handleSubmit((v) => start(async () => {
         const r = await saveVendorAction(v);
-        if (r.ok) router.push("/vendors");
+        if (r.ok) { toast("تم حفظ المورد"); router.push("/vendors"); }
         else setError(actionErrorText(t.errors, r));
       }))}
     >
@@ -42,7 +43,7 @@ export function VendorForm({ t, initial }: { t: Pick<Dictionary, "customers" | "
       </div>
       {f("address", t.customers.address, "rtl")}
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-4" {...register("is_active")} />{t.common.active}</label>
-      <Button type="submit" disabled={pending}>{t.common.save}</Button>
+      <Button type="submit" loading={pending}>{t.common.save}</Button>
     </form>
   );
 }

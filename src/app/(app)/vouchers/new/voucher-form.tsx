@@ -14,6 +14,7 @@ import type { VoucherInput } from "@/lib/validation/revenue";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { createVoucherAction } from "../actions";
 import { actionErrorText } from "@/lib/action-error";
+import { toast } from "@/components/ui/toast";
 
 interface OpenInvoiceOption { id: string; number: string; customer_id: string | null; amount_due: string; amount_paid: string; issue_date: string }
 
@@ -65,11 +66,11 @@ export function VoucherForm({
       setError(null);
       const v = getValues();
       const r = await createVoucherAction({ ...v, allocations: (v.allocations ?? []).filter((a) => a.amount && a.amount.trim() !== "") });
-      if (r.ok) router.push(`/vouchers/${r.data}`);
+      if (r.ok) { toast("تم ترحيل السند"); router.push(`/vouchers/${r.data}`); }
       else setError(actionErrorText(t.errors, r));
     });
 
-  const row = (label: string, el: React.ReactNode, id?: string) => <div className="space-y-1.5"><Label htmlFor={id}>{label}</Label>{el}</div>;
+  const row = (label: string, el: React.ReactNode, id?: string) => <div className="field-group space-y-1.5"><Label htmlFor={id}>{label}</Label>{el}</div>;
   const isCustomerReceipt = type === "receipt" && partyType === "customer";
 
   return (
@@ -138,7 +139,7 @@ export function VoucherForm({
           )}
         </div>
       )}
-      <Button type="submit" disabled={pending || !!allocationCheck?.errors.length}>{t.common.save}</Button>
+      <Button type="submit" loading={pending} disabled={pending || !!allocationCheck?.errors.length}>{t.common.save}</Button>
     </form>
   );
 }

@@ -26,19 +26,19 @@ export function OnboardingForm({
           {state.error === "validation" ? t.errors.validation : state.error}
         </Alert>
       )}
-      <div className="space-y-2">
+      <div className="field-group space-y-2">
         <Label htmlFor="name_ar">{t.onboarding.nameAr}</Label>
         <Input id="name_ar" name="name_ar" required dir="rtl" />
       </div>
-      <div className="space-y-2">
+      <div className="field-group space-y-2">
         <Label htmlFor="name_en">{t.onboarding.nameEn}</Label>
         <Input id="name_en" name="name_en" dir="ltr" />
       </div>
-      <div className="space-y-2">
+      <div className="field-group space-y-2">
         <Label htmlFor="country_code">{t.onboarding.country}</Label>
         <Input id="country_code" name="country_code" defaultValue="SA" maxLength={2} dir="ltr" required />
       </div>
-      <div className="space-y-2">
+      <div className="field-group space-y-2">
         <Label htmlFor="base_currency">{t.onboarding.baseCurrency}</Label>
         <NativeSelect id="base_currency" name="base_currency" defaultValue="SAR">
           {currencies.map((c) => (
@@ -48,7 +48,7 @@ export function OnboardingForm({
           ))}
         </NativeSelect>
       </div>
-      <div className="space-y-2">
+      <div className="field-group space-y-2">
         <Label htmlFor="fiscal_year_start_month">{t.onboarding.fiscalStartMonth}</Label>
         <NativeSelect id="fiscal_year_start_month" name="fiscal_year_start_month" defaultValue="1">
           {t.months.map((m, i) => (
@@ -58,11 +58,11 @@ export function OnboardingForm({
           ))}
         </NativeSelect>
       </div>
-      <div className="space-y-2">
+      <div className="field-group space-y-2">
         <Label htmlFor="timezone">{t.onboarding.timezone}</Label>
         <Input id="timezone" name="timezone" defaultValue="Asia/Riyadh" dir="ltr" required lang={locale} />
       </div>
-      <Button type="submit" className="sm:col-span-2" disabled={pending}>
+      <Button type="submit" className="sm:col-span-2" loading={pending}>
         {t.onboarding.submit}
       </Button>
     </form>

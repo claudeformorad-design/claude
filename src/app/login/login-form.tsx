@@ -30,16 +30,16 @@ export function LoginForm({ t }: { t: Pick<Dictionary, "auth" | "errors"> }) {
       {state?.info === "check_email" && <Alert variant="success">{t.auth.checkEmail}</Alert>}
 
       {mode === "up" && (
-        <div className="space-y-2">
+        <div className="field-group space-y-2">
           <Label htmlFor="full_name">{t.auth.fullName}</Label>
           <Input id="full_name" name="full_name" autoComplete="name" />
         </div>
       )}
-      <div className="space-y-2">
+      <div className="field-group space-y-2">
         <Label htmlFor="email">{t.auth.email}</Label>
         <Input id="email" name="email" type="email" dir="ltr" autoComplete="email" required />
       </div>
-      <div className="space-y-2">
+      <div className="field-group space-y-2">
         <Label htmlFor="password">{t.auth.password}</Label>
         <Input
           id="password"

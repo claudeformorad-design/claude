@@ -10,6 +10,7 @@ import type { Dictionary } from "@/i18n/dictionaries/ar";
 import type { ActionResult } from "@/services/errors";
 import { deleteDraftAction, postJournalEntryAction, reverseJournalEntryAction } from "../actions";
 import { actionErrorText } from "@/lib/action-error";
+import { toast } from "@/components/ui/toast";
 
 export function EntryActions({
   t,
@@ -33,11 +34,11 @@ export function EntryActions({
   const [error, setError] = useState<string | null>(null);
   const [reversalDate, setReversalDate] = useState(today);
 
-  const run = <T,>(fn: () => Promise<ActionResult<T>>, onOk: (data: T) => void) => {
+  const run = <T,>(fn: () => Promise<ActionResult<T>>, onOk: (data: T) => void, done = "تمت العملية بنجاح") => {
     setError(null);
     startTransition(async () => {
       const result = await fn();
-      if (result.ok) onOk(result.data);
+      if (result.ok) { toast(done); onOk(result.data); }
       else setError(actionErrorText(t.errors, result));
     });
   };
@@ -52,14 +53,14 @@ export function EntryActions({
           </Button>
         )}
         {status === "draft" && canPost && (
-          <Button disabled={pending} onClick={() => run(() => postJournalEntryAction(entryId), () => router.refresh())}>
+          <Button loading={pending} onClick={() => run(() => postJournalEntryAction(entryId), () => router.refresh(), "تم ترحيل القيد")}>
             {t.journal.post}
           </Button>
         )}
         {status === "draft" && canCreate && (
           <Button
             variant="destructive"
-            disabled={pending}
+            loading={pending}
             onClick={() => {
               if (confirm(t.journal.deleteDraft + "?")) run(() => deleteDraftAction(entryId), () => router.push("/journal"));
             }}
@@ -79,7 +80,7 @@ export function EntryActions({
             />
             <Button
               variant="outline"
-              disabled={pending}
+              loading={pending}
               onClick={() => {
                 if (confirm(t.journal.reverseConfirm))
                   run(() => reverseJournalEntryAction(entryId, reversalDate), (id) => router.push(`/journal/${id}`));

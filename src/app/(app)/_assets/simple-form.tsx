@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/select";
 import type { ActionResult } from "@/services/errors";
 import { actionErrorText } from "@/lib/action-error";
+import { toast } from "@/components/ui/toast";
 
 export type Field =
   | { name: string; label: string; type?: "text" | "date" | "number" | "month"; ltr?: boolean }
@@ -41,7 +42,7 @@ export function SimpleForm({
       onSubmit={handleSubmit((v) => start(async () => {
         setError(null);
         const r = await action(v);
-        if (r.ok) { if (onDone) router.push(onDone); else { reset(initial); router.refresh(); } }
+        if (r.ok) { toast("تم الحفظ بنجاح"); if (onDone) router.push(onDone); else { reset(initial); router.refresh(); } }
         else setError(actionErrorText(errors, r));
       }))}
     >
@@ -50,15 +51,15 @@ export function SimpleForm({
         "checkbox" in f ? (
           <label key={f.name} className="flex items-center gap-2 self-end text-sm"><input type="checkbox" className="size-4" {...register(f.name)} />{f.label}</label>
         ) : "options" in f ? (
-          <div key={f.name} className="space-y-1.5"><Label htmlFor={f.name}>{f.label}</Label>
+          <div key={f.name} className="field-group space-y-1.5"><Label htmlFor={f.name}>{f.label}</Label>
             <NativeSelect id={f.name} {...register(f.name)}><option value="">{f.optional ? "—" : ""}</option>{f.options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}</NativeSelect></div>
         ) : (
-          <div key={f.name} className="space-y-1.5"><Label htmlFor={f.name}>{f.label}</Label>
+          <div key={f.name} className="field-group space-y-1.5"><Label htmlFor={f.name}>{f.label}</Label>
             <Input id={f.name} type={f.type === "number" ? "text" : (f.type ?? "text")} inputMode={f.type === "number" ? "decimal" : undefined}
               dir={f.ltr || f.type ? "ltr" : undefined} {...register(f.name)} /></div>
         ),
       )}
-      <div className="md:col-span-full"><Button type="submit" disabled={pending}>{submitLabel}</Button></div>
+      <div className="md:col-span-full"><Button type="submit" loading={pending}>{submitLabel}</Button></div>
     </form>
   );
 }

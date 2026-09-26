@@ -13,6 +13,7 @@ import { ZERO, formatMoney, isValidAmount, toMoney } from "@/lib/accounting/mone
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { postPayrollAction } from "../../_payables/actions";
 import { actionErrorText } from "@/lib/action-error";
+import { toast } from "@/components/ui/toast";
 
 const empty = { employee_name: "", employee_code: "", department_id: "", basic: "", allowances: "", deductions: "", insurance_employee: "", insurance_employer: "" };
 const nums = ["basic", "allowances", "deductions", "insurance_employee", "insurance_employer"] as const;
@@ -35,16 +36,16 @@ export function PayrollForm({ t, locale, month, departments }: {
   return (
     <form className="space-y-5" onSubmit={handleSubmit((v) => start(async () => {
       const r = await postPayrollAction(v);
-      if (r.ok) router.push("/payroll"); else setError(actionErrorText(t.errors, r));
+      if (r.ok) { toast("تم ترحيل مسيّر الرواتب"); router.push("/payroll"); } else setError(actionErrorText(t.errors, r));
     }))}>
       {error && <Alert variant="destructive">{error}</Alert>}
       <div className="grid max-w-md gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5"><Label htmlFor="pm">{t.payables.month}</Label><Input id="pm" type="month" dir="ltr" {...register("period_month")} /></div>
-        <div className="space-y-1.5"><Label htmlFor="pd">{t.common.date}</Label><Input id="pd" type="date" dir="ltr" {...register("posting_date")} /></div>
+        <div className="field-group space-y-1.5"><Label htmlFor="pm">{t.payables.month}</Label><Input id="pm" type="month" dir="ltr" {...register("period_month")} /></div>
+        <div className="field-group space-y-1.5"><Label htmlFor="pd">{t.common.date}</Label><Input id="pd" type="date" dir="ltr" {...register("posting_date")} /></div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="text-muted-foreground"><tr>
+          <thead className="border-b-2 border-thead-line bg-thead font-bold text-thead-text"><tr>
             <th className="p-1 text-start">{t.payables.employee}</th><th className="p-1 text-start">{t.folio.department}</th>
             {nums.map((n) => <th key={n} className="p-1 text-start">{labels[n]}</th>)}<th />
           </tr></thead>
@@ -64,7 +65,7 @@ export function PayrollForm({ t, locale, month, departments }: {
         <Button type="button" variant="outline" size="sm" onClick={() => append(empty)}><Plus />{t.journal.addLine}</Button>
         <span className="text-sm">{t.payables.net}: <strong className="num">{formatMoney(net, { locale })}</strong></span>
       </div>
-      <Button type="submit" disabled={pending}>{t.journal.post}</Button>
+      <Button type="submit" loading={pending}>{t.journal.post}</Button>
     </form>
   );
 }

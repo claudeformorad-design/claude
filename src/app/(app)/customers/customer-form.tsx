@@ -12,6 +12,7 @@ import type { CustomerFormInput } from "@/lib/validation/revenue";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { saveCustomerAction } from "./actions";
 import { actionErrorText } from "@/lib/action-error";
+import { toast } from "@/components/ui/toast";
 
 export function CustomerForm({ t, initial }: { t: Pick<Dictionary, "customers" | "common" | "errors">; initial: CustomerFormInput }) {
   const router = useRouter();
@@ -23,12 +24,12 @@ export function CustomerForm({ t, initial }: { t: Pick<Dictionary, "customers" |
     start(async () => {
       setError(null);
       const r = await saveCustomerAction(v);
-      if (r.ok) router.push("/customers");
+      if (r.ok) { toast("تم حفظ العميل"); router.push("/customers"); }
       else setError(actionErrorText(t.errors, r));
     });
 
   const f = (name: keyof CustomerFormInput, label: string, props: React.ComponentProps<"input"> = {}) => (
-    <div className="space-y-1.5"><Label htmlFor={name}>{label}</Label><Input id={name} {...register(name)} {...props} /></div>
+    <div className="field-group space-y-1.5"><Label htmlFor={name}>{label}</Label><Input id={name} {...register(name)} {...props} /></div>
   );
 
   return (
@@ -36,7 +37,7 @@ export function CustomerForm({ t, initial }: { t: Pick<Dictionary, "customers" |
       {error && <Alert variant="destructive">{error}</Alert>}
       <div className="grid grid-cols-2 gap-3">
         {f("code", t.customers.code, { dir: "ltr" })}
-        <div className="space-y-1.5">
+        <div className="field-group space-y-1.5">
           <Label htmlFor="customer_type">{t.customers.type}</Label>
           <NativeSelect id="customer_type" {...register("customer_type")}>
             {(["company", "individual", "travel_agent", "ota", "government"] as const).map((k) => <option key={k} value={k}>{t.customers.types[k]}</option>)}
@@ -59,7 +60,7 @@ export function CustomerForm({ t, initial }: { t: Pick<Dictionary, "customers" |
       </div>
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-4" {...register("is_active")} />{t.common.active}</label>
       <div className="flex gap-2">
-        <Button type="submit" disabled={pending}>{t.common.save}</Button>
+        <Button type="submit" loading={pending}>{t.common.save}</Button>
         <Button type="button" variant="outline" onClick={() => router.push("/customers")}>{t.common.cancel}</Button>
       </div>
     </form>

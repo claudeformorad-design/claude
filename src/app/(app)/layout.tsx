@@ -5,6 +5,7 @@ import { PointerEffects } from "@/components/layout/pointer-effects";
 import { RouteProgress } from "@/components/layout/route-progress";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopBar } from "@/components/layout/top-bar";
+import { Toaster } from "@/components/ui/toast";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -29,6 +30,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <RouteProgress />
       </Suspense>
       <PointerEffects />
+      <Toaster />
       <div className="flex min-w-0 flex-1 overflow-hidden">
         <Sidebar
           labels={t.nav}

@@ -12,11 +12,11 @@ export default function AppError({ error, reset }: { error: Error & { digest?: s
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
-      <p className="text-[17px] font-semibold text-ink">تعذّر تحميل هذه الصفحة</p>
-      <p className="max-w-md text-[13px] leading-relaxed text-muted-foreground">
+      <p className="text-[18px] font-semibold text-ink">تعذّر تحميل هذه الصفحة</p>
+      <p className="max-w-md text-[14px] leading-relaxed text-muted-foreground">
         حدث خطأ أثناء قراءة البيانات. أعد المحاولة، وإن تكرر فارجع إلى لوحة التحكم.
       </p>
-      {error.digest && <p className="num text-[11px] text-slate-400">{error.digest}</p>}
+      {error.digest && <p className="num text-[12px] text-slate-400">{error.digest}</p>}
       <div className="mt-2 flex gap-2">
         <Button onClick={reset}>إعادة المحاولة</Button>
         <Button asChild variant="outline">

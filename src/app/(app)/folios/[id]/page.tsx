@@ -58,9 +58,9 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
       />
 
       <StatGrid>
-        <Stat icon={Wallet} tone="ink" label={t.folio.balance} value={<><Money value={detail.balance} locale={locale} /> <span className="text-[12px] font-normal text-slate-500">{ctx.hotel.base_currency}</span></>} />
+        <Stat icon={Wallet} tone="ink" label={t.folio.balance} value={<><Money value={detail.balance} locale={locale} /> <span className="text-[13px] font-normal text-slate-500">{ctx.hotel.base_currency}</span></>} />
         <Stat icon={HandCoins} tone="teal" label={t.folio.deposits} value={<Money value={detail.deposits} locale={locale} />} />
-        <Stat icon={CalendarRange} tone="clay" label="الإقامة" value={<span className="num text-[17px]">{folio.arrival_date ?? "—"} ← {folio.departure_date ?? "—"}</span>} hint={t.folio.types[folio.folio_type]} />
+        <Stat icon={CalendarRange} tone="clay" label="الإقامة" value={<span className="num text-[18px]">{folio.arrival_date ?? "—"} ← {folio.departure_date ?? "—"}</span>} hint={t.folio.types[folio.folio_type]} />
         <Stat icon={ListOrdered} tone="neutral" label={t.folio.transactions} value={<span className="num">{transactions.length}</span>} hint={folio.room_number ? `${t.folio.room} ${folio.room_number}` : undefined} />
       </StatGrid>
 

@@ -11,6 +11,7 @@ import { NativeSelect } from "@/components/ui/select";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { type RevenueSettingKind, saveRevenueSettingAction } from "./actions";
 import { actionErrorText } from "@/lib/action-error";
+import { toast } from "@/components/ui/toast";
 
 type Option = { id: string; label: string };
 
@@ -36,15 +37,15 @@ export function RevenueSettingForm({
       setError(null);
       const payload = { ...v, tax_rate_ids: kind === "charge" ? ((v.tax_rate_ids as string[] | false) || []) : undefined };
       const r = await saveRevenueSettingAction(kind, payload);
-      if (r.ok) router.push("/settings/revenue");
+      if (r.ok) { toast("تم الحفظ"); router.push("/settings/revenue"); }
       else setError(actionErrorText(t.errors, r));
     });
 
   const text = (name: string, label: string, props: React.ComponentProps<"input"> = {}) => (
-    <div className="space-y-1.5"><Label htmlFor={name}>{label}</Label><Input id={name} {...register(name)} {...props} /></div>
+    <div className="field-group space-y-1.5"><Label htmlFor={name}>{label}</Label><Input id={name} {...register(name)} {...props} /></div>
   );
   const select = (name: string, label: string, options: Option[]) => (
-    <div className="space-y-1.5">
+    <div className="field-group space-y-1.5">
       <Label htmlFor={name}>{label}</Label>
       <NativeSelect id={name} {...register(name)}>
         <option value="">—</option>
@@ -94,7 +95,7 @@ export function RevenueSettingForm({
       )}
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-4" {...register("is_active")} />{t.common.active}</label>
       <div className="flex gap-2">
-        <Button type="submit" disabled={pending}>{t.common.save}</Button>
+        <Button type="submit" loading={pending}>{t.common.save}</Button>
         <Button type="button" variant="outline" onClick={() => router.push("/settings/revenue")}>{t.common.cancel}</Button>
       </div>
     </form>

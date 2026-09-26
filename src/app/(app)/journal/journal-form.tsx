@@ -21,6 +21,7 @@ import {
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { saveJournalEntryAction } from "./actions";
 import { actionErrorText } from "@/lib/action-error";
+import { toast } from "@/components/ui/toast";
 
 export interface JournalFormProps {
   t: Pick<Dictionary, "journal" | "common" | "errors">;
@@ -67,7 +68,7 @@ export function JournalForm({
       setServerError(null);
       startTransition(async () => {
         const result = await saveJournalEntryAction(values, { entryId, post });
-        if (result.ok) router.push(`/journal/${result.data}`);
+        if (result.ok) { toast("تم حفظ القيد"); router.push(`/journal/${result.data}`); }
         else setServerError(actionErrorText(t.errors, result));
       });
     });
@@ -77,17 +78,17 @@ export function JournalForm({
       {serverError && <Alert variant="destructive">{serverError}</Alert>}
 
       <div className="grid gap-4 md:grid-cols-4">
-        <div className="space-y-1.5">
+        <div className="field-group space-y-1.5">
           <Label htmlFor="entry_date">{t.journal.entryDate}</Label>
           <Input id="entry_date" type="date" dir="ltr" {...register("entry_date")} aria-invalid={!!formState.errors.entry_date} />
         </div>
-        <div className="space-y-1.5">
+        <div className="field-group space-y-1.5">
           <Label htmlFor="reference">
             {t.common.reference} <span className="text-xs text-muted-foreground">({t.common.optional})</span>
           </Label>
           <Input id="reference" {...register("reference")} />
         </div>
-        <div className="space-y-1.5">
+        <div className="field-group space-y-1.5">
           <Label htmlFor="currency_code">{t.common.currency}</Label>
           <NativeSelect
             id="currency_code"
@@ -100,7 +101,7 @@ export function JournalForm({
             ))}
           </NativeSelect>
         </div>
-        <div className="space-y-1.5">
+        <div className="field-group space-y-1.5">
           <Label htmlFor="exchange_rate" title={t.journal.exchangeRateHint}>{t.journal.exchangeRate}</Label>
           <Input
             id="exchange_rate"
@@ -111,7 +112,7 @@ export function JournalForm({
             {...register("exchange_rate")}
           />
         </div>
-        <div className="space-y-1.5 md:col-span-4">
+        <div className="field-group space-y-1.5 md:col-span-4">
           <Label htmlFor="description">{t.common.description}</Label>
           <Input id="description" {...register("description")} aria-invalid={!!formState.errors.description} />
         </div>
@@ -119,7 +120,7 @@ export function JournalForm({
 
       <div className="overflow-x-auto rounded-xl border border-line">
         <table className="w-full text-sm">
-          <thead className="bg-muted/60 text-muted-foreground">
+          <thead className="border-b-2 border-thead-line bg-thead font-bold text-thead-text">
             <tr>
               <th className="w-10 px-2 py-2 text-start">#</th>
               <th className="min-w-64 px-2 py-2 text-start">{t.journal.account}</th>
@@ -251,11 +252,11 @@ export function JournalForm({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" disabled={pending} onClick={submit(false)}>
+        <Button type="button" variant="outline" loading={pending} onClick={submit(false)}>
           {t.common.saveDraft}
         </Button>
         {canPost && (
-          <Button type="button" disabled={pending || !live.valid} onClick={submit(true)}>
+          <Button type="button" loading={pending} disabled={pending || !live.valid} onClick={submit(true)}>
             {t.common.saveAndPost}
           </Button>
         )}

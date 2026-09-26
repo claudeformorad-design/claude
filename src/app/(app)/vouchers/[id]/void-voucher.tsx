@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { voidVoucherAction } from "../actions";
 import { actionErrorText } from "@/lib/action-error";
+import { toast } from "@/components/ui/toast";
 
 export function VoidVoucher({ id, t }: { id: string; t: Pick<Dictionary, "vouchers" | "errors"> }) {
   const router = useRouter();
@@ -21,11 +22,11 @@ export function VoidVoucher({ id, t }: { id: string; t: Pick<Dictionary, "vouche
         <Input className="w-80" placeholder={t.vouchers.voidReason} value={reason} onChange={(e) => setReason(e.target.value)} />
         <Button
           variant="destructive"
-          disabled={pending || !reason.trim()}
+          loading={pending} disabled={pending || !reason.trim()}
           onClick={() =>
             start(async () => {
               const r = await voidVoucherAction(id, reason);
-              if (r.ok) router.refresh();
+              if (r.ok) { toast("تم إلغاء السند"); router.refresh(); }
               else setError(actionErrorText(t.errors, r));
             })
           }
