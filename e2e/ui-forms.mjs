@@ -3,7 +3,8 @@ import { chromium } from "playwright";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3100";
 const SHOTS = process.env.SHOTS ?? "/tmp";
-const browser = await chromium.launch({ executablePath: process.env.CHROME });
+// HOST_RULES يحاكي فتح النظام من نطاق معاينة (مثل Google AI Studio): "MAP preview.run.app 127.0.0.1"
+const browser = await chromium.launch({ executablePath: process.env.CHROME, args: process.env.HOST_RULES ? [`--host-resolver-rules=${process.env.HOST_RULES}`, "--no-proxy-server"] : [] });
 const page = await browser.newPage({ locale: "ar-SA", viewport: { width: 1400, height: 900 } });
 const problems = [];
 page.on("pageerror", (e) => problems.push(`pageerror: ${e.message.slice(0, 200)}`));

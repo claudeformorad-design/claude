@@ -232,6 +232,24 @@ tbody.rows-animate > tr {
 }
 
 
+/* ---- دخول الصفحة (CSS فقط؛ لا يُخفي شيئًا إن لم يعمل JavaScript) ---- */
+.page-enter {
+  animation: page-enter 0.75s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(18px); filter: blur(8px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+/* ---- كنس أجزاء الدائرة ---- */
+.donut-seg {
+  transition: stroke-width 0.2s ease;
+  animation: donut-sweep 1.1s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+@keyframes donut-sweep {
+  from { stroke-dasharray: 0 var(--circ); }
+}
+
 /* ---- بقعة ضوء تتبع المؤشر (تُضبط --mx/--my من PointerEffects) ---- */
 .spotlight {
   background-image: radial-gradient(520px circle at var(--mx, -1000px) var(--my, -1000px), rgba(47, 124, 246, 0.08), transparent 42%);

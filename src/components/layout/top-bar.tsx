@@ -61,9 +61,9 @@ export function TopBar({
         {current && current.href !== "/" && (
           <>
             <span className="text-slate-300">/</span>
-            <motion.span key={current.href} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="truncate font-medium text-ink">
+            <span key={current.href} className="animate-fade truncate font-medium text-ink">
               {current.label}
-            </motion.span>
+            </span>
           </>
         )}
       </div>

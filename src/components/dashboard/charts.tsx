@@ -212,24 +212,24 @@ export function DonutChart({
             const before = items.slice(0, i).reduce((acc, x) => acc + x.value, 0) / total;
             const len = Math.max((s.value / total) * circ - gap, 0.5);
             return (
-              <motion.circle
+              <circle
                 key={s.label}
                 cx={c} cy={c} r={r} fill="none" stroke={s.color} strokeLinecap={items.length > 1 ? "round" : "butt"}
+                strokeDasharray={`${len} ${circ}`}
                 strokeDashoffset={-before * circ}
-                initial={{ strokeDasharray: `0 ${circ}`, strokeWidth: sw }}
-                animate={{ strokeDasharray: `${len} ${circ}`, strokeWidth: active === i ? sw + 6 : sw }}
-                transition={{ strokeDasharray: { duration: 1.1, delay: 0.15 + i * 0.12, ease: [0.16, 1, 0.3, 1] }, strokeWidth: { duration: 0.2 } }}
+                strokeWidth={active === i ? sw + 6 : sw}
                 onMouseEnter={() => setActive(i)} onMouseLeave={() => setActive(null)}
-                className="cursor-pointer"
+                className="donut-seg cursor-pointer"
+                style={{ ["--circ" as string]: circ, animationDelay: `${0.15 + i * 0.12}s` }}
               />
             );
           })}
         </svg>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
           <span className="max-w-24 truncate text-[11px] text-muted-foreground">{a ? a.label : centerTitle}</span>
-          <motion.span key={a?.label ?? "total"} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="num text-lg font-semibold text-ink">
+          <span key={a?.label ?? "total"} className="animate-pop num text-lg font-semibold text-ink">
             {a ? `${fmt((a.value / total) * 100, 1)}%` : centerValue}
-          </motion.span>
+          </span>
         </div>
       </div>
       <div className="flex w-full flex-wrap justify-center gap-x-4 gap-y-2 text-[12px]">

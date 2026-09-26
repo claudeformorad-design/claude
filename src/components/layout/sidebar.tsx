@@ -42,10 +42,10 @@ export function Sidebar({ labels, hotelName, initialCollapsed }: { labels: NavLa
           </motion.div>
         </div>
         {!collapsed && (
-          <motion.div initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} className="min-w-0">
+          <div className="animate-fade min-w-0">
             <p className="truncate text-[15px] font-semibold text-ink">{hotelName}</p>
             <p className="text-[11px] text-muted-foreground">النظام المحاسبي الفندقي</p>
-          </motion.div>
+          </div>
         )}
       </div>
 
