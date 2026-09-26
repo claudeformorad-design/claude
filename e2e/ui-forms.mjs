@@ -27,7 +27,17 @@ const noFormError = async () => {
   const alerts = await page.locator("[role=alert]").filter({ hasText: /تحقق|خطأ|تجاوز|صلاحية|غير/ }).allTextContents();
   if (alerts.length) throw new Error("form error: " + alerts.join(" | "));
 };
-const bodyHas = async (...texts) => { const b = await page.locator("body").innerText(); for (const t of texts) if (!b.includes(t)) throw new Error(`missing "${t}"`); };
+// ينتظر ظهور النصوص (حتى 10 ثوانٍ): بعد إعادة التوجيه من Server Action يتغيّر العنوان قبل وصول المحتوى
+const bodyHas = async (...texts) => {
+  const until = Date.now() + 10000;
+  for (;;) {
+    const b = await page.locator("body").innerText();
+    const missing = texts.find((t) => !b.includes(t));
+    if (missing === undefined) return;
+    if (Date.now() > until) throw new Error(`missing "${missing}"`);
+    await page.waitForTimeout(200);
+  }
+};
 
 // مستخدم وفندق جديدان
 const email = `forms-${Date.now()}@test.dev`;

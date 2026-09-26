@@ -13,6 +13,7 @@
     "test:watch": "vitest",
     "test:db": "bash supabase/tests/run-local.sh",
     "test:db:pglite": "node supabase/tests/run-pglite.mjs",
+    "test:perf": "bash supabase/perf/run.sh",
     "e2e:api": "node e2e/api-security.mjs",
     "e2e:ui": "node e2e/ui-walkthrough.mjs && node e2e/ui-forms.mjs"
   },
