@@ -34,7 +34,7 @@ export default async function PeriodsPage() {
         {(years.data ?? []).map((y) => (
           <Card key={y.id} className="overflow-hidden">
             <CardHeader className="flex-row items-center justify-between">
-              <CardTitle>{a.fiscalYear} {y.name} <span className="num text-[14px] font-normal text-slate-500">{y.start_date} → {y.end_date}</span></CardTitle>
+              <CardTitle>{a.fiscalYear} {y.name} <span className="num text-[15px] font-normal text-slate-500">{y.start_date} → {y.end_date}</span></CardTitle>
               <div className="flex items-center gap-2">
                 <Badge variant={y.status === "open" ? "success" : "secondary"}>{y.status === "open" ? t.folio.statuses.open : t.folio.statuses.closed}</Badge>
                 {can && y.status === "open" && <PeriodButton op="closeYear" id={y.id} label={a.closeYear} confirmText={a.closeYearConfirm} variant="destructive" errorLabels={errs} />}

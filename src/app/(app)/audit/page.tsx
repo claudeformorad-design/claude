@@ -55,7 +55,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
               <TableRow key={r.id}>
                 <TableCell className="num whitespace-nowrap">{formatDateTime(r.occurred_at, ctx.hotel.timezone, true)}</TableCell>
                 <TableCell>{r.actor_name ? <EntityCell name={r.actor_name} /> : <span className="text-slate-400">النظام</span>}</TableCell>
-                <TableCell><span className="font-medium">{TABLE_AR[r.table_name ?? ""] ?? r.table_name}</span>{TABLE_AR[r.table_name ?? ""] && <span className="num block text-[12px] text-slate-500">{r.table_name}</span>}</TableCell>
+                <TableCell><span className="font-medium">{TABLE_AR[r.table_name ?? ""] ?? r.table_name}</span>{TABLE_AR[r.table_name ?? ""] && <span className="num block text-[13px] text-slate-500">{r.table_name}</span>}</TableCell>
                 <TableCell><Badge variant={r.action === "DELETE" ? "destructive" : r.action === "INSERT" ? "success" : "warning"}>{ACTION_AR[r.action ?? ""] ?? r.action}</Badge></TableCell>
                 <TableCell className="max-w-md">
                   {r.action === "UPDATE" ? (

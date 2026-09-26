@@ -116,7 +116,7 @@ export function VoucherForm({
       </div>
 
       {isCustomerReceipt && customerId && (
-        <div className="space-y-2 rounded-xl bg-panel p-4">
+        <div className="space-y-2 rounded-lg bg-panel p-4">
           <div className="flex items-center justify-between">
             <p className="font-medium">{t.vouchers.allocations}</p>
             <Button type="button" variant="outline" size="sm" onClick={auto}>{t.vouchers.autoAllocate}</Button>

@@ -121,7 +121,7 @@ export default async function JournalPage({
                 <TableCell>
                   <Badge variant="outline">{t.journal.sources[e.source]}</Badge>
                 </TableCell>
-                <TableCell className="text-end font-semibold">
+                <TableCell className="whitespace-nowrap text-end font-semibold">
                   <Money value={e.total_debit} locale={locale} /> <span className="text-xs font-normal text-slate-500">{e.currency_code}</span>
                 </TableCell>
                 <TableCell>

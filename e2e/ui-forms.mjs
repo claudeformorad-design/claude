@@ -51,6 +51,7 @@ if (process.env.LOCAL) {
   await page.getByRole("button", { name: "إنشاء الحساب" }).click();
   await page.waitForURL(/onboarding/);
 } await page.fill("#name_ar", "فندق النماذج");
+await page.selectOption("#country_code", "SA"); await page.selectOption("#base_currency", "SAR"); await page.selectOption("#fiscal_year_start_month", "1"); await page.selectOption("#timezone", "Asia/Riyadh");
 await page.getByRole("button", { name: "إنشاء الفندق" }).click();
 await page.waitForURL((u) => u.pathname === "/");
 

@@ -19,7 +19,7 @@ export function PageHeader({
         <SectionIcon />
         <div className="min-w-0 space-y-1">
           <h1 className="type-display text-[30px] text-ink">{title}</h1>
-          {description && <p className="type-body max-w-3xl text-[14.5px] text-slate-600">{description}</p>}
+          {description && <p className="type-body max-w-3xl text-[15.5px] text-slate-600">{description}</p>}
         </div>
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}

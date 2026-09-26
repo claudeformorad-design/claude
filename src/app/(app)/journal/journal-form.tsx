@@ -118,7 +118,7 @@ export function JournalForm({
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-line">
+      <div className="overflow-x-auto rounded-lg border border-line">
         <table className="w-full text-sm">
           <thead className="border-b-2 border-thead-line bg-thead font-bold text-thead-text">
             <tr>

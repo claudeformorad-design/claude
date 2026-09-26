@@ -18,11 +18,11 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
-      <div className="animate-pop mb-4 flex size-12 items-center justify-center rounded-xl bg-subtle text-slate-500">
+      <div className="animate-pop mb-4 flex size-12 items-center justify-center rounded-lg bg-subtle text-slate-500">
         <Icon className="size-6 stroke-[1.5]" />
       </div>
-      <h3 className="text-[16px] font-semibold text-ink">{title}</h3>
-      <p className="mt-1 max-w-md text-[14px] leading-relaxed text-muted-foreground">{description}</p>
+      <h3 className="text-[17px] font-semibold text-ink">{title}</h3>
+      <p className="mt-1 max-w-md text-[15px] leading-relaxed text-muted-foreground">{description}</p>
       {actionHref && actionLabel && (
         <Button asChild className="mt-5" size="sm" variant="outline">
           <Link href={actionHref}>{actionLabel}</Link>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import localFont from "next/font/local";
 import { Inter } from "next/font/google";
 import { directionOf } from "@/i18n/config";
@@ -34,8 +35,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { locale } = await getI18n();
+  const density = (await cookies()).get("table_density")?.value === "compact" ? "compact" : "comfortable";
   return (
-    <html lang={locale} dir={directionOf(locale)} className={`${thmanyah.variable} ${digits.variable}`}>
+    <html lang={locale} dir={directionOf(locale)} data-density={density} className={`${thmanyah.variable} ${digits.variable}`}>
       <body className="min-h-screen font-sans">
         {children}
       </body>

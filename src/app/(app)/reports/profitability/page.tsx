@@ -72,8 +72,8 @@ export default async function ProfitabilityPage({ searchParams }: { searchParams
                 <TableCell>
                   <span className="font-medium">{r.departmentId ? deptName.get(r.departmentId) : p.unassigned}</span>
                   {total.revenue.gt(0) && r.revenue.gt(0) && (
-                    <span className="mt-1.5 block h-1.5 w-full max-w-40 overflow-hidden rounded-full bg-subtle">
-                      <span className="block h-full rounded-full bg-accent1" style={{ width: `${Math.min(100, r.revenue.div(total.revenue).times(100).toNumber())}%` }} />
+                    <span className="mt-1.5 block h-1.5 w-full max-w-40 overflow-hidden rounded-sm bg-subtle">
+                      <span className="block h-full rounded-sm bg-accent1" style={{ width: `${Math.min(100, r.revenue.div(total.revenue).times(100).toNumber())}%` }} />
                     </span>
                   )}
                 </TableCell>{cells(r)}

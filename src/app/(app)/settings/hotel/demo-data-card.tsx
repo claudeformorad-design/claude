@@ -25,17 +25,17 @@ export function DemoDataCard({ active, errors }: { active: boolean; errors: Reco
   return (
     <div className="surface flex flex-wrap items-center justify-between gap-4 p-6">
       <div className="flex min-w-0 items-start gap-4">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent1-tint text-accent1">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent1-tint text-accent1">
           <Sparkles className="size-5 stroke-[1.75]" />
         </span>
         <div className="space-y-1">
-          <h3 className="text-[16px] font-semibold text-ink">بيانات تجريبية مؤقتة</h3>
-          <p className="max-w-xl text-[14px] leading-relaxed text-slate-600">
+          <h3 className="text-[17px] font-semibold text-ink">بيانات تجريبية مؤقتة</h3>
+          <p className="max-w-xl text-[15px] leading-relaxed text-slate-600">
             {active
               ? "البيانات التجريبية محمّلة الآن. الحذف يعيد النظام كما كان قبل تحميلها تمامًا — وأي عملية أجريتها بعد التحميل ستُحذف معها."
               : "تولّد ستة أشهر من النشاط (إقامات، مطعم، مناسبات، مشتريات، رواتب) عبر نفس القيود المحاسبية الحقيقية، لتعاين لوحة التحكم والتقارير. تُحذف بالكامل متى شئت."}
           </p>
-          {error && <p className="text-[13px] text-urgent">{error}</p>}
+          {error && <p className="text-[14px] text-urgent">{error}</p>}
         </div>
       </div>
       {active ? (

@@ -8,7 +8,7 @@ import { useSection } from "@/components/layout/use-section";
  */
 export default function Template({ children }: { children: React.ReactNode }) {
   const section = useSection();
-  const color = section && section.item.href !== "/" ? section.group.color : "#2e90fa";
+  const color = section && section.item.href !== "/" ? section.group.color : "#2483e1";
   return (
     <div className="page-enter stagger" style={{ ["--section" as string]: color }}>
       {children}

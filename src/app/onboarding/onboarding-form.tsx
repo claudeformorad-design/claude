@@ -9,6 +9,21 @@ import { NativeSelect } from "@/components/ui/select";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { createHotelAction } from "./actions";
 
+/** لا توجد قيم افتراضية: كل حقل يُختار صراحة */
+const COUNTRIES: [string, string][] = [
+  ["SA", "السعودية"], ["YE", "اليمن"], ["AE", "الإمارات"], ["KW", "الكويت"], ["QA", "قطر"], ["BH", "البحرين"], ["OM", "عُمان"],
+  ["JO", "الأردن"], ["EG", "مصر"], ["MA", "المغرب"], ["IQ", "العراق"], ["LB", "لبنان"], ["TN", "تونس"], ["DZ", "الجزائر"],
+  ["SD", "السودان"], ["LY", "ليبيا"], ["SY", "سوريا"], ["PS", "فلسطين"], ["TR", "تركيا"], ["GB", "المملكة المتحدة"], ["US", "الولايات المتحدة"],
+];
+const TIMEZONES: [string, string][] = [
+  ["Asia/Riyadh", "الرياض (+03:00)"], ["Asia/Aden", "عدن / صنعاء (+03:00)"], ["Asia/Dubai", "دبي (+04:00)"], ["Asia/Kuwait", "الكويت (+03:00)"],
+  ["Asia/Qatar", "الدوحة (+03:00)"], ["Asia/Bahrain", "المنامة (+03:00)"], ["Asia/Muscat", "مسقط (+04:00)"], ["Asia/Amman", "عمّان (+03:00)"],
+  ["Asia/Baghdad", "بغداد (+03:00)"], ["Asia/Beirut", "بيروت"], ["Africa/Cairo", "القاهرة"], ["Africa/Casablanca", "الدار البيضاء"],
+  ["Africa/Tunis", "تونس (+01:00)"], ["Africa/Algiers", "الجزائر (+01:00)"], ["Africa/Khartoum", "الخرطوم (+02:00)"], ["Africa/Tripoli", "طرابلس (+02:00)"],
+  ["Asia/Damascus", "دمشق (+03:00)"], ["Asia/Gaza", "غزة"], ["Europe/Istanbul", "إسطنبول (+03:00)"], ["Europe/London", "لندن"],
+  ["America/New_York", "نيويورك"], ["UTC", "التوقيت العالمي UTC"],
+];
+
 export function OnboardingForm({
   t,
   currencies,
@@ -36,11 +51,15 @@ export function OnboardingForm({
       </div>
       <div className="field-group space-y-2">
         <Label htmlFor="country_code">{t.onboarding.country}</Label>
-        <Input id="country_code" name="country_code" defaultValue="SA" maxLength={2} dir="ltr" required />
+        <NativeSelect id="country_code" name="country_code" defaultValue="" required>
+          <option value="" disabled>اختر الدولة</option>
+          {COUNTRIES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+        </NativeSelect>
       </div>
       <div className="field-group space-y-2">
         <Label htmlFor="base_currency">{t.onboarding.baseCurrency}</Label>
-        <NativeSelect id="base_currency" name="base_currency" defaultValue="SAR">
+        <NativeSelect id="base_currency" name="base_currency" defaultValue="" required>
+          <option value="" disabled>اختر العملة</option>
           {currencies.map((c) => (
             <option key={c.code} value={c.code}>
               {c.code} — {c.name}
@@ -50,7 +69,8 @@ export function OnboardingForm({
       </div>
       <div className="field-group space-y-2">
         <Label htmlFor="fiscal_year_start_month">{t.onboarding.fiscalStartMonth}</Label>
-        <NativeSelect id="fiscal_year_start_month" name="fiscal_year_start_month" defaultValue="1">
+        <NativeSelect id="fiscal_year_start_month" name="fiscal_year_start_month" defaultValue="" required>
+          <option value="" disabled>اختر الشهر</option>
           {t.months.map((m, i) => (
             <option key={m} value={i + 1}>
               {m}
@@ -60,7 +80,10 @@ export function OnboardingForm({
       </div>
       <div className="field-group space-y-2">
         <Label htmlFor="timezone">{t.onboarding.timezone}</Label>
-        <Input id="timezone" name="timezone" defaultValue="Asia/Riyadh" dir="ltr" required lang={locale} />
+        <NativeSelect id="timezone" name="timezone" defaultValue="" required lang={locale}>
+          <option value="" disabled>اختر المنطقة الزمنية</option>
+          {TIMEZONES.map(([tz, name]) => <option key={tz} value={tz}>{name}</option>)}
+        </NativeSelect>
       </div>
       <Button type="submit" className="sm:col-span-2" loading={pending}>
         {t.onboarding.submit}

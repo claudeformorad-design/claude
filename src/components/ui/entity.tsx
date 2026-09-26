@@ -25,7 +25,7 @@ export function initials(name: string): string {
 
 export function Avatar({ name, className }: { name: string; className?: string }) {
   return (
-    <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold", tintOf(name), className)} aria-hidden>
+    <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-md text-[14px] font-semibold", tintOf(name), className)} aria-hidden>
       {initials(name)}
     </span>
   );
@@ -38,7 +38,7 @@ export function EntityCell({ name, sub, href }: { name: string; sub?: React.Reac
       <Avatar name={name} />
       <span className="min-w-0 leading-tight">
         <span className="block truncate font-medium text-ink group-hover:underline">{name}</span>
-        {sub && <span className="block truncate text-[13px] text-slate-500">{sub}</span>}
+        {sub && <span className="block truncate text-[14px] text-slate-500">{sub}</span>}
       </span>
     </span>
   );

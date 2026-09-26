@@ -12,104 +12,111 @@
 @theme inline {
   --font-sans: var(--font-thmanyah), ui-sans-serif, system-ui, sans-serif;
 
-  /* المحايدات */
-  --color-ink: #111111;
-  --color-ink-soft: #2b2b2a;
-  --color-frame: #e7dfc9;
-  --color-content: #f7f7f6;
-  --color-sidebar: #ffffff;
-  --color-panel: #fafaf9;
+  /* ===== لوحة الألوان (نمط Notion / Ramp — قيم مقروءة من البكسلات) =====
+     محايدات دافئة، فصل بين المناطق بفرق إضاءة طفيف + خط رفيع، ولون فعل واحد أزرق */
+  --color-ink: #312f2e;          /* نص أساسي */
+  --color-ink-soft: #3a3a3a;     /* نص ثانوي غامق */
+  --color-frame: #f7f7f5;
+  --color-content: #ffffff;      /* خلفية المحتوى */
+  --color-sidebar: #f7f7f5;      /* الشريط الجانبي */
+  --color-panel: #fbf9f3;        /* خلفية الأعمدة/المناطق الفرعية */
   --color-tile: #ffffff;
-  --color-line: #ecece9;
-  --color-line-strong: #deded9;
-  --color-subtle: #f2f2f0;
+  --color-line: #eceae3;         /* حدود رفيعة شبه غير مرئية */
+  --color-line-strong: #dcd9d0;
+  --color-subtle: #f1f0ec;
   --color-canvas: var(--color-content);
-  /* رأس الجداول: بيج دافئ من هوية النظام، مميز بوضوح عن جسم الجدول */
-  --color-thead: #f1ebdc;
-  --color-thead-line: #e2d7bf;
-  --color-thead-text: #2b2a26;
+  /* رأس الجداول: داكن بنص أبيض (نمط الجدول المعتمد) */
+  --color-thead: #1f1d1b;
+  --color-thead-line: #1f1d1b;
+  --color-thead-text: #ffffff;
+  --color-group-row: #efeeea;    /* صفوف المجموعات الرئيسية */
 
-  /* الرماديات دافئة (تعيد تعريف slate في كل النظام) */
-  --color-slate-50: #fafaf9;
-  --color-slate-100: #f2f2f0;
-  --color-slate-200: #e6e6e2;
-  --color-slate-300: #cfcfca;
-  --color-slate-400: #8c8c86;
-  --color-slate-500: #63635d;
-  --color-slate-600: #4b4b47;
-  --color-slate-700: #333331;
-  --color-slate-800: #2b2b2a;
-  --color-slate-900: #111111;
+  /* الرماديات دافئة (تعيد تعريف slate)، بتباين أعلى للنصوص الثانوية */
+  --color-slate-50: #fbfaf8;
+  --color-slate-100: #f1f0ec;
+  --color-slate-200: #e5e3dc;
+  --color-slate-300: #cfccc3;
+  --color-slate-400: #9b9b9b;    /* معلومات ثانوية جدًا فقط (وقت، عدّاد) */
+  --color-slate-500: #6b6964;
+  --color-slate-600: #53514d;
+  --color-slate-700: #3a3a3a;
+  --color-slate-800: #312f2e;
+  --color-slate-900: #312f2e;
 
-  /* اللونان الأساسيان للعناصر الصغيرة (مؤشرات، عنصر نشط، سلاسل المخططات):
-     فيروزي عميق وطيني دافئ — متكاملان ومتناغمان مع البيج والأسود */
-  --color-accent1: #008a7c;
-  --color-accent1-soft: #5fb3a8;
-  --color-accent1-tint: #d9f0ec;
-  --color-accent2: #cc6a38;
-  --color-accent2-soft: #e9b08f;
-  --color-accent2-tint: #fae6da;
+  /* لون الفعل الوحيد (أزرار، روابط، عنصر نشط) + لون ثانٍ للتصنيف */
+  --color-action: #2483e1;
+  --color-action-hover: #1b72c8;
+  --color-accent1: #2483e1;
+  --color-accent1-soft: #7fb3ec;
+  --color-accent1-tint: #cee3f8;
+  --color-accent2: #b27a17;
+  --color-accent2-soft: #d9b46c;
+  --color-accent2-tint: #f6e3ae;
 
-  /* ألوان الحالة الباستيل: tint للخلفية، والأساسي للنص/الأيقونة */
-  --color-urgent: #e2665c;
-  --color-urgent-tint: #fde7e2;
-  --color-success: #4e9b63;
-  --color-success-tint: #dff2e3;
-  --color-info: #9b5de0;
-  --color-info-tint: #eee1fb;
-  --color-pending: #c9584e;
-  --color-pending-tint: #fbdad5;
-  --color-review: #7c63c9;
-  --color-review-tint: #e9e1f7;
-  --color-neutral: #6e6e6a;
-  --color-neutral-tint: #ededeb;
-  --color-amber: #b8873a;
-  --color-amber-tint: #f6ebda;
-  --color-sky: #4a82bf;
-  --color-sky-tint: #dae7f6;
+  /* الحالات: خلفية Tint فاتحة + نقطة/نص Shade من نفس درجة اللون */
+  --color-success: #4e8763;
+  --color-success-tint: #d5e9d6;
+  --color-success-dot: #5d9773;
+  --color-amber: #9a6a14;
+  --color-amber-tint: #f6e3ae;
+  --color-amber-dot: #ca912f;
+  --color-sky: #1f6fbf;
+  --color-sky-tint: #cee3f8;
+  --color-sky-dot: #2783dd;
+  --color-urgent: #b4463d;
+  --color-urgent-tint: #f6d8d4;
+  --color-urgent-dot: #c4544b;
+  --color-info: #1f6fbf;
+  --color-info-tint: #cee3f8;
+  --color-pending: #b4463d;
+  --color-pending-tint: #f6d8d4;
+  --color-review: #1f6fbf;
+  --color-review-tint: #cee3f8;
+  --color-neutral: #53514d;
+  --color-neutral-tint: #edece8;
 
-  /* أسماء قديمة تُستخدم في الصفحات، معاد ربطها بالعائلة الباستيل */
-  --color-brand-blue: var(--color-sky);
-  --color-brand-orange: var(--color-amber);
-  --color-brand-green: var(--color-success);
-  --color-brand-red: var(--color-urgent);
-  --color-brand-purple: var(--color-info);
-  --color-brand-yellow: var(--color-amber);
+  /* أسماء قديمة معاد ربطها */
+  --color-brand-blue: var(--color-action);
+  --color-brand-orange: var(--color-amber-dot);
+  --color-brand-green: var(--color-success-dot);
+  --color-brand-red: var(--color-urgent-dot);
+  --color-brand-purple: #8a5cc9;
+  --color-brand-yellow: var(--color-amber-dot);
 
   --color-background: var(--color-content);
-  --color-foreground: #111111;
+  --color-foreground: #312f2e;
   --color-card: #ffffff;
-  --color-card-foreground: #111111;
+  --color-card-foreground: #312f2e;
   --color-popover: #ffffff;
-  --color-popover-foreground: #111111;
-  --color-primary: var(--color-ink);
+  --color-popover-foreground: #312f2e;
+  --color-primary: var(--color-action);
   --color-primary-foreground: #ffffff;
   --color-secondary: var(--color-subtle);
-  --color-secondary-foreground: #111111;
+  --color-secondary-foreground: #312f2e;
   --color-muted: var(--color-subtle);
-  --color-muted-foreground: #52524d;
+  --color-muted-foreground: #5f5d58;
   --color-accent: var(--color-subtle);
-  --color-accent-foreground: #111111;
+  --color-accent-foreground: #312f2e;
   --color-destructive: var(--color-urgent);
   --color-warning: var(--color-amber);
   --color-border: var(--color-line);
   --color-input: var(--color-line);
-  --color-ring: var(--color-ink);
+  --color-ring: var(--color-action);
 
-  --radius-card: 1.25rem;
+  --radius-card: 0.625rem;
 
   /* أحجام أكبر قليلًا من الافتراضي (خط ثمانية مريح للقراءة بحجم 14–15px) */
-  --text-xs: 0.8125rem;
+  --text-xs: 0.875rem;
   --text-xs--line-height: 1.5;
-  --text-sm: 0.9375rem;
+  --text-sm: 1rem;
   --text-sm--line-height: 1.55;
-  --text-base: 1.0625rem;
+  --text-base: 1.125rem;
   --text-lg: 1.1875rem;
   --text-xl: 1.3125rem;
   --text-2xl: 1.625rem;
 
-  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
-  --shadow-lift: 0 8px 16px rgba(0, 0, 0, 0.08);
+  --shadow-soft: 0 1px 2px rgba(49, 47, 46, 0.04);
+  --shadow-lift: 0 8px 24px -8px rgba(49, 47, 46, 0.16);
 
   --animate-rise: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
   --animate-fade: fade 0.45s ease backwards;
@@ -127,7 +134,7 @@
     background: var(--color-frame);
   }
   body {
-    color: #111111;
+    color: #312f2e;
     font-family: var(--font-sans);
     line-height: 1.55;
     /* دليل جماليات «ثمانية»: لا تباعد أحرف في العربية (يكسر الاتصال)، ولا ضبط سطر (يُدخل كشيدة تلقائية)،
@@ -140,11 +147,11 @@
     -webkit-font-smoothing: antialiased;
   }
   ::selection {
-    background: #111111;
+    background: #2483e1;
     color: #fff;
   }
   input[type="radio"] {
-    accent-color: #111111;
+    accent-color: #2483e1;
     width: 1rem;
     height: 1rem;
     cursor: pointer;
@@ -155,20 +162,20 @@
     width: 1.15rem;
     height: 1.15rem;
     flex-shrink: 0;
-    border-radius: 0.35rem;
-    border: 1.5px solid #bdbdb7;
+    border-radius: 0.3rem;
+    border: 1.5px solid #bdb9ae;
     background: #fff center / 0.8rem no-repeat;
     cursor: pointer;
     transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  input[type="checkbox"]:not(.sr-only):hover { border-color: #111111; }
+  input[type="checkbox"]:not(.sr-only):hover { border-color: #2483e1; }
   input[type="checkbox"]:not(.sr-only):checked {
-    border-color: #111111;
-    background-color: #111111;
+    border-color: #2483e1;
+    background-color: #2483e1;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7'/%3E%3C/svg%3E");
     transform: scale(1.06);
   }
-  input[type="checkbox"]:not(.sr-only):focus-visible { box-shadow: 0 0 0 4px rgba(17, 17, 17, 0.1); outline: none; }
+  input[type="checkbox"]:not(.sr-only):focus-visible { box-shadow: 0 0 0 3px rgba(36, 131, 225, 0.2); outline: none; }
 }
 
 /* ---- سُلّم الطباعة (مستخلص من دليل جماليات ثمانية) ----
@@ -184,6 +191,7 @@
 
 /* الأرقام: عرض متساوٍ واتجاه LTR داخل النص العربي */
 .num {
+  white-space: nowrap;
   font-family: var(--font-digits), var(--font-sans);
   font-variant-numeric: tabular-nums;
   direction: ltr;
@@ -195,11 +203,11 @@
    خلفية دافئة هادئة، حافة رفيعة، وعند التركيز: خلفية بيضاء وحافة داكنة وهالة ناعمة تتسع بحركة */
 @layer components {
   .field {
-    border-radius: 0.75rem;
-    border: 1px solid #e2e1dc;
-    background-color: #fbfbf9;
+    border-radius: 0.5rem;
+    border: 1px solid #dfdcd3;
+    background-color: #ffffff;
     padding-inline: 0.875rem;
-    font-size: 14.5px;
+    font-size: 15.5px;
     font-weight: 500;
     color: var(--color-ink);
     outline: none;
@@ -207,11 +215,11 @@
     transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .field::placeholder { color: var(--color-slate-400); font-weight: 500; }
-  .field:hover { border-color: #cfcec8; background-color: #fff; }
+  .field:hover { border-color: #c9c5ba; }
   .field:focus, .field:focus-visible {
-    border-color: var(--color-ink);
+    border-color: var(--color-action);
     background-color: #fff;
-    box-shadow: 0 0 0 4px rgba(17, 17, 17, 0.07);
+    box-shadow: 0 0 0 3px rgba(36, 131, 225, 0.18);
   }
   .field[aria-invalid="true"] { border-color: var(--color-urgent); box-shadow: 0 0 0 4px rgba(226, 102, 92, 0.14); }
   .field[type="date"], .field[type="month"], .field[type="number"] { font-family: var(--font-digits), var(--font-sans); }
@@ -219,7 +227,7 @@
   /* سهم قائمة الاختيار في جهة النهاية (يسارًا في العربية) */
   .field-select {
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234b4b47' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2353514d' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-size: 16px;
     background-position: left 0.8rem center;
@@ -228,32 +236,40 @@
   [dir="ltr"] .field-select { background-position: right 0.8rem center; }
 
   /* اللافتة تغمق حين يكون حقلها في حالة تركيز */
-  .field-group:focus-within > label { color: var(--color-ink); }
+  .field-group:focus-within > label { color: var(--color-action); }
 }
 
 /* ---- الأسطح ---- */
 /* بطاقة: بيضاء، زوايا 20px، ظل واحد خفيف جدًا، بلا حدود */
 .surface {
   background: #fff;
+  border: 1px solid var(--color-line);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-soft);
 }
 /* عنصر صغير داخل منطقة العمل */
 .tile {
   background: #fff;
-  border-radius: 0.75rem;
-  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--color-line);
+  border-radius: 0.5rem;
 }
+/* كثافة الجداول: مريح (افتراضي) / مضغوط — تُحفظ في كوكي وتُطبق على كل الجداول */
+.th-cell { height: 3.5rem; }
+.td-cell { padding-block: 1rem; }
+html[data-density="compact"] .th-cell { height: 2.75rem; }
+html[data-density="compact"] .td-cell { padding-block: 0.5rem; }
+html[data-density="compact"] [data-slot="table"] table { font-size: 15px; }
+
 /* جدول داخل بطاقة: البطاقة هي السطح، فلا يتكرر الإطار ولا الظل */
 [data-slot="card"] [data-slot="table"] {
+  border: 0;
   border-radius: 0;
   background: transparent;
-  box-shadow: none;
 }
 
 /* ---- لون القسم الحالي (يُضبط في template.tsx حسب القسم؛ الافتراضي أزرق) ---- */
 :root {
-  --section: #111111;
+  --section: #312f2e;
 }
 
 /* ---- شريط أدوات الفلاتر فوق الجداول (موحّد في كل الصفحات) ---- */
@@ -266,10 +282,10 @@
   align-items: flex-end;
   gap: 0.5rem;
   margin-bottom: 1rem;
-  padding: 1rem;
-  background: #fff;
+  padding: 0.75rem;
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-soft);
 }
 
 /* ---- حركة دخول الصفحة وأقسامها (CSS فقط؛ لا تُخفي شيئًا إن لم يعمل JavaScript) ---- */
@@ -299,15 +315,15 @@
 .stat-grid > *:nth-child(3) { animation-delay: 0.2s; }
 .stat-grid > *:nth-child(4) { animation-delay: 0.26s; }
 .stat-grid > *:nth-child(n + 5) { animation-delay: 0.32s; }
+/* تمرير هادئ: الحافة تغمق قليلًا فقط، دون أي حركة للبطاقة */
 .lift {
-  transition: transform 0.35s var(--ease-precise), box-shadow 0.35s var(--ease-precise);
+  transition: border-color 0.25s ease, background-color 0.25s ease;
 }
 .lift:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 14px 28px -14px rgba(0, 0, 0, 0.18);
+  border-color: var(--color-line-strong);
+  background-color: #fdfcfa;
 }
-.lift:hover .lift-icon { transform: rotate(-8deg) scale(1.08); }
-.lift-icon { transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.lift-icon { transition: none; }
 
 /* صفوف الجداول: تتابع سريع لأول 14 صفًا، وعلامة داكنة على بداية الصف عند المرور */
 tbody.rows-animate > tr {
@@ -325,8 +341,8 @@ tbody.rows-animate > tr:nth-child(9) { animation-delay: 0.36s; }
 tbody.rows-animate > tr:nth-child(10) { animation-delay: 0.39s; }
 tbody.rows-animate > tr:nth-child(n + 11) { animation-delay: 0.42s; }
 tbody.rows-animate > tr > td:first-child { transition: box-shadow 0.2s ease; }
-tbody.rows-animate > tr:hover > td:first-child { box-shadow: inset -3px 0 0 var(--color-ink); }
-[dir="ltr"] tbody.rows-animate > tr:hover > td:first-child { box-shadow: inset 3px 0 0 var(--color-ink); }
+tbody.rows-animate > tr:hover > td:first-child { box-shadow: inset -2px 0 0 var(--color-action); }
+[dir="ltr"] tbody.rows-animate > tr:hover > td:first-child { box-shadow: inset 2px 0 0 var(--color-action); }
 @supports (animation-timeline: view()) {
   tbody.rows-animate > tr:nth-child(n + 15) {
     animation: reveal linear both;
@@ -343,7 +359,7 @@ tbody.rows-animate > tr:hover > td:first-child { box-shadow: inset -3px 0 0 var(
   animation: var(--animate-stripes);
 }
 .track-stripes {
-  background: repeating-linear-gradient(-45deg, #ecece9 0 5px, #f4f4f2 5px 10px);
+  background: #f1f0ec;
 }
 
 /* ---- كنس أجزاء الدائرة ---- */
@@ -366,7 +382,7 @@ tbody.rows-animate > tr:hover > td:first-child { box-shadow: inset -3px 0 0 var(
 
 /* ---- هيكل التحميل ---- */
 .skeleton {
-  background: #ecece9;
+  background: #efede7;
   animation: skeleton-pulse 1.4s ease-in-out infinite;
 }
 @keyframes skeleton-pulse {

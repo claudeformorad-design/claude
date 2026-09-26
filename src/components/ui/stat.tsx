@@ -29,10 +29,10 @@ export function Stat({
         <span className={cn("lift-icon flex size-9 shrink-0 items-center justify-center rounded-[10px]", TONES[tone])}>
           <Icon className="size-[17px] stroke-[1.9]" />
         </span>
-        <p className="truncate text-[14px] font-medium text-slate-600">{label}</p>
+        <p className="truncate text-[15px] font-medium text-slate-600">{label}</p>
       </div>
       <p className={cn("display-num mt-3 truncate text-[23px] font-bold leading-tight text-ink sm:text-[26px]", valueClassName)}>{value}</p>
-      {hint && <p className="mt-1 truncate text-[13px] text-slate-500">{hint}</p>}
+      {hint && <p className="mt-1 truncate text-[14px] text-slate-500">{hint}</p>}
     </div>
   );
 }

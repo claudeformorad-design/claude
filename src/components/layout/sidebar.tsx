@@ -65,19 +65,19 @@ export function Sidebar({
   return (
     <motion.aside
       initial={false}
-      animate={{ width: expanded ? 268 : 80 }}
+      animate={{ width: expanded ? 292 : 80 }}
       transition={{ type: "spring", stiffness: 300, damping: 32 }}
-      className="no-print relative hidden shrink-0 flex-col overflow-hidden border-e border-line bg-white py-5 md:flex"
+      className="no-print relative hidden shrink-0 flex-col overflow-hidden border-e border-line bg-sidebar py-5 md:flex"
     >
       {/* الشعار واسم المنشأة */}
       <Link href="/" className={cn("mb-5 flex items-center gap-3", expanded ? "px-5" : "justify-center")} title={hotelName}>
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-ink text-white shadow-[0_6px_14px_-6px_rgba(0,0,0,0.5)]">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-[10px] bg-ink text-white shadow-[0_6px_14px_-6px_rgba(0,0,0,0.5)]">
           <Building2 className="size-5 stroke-[1.75]" />
         </span>
         {expanded && (
           <span className="min-w-0 leading-tight">
-            <span className="block truncate text-[16px] font-bold text-ink">{hotelName}</span>
-            <span className="block text-[12.5px] text-slate-500">النظام المحاسبي الفندقي</span>
+            <span className="block truncate text-[17px] font-bold text-ink">{hotelName}</span>
+            <span className="block text-[13.5px] text-slate-500">النظام المحاسبي الفندقي</span>
           </span>
         )}
       </Link>
@@ -86,14 +86,14 @@ export function Sidebar({
       <div className={cn("mb-4", expanded ? "px-4" : "flex justify-center")}>
         {expanded ? (
           <button type="button" onClick={openSearch}
-            className="flex h-10 w-full items-center gap-2.5 rounded-xl border border-line bg-panel px-3 text-[14px] text-slate-500 transition-colors hover:border-line-strong hover:text-ink">
+            className="flex h-10 w-full items-center gap-2.5 rounded-lg border border-line bg-white px-3 text-[15px] text-slate-500 transition-colors hover:border-line-strong hover:text-ink">
             <Search className="size-4 stroke-[1.9]" />
             <span className="flex-1 text-start">ابحث عن صفحة…</span>
-            <kbd className="rounded-md bg-white px-1.5 py-0.5 text-[11px] text-slate-500 shadow-soft">Ctrl K</kbd>
+            <kbd className="rounded-md bg-white px-1.5 py-0.5 text-[12px] text-slate-500 shadow-soft">Ctrl K</kbd>
           </button>
         ) : (
           <button type="button" onClick={openSearch} aria-label="بحث" title="بحث (Ctrl K)"
-            className="flex size-12 items-center justify-center rounded-[14px] border border-line bg-panel text-slate-600 transition-colors hover:text-ink">
+            className="flex size-12 items-center justify-center rounded-[10px] border border-line bg-white text-slate-600 transition-colors hover:text-ink">
             <Search className="size-[19px] stroke-[1.9]" />
           </button>
         )}
@@ -123,14 +123,14 @@ export function Sidebar({
                     }
                   }}
                   className={cn(
-                    "group relative flex size-12 items-center justify-center rounded-[14px] transition-colors duration-200",
+                    "group relative flex size-12 items-center justify-center rounded-[10px] transition-colors duration-200",
                     active ? "text-white" : "text-slate-600 hover:bg-subtle hover:text-ink",
                     open?.index === i && !active && "bg-subtle text-ink",
                   )}
                 >
                   {active && (
                     <motion.span layoutId="rail-active" transition={spring}
-                      className="absolute inset-0 rounded-[14px] bg-ink shadow-[0_8px_18px_-8px_rgba(0,0,0,0.55)]" />
+                      className="absolute inset-0 rounded-[10px] bg-ink shadow-[0_8px_18px_-8px_rgba(0,0,0,0.55)]" />
                   )}
                   <g.icon className="relative z-10 size-5 stroke-[1.9] transition-transform duration-200 group-hover:scale-110" />
                   {active && <span className="absolute -end-[17px] top-1/2 z-10 h-5 w-1 -translate-y-1/2 rounded-full bg-ink" />}
@@ -160,7 +160,7 @@ export function Sidebar({
         {signOut && (
           <form action={signOut} className={expanded ? "" : "contents"}>
             <button type="submit" title="تسجيل الخروج" aria-label="تسجيل الخروج"
-              className="flex size-10 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-urgent-tint hover:text-urgent">
+              className="flex size-10 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-urgent-tint hover:text-urgent">
               <LogOut className="size-[18px] stroke-[1.9]" />
             </button>
           </form>
@@ -171,7 +171,7 @@ export function Sidebar({
           aria-label={expanded ? "طي القائمة" : "توسيع القائمة"}
           title={expanded ? "طي القائمة" : "توسيع القائمة"}
           className={cn(
-            "flex h-10 items-center justify-center gap-2.5 rounded-xl text-[14px] font-medium text-slate-600 transition-colors duration-200 hover:bg-subtle hover:text-ink",
+            "flex h-10 items-center justify-center gap-2.5 rounded-lg text-[15px] font-medium text-slate-600 transition-colors duration-200 hover:bg-subtle hover:text-ink",
             expanded ? "flex-1 px-3" : "size-10",
           )}
         >
@@ -205,9 +205,9 @@ function Flyout({
       exit={{ opacity: 0, x: 6, scale: 0.98, transition: { duration: 0.12 } }}
       transition={{ type: "spring", stiffness: 420, damping: 32 }}
       style={{ top: maxTop, right }}
-      className="fixed z-50 w-64 rounded-2xl border border-line bg-white p-2 shadow-lift"
+      className="fixed z-50 w-64 rounded-[10px] border border-line bg-white p-2 shadow-lift"
     >
-      <p className="flex items-center gap-2 px-3 pb-2 pt-1.5 text-[13.5px] font-bold text-ink">
+      <p className="flex items-center gap-2 px-3 pb-2 pt-1.5 text-[14.5px] font-bold text-ink">
         <group.icon className="size-4 stroke-[1.9]" />
         {group.title}
       </p>
@@ -219,7 +219,7 @@ function Flyout({
               role="menuitem"
               href={item.href}
               className={cn(
-                "flex h-10 items-center gap-3 rounded-[10px] px-3 text-[14.5px] font-medium transition-colors",
+                "flex h-10 items-center gap-3 rounded-[10px] px-3 text-[15.5px] font-medium transition-colors",
                 active ? "bg-ink text-white" : "text-slate-700 hover:bg-subtle hover:text-ink",
               )}
             >
@@ -266,9 +266,9 @@ function ExpandedNav({ groups, pathname, activeGroup }: { groups: NavGroup[]; pa
             const active = item.href === activeHref;
             return (
               <Link key={g.title} href={item.href} aria-current={active ? "page" : undefined}
-                className={cn("group relative flex h-11 items-center gap-3 rounded-xl px-2 text-[15px] font-semibold transition-colors",
+                className={cn("group relative flex h-11 items-center gap-3 rounded-lg px-2 text-[16px] font-semibold transition-colors",
                   active ? "text-white" : "text-ink hover:bg-subtle")}>
-                {active && <motion.span layoutId="expanded-active" transition={spring} className="absolute inset-0 rounded-xl bg-ink shadow-[0_8px_18px_-10px_rgba(0,0,0,0.6)]" />}
+                {active && <motion.span layoutId="expanded-active" transition={spring} className="absolute inset-0 rounded-lg bg-ink shadow-[0_8px_18px_-10px_rgba(0,0,0,0.6)]" />}
                 <span className={cn("relative z-10 flex size-8 items-center justify-center rounded-[10px] transition-colors",
                   active ? "bg-white/15" : "bg-subtle group-hover:bg-white group-hover:shadow-soft")}>
                   <item.icon className="size-[17px] stroke-[1.9]" />
@@ -281,13 +281,13 @@ function ExpandedNav({ groups, pathname, activeGroup }: { groups: NavGroup[]; pa
           return (
             <div key={g.title}>
               <button type="button" onClick={() => flip(gi)} aria-expanded={isOpen}
-                className="group flex h-11 w-full items-center gap-3 rounded-xl px-2 text-[15px] font-semibold text-ink transition-colors hover:bg-subtle">
+                className="group flex h-11 w-full items-center gap-3 rounded-lg px-2 text-[16px] font-semibold text-ink transition-colors hover:bg-subtle">
                 <span className={cn("flex size-8 items-center justify-center rounded-[10px] transition-colors",
                   groupActive ? "bg-ink text-white" : "bg-subtle text-ink group-hover:bg-white group-hover:shadow-soft")}>
                   <g.icon className="size-[17px] stroke-[1.9]" />
                 </span>
-                <span className="flex-1 text-start">{g.title}</span>
-                <span className="text-[12px] font-medium text-slate-500">{g.items.length}</span>
+                <span className="flex-1 truncate text-start">{g.title}</span>
+                <span className="text-[13px] font-medium text-slate-500">{g.items.length}</span>
                 <ChevronDown className={cn("size-4 text-slate-500 transition-transform duration-200", isOpen && "rotate-180")} />
               </button>
               <AnimatePresence initial={false}>
@@ -308,7 +308,7 @@ function ExpandedNav({ groups, pathname, activeGroup }: { groups: NavGroup[]; pa
                             href={item.href}
                             aria-current={active ? "page" : undefined}
                             className={cn(
-                              "group relative flex h-10 items-center gap-2.5 rounded-[10px] px-2.5 text-[14.5px] font-medium transition-colors duration-200",
+                              "group relative flex h-10 items-center gap-2.5 rounded-[10px] px-2.5 text-[15.5px] font-medium transition-colors duration-200",
                               active ? "text-white" : "text-slate-700 hover:bg-subtle hover:text-ink",
                             )}
                           >

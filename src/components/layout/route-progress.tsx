@@ -55,7 +55,7 @@ export function RouteProgress() {
           initial={{ scaleX: 0, opacity: 1 }}
           animate={{ scaleX: 0.85, transition: { duration: 4, ease: [0.1, 0.8, 0.2, 1] } }}
           exit={{ scaleX: 1, opacity: 0, transition: { duration: 0.35 } }}
-          style={{ background: "#2e90fa" }}
+          style={{ background: "#2483e1" }}
         />
       )}
     </AnimatePresence>

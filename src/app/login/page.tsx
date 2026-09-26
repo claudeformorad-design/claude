@@ -12,7 +12,7 @@ export default async function LoginPage() {
     <main className="flex min-h-screen items-center justify-center p-4">
       <div className="surface animate-rise w-full max-w-md p-8">
         <div className="mb-6 flex items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-xl bg-ink text-white"><Building2 className="size-5 stroke-[1.75]" /></div>
+          <div className="flex size-11 items-center justify-center rounded-lg bg-ink text-white"><Building2 className="size-5 stroke-[1.75]" /></div>
           <p className="text-lg font-semibold text-ink">{t.app.name}</p>
         </div>
         <LoginForm t={{ auth: t.auth, errors: t.errors }} />

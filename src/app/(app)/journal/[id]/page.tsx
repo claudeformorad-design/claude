@@ -55,7 +55,7 @@ export default async function JournalEntryPage({ params }: { params: Promise<{ i
         <CardContent className="grid gap-x-8 gap-y-5 p-6 text-sm sm:grid-cols-2 lg:grid-cols-4">
           {meta.map(([label, value]) => (
             <div key={label} className="border-s-2 border-line ps-3">
-              <p className="text-[13px] text-slate-500">{label}</p>
+              <p className="text-[14px] text-slate-500">{label}</p>
               <div className="mt-0.5 font-semibold text-ink">{value}</div>
             </div>
           ))}
@@ -100,7 +100,7 @@ export default async function JournalEntryPage({ params }: { params: Promise<{ i
                 <TableRow key={l.id}>
                   <TableCell className="num text-muted-foreground">{l.line_no}</TableCell>
                   <TableCell>
-                    <span className="num me-2 rounded-md bg-subtle px-1.5 py-0.5 text-[13px] font-semibold text-slate-700">{account?.code}</span><span className="font-medium">{name(account)}</span>
+                    <span className="num me-2 rounded-md bg-subtle px-1.5 py-0.5 text-[14px] font-semibold text-slate-700">{account?.code}</span><span className="font-medium">{name(account)}</span>
                   </TableCell>
                   <TableCell>{dept ? dept.code : "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{l.description ?? ""}</TableCell>

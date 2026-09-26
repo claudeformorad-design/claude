@@ -36,7 +36,7 @@ export function Toaster() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.97, transition: { duration: 0.18 } }}
             transition={{ type: "spring", stiffness: 480, damping: 32 }}
-            className="flex items-center gap-2.5 rounded-full bg-ink py-2.5 pe-5 ps-3 text-[14px] font-medium text-white shadow-lift"
+            className="flex items-center gap-2.5 rounded-lg bg-ink py-2.5 pe-5 ps-3 text-[15px] font-medium text-white shadow-lift"
           >
             {t.tone === "success"
               ? <CheckCircle2 className="size-[18px] text-accent1-soft" />

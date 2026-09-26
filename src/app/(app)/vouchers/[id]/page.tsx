@@ -43,15 +43,15 @@ export default async function VoucherPage({ params }: { params: Promise<{ id: st
       />
       <Card className="mb-6">
         <CardContent className="grid gap-x-8 gap-y-5 p-6 text-sm sm:grid-cols-3">
-          <div className="sm:col-span-3 flex items-center justify-between rounded-xl bg-panel px-5 py-4">
-            <span className="text-[14px] text-slate-600">{t.folio.amount}</span>
+          <div className="sm:col-span-3 flex items-center justify-between rounded-lg bg-panel px-5 py-4">
+            <span className="text-[15px] text-slate-600">{t.folio.amount}</span>
             <span className={`text-[28px] font-bold ${v.voucher_type === "receipt" ? "text-success" : "text-ink"}`}><Money value={v.amount} locale={locale} /></span>
           </div>
           {meta.map(([label, value]) => (
-            <div key={label} className="border-s-2 border-line ps-3"><p className="text-[13px] text-slate-500">{label}</p><div className="mt-0.5 font-semibold text-ink">{value}</div></div>
+            <div key={label} className="border-s-2 border-line ps-3"><p className="text-[14px] text-slate-500">{label}</p><div className="mt-0.5 font-semibold text-ink">{value}</div></div>
           ))}
           {v.journal_entry_id && (
-            <div className="border-s-2 border-line ps-3"><p className="text-[13px] text-slate-500">{t.journal.entry}</p><Link className="mt-0.5 block font-semibold text-accent1 hover:underline" href={`/journal/${v.journal_entry_id}`}>{t.journal.entry} ←</Link></div>
+            <div className="border-s-2 border-line ps-3"><p className="text-[14px] text-slate-500">{t.journal.entry}</p><Link className="mt-0.5 block font-semibold text-accent1 hover:underline" href={`/journal/${v.journal_entry_id}`}>{t.journal.entry} ←</Link></div>
           )}
           {v.status === "voided" && (
             <div className="sm:col-span-2"><p className="text-muted-foreground">{t.vouchers.voidedBecause}</p><p>{v.void_reason}</p></div>

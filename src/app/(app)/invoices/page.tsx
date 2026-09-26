@@ -98,7 +98,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
               <TableRow key={i.id}>
                 <TableCell>
                   <Link href={`/invoices/${i.id}`} className="num block font-semibold text-ink hover:underline">{i.invoice_number}</Link>
-                  <span className="text-[13px] text-slate-500">{t.invoices.types[i.invoice_type]}</span>
+                  <span className="text-[14px] text-slate-500">{t.invoices.types[i.invoice_type]}</span>
                 </TableCell>
                 <TableCell className="num">{i.issue_date}</TableCell>
                 <TableCell><EntityCell name={i.bill_to_name} /></TableCell>

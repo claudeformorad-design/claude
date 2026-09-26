@@ -40,7 +40,7 @@ export default async function PayrollPage() {
                 <TableCell className="num">{r.posting_date}</TableCell>
                 <TableCell className="text-end"><Money value={r.total_gross} locale={locale} /></TableCell>
                 <TableCell className="text-end font-semibold"><Money value={r.total_net} locale={locale} /></TableCell>
-                <TableCell className="text-end">{r.journal_entry_id && <Link className="text-[13px] font-medium text-accent1 hover:underline" href={`/journal/${r.journal_entry_id}`}>{t.journal.entry} ←</Link>}</TableCell>
+                <TableCell className="text-end">{r.journal_entry_id && <Link className="text-[14px] font-medium text-accent1 hover:underline" href={`/journal/${r.journal_entry_id}`}>{t.journal.entry} ←</Link>}</TableCell>
               </TableRow>
             ))}
           </TableBody>
