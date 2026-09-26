@@ -125,20 +125,27 @@ returns trigger
 language plpgsql
 set search_path = ''
 as $$
+declare
+  -- الأعمدة المولّدة تكون فارغة في NEW داخل تريغر BEFORE، فنستبعدها من المقارنة
+  v_new jsonb := to_jsonb(new) - 'ledger_effect' - 'deposit_effect';
+  v_old jsonb := to_jsonb(old) - 'ledger_effect' - 'deposit_effect';
 begin
   if tg_op = 'DELETE' then
     raise exception 'Folio transactions cannot be deleted; void them instead' using errcode = '42501';
   end if;
+  if tg_op = 'UPDATE' and app.is_system_posting() then
+    -- ربط الحركة بقيدها (مرة واحدة)
+    if old.journal_entry_id is null and new.journal_entry_id is not null
+       and (v_new - 'journal_entry_id') = (v_old - 'journal_entry_id') then
+      return new;
+    end if;
+    -- ربط الحركة بحركة إلغائها (مرة واحدة)
+    if old.voided_by_id is null and new.voided_by_id is not null
+       and (v_new - 'voided_by_id') = (v_old - 'voided_by_id') then
+      return new;
+    end if;
+  end if;
   if tg_op = 'UPDATE' then
-    if app.is_system_posting() and old.voided_by_id is null and new.voided_by_id is not null
-       and (to_jsonb(new) - 'voided_by_id' - 'journal_entry_id') = (to_jsonb(old) - 'voided_by_id' - 'journal_entry_id')
-       and (old.journal_entry_id is null or new.journal_entry_id = old.journal_entry_id) then
-      return new;
-    end if;
-    if app.is_system_posting() and old.journal_entry_id is null and new.journal_entry_id is not null
-       and (to_jsonb(new) - 'journal_entry_id') = (to_jsonb(old) - 'journal_entry_id') then
-      return new;
-    end if;
     raise exception 'Folio transactions are immutable' using errcode = '42501';
   end if;
   return new;
