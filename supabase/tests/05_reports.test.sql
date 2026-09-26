@@ -56,7 +56,7 @@ select public.save_journal_entry((select id from h5), current_date, 'رأس ما
 select public.register_fixed_asset((select id from h5), 'سيارة', 'سيارات', (select v from ids where k = 'acc_1204'), 20000, 60, current_date,
   0, null, null, (select v from ids where k = 'acc_1103'));
 select public.create_payment_voucher((select id from h5), 'disbursement', 'account', (select v from ids where k = 'pm_bank'), 3000,
-  'كهرباء', p_counter_account_id => (select v from ids where k = 'acc_5204'));
+  'كهرباء', current_date, p_counter_account_id => (select v from ids where k = 'acc_5204'));
 
 do $$
 declare h uuid := (select id from h5);

@@ -119,7 +119,7 @@ select public.create_vendor_bill((select id from h6), (select id from public.ven
 do $$
 declare r record;
 begin
-  select * into r from public.tax_return((select id from h6), current_date, current_date) where code = 'VAT';
+  select * into r from public.tax_return((select id from h6), app.today_for_hotel((select id from h6)), app.today_for_hotel((select id from h6))) where code = 'VAT';
   -- المبيعات: 1000 − 100 (خصم) + 2000 − 200 (إشعار) = 2700 ؛ الضريبة 150 − 15 + 300 − 30 = 405
   assert r.sales_base = 2700 and r.sales_tax = 405, format('sales %s / %s', r.sales_base, r.sales_tax);
   assert r.purchases_base = 400 and r.purchases_tax = 60, 'purchases';

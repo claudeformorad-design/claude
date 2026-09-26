@@ -189,10 +189,10 @@ begin
   assert -pg_temp.gl(h, 'vat_output') = 120, 'VAT output net of credit note';
   assert pg_temp.gl(h, 'ar_control') = 920, 'AR = invoice outstanding';
   -- خصم الإشعار يحمل قسم البند ⇒ صافي إيراد القسم = 1000 − 200 ولا يوجد إيراد بلا قسم
-  assert (select sum(amount) from public.department_profitability(h, current_date, current_date)
+  assert (select sum(amount) from public.department_profitability(h, app.today_for_hotel(h), app.today_for_hotel(h))
           where account_type = 'revenue' and department_id = (select department_id from public.invoice_items
                                                                where invoice_id = (select v from ids where k = 'inv'))) = 800, 'dept revenue net of credit note';
-  assert not exists (select 1 from public.department_profitability(h, current_date, current_date)
+  assert not exists (select 1 from public.department_profitability(h, app.today_for_hotel(h), app.today_for_hotel(h))
                      where account_type = 'revenue' and department_id is null), 'no unassigned revenue';
 end $$;
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000c1');

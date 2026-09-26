@@ -176,11 +176,12 @@ select pg_temp.act_as('00000000-0000-0000-0000-0000000000d1');
 insert into ids select 'folio', public.open_folio((select id from h4), 'نزيل');
 select public.post_folio_charge((select v from ids where k = 'folio'), (select id from public.charge_codes where hotel_id = (select id from h4) and code = 'FOOD'), 1000);
 do $$
+-- الرسم أعلاه بتاريخ الفندق (قد يسبق تاريخ UTC بيوم قرب منتصف الليل)؛ النطاق يشمل الاثنين
 declare fnb uuid := (select v from ids where k = 'dept_fnb');
 begin
-  assert (select sum(amount) from public.department_profitability((select id from h4), date_trunc('year', current_date)::date, current_date)
+  assert (select sum(amount) from public.department_profitability((select id from h4), date_trunc('year', current_date - 1)::date, current_date + 1)
           where department_id = fnb and account_type = 'revenue') = 1000, 'F&B revenue';
-  assert (select sum(amount) from public.department_profitability((select id from h4), date_trunc('year', current_date)::date, current_date)
+  assert (select sum(amount) from public.department_profitability((select id from h4), date_trunc('year', current_date - 1)::date, current_date + 1)
           where department_id = fnb and account_type = 'expense') = 440 + 55 + 10, 'F&B costs (COGS + shortage + oil issues)';
 end $$;
 
