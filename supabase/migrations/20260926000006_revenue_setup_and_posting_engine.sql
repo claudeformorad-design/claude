@@ -411,6 +411,8 @@ declare
   v_entry_id uuid;
   v_line     jsonb;
   v_no       integer := 0;
+  -- نعيد العلَم لحالته السابقة حتى لا نعطّله على دالة مستدعية ما زالت تحتاجه
+  v_prev     text := coalesce(current_setting('app.system_posting', true), 'off');
 begin
   if p_source in ('manual', 'opening', 'adjustment', 'closing', 'reversal') then
     raise exception 'post_system_entry is only for document-generated entries' using errcode = '22023';
@@ -444,7 +446,7 @@ begin
 
   update public.journal_entries set status = 'posted' where id = v_entry_id;
 
-  perform set_config('app.system_posting', 'off', true);
+  perform set_config('app.system_posting', v_prev, true);
   return v_entry_id;
 end;
 $$;
@@ -459,6 +461,7 @@ as $$
 declare
   v_orig   public.journal_entries%rowtype;
   v_new_id uuid;
+  v_prev   text := coalesce(current_setting('app.system_posting', true), 'off');
 begin
   select * into v_orig from public.journal_entries where id = p_entry_id for update;
   if v_orig.status <> 'posted' or v_orig.reversed_by_id is not null then
@@ -482,7 +485,7 @@ begin
   update public.journal_entries set status = 'posted' where id = v_new_id;
   update public.journal_entries set reversed_by_id = v_new_id where id = v_orig.id;
 
-  perform set_config('app.system_posting', 'off', true);
+  perform set_config('app.system_posting', v_prev, true);
   return v_new_id;
 end;
 $$;

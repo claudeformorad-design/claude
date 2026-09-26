@@ -51,7 +51,7 @@ grant all on h2, ids to authenticated;
 do $$
 declare h uuid := (select id from h2);
 begin
-  assert (select count(*) from public.payment_methods where hotel_id = h) = 6, 'default payment methods';
+  assert (select count(*) from public.payment_methods where hotel_id = h) = 7, 'default payment methods (incl. petty cash)';
   assert (select count(*) from public.charge_codes where hotel_id = h) = 12, 'default charge codes';
   assert (select count(*) from public.tax_rates where hotel_id = h) = 0, 'no taxes assumed';
 end $$;
