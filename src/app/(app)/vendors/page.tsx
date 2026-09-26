@@ -12,6 +12,9 @@ import { getI18n } from "@/i18n/server";
 import { VendorForm } from "./vendor-form";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Truck } from "lucide-react";
+import { BadgeCheck, CalendarClock } from "lucide-react";
+import { Stat, StatGrid } from "@/components/ui/stat";
+import { EntityCell } from "@/components/ui/entity";
 
 export default async function VendorsPage({ searchParams }: { searchParams: Promise<{ edit?: string; new?: string }> }) {
   const ctx = await requireAppContext(PERMISSIONS.vendorsView);
@@ -31,6 +34,11 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
     <>
       <PageHeader title={t.nav.vendors} description={t.payables.vendorsSubtitle}
         actions={can && <Button asChild><Link href="/vendors?new=1"><Plus />{t.payables.newVendor}</Link></Button>} />
+      <StatGrid className="lg:grid-cols-3">
+        <Stat icon={Truck} tone="ink" label="الموردون" value={<span className="num">{vendors.length}</span>} />
+        <Stat icon={BadgeCheck} tone="teal" label="فعّالون" value={<span className="num">{vendors.filter((v) => v.is_active).length}</span>} />
+        <Stat icon={CalendarClock} tone="clay" label="متوسط مدة السداد" value={<span className="num">{vendors.length ? Math.round(vendors.reduce((a, v) => a + v.payment_terms_days, 0) / vendors.length) : 0} يومًا</span>} />
+      </StatGrid>
       <div className={`grid gap-6 ${initial ? "xl:grid-cols-[1fr_380px]" : ""}`}>
         <Card className="overflow-hidden">
           <Table>
@@ -55,10 +63,10 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
               )}
               {vendors.map((v) => (
                 <TableRow key={v.id}>
-                  <TableCell className="num">{v.code}</TableCell>
-                  <TableCell><Link href={`/bills?vendor=${v.id}`} className="hover:underline">{(locale === "en" && v.name_en) || v.name_ar}</Link></TableCell>
+                  <TableCell className="num text-slate-600">{v.code}</TableCell>
+                  <TableCell><EntityCell name={(locale === "en" && v.name_en) || v.name_ar} sub={v.phone ?? v.email ?? undefined} href={`/bills?vendor=${v.id}`} /></TableCell>
                   <TableCell className="num">{v.tax_number ?? "—"}</TableCell>
-                  <TableCell className="num">{v.payment_terms_days}</TableCell>
+                  <TableCell><span className="num">{v.payment_terms_days}</span> <span className="text-slate-500">يومًا</span></TableCell>
                   <TableCell><Badge variant={v.is_active ? "success" : "secondary"}>{v.is_active ? t.common.active : t.common.inactive}</Badge></TableCell>
                   {can && <TableCell className="text-end"><Button asChild variant="ghost" size="sm"><Link href={`/vendors?edit=${v.id}`}>{t.common.edit}</Link></Button></TableCell>}
                 </TableRow>

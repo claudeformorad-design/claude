@@ -2,7 +2,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { NativeSelect } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireAppContext } from "@/lib/auth/context";
@@ -13,6 +13,9 @@ import { listAccounts } from "@/services/accounts.service";
 import { listBankLines, listLedgerLines } from "@/services/payables.service";
 import { getI18n } from "@/i18n/server";
 import { AddBankLine, AutoMatch, LineActions } from "./bank-client";
+import { CheckCircle2, FileText, Landmark, Link2Off } from "lucide-react";
+import { Stat, StatGrid } from "@/components/ui/stat";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default async function BankPage({ searchParams }: { searchParams: Promise<{ account?: string }> }) {
   const ctx = await requireAppContext(PERMISSIONS.bankReconcile);
@@ -43,11 +46,12 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
       </form>
       {accountId && (
         <>
-          <div className="mb-4 grid gap-4 sm:grid-cols-3">
-            <Card><CardHeader><CardTitle className="text-sm text-muted-foreground">{t.payables.glBalance}</CardTitle></CardHeader><CardContent className="text-xl font-bold"><Money value={glBalance} locale={locale} /></CardContent></Card>
-            <Card><CardHeader><CardTitle className="text-sm text-muted-foreground">{t.payables.statementTotal}</CardTitle></CardHeader><CardContent className="text-xl font-bold"><Money value={sumMoney(lines.map((l) => l.amount))} locale={locale} /></CardContent></Card>
-            <Card><CardHeader><CardTitle className="text-sm text-muted-foreground">{t.payables.unmatchedLedger}</CardTitle></CardHeader><CardContent className="text-xl font-bold"><Money value={sumMoney(unmatchedLedger.map(net))} locale={locale} /></CardContent></Card>
-          </div>
+          <StatGrid>
+            <Stat icon={Landmark} tone="ink" label={t.payables.glBalance} value={<Money value={glBalance} locale={locale} />} />
+            <Stat icon={FileText} tone="teal" label={t.payables.statementTotal} value={<Money value={sumMoney(lines.map((l) => l.amount))} locale={locale} />} hint={`${lines.length} سطر في الكشف`} />
+            <Stat icon={Link2Off} tone="clay" label={t.payables.unmatchedLedger} value={<Money value={sumMoney(unmatchedLedger.map(net))} locale={locale} />} hint={`${unmatchedLedger.length} حركة`} />
+            <Stat icon={CheckCircle2} tone="neutral" label="أسطر مطابقة" value={<span className="num">{lines.filter((l) => l.matched_line_id).length} / {lines.length}</span>} />
+          </StatGrid>
           <Card className="mb-4"><CardContent className="p-4"><AddBankLine t={tt} accountId={accountId} today={todayInTimeZone(ctx.hotel.timezone)} /></CardContent></Card>
           <Card className="overflow-hidden">
             <Table>
@@ -56,11 +60,11 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
                 <TableHead className="text-end">{t.folio.amount}</TableHead><TableHead>{t.common.status}</TableHead><TableHead />
               </TableRow></TableHeader>
               <TableBody>
-                {lines.length === 0 && <TableRow><TableCell colSpan={6} className="py-8 text-center text-muted-foreground">{t.common.noData}</TableCell></TableRow>}
+                {lines.length === 0 && <TableRow><TableCell colSpan={6} className="py-8"><EmptyState title="كشف الحساب فارغ" description="أضف أسطر كشف البنك من النموذج أعلاه، ثم طابقها مع حركات الأستاذ يدويًا أو تلقائيًا." icon={Landmark} /></TableCell></TableRow>}
                 {lines.map((l) => (
                   <TableRow key={l.id}>
                     <TableCell className="num">{l.txn_date}</TableCell><TableCell>{l.description}</TableCell><TableCell className="num">{l.reference ?? ""}</TableCell>
-                    <TableCell className="text-end"><Money value={l.amount} locale={locale} /></TableCell>
+                    <TableCell className={`text-end font-semibold ${toMoney(l.amount).isNegative() ? "text-ink" : "text-success"}`}><Money value={l.amount} locale={locale} /></TableCell>
                     <TableCell><Badge variant={l.matched_line_id ? "success" : "warning"}>{l.matched_line_id ? t.payables.matched : t.payables.unmatched}</Badge></TableCell>
                     <TableCell>
                       <LineActions t={tt} lineId={l.id} matched={!!l.matched_line_id}

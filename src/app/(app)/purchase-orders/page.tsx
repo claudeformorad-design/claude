@@ -10,6 +10,10 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import { listPurchaseOrders, listVendors } from "@/services/payables.service";
 import { getI18n } from "@/i18n/server";
 import { ConvertToBill } from "./convert-button";
+import { PackageCheck, PackageOpen, ShoppingCart } from "lucide-react";
+import { Stat, StatGrid } from "@/components/ui/stat";
+import { EntityCell } from "@/components/ui/entity";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default async function PurchaseOrdersPage() {
   const ctx = await requireAppContext(PERMISSIONS.purchasesManage);
@@ -20,6 +24,11 @@ export default async function PurchaseOrdersPage() {
     <>
       <PageHeader title={t.nav.purchaseOrders} description={t.payables.poSubtitle}
         actions={<Button asChild><Link href="/purchase-orders/new"><Plus />{t.payables.newPo}</Link></Button>} />
+      <StatGrid className="lg:grid-cols-3">
+        <Stat icon={ShoppingCart} tone="ink" label="أوامر الشراء" value={<span className="num">{pos.length}</span>} />
+        <Stat icon={PackageOpen} tone="clay" label="مفتوحة بانتظار الفوترة" value={<span className="num">{pos.filter((p) => p.status === "open").length}</span>} />
+        <Stat icon={PackageCheck} tone="teal" label="مكتملة" value={<span className="num">{pos.filter((p) => p.status !== "open").length}</span>} />
+      </StatGrid>
       <Card className="overflow-hidden">
         <Table>
           <TableHeader><TableRow>
@@ -27,12 +36,12 @@ export default async function PurchaseOrdersPage() {
             <TableHead>{t.common.status}</TableHead><TableHead />
           </TableRow></TableHeader>
           <TableBody>
-            {pos.length === 0 && <TableRow><TableCell colSpan={5} className="py-10 text-center text-muted-foreground">{t.common.noData}</TableCell></TableRow>}
+            {pos.length === 0 && <TableRow><TableCell colSpan={5} className="py-8"><EmptyState title="لا توجد أوامر شراء" description="أنشئ أمر شراء للمورد ثم حوّله إلى فاتورة عند الاستلام." actionHref="/purchase-orders/new" actionLabel="أمر شراء جديد" icon={ShoppingCart} /></TableCell></TableRow>}
             {pos.map((p) => (
               <TableRow key={p.id}>
-                <TableCell className="num">{p.po_number}</TableCell><TableCell className="num">{p.order_date}</TableCell>
-                <TableCell>{vName.get(p.vendor_id)}</TableCell>
-                <TableCell><Badge variant={p.status === "open" ? "default" : "secondary"}>{t.payables.statuses[p.status]}</Badge></TableCell>
+                <TableCell className="num font-semibold">{p.po_number}</TableCell><TableCell className="num">{p.order_date}</TableCell>
+                <TableCell><EntityCell name={vName.get(p.vendor_id) ?? "—"} /></TableCell>
+                <TableCell><Badge variant={p.status === "open" ? "warning" : "success"}>{t.payables.statuses[p.status]}</Badge></TableCell>
                 <TableCell className="text-end">
                   {p.status === "open" && ctx.can(PERMISSIONS.billsCreate) && (
                     <ConvertToBill poId={p.id} vendorId={p.vendor_id} label={t.payables.toBill} errors={t.errors} />

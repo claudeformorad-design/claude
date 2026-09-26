@@ -13,8 +13,16 @@ import { listAccounts, listDepartments } from "@/services/accounts.service";
 import { getI18n } from "@/i18n/server";
 import { cn } from "@/lib/utils";
 import { AccountForm } from "./account-form";
+import { HandCoins, Landmark, PieChart, TrendingDown, TrendingUp } from "lucide-react";
+import { Stat, StatGrid } from "@/components/ui/stat";
 
 export const metadata = { title: "دليل الحسابات" };
+
+const TYPE_ORDER = ["asset", "liability", "equity", "revenue", "expense"] as const;
+const TYPE_COLOR: Record<(typeof TYPE_ORDER)[number], string> = {
+  asset: "#008a7c", liability: "#cc6a38", equity: "#3f7fc4", revenue: "#4e9b63", expense: "#b8873a",
+};
+const TYPE_ICON = { asset: Landmark, liability: HandCoins, equity: PieChart, revenue: TrendingUp, expense: TrendingDown } as const;
 
 export default async function AccountsPage({
   searchParams,
@@ -65,6 +73,12 @@ export default async function AccountsPage({
           )
         }
       />
+      <StatGrid className="lg:grid-cols-5">
+        {TYPE_ORDER.map((ty) => (
+          <Stat key={ty} icon={TYPE_ICON[ty]} tone={ty === "asset" ? "ink" : ty === "revenue" ? "teal" : ty === "expense" ? "clay" : "neutral"}
+            label={t.accounts.types[ty]} value={<span className="num">{accounts.filter((x) => x.account_type === ty && x.is_postable).length}</span>} hint="حساب تفصيلي" />
+        ))}
+      </StatGrid>
       <div className={`grid gap-6 ${formInitial ? "xl:grid-cols-[1fr_380px]" : ""}`}>
         <Card className="overflow-hidden">
           <Table>
@@ -80,10 +94,13 @@ export default async function AccountsPage({
             </TableHeader>
             <TableBody>
               {rows.map((a) => (
-                <TableRow key={a.id} className={cn(!a.is_postable && "bg-muted/30 font-semibold", !a.is_active && "opacity-50")}>
-                  <TableCell className="num">{a.code}</TableCell>
+                <TableRow key={a.id} className={cn(!a.is_postable && "bg-panel font-semibold", a.depth === 0 && "bg-subtle/70", !a.is_active && "opacity-50")}>
+                  <TableCell className={cn("num", a.is_postable ? "text-slate-600" : "text-ink")}>{a.code}</TableCell>
                   <TableCell>
-                    <span style={{ paddingInlineStart: `${a.depth * 1.25}rem` }}>{name(a)}</span>
+                    <span className="flex items-center gap-2.5" style={{ paddingInlineStart: `${a.depth * 1.35}rem` }}>
+                      <span className={cn("shrink-0 rounded-full", a.is_postable ? "size-1.5" : "size-2.5")} style={{ background: TYPE_COLOR[a.account_type] }} />
+                      {name(a)}
+                    </span>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{t.accounts.subtypes[a.account_subtype]}</TableCell>
                   <TableCell>{t.accounts.sides[a.normal_balance]}</TableCell>

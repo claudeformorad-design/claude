@@ -1,7 +1,6 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { FileSpreadsheet } from "lucide-react";
 import { Money } from "@/components/money";
-import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,6 +11,8 @@ import { fiscalYearStart, isIsoDate, todayInTimeZone } from "@/lib/accounting/fi
 import { trialBalanceColumns } from "@/lib/accounting/trial-balance";
 import { getTrialBalance } from "@/services/reports.service";
 import { getI18n } from "@/i18n/server";
+import { ArrowDownToLine, ArrowUpFromLine, CheckCircle2, ListChecks, TriangleAlert } from "lucide-react";
+import { Stat, StatGrid } from "@/components/ui/stat";
 
 export default async function TrialBalancePage({
   searchParams,
@@ -58,9 +59,14 @@ export default async function TrialBalancePage({
         <Button type="submit" variant="outline">{t.common.apply}</Button>
       </form>
 
-      <Alert variant={tb.isBalanced ? "success" : "destructive"} className="mb-4">
-        {tb.isBalanced ? t.trialBalance.balancedNote : t.trialBalance.unbalancedNote}
-      </Alert>
+      <StatGrid>
+        <Stat icon={ArrowDownToLine} tone="teal" label="إجمالي المدين (ختامي)" value={<Money value={tb.totals.closingDebit} locale={locale} />} />
+        <Stat icon={ArrowUpFromLine} tone="clay" label="إجمالي الدائن (ختامي)" value={<Money value={tb.totals.closingCredit} locale={locale} />} />
+        <Stat icon={ListChecks} tone="neutral" label="حسابات بحركة" value={<span className="num">{tb.rows.length}</span>} />
+        <Stat icon={tb.isBalanced ? CheckCircle2 : TriangleAlert} tone={tb.isBalanced ? "ink" : "clay"} label="حالة الميزان"
+          value={tb.isBalanced ? "متوازن" : "غير متوازن"} valueClassName={tb.isBalanced ? "text-success" : "text-urgent"}
+          hint={tb.isBalanced ? t.trialBalance.balancedNote : t.trialBalance.unbalancedNote} />
+      </StatGrid>
 
       <Card className="overflow-hidden">
         <Table>

@@ -13,6 +13,8 @@ import { listDepartments } from "@/services/accounts.service";
 import { raise } from "@/services/errors";
 import { getI18n } from "@/i18n/server";
 import { cn } from "@/lib/utils";
+import { Package, PieChart, Receipt, TrendingUp } from "lucide-react";
+import { Stat, StatGrid } from "@/components/ui/stat";
 
 export default async function ProfitabilityPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string }> }) {
   const ctx = await requireAppContext(PERMISSIONS.profitabilityView);
@@ -49,6 +51,13 @@ export default async function ProfitabilityPage({ searchParams }: { searchParams
         <Input type="date" name="to" defaultValue={to} dir="ltr" className="w-40" aria-label={t.common.to} />
         <Button type="submit" variant="outline">{t.common.apply}</Button>
       </form>
+      <StatGrid>
+        <Stat icon={TrendingUp} tone="teal" label={p.revenue} value={<Money value={total.revenue} locale={locale} />} />
+        <Stat icon={Package} tone="clay" label={p.cos} value={<Money value={total.costOfSales} locale={locale} />} />
+        <Stat icon={Receipt} tone="neutral" label={p.opex} value={<Money value={total.operatingExpenses} locale={locale} />} />
+        <Stat icon={PieChart} tone="ink" label={p.net} value={<Money value={total.netProfit} locale={locale} />}
+          valueClassName={total.netProfit.isNegative() ? "text-urgent" : "text-success"} hint={total.margin ? `هامش ${total.margin.toFixed(1)}%` : undefined} />
+      </StatGrid>
       <Card className="overflow-hidden">
         <Table>
           <TableHeader><TableRow>
@@ -60,7 +69,14 @@ export default async function ProfitabilityPage({ searchParams }: { searchParams
             {rows.length === 0 && <TableRow><TableCell colSpan={7} className="py-10 text-center text-muted-foreground">{t.common.noData}</TableCell></TableRow>}
             {rows.map((r) => (
               <TableRow key={r.departmentId ?? "none"}>
-                <TableCell>{r.departmentId ? deptName.get(r.departmentId) : p.unassigned}</TableCell>{cells(r)}
+                <TableCell>
+                  <span className="font-medium">{r.departmentId ? deptName.get(r.departmentId) : p.unassigned}</span>
+                  {total.revenue.gt(0) && r.revenue.gt(0) && (
+                    <span className="mt-1.5 block h-1.5 w-full max-w-40 overflow-hidden rounded-full bg-subtle">
+                      <span className="block h-full rounded-full bg-accent1" style={{ width: `${Math.min(100, r.revenue.div(total.revenue).times(100).toNumber())}%` }} />
+                    </span>
+                  )}
+                </TableCell>{cells(r)}
               </TableRow>
             ))}
           </TableBody>

@@ -167,6 +167,9 @@
 /* ---- شريط أدوات الفلاتر فوق الجداول (موحّد في كل الصفحات) ---- */
 .toolbar {
   display: flex;
+  justify-content: flex-start;
+  width: fit-content;
+  max-width: 100%;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 0.5rem;

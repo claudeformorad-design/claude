@@ -10,7 +10,7 @@ export function Table({ className, ...props }: React.ComponentProps<"table">) {
 }
 
 export function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
-  return <thead className={cn("border-b border-line text-xs text-muted-foreground", className)} {...props} />;
+  return <thead className={cn("border-b border-line bg-panel text-[12px] text-slate-600", className)} {...props} />;
 }
 
 export function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
@@ -22,11 +22,11 @@ export function TableFooter({ className, ...props }: React.ComponentProps<"tfoot
 }
 
 export function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
-  return <tr className={cn("border-b border-line/70 transition-colors duration-150 hover:bg-panel", className)} {...props} />;
+  return <tr className={cn("border-b border-line/70 transition-colors duration-150 hover:bg-[#fafaf8]", className)} {...props} />;
 }
 
 export function TableHead({ className, ...props }: React.ComponentProps<"th">) {
-  return <th className={cn("h-12 whitespace-nowrap px-5 text-start align-middle font-medium", className)} {...props} />;
+  return <th className={cn("h-11 whitespace-nowrap px-5 text-start align-middle font-semibold", className)} {...props} />;
 }
 
 export function TableCell({ className, ...props }: React.ComponentProps<"td">) {

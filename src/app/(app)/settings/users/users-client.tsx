@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { saveRoleAction, setMemberRolesAction } from "../../_admin/actions";
 import { actionErrorText } from "@/lib/action-error";
+import { Avatar } from "@/components/ui/entity";
 
 type T = Pick<Dictionary, "admin" | "common" | "errors">;
 type Role = { id: string; label: string; system: boolean };
@@ -22,17 +23,21 @@ export function MemberRow({ t, userId, email, name, active, roleIds, roles, isSe
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   return (
-    <div className="space-y-2 border-b p-4 last:border-0">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="font-medium">{name || email}</span><span className="text-sm text-muted-foreground" dir="ltr">{email}</span>
+    <div className="space-y-3 border-b border-line p-5 last:border-0">
+      <div className="flex flex-wrap items-center gap-3">
+        <Avatar name={name || email} className="size-10 text-[13px]" />
+        <div className="min-w-0 leading-tight">
+          <p className="font-semibold text-ink">{name || email}</p>
+          <p className="text-[12px] text-slate-500" dir="ltr">{email}</p>
+        </div>
         {!isActive && <Badge variant="secondary">{t.common.inactive}</Badge>}
       </div>
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-2">
         {roles.map((r) => (
-          <label key={r.id} className="flex items-center gap-1.5 text-sm">
-            <input type="checkbox" className="size-4" checked={sel.has(r.id)}
+          <label key={r.id} className={`flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors ${sel.has(r.id) ? "bg-ink text-white" : "bg-subtle text-slate-700 hover:bg-line"}`}>
+            <input type="checkbox" className="sr-only" checked={sel.has(r.id)}
               onChange={(e) => { const n = new Set(sel); if (e.target.checked) n.add(r.id); else n.delete(r.id); setSel(n); }} />
-            {r.label}{r.system && <span className="text-xs text-muted-foreground">({t.admin.systemRole})</span>}
+            {r.label}{r.system && <span className={`text-[11px] ${sel.has(r.id) ? "text-white/70" : "text-slate-500"}`}>({t.admin.systemRole})</span>}
           </label>
         ))}
       </div>

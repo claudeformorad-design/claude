@@ -203,7 +203,7 @@ await step("close a period", async () => {
   await page.getByRole("button", { name: "إقفال", exact: true }).first().click(); await page.waitForTimeout(1500);
   await page.getByRole("button", { name: "إعادة فتح" }).first().waitFor();
 });
-await step("audit log lists changes", async () => { await go("/audit"); await bodyHas("journal_entries", "INSERT"); });
+await step("audit log lists changes", async () => { await go("/audit"); await bodyHas("القيود", "إضافة"); });
 
 console.log(`\nproblems (${problems.length}):`);
 for (const p of problems) console.log(" - " + p);

@@ -8,12 +8,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { todayInTimeZone } from "@/lib/accounting/fiscal";
-import { toMoney } from "@/lib/accounting/money";
+import { ZERO, toMoney } from "@/lib/accounting/money";
 import type { InventoryItemRow } from "@/lib/supabase/database.types";
 import { listAccounts, listDepartments } from "@/services/accounts.service";
 import { getI18n } from "@/i18n/server";
 import { inventoryMovementAction, saveItemAction } from "../_assets/actions";
 import { SimpleForm } from "../_assets/simple-form";
+import { Boxes, Coins, PackageX, TriangleAlert } from "lucide-react";
+import { Stat, StatGrid } from "@/components/ui/stat";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ edit?: string; new?: string }> }) {
   const ctx = await requireAppContext(PERMISSIONS.inventoryView);
@@ -35,11 +38,18 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   const i = t.inventory;
   const edit = items.find((x) => x.id === sp.edit);
   const today = todayInTimeZone(ctx.hotel.timezone);
+  const lowCount = items.filter((x) => toMoney(x.quantity_on_hand).lte(toMoney(x.reorder_level)) && toMoney(x.reorder_level).gt(0)).length;
 
   return (
     <>
       <PageHeader title={t.nav.stock} description={i.subtitle}
         actions={can && <Button asChild variant="outline"><Link href="/inventory?new=1">{i.newItem}</Link></Button>} />
+      <StatGrid>
+        <Stat icon={Boxes} tone="ink" label="الأصناف" value={<span className="num">{items.length}</span>} hint={`${items.filter((x) => x.is_active).length} فعّال`} />
+        <Stat icon={Coins} tone="teal" label="قيمة المخزون" value={<Money value={items.reduce((s, x) => s.plus(toMoney(x.stock_value)), ZERO)} locale={locale} />} />
+        <Stat icon={TriangleAlert} tone="clay" label="تحت حد إعادة الطلب" value={<span className="num">{lowCount}</span>} />
+        <Stat icon={PackageX} tone="neutral" label="نفدت كميتها" value={<span className="num">{items.filter((x) => x.is_active && toMoney(x.quantity_on_hand).lte(0)).length}</span>} />
+      </StatGrid>
       {can && (edit || sp.new) && (
         <Card className="mb-6"><CardHeader><CardTitle>{edit ? t.common.edit : i.newItem}</CardTitle></CardHeader><CardContent>
           <SimpleForm key={edit?.id ?? "new"} columns={4} submitLabel={t.common.save} errors={t.errors} action={saveItemAction} onDone="/inventory"
@@ -79,15 +89,15 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
             <TableHead className="text-end">{i.value}</TableHead><TableHead />{can && <TableHead />}
           </TableRow></TableHeader>
           <TableBody>
-            {items.length === 0 && <TableRow><TableCell colSpan={8} className="py-10 text-center text-muted-foreground">{t.common.noData}</TableCell></TableRow>}
+            {items.length === 0 && <TableRow><TableCell colSpan={8} className="py-8"><EmptyState title="لا توجد أصناف مخزون" description="أضف أصناف المطبخ والمتجر والمستلزمات لتتبع كمياتها وتكلفتها المتوسطة." actionHref="/inventory?new=1" actionLabel={i.newItem} icon={Boxes} /></TableCell></TableRow>}
             {items.map((x) => {
               const low = toMoney(x.quantity_on_hand).lte(toMoney(x.reorder_level)) && toMoney(x.reorder_level).gt(0);
               return (
                 <TableRow key={x.id} className={x.is_active ? "" : "opacity-50"}>
-                  <TableCell className="num">{x.sku}</TableCell><TableCell>{name(x)}</TableCell><TableCell>{x.unit}</TableCell>
+                  <TableCell className="num font-semibold">{x.sku}</TableCell><TableCell className="font-medium">{name(x)}</TableCell><TableCell className="text-slate-600">{x.unit}</TableCell>
                   <TableCell className="num text-end">{toMoney(x.quantity_on_hand).toString()}</TableCell>
                   <TableCell className="text-end"><Money value={x.average_cost} locale={locale} decimals={4} /></TableCell>
-                  <TableCell className="text-end"><Money value={x.stock_value} locale={locale} /></TableCell>
+                  <TableCell className="text-end font-semibold"><Money value={x.stock_value} locale={locale} /></TableCell>
                   <TableCell>{low && <Badge variant="warning">{i.lowStock}</Badge>}</TableCell>
                   {can && <TableCell className="text-end"><Button asChild variant="ghost" size="sm"><Link href={`/inventory?edit=${x.id}`}>{t.common.edit}</Link></Button></TableCell>}
                 </TableRow>

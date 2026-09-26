@@ -37,7 +37,8 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         <InvoiceStatusBadge status={inv.status} labels={t.invoices.statuses} />
         <PrintButton label={t.invoices.print} />
       </div>
-      <Card className="print:border-0 print:shadow-none">
+      <Card className="overflow-hidden print:border-0 print:shadow-none">
+        <div className="h-1.5 bg-ink print:hidden" />
         <CardContent className="space-y-6 p-8">
           <div className="flex flex-wrap items-start justify-between gap-6 border-b pb-6">
             <div>
@@ -47,8 +48,8 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
               {hotel.address && <p className="text-sm text-muted-foreground">{hotel.address}</p>}
             </div>
             <div className="text-end">
-              <p className="text-2xl font-bold text-primary">{t.invoices.taxInvoice}</p>
-              <p className="num text-lg">{inv.invoice_number}</p>
+              <p className="text-2xl font-bold text-ink">{t.invoices.taxInvoice}</p>
+              <p className="num text-lg font-semibold text-accent1">{inv.invoice_number}</p>
               <p className="text-sm text-muted-foreground">{t.invoices.issueDate}: <span className="num">{inv.issue_date}</span></p>
               {inv.due_date && <p className="text-sm text-muted-foreground">{t.invoices.dueDate}: <span className="num">{inv.due_date}</span></p>}
             </div>
@@ -119,7 +120,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
               <tbody>
                 <tr><td className="py-1">{t.invoices.subtotal}</td><td className="py-1 text-end">{m(inv.subtotal)}</td></tr>
                 <tr><td className="py-1">{t.invoices.taxTotal}</td><td className="py-1 text-end">{m(inv.tax_total)}</td></tr>
-                <tr className="border-t text-base font-bold"><td className="py-2">{t.invoices.total} ({inv.currency_code})</td><td className="py-2 text-end">{m(inv.total)}</td></tr>
+                <tr className="text-base font-bold"><td className="rounded-s-xl bg-accent1-tint px-3 py-2.5 text-accent1 print:bg-transparent print:text-ink">{t.invoices.total} ({inv.currency_code})</td><td className="rounded-e-xl bg-accent1-tint px-3 py-2.5 text-end text-accent1 print:bg-transparent print:text-ink">{m(inv.total)}</td></tr>
                 {toMoney(inv.amount_due).gt(0) && (
                   <>
                     <tr><td className="py-1">{t.invoices.amountDue}</td><td className="py-1 text-end">{m(inv.amount_due)}</td></tr>

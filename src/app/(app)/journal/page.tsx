@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { NativeSelect } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
@@ -15,7 +14,9 @@ import { listJournalEntries } from "@/services/journal.service";
 import { getI18n } from "@/i18n/server";
 import { StatusBadge } from "./status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { BookOpen } from "lucide-react";
+import { BookOpen, FilePen, CheckCircle2, Undo2 } from "lucide-react";
+import { Stat, StatGrid } from "@/components/ui/stat";
+import { FilterTabs } from "@/components/ui/filter-tabs";
 
 export default async function JournalPage({
   searchParams,
@@ -34,6 +35,19 @@ export default async function JournalPage({
     search: sp.q,
   });
 
+  const drafts = entries.filter((e) => e.status === "draft").length;
+  const posted = entries.filter((e) => e.status === "posted").length;
+  const reversed = entries.filter((e) => !!e.reversed_by_id).length;
+  const qs = (st?: string) => {
+    const p = new URLSearchParams();
+    if (st) p.set("status", st);
+    if (sp.q) p.set("q", sp.q);
+    if (sp.from) p.set("from", sp.from);
+    if (sp.to) p.set("to", sp.to);
+    const q = p.toString();
+    return q ? `/journal?${q}` : "/journal";
+  };
+
   return (
     <>
       <PageHeader
@@ -48,13 +62,22 @@ export default async function JournalPage({
         }
       />
 
+      <StatGrid>
+        <Stat icon={BookOpen} tone="ink" label="قيود في القائمة" value={<span className="num">{entries.length}</span>} />
+        <Stat icon={CheckCircle2} tone="teal" label={t.journal.status.posted} value={<span className="num">{posted}</span>} hint="تؤثر على الأرصدة" />
+        <Stat icon={FilePen} tone="clay" label="مسودات" value={<span className="num">{drafts}</span>} hint="لا تؤثر حتى الترحيل" />
+        <Stat icon={Undo2} tone="neutral" label="قيود معكوسة" value={<span className="num">{reversed}</span>} />
+      </StatGrid>
+
+      <FilterTabs className="mb-4" active={status ?? "all"} items={[
+        { key: "all", href: qs(), label: "الكل" },
+        { key: "posted", href: qs("posted"), label: t.journal.status.posted },
+        { key: "draft", href: qs("draft"), label: t.journal.status.draft },
+      ]} />
+
       <form className="toolbar">
-        <Input name="q" defaultValue={sp.q} placeholder={t.common.search} className="w-56" />
-        <NativeSelect name="status" defaultValue={status ?? ""} className="w-36">
-          <option value="">{t.common.status}</option>
-          <option value="draft">{t.journal.status.draft}</option>
-          <option value="posted">{t.journal.status.posted}</option>
-        </NativeSelect>
+        {status && <input type="hidden" name="status" value={status} />}
+        <Input name="q" defaultValue={sp.q} placeholder="ابحث بالوصف أو رقم القيد" className="w-64" />
         <Input type="date" name="from" defaultValue={sp.from} dir="ltr" className="w-40" aria-label={t.common.from} />
         <Input type="date" name="to" defaultValue={sp.to} dir="ltr" className="w-40" aria-label={t.common.to} />
         <Button type="submit" variant="outline">{t.common.apply}</Button>
@@ -89,17 +112,17 @@ export default async function JournalPage({
             {entries.map((e) => (
               <TableRow key={e.id}>
                 <TableCell>
-                  <Link href={`/journal/${e.id}`} className="num font-medium text-primary hover:underline">
+                  <Link href={`/journal/${e.id}`} className="num font-semibold text-ink hover:underline">
                     {e.entry_number ?? t.journal.draftNumber}
                   </Link>
                 </TableCell>
                 <TableCell className="num">{e.entry_date}</TableCell>
-                <TableCell className="max-w-md truncate">{e.description}</TableCell>
+                <TableCell className="max-w-md truncate font-medium">{e.description}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{t.journal.sources[e.source]}</Badge>
                 </TableCell>
-                <TableCell className="text-end">
-                  <Money value={e.total_debit} locale={locale} /> <span className="text-xs text-muted-foreground">{e.currency_code}</span>
+                <TableCell className="text-end font-semibold">
+                  <Money value={e.total_debit} locale={locale} /> <span className="text-xs font-normal text-slate-500">{e.currency_code}</span>
                 </TableCell>
                 <TableCell>
                   <StatusBadge status={e.status} reversed={!!e.reversed_by_id} labels={t.journal.status} />

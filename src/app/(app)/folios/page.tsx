@@ -6,14 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { NativeSelect } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { listFolios } from "@/services/folio.service";
 import { getI18n } from "@/i18n/server";
 import { EmptyState } from "@/components/ui/empty-state";
-import { BedDouble } from "lucide-react";
+import { BedDouble, DoorOpen, HandCoins, Wallet } from "lucide-react";
+import { Stat, StatGrid } from "@/components/ui/stat";
+import { EntityCell } from "@/components/ui/entity";
+import { FilterTabs } from "@/components/ui/filter-tabs";
+import { ZERO, toMoney } from "@/lib/accounting/money";
 
 export default async function FoliosPage({ searchParams }: { searchParams: Promise<{ status?: string; q?: string }> }) {
   const ctx = await requireAppContext(PERMISSIONS.folioView);
@@ -21,6 +24,11 @@ export default async function FoliosPage({ searchParams }: { searchParams: Promi
   const sp = await searchParams;
   const status = sp.status ?? "open";
   const folios = await listFolios(ctx.supabase, ctx.hotel.id, { status: status === "all" ? undefined : status, q: sp.q });
+
+  const totalBalance = folios.reduce((a, f) => a.plus(toMoney(f.balance)), ZERO);
+  const totalDeposits = folios.reduce((a, f) => a.plus(toMoney(f.deposit_balance)), ZERO);
+  const withBalance = folios.filter((f) => !toMoney(f.balance).isZero()).length;
+  const tabHref = (k: string) => `/folios?status=${k}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}`;
 
   return (
     <>
@@ -31,16 +39,26 @@ export default async function FoliosPage({ searchParams }: { searchParams: Promi
           <Button asChild><Link href="/folios/new"><Plus />{t.folio.newFolio}</Link></Button>
         )}
       />
-      <form className="toolbar">
-        <Input name="q" defaultValue={sp.q} placeholder={t.common.search} className="w-56" />
-        <NativeSelect name="status" defaultValue={status} className="w-36">
-          <option value="open">{t.folio.statuses.open}</option>
-          <option value="closed">{t.folio.statuses.closed}</option>
-          <option value="cancelled">{t.folio.statuses.cancelled}</option>
-          <option value="all">—</option>
-        </NativeSelect>
-        <Button type="submit" variant="outline">{t.common.apply}</Button>
-      </form>
+      <StatGrid>
+        <Stat icon={BedDouble} tone="ink" label={status === "open" ? "فوليوهات مفتوحة" : "فوليوهات في القائمة"} value={<span className="num">{folios.length}</span>} />
+        <Stat icon={Wallet} tone="teal" label="أرصدة مستحقة على النزلاء" value={<Money value={totalBalance} locale={locale} />} hint={`${withBalance} فوليو برصيد`} />
+        <Stat icon={HandCoins} tone="clay" label="عربون غير مطبّق" value={<Money value={totalDeposits} locale={locale} />} />
+        <Stat icon={DoorOpen} tone="neutral" label="غرف مشغولة" value={<span className="num">{new Set(folios.filter((f) => f.status === "open" && f.room_number).map((f) => f.room_number)).size}</span>} hint="من الفوليوهات المفتوحة المعروضة" />
+      </StatGrid>
+
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <FilterTabs active={status} items={[
+          { key: "open", href: tabHref("open"), label: t.folio.statuses.open },
+          { key: "closed", href: tabHref("closed"), label: t.folio.statuses.closed },
+          { key: "cancelled", href: tabHref("cancelled"), label: t.folio.statuses.cancelled },
+          { key: "all", href: tabHref("all"), label: "الكل" },
+        ]} />
+        <form className="flex items-center gap-2">
+          <input type="hidden" name="status" value={status} />
+          <Input name="q" defaultValue={sp.q} placeholder="ابحث بالاسم أو الغرفة أو الرقم" className="w-64 bg-white" />
+          <Button type="submit" variant="outline">{t.common.apply}</Button>
+        </form>
+      </div>
       <Card className="overflow-hidden">
         <Table>
           <TableHeader>
@@ -72,12 +90,12 @@ export default async function FoliosPage({ searchParams }: { searchParams: Promi
             {folios.map((f) => (
               <TableRow key={f.id}>
                 <TableCell><Link href={`/folios/${f.id}`} className="num font-medium text-primary hover:underline">{f.folio_number}</Link></TableCell>
-                <TableCell>{f.guest_name}</TableCell>
-                <TableCell className="num">{f.room_number ?? "—"}</TableCell>
+                <TableCell><EntityCell name={f.guest_name} sub={f.departure_date ? `مغادرة ${f.departure_date}` : undefined} /></TableCell>
+                <TableCell>{f.room_number ? <span className="num inline-flex h-7 min-w-10 items-center justify-center rounded-lg bg-subtle px-2 text-[12px] font-semibold text-ink">{f.room_number}</span> : <span className="text-slate-400">—</span>}</TableCell>
                 <TableCell>{t.folio.types[f.folio_type]}</TableCell>
                 <TableCell className="num">{f.arrival_date ?? "—"}</TableCell>
                 <TableCell className="text-end"><Money value={f.deposit_balance} locale={locale} blankZero /></TableCell>
-                <TableCell className="text-end font-medium"><Money value={f.balance} locale={locale} /></TableCell>
+                <TableCell className="text-end font-semibold"><Money value={f.balance} locale={locale} /></TableCell>
                 <TableCell>
                   <Badge variant={f.status === "open" ? "success" : "secondary"}>{t.folio.statuses[f.status]}</Badge>
                 </TableCell>

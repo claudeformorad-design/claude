@@ -13,6 +13,9 @@ import { listChargeCodes, listPaymentMethods, listTaxRates } from "@/services/re
 import { getI18n } from "@/i18n/server";
 import { cn } from "@/lib/utils";
 import { FolioActions } from "./folio-actions";
+import { CalendarRange, HandCoins, ListOrdered, Wallet } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Stat, StatGrid } from "@/components/ui/stat";
 
 export default async function FolioPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -48,20 +51,18 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
         description={`${folio.guest_name}${folio.room_number ? ` — ${t.folio.room} ${folio.room_number}` : ""}`}
         actions={
           <div className="flex items-center gap-2">
-            {detail.invoiceId && <Link className="text-sm text-primary hover:underline" href={`/invoices/${detail.invoiceId}`}>{t.folio.invoice}</Link>}
+            {detail.invoiceId && <Button asChild variant="outline"><Link href={`/invoices/${detail.invoiceId}`}>{t.folio.invoice}</Link></Button>}
             <Badge variant={isOpen ? "success" : "secondary"}>{t.folio.statuses[folio.status]}</Badge>
           </div>
         }
       />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <Card><CardHeader><CardTitle className="text-sm text-muted-foreground">{t.folio.balance}</CardTitle></CardHeader>
-          <CardContent className="text-2xl font-bold"><Money value={detail.balance} locale={locale} /> <span className="text-sm font-normal text-muted-foreground">{ctx.hotel.base_currency}</span></CardContent></Card>
-        <Card><CardHeader><CardTitle className="text-sm text-muted-foreground">{t.folio.deposits}</CardTitle></CardHeader>
-          <CardContent className="text-2xl font-bold"><Money value={detail.deposits} locale={locale} /></CardContent></Card>
-        <Card><CardHeader><CardTitle className="text-sm text-muted-foreground">{t.folio.folioType}</CardTitle></CardHeader>
-          <CardContent className="text-lg">{t.folio.types[folio.folio_type]} · <span className="num">{folio.arrival_date ?? "—"} → {folio.departure_date ?? "—"}</span></CardContent></Card>
-      </div>
+      <StatGrid>
+        <Stat icon={Wallet} tone="ink" label={t.folio.balance} value={<><Money value={detail.balance} locale={locale} /> <span className="text-[12px] font-normal text-slate-500">{ctx.hotel.base_currency}</span></>} />
+        <Stat icon={HandCoins} tone="teal" label={t.folio.deposits} value={<Money value={detail.deposits} locale={locale} />} />
+        <Stat icon={CalendarRange} tone="clay" label="الإقامة" value={<span className="num text-[17px]">{folio.arrival_date ?? "—"} ← {folio.departure_date ?? "—"}</span>} hint={t.folio.types[folio.folio_type]} />
+        <Stat icon={ListOrdered} tone="neutral" label={t.folio.transactions} value={<span className="num">{transactions.length}</span>} hint={folio.room_number ? `${t.folio.room} ${folio.room_number}` : undefined} />
+      </StatGrid>
 
       {isOpen && (
         <Card className="mb-6"><CardContent className="p-5">

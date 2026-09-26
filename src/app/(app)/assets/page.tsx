@@ -6,12 +6,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { todayInTimeZone } from "@/lib/accounting/fiscal";
-import { toMoney } from "@/lib/accounting/money";
+import { ZERO, toMoney } from "@/lib/accounting/money";
 import type { FixedAssetRow } from "@/lib/supabase/database.types";
 import { listAccounts, listDepartments } from "@/services/accounts.service";
 import { getI18n } from "@/i18n/server";
 import { disposeAssetAction, registerAssetAction, runDepreciationAction } from "../_assets/actions";
 import { SimpleForm } from "../_assets/simple-form";
+import { Building2, Coins, Scale, TrendingDown } from "lucide-react";
+import { Stat, StatGrid } from "@/components/ui/stat";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default async function AssetsPage() {
   const ctx = await requireAppContext(PERMISSIONS.assetsView);
@@ -35,10 +38,17 @@ export default async function AssetsPage() {
   const can = ctx.can(PERMISSIONS.assetsManage);
   const today = todayInTimeZone(ctx.hotel.timezone);
   const a = t.assets;
+  const active = assets.filter((x) => x.status !== "disposed");
 
   return (
     <>
       <PageHeader title={t.nav.fixedAssets} description={a.subtitle} />
+      <StatGrid>
+        <Stat icon={Building2} tone="ink" label="أصول فعّالة" value={<span className="num">{active.length}</span>} hint={`${assets.length - active.length} مستبعد`} />
+        <Stat icon={Coins} tone="teal" label="التكلفة" value={<Money value={active.reduce((s, x) => s.plus(toMoney(x.cost)), ZERO)} locale={locale} />} />
+        <Stat icon={TrendingDown} tone="clay" label="مجمع الإهلاك" value={<Money value={active.reduce((s, x) => s.plus(toMoney(x.accumulated_depreciation)), ZERO)} locale={locale} />} />
+        <Stat icon={Scale} tone="neutral" label="صافي القيمة الدفترية" value={<Money value={active.reduce((s, x) => s.plus(toMoney(x.cost)).minus(toMoney(x.accumulated_depreciation)), ZERO)} locale={locale} />} />
+      </StatGrid>
       {can && (
         <div className="mb-6 grid gap-6 xl:grid-cols-[2fr_1fr]">
           <Card><CardHeader><CardTitle>{a.register}</CardTitle></CardHeader><CardContent>
@@ -67,14 +77,15 @@ export default async function AssetsPage() {
             <TableHead className="text-end">{a.nbv}</TableHead><TableHead>{t.common.status}</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {assets.length === 0 && <TableRow><TableCell colSpan={7} className="py-10 text-center text-muted-foreground">{t.common.noData}</TableCell></TableRow>}
+            {assets.length === 0 && <TableRow><TableCell colSpan={7} className="py-8"><EmptyState title="سجل الأصول فارغ" description="سجّل الأصول الثابتة (أجهزة، أثاث، مركبات) ليُحسب إهلاكها الشهري تلقائيًا." icon={Building2} /></TableCell></TableRow>}
             {assets.map((x) => (
               <TableRow key={x.id}>
-                <TableCell className="num">{x.asset_number}</TableCell>
+                <TableCell className="num font-semibold">{x.asset_number}</TableCell>
                 <TableCell>
-                  <p>{x.name} <span className="text-xs text-muted-foreground">· {x.category} · {x.useful_life_months}</span></p>
+                  <p className="font-medium">{x.name}</p>
+                  <p className="text-[12px] text-slate-500">{x.category} · {x.useful_life_months} شهرًا</p>
                   {can && x.status !== "disposed" && (
-                    <details className="mt-1 text-sm"><summary className="cursor-pointer text-primary">{a.dispose}</summary>
+                    <details className="mt-1 text-sm"><summary className="cursor-pointer text-[12px] font-medium text-accent2">{a.dispose}</summary>
                       <div className="mt-2">
                         <SimpleForm columns={4} submitLabel={a.dispose} errors={t.errors}
                           action={async (v) => { "use server"; return disposeAssetAction({ ...v, asset_id: x.id }); }}
@@ -88,7 +99,7 @@ export default async function AssetsPage() {
                 <TableCell className="num">{x.acquisition_date}</TableCell>
                 <TableCell className="text-end"><Money value={x.cost} locale={locale} /></TableCell>
                 <TableCell className="text-end"><Money value={x.accumulated_depreciation} locale={locale} blankZero /></TableCell>
-                <TableCell className="text-end"><Money value={x.status === "disposed" ? "0" : toMoney(x.cost).minus(toMoney(x.accumulated_depreciation))} locale={locale} /></TableCell>
+                <TableCell className="text-end font-semibold"><Money value={x.status === "disposed" ? "0" : toMoney(x.cost).minus(toMoney(x.accumulated_depreciation))} locale={locale} /></TableCell>
                 <TableCell><Badge variant={x.status === "active" ? "success" : "secondary"}>{a.statuses[x.status]}</Badge></TableCell>
               </TableRow>
             ))}

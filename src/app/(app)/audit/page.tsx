@@ -8,6 +8,19 @@ import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { getI18n } from "@/i18n/server";
 import { formatDateTime } from "@/lib/accounting/fiscal";
+import { History, Pencil, PlusCircle, Trash2 } from "lucide-react";
+import { Stat, StatGrid } from "@/components/ui/stat";
+import { EntityCell } from "@/components/ui/entity";
+
+const ACTION_AR: Record<string, string> = { INSERT: "إضافة", UPDATE: "تعديل", DELETE: "حذف" };
+const TABLE_AR: Record<string, string> = {
+  journal_entries: "القيود", journal_entry_lines: "أسطر القيود", chart_of_accounts: "دليل الحسابات", accounting_periods: "الفترات",
+  fiscal_years: "السنوات المالية", guest_folios: "الفوليو", folio_transactions: "حركات الفوليو", invoices: "الفواتير", payments: "السندات",
+  customers: "العملاء", vendors: "الموردون", vendor_bills: "فواتير الموردين", purchase_orders: "أوامر الشراء", payroll_runs: "الرواتب",
+  fixed_assets: "الأصول الثابتة", inventory_items: "أصناف المخزون", inventory_movements: "حركات المخزون", hotels: "بيانات الفندق",
+  departments: "الأقسام", charge_codes: "رموز الإيراد", tax_rates: "الضرائب", payment_methods: "طرق الدفع", hotel_members: "المستخدمون",
+  user_hotel_roles: "أدوار المستخدمين", roles: "الأدوار", bank_statement_lines: "كشوف البنك",
+};
 
 export default async function AuditPage({ searchParams }: { searchParams: Promise<{ table?: string; page?: string }> }) {
   const ctx = await requireAppContext(PERMISSIONS.auditView);
@@ -18,11 +31,18 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   if (sp.table) q = q.eq("table_name", sp.table.trim());
   const { data } = await q;
   const a = t.admin;
+  const rows = data ?? [];
   return (
     <>
       <PageHeader title={t.nav.audit} description={a.auditSubtitle} />
+      <StatGrid>
+        <Stat icon={History} tone="ink" label="أحداث في الصفحة" value={<span className="num">{rows.length}</span>} />
+        <Stat icon={PlusCircle} tone="teal" label="إضافات" value={<span className="num">{rows.filter((r) => r.action === "INSERT").length}</span>} />
+        <Stat icon={Pencil} tone="clay" label="تعديلات" value={<span className="num">{rows.filter((r) => r.action === "UPDATE").length}</span>} />
+        <Stat icon={Trash2} tone="neutral" label="حذف" value={<span className="num">{rows.filter((r) => r.action === "DELETE").length}</span>} />
+      </StatGrid>
       <form className="toolbar">
-        <Input name="table" defaultValue={sp.table} placeholder={a.table} dir="ltr" className="w-60" />
+        <Input name="table" defaultValue={sp.table} placeholder="اسم الجدول (مثل journal_entries)" dir="ltr" className="w-72" />
         <Button type="submit" variant="outline">{t.common.apply}</Button>
       </form>
       <Card className="overflow-hidden">
@@ -31,12 +51,12 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
             <TableHead>{t.common.date}</TableHead><TableHead>{a.actor}</TableHead><TableHead>{a.table}</TableHead><TableHead>{a.action}</TableHead><TableHead>{a.changed}</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {(data ?? []).map((r) => (
+            {rows.map((r) => (
               <TableRow key={r.id}>
                 <TableCell className="num whitespace-nowrap">{formatDateTime(r.occurred_at, ctx.hotel.timezone, true)}</TableCell>
-                <TableCell>{r.actor_name || "—"}</TableCell>
-                <TableCell className="num">{r.table_name}</TableCell>
-                <TableCell><Badge variant={r.action === "DELETE" ? "destructive" : r.action === "INSERT" ? "success" : "outline"}>{r.action}</Badge></TableCell>
+                <TableCell>{r.actor_name ? <EntityCell name={r.actor_name} /> : <span className="text-slate-400">النظام</span>}</TableCell>
+                <TableCell><span className="font-medium">{TABLE_AR[r.table_name ?? ""] ?? r.table_name}</span>{TABLE_AR[r.table_name ?? ""] && <span className="num block text-[11px] text-slate-500">{r.table_name}</span>}</TableCell>
+                <TableCell><Badge variant={r.action === "DELETE" ? "destructive" : r.action === "INSERT" ? "success" : "warning"}>{ACTION_AR[r.action ?? ""] ?? r.action}</Badge></TableCell>
                 <TableCell className="max-w-md">
                   {r.action === "UPDATE" ? (
                     <details><summary className="cursor-pointer num">{(r.changed_fields ?? []).join(", ")}</summary>

@@ -33,7 +33,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <Sidebar
           labels={t.nav}
           hotelName={hotelName}
-          user={{ name: ctx.profile?.full_name ?? "", email: ctx.user.email ?? "", role: roleLabel, signOut }}
+          signOut={signOut}
           initialExpanded={sidebarExpanded}
         />
         <div className="flex min-w-0 flex-1 flex-col">

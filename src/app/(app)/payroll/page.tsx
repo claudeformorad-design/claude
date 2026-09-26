@@ -9,6 +9,9 @@ import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { listPayrollRuns } from "@/services/payables.service";
 import { getI18n } from "@/i18n/server";
+import { Banknote, UserCog, Wallet } from "lucide-react";
+import { Stat, StatGrid } from "@/components/ui/stat";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default async function PayrollPage() {
   const ctx = await requireAppContext(PERMISSIONS.payrollManage);
@@ -18,6 +21,11 @@ export default async function PayrollPage() {
     <>
       <PageHeader title={t.nav.payroll} description={t.payables.payrollSubtitle}
         actions={<Button asChild><Link href="/payroll/new"><Plus />{t.payables.newPayroll}</Link></Button>} />
+      <StatGrid className="lg:grid-cols-3">
+        <Stat icon={UserCog} tone="ink" label="مسيّرات مرحّلة" value={<span className="num">{runs.length}</span>} hint={runs[0] ? `آخرها ${runs[0].period_month.slice(0, 7)}` : undefined} />
+        <Stat icon={Banknote} tone="teal" label="إجمالي آخر مسيّر" value={runs[0] ? <Money value={runs[0].total_gross} locale={locale} /> : "—"} />
+        <Stat icon={Wallet} tone="clay" label="صافي آخر مسيّر" value={runs[0] ? <Money value={runs[0].total_net} locale={locale} /> : "—"} />
+      </StatGrid>
       <Card className="overflow-hidden">
         <Table>
           <TableHeader><TableRow>
@@ -25,14 +33,14 @@ export default async function PayrollPage() {
             <TableHead className="text-end">{t.payables.gross}</TableHead><TableHead className="text-end">{t.payables.net}</TableHead><TableHead />
           </TableRow></TableHeader>
           <TableBody>
-            {runs.length === 0 && <TableRow><TableCell colSpan={6} className="py-10 text-center text-muted-foreground">{t.common.noData}</TableCell></TableRow>}
+            {runs.length === 0 && <TableRow><TableCell colSpan={6} className="py-8"><EmptyState title="لم يُرحَّل أي مسيّر رواتب" description="رحّل مسيّر الشهر ليُسجَّل مصروف الرواتب والتأمينات والمستحقات تلقائيًا." actionHref="/payroll/new" actionLabel="مسيّر جديد" icon={UserCog} /></TableCell></TableRow>}
             {runs.map((r) => (
               <TableRow key={r.id}>
                 <TableCell className="num">{r.run_number}</TableCell><TableCell className="num">{r.period_month.slice(0, 7)}</TableCell>
                 <TableCell className="num">{r.posting_date}</TableCell>
                 <TableCell className="text-end"><Money value={r.total_gross} locale={locale} /></TableCell>
-                <TableCell className="text-end"><Money value={r.total_net} locale={locale} /></TableCell>
-                <TableCell className="text-end">{r.journal_entry_id && <Link className="text-primary hover:underline" href={`/journal/${r.journal_entry_id}`}>{t.journal.entry}</Link>}</TableCell>
+                <TableCell className="text-end font-semibold"><Money value={r.total_net} locale={locale} /></TableCell>
+                <TableCell className="text-end">{r.journal_entry_id && <Link className="text-[12px] font-medium text-accent1 hover:underline" href={`/journal/${r.journal_entry_id}`}>{t.journal.entry} ←</Link>}</TableCell>
               </TableRow>
             ))}
           </TableBody>

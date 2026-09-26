@@ -12,6 +12,11 @@ import type { CustomerFormInput } from "@/lib/validation/revenue";
 import { listCustomers } from "@/services/customers.service";
 import { getI18n } from "@/i18n/server";
 import { CustomerForm } from "./customer-form";
+import { BadgeCheck, Hourglass, Users, Wallet } from "lucide-react";
+import { Stat, StatGrid } from "@/components/ui/stat";
+import { EntityCell } from "@/components/ui/entity";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ZERO, toMoney } from "@/lib/accounting/money";
 
 export default async function CustomersPage({ searchParams }: { searchParams: Promise<{ edit?: string; new?: string }> }) {
   const ctx = await requireAppContext(PERMISSIONS.customersView);
@@ -44,6 +49,12 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
         description={t.customers.subtitle}
         actions={canManage && <Button asChild><Link href="/customers?new=1"><Plus />{t.customers.newCustomer}</Link></Button>}
       />
+      <StatGrid>
+        <Stat icon={Users} tone="ink" label="العملاء" value={<span className="num">{customers.length}</span>} hint={`${customers.filter((x) => x.is_active).length} فعّال`} />
+        <Stat icon={BadgeCheck} tone="teal" label="مسموح لهم بالآجل" value={<span className="num">{customers.filter((x) => x.allow_credit).length}</span>} />
+        <Stat icon={Hourglass} tone="clay" label="فواتير مفتوحة" value={<Money value={customers.reduce((a, x) => a.plus(toMoney(x.open_invoices)), ZERO)} locale={locale} />} />
+        <Stat icon={Wallet} tone="neutral" label="أرصدة دائنة غير مخصصة" value={<Money value={customers.reduce((a, x) => a.plus(toMoney(x.unapplied_credit)), ZERO)} locale={locale} />} />
+      </StatGrid>
       <div className={`grid gap-6 ${initial ? "xl:grid-cols-[1fr_380px]" : ""}`}>
         <Card className="overflow-hidden">
           <Table>
@@ -61,16 +72,16 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
             </TableHeader>
             <TableBody>
               {customers.length === 0 && (
-                <TableRow><TableCell colSpan={8} className="py-10 text-center text-muted-foreground">{t.common.noData}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="py-8"><EmptyState title="لا يوجد عملاء بعد" description="أضف الشركات والجهات التي تتعامل معها بالآجل لإصدار الفواتير ومتابعة ذممها." actionHref="/customers?new=1" actionLabel="إضافة عميل" icon={Users} /></TableCell></TableRow>
               )}
               {customers.map((x) => (
                 <TableRow key={x.id} className={x.is_active ? "" : "opacity-50"}>
-                  <TableCell className="num">{x.code}</TableCell>
-                  <TableCell><Link href={`/invoices?customer=${x.id}`} className="hover:underline">{name(x)}</Link></TableCell>
+                  <TableCell className="num text-slate-600">{x.code}</TableCell>
+                  <TableCell><EntityCell name={name(x)} sub={t.customers.types[x.customer_type]} href={`/invoices?customer=${x.id}`} /></TableCell>
                   <TableCell>{t.customers.types[x.customer_type]}</TableCell>
                   <TableCell>{x.allow_credit ? <Badge variant="success">{t.common.yes}</Badge> : <Badge variant="secondary">{t.common.no}</Badge>}</TableCell>
                   <TableCell className="text-end">{x.credit_limit ? <Money value={x.credit_limit} locale={locale} /> : "—"}</TableCell>
-                  <TableCell className="text-end"><Money value={x.open_invoices} locale={locale} blankZero /></TableCell>
+                  <TableCell className="text-end font-semibold"><Money value={x.open_invoices} locale={locale} blankZero /></TableCell>
                   <TableCell className="text-end"><Money value={x.unapplied_credit} locale={locale} blankZero /></TableCell>
                   {canManage && (
                     <TableCell className="text-end"><Button asChild variant="ghost" size="sm"><Link href={`/customers?edit=${x.id}`}>{t.common.edit}</Link></Button></TableCell>

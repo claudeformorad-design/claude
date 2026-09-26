@@ -34,12 +34,13 @@ export function ReportView({ report, locale, exportHref, labels }: {
           <TableBody>
             {report.rows.map((row, ri) => (
               <TableRow key={ri} className={cn(
-                row.kind === "section" && "bg-muted/40 font-semibold hover:bg-muted/40",
-                row.kind === "subtotal" && "font-medium",
-                row.kind === "total" && "border-t-2 bg-muted/60 font-bold",
+                row.kind === "section" && "bg-panel font-bold hover:bg-panel",
+                row.kind === "subtotal" && "bg-subtle/60 font-semibold hover:bg-subtle/60",
+                row.kind === "total" && "border-0 bg-ink font-bold text-white hover:bg-ink [&_td]:text-white",
               )}>
                 {row.cells.map((c, ci) => (
-                  <TableCell key={ci} className={cn(ci > 0 && "text-end", row.kind === "line" && ci === 0 && "ps-6")}>{cell(c)}</TableCell>
+                  <TableCell key={ci} className={cn(ci > 0 && "text-end", row.kind === "line" && ci === 0 && "ps-9 text-slate-700",
+                    row.kind === "section" && ci === 0 && "border-s-4 border-accent1")}>{cell(c)}</TableCell>
                 ))}
               </TableRow>
             ))}
