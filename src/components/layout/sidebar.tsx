@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BedDouble, BookOpen, Boxes, Building2, FileSpreadsheet, FileText, LayoutDashboard, ListTree,
-  Landmark, PieChart, TrendingUp, Waves, ListChecks, Banknote, Receipt, Scale, Settings, ShoppingCart, Truck, UserCog, Users, Wallet, Clock,
+  Landmark, PieChart, Percent, CalendarCheck, ShieldCheck, History, TrendingUp, Waves, ListChecks, Banknote, Receipt, Scale, Settings, ShoppingCart, Truck, UserCog, Users, Wallet, Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +46,12 @@ export interface NavLabels {
   cashFlow: string;
   dailyCash: string;
   roomStats: string;
+  taxReturn: string;
+  periods: string;
+  hotelSettings: string;
+  users: string;
+  audit: string;
+  groupAdmin: string;
 }
 
 type Item = { href: string; label: string; icon: React.ComponentType<{ className?: string }>; soon?: boolean };
@@ -96,14 +102,19 @@ export function Sidebar({ labels, hotelName }: { labels: NavLabels; hotelName: s
         { href: "/reports/trial-balance", label: labels.trialBalance, icon: ListChecks },
         { href: "/reports/rooms", label: labels.roomStats, icon: BedDouble },
         { href: "/reports/daily-cash", label: labels.dailyCash, icon: Banknote },
+        { href: "/reports/tax-return", label: labels.taxReturn, icon: Percent },
         { href: "/reports/aging", label: labels.aging, icon: Clock },
         { href: "/reports/profitability", label: labels.profitability, icon: PieChart },
       ],
     },
     {
+      title: labels.groupAdmin,
       items: [
+        { href: "/settings/hotel", label: labels.hotelSettings, icon: Settings },
         { href: "/settings/revenue", label: labels.revenueSettings, icon: Wallet },
-        { href: "#", label: labels.settings, icon: Settings, soon: true },
+        { href: "/settings/users", label: labels.users, icon: ShieldCheck },
+        { href: "/periods", label: labels.periods, icon: CalendarCheck },
+        { href: "/audit", label: labels.audit, icon: History },
       ],
     },
   ];

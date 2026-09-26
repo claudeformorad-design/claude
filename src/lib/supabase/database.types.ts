@@ -48,6 +48,8 @@ export type HotelRow = Audit & {
   email: string | null;
   logo_url: string | null;
   is_active: boolean;
+  journal_approval_threshold: string | null;
+  voucher_approval_threshold: string | null;
 };
 
 export type UserProfileRow = {
@@ -353,8 +355,10 @@ export type Database = {
       hotels: Table<HotelRow, "name_ar" | "country_code" | "base_currency">;
       users_profiles: Table<UserProfileRow, "id">;
       roles: Table<RoleRow, "code" | "name_ar" | "name_en">;
+      permissions: ReadOnlyTable<{ code: string; module: string; action: string; name_ar: string; name_en: string; sort_order: number }>;
+      role_permissions: Table<{ role_id: string; permission_code: string }, "role_id" | "permission_code">;
+      user_hotel_roles: Table<{ hotel_id: string; user_id: string; role_id: string; created_at: string; created_by: string | null }, "hotel_id" | "user_id" | "role_id">;
       hotel_members: Table<HotelMemberRow, "hotel_id" | "user_id">;
-      user_hotel_roles: Table<UserHotelRoleRow, "hotel_id" | "user_id" | "role_id">;
       currencies: Table<CurrencyRow, "code" | "name_ar" | "name_en" | "symbol">;
       departments: Table<DepartmentRow, "hotel_id" | "code" | "name_ar" | "kind">;
       chart_of_accounts: Table<AccountRow, "hotel_id" | "code" | "name_ar" | "account_type" | "account_subtype">;
@@ -396,6 +400,7 @@ export type Database = {
         Row: { customer_id: string; hotel_id: string; open_invoices: string; unapplied_credit: string };
         Relationships: [];
       };
+      audit_log_view: { Row: AuditLogRow & { actor_name: string | null }; Relationships: [] };
       journal_entry_totals: {
         Row: {
           journal_entry_id: string;
@@ -410,6 +415,14 @@ export type Database = {
       };
     };
     Functions: {
+      close_fiscal_year: { Args: { p_fiscal_year_id: string }; Returns: string | null };
+      set_period_status: { Args: { p_period_id: string; p_status: PeriodStatus }; Returns: undefined };
+      add_hotel_member: { Args: { p_hotel_id: string; p_email: string; p_role_ids: string[] }; Returns: string };
+      hotel_members_overview: { Args: { p_hotel_id: string }; Returns: { user_id: string; email: string; full_name: string; is_active: boolean; role_ids: string[] }[] };
+      tax_return: {
+        Args: { p_hotel_id: string; p_from: string; p_to: string };
+        Returns: { tax_rate_id: string; code: string; name: string; kind: TaxKind; rate: string; sales_base: string; sales_tax: string; purchases_base: string; purchases_tax: string }[];
+      };
       room_statistics: { Args: { p_hotel_id: string; p_from: string; p_to: string }; Returns: { business_date: string; room_nights: string; room_revenue: string; rooms_available: number }[] };
       cash_flow_lines: { Args: { p_hotel_id: string; p_from: string; p_to: string }; Returns: { activity: "operating" | "investing" | "financing"; account_id: string; amount: string }[] };
       cash_balance: { Args: { p_hotel_id: string; p_as_of: string }; Returns: string };

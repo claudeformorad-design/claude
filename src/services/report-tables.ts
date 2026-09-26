@@ -30,6 +30,7 @@ export const REPORTS = {
   "aging-receivable": PERMISSIONS.agingView,
   "aging-payable": PERMISSIONS.agingView,
   profitability: PERMISSIONS.profitabilityView,
+  "tax-return": PERMISSIONS.taxReportView,
 } as const satisfies Record<string, Permission>;
 export type ReportKey = keyof typeof REPORTS;
 
@@ -128,6 +129,20 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
       rows.push(total(t.common.total, ...AGING_BUCKETS.map((b) => totals.buckets[b]), totals.total));
       return { title: `${t.nav.aging} — ${kind === "receivable" ? t.payables.receivable : t.payables.payable}`, subtitle: `${r.asOf} ${p.to}`,
         columns: [t.vouchers.party, ...AGING_BUCKETS.map((b) => t.payables.buckets[b]), t.common.total], rows };
+    }
+    case "tax-return": {
+      const { data, error } = await ctx.supabase.rpc("tax_return", { p_hotel_id: ctx.hotel.id, p_from: p.from, p_to: p.to })
+        .select("code, name, kind, rate::text, sales_base::text, sales_tax::text, purchases_base::text, purchases_tax::text");
+      raise(error);
+      const a = t.admin;
+      const rows = (data ?? []).map((x) => {
+        const out = toMoney(x.sales_tax), inp = toMoney(x.purchases_tax);
+        return line(`${x.code} — ${x.name} (${toMoney(x.rate).toString()}%)`, toMoney(x.sales_base), out, toMoney(x.purchases_base), inp, out.minus(inp));
+      });
+      const sum = (k: "sales_base" | "sales_tax" | "purchases_base" | "purchases_tax") => sumMoney((data ?? []).map((x) => x[k]));
+      rows.push(total(t.common.total, sum("sales_base"), sum("sales_tax"), sum("purchases_base"), sum("purchases_tax"), sum("sales_tax").minus(sum("purchases_tax"))));
+      return { title: t.nav.taxReturn, subtitle: `${period} · ${a.taxSubtitle}`,
+        columns: [t.revenueSettings.taxes, a.salesBase, a.salesTax, a.purchasesBase, a.purchasesTax, a.netPayable], rows };
     }
     case "profitability": {
       const [res, departments] = await Promise.all([

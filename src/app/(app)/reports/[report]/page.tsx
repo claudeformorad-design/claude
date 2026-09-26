@@ -9,7 +9,7 @@ import { REPORTS, type ReportKey, buildReport } from "@/services/report-tables";
 import { getI18n } from "@/i18n/server";
 
 /** صفحة عامة للقوائم المالية: قائمة الدخل، الميزانية، التدفقات، الإشغال، النقدية اليومية */
-const PAGES = ["income-statement", "balance-sheet", "cash-flow", "rooms", "daily-cash"] as const;
+const PAGES = ["income-statement", "balance-sheet", "cash-flow", "rooms", "daily-cash", "tax-return"] as const;
 
 export default async function ReportPage({ params, searchParams }: {
   params: Promise<{ report: string }>; searchParams: Promise<{ from?: string; to?: string }>;

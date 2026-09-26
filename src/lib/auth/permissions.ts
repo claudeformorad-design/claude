@@ -45,6 +45,9 @@ export const PERMISSIONS = {
   profitabilityView: "reports.profitability.view",
   financialView: "reports.financial.view",
   cashReportView: "reports.cash.view",
+  journalApprove: "gl.journal.approve",
+  paymentsApproveLarge: "payments.approve_large",
+  taxReportView: "reports.tax.view",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
