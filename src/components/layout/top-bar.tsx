@@ -34,7 +34,7 @@ function RangePills() {
               href={r.key === "month" ? "/" : `/?range=${r.key}`}
               className={cn(
                 "relative whitespace-nowrap rounded-full border px-4 py-2 text-[13px] transition-colors duration-200",
-                active ? "border-ink text-white" : "border-line bg-white/70 text-slate-600 hover:border-line-strong hover:text-ink",
+                active ? "border-ink text-white" : "border-line bg-white text-slate-600 hover:border-line-strong hover:text-ink",
               )}
             >
               {active && <motion.span layoutId="range-active" className="absolute inset-0 rounded-full bg-ink" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
@@ -42,7 +42,7 @@ function RangePills() {
             </Link>
           );
         })}
-        <Link href="/reports/income-statement" className="whitespace-nowrap rounded-full border border-line bg-white/70 px-4 py-2 text-[13px] text-slate-600 transition-colors hover:border-line-strong hover:text-ink">
+        <Link href="/reports/income-statement" className="whitespace-nowrap rounded-full border border-line bg-white px-4 py-2 text-[13px] text-slate-600 transition-colors hover:border-line-strong hover:text-ink">
           التقارير
         </Link>
       </nav>
@@ -89,17 +89,17 @@ export function TopBar({
   }, []);
 
   const initials = (userName || userEmail || "؟").trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("");
-  const iconBtn = "flex size-10 shrink-0 items-center justify-center rounded-full border border-line bg-white/70 text-slate-600 transition-all duration-200 hover:border-line-strong hover:bg-white hover:text-ink";
+  const iconBtn = "flex size-10 shrink-0 items-center justify-center rounded-full border border-line bg-white text-slate-600 transition-all duration-200 hover:border-line-strong hover:bg-white hover:text-ink";
 
   return (
-    <header className="no-print flex h-[72px] shrink-0 items-center gap-3 px-4 md:px-5">
+    <header className="no-print flex h-[72px] shrink-0 items-center gap-3 border-b border-line bg-white px-4 md:px-7">
       <button type="button" onClick={() => setDrawerOpen(true)} className={cn(iconBtn, "md:hidden")} aria-label="القائمة">
         <Menu className="size-[18px]" />
       </button>
 
       {/* الشعار واسم المنشأة */}
       <Link href="/" className="flex min-w-0 items-center gap-2.5">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-ink text-white">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-orange via-[#e8457a] to-brand-blue text-white">
           <Building2 className="size-[18px]" />
         </span>
         <span className="hidden min-w-0 leading-tight sm:block">
@@ -109,7 +109,7 @@ export function TopBar({
       </Link>
 
       {/* الوسط: مبدّل الفترة في لوحة التحكم، واسم الصفحة في غيرها */}
-      <div className="flex min-w-0 flex-1 justify-center">
+      <div className="flex min-w-0 flex-1 justify-start md:justify-center">
         {pathname === "/" ? (
           <div className="hidden lg:block">
             <Suspense fallback={null}>
@@ -117,7 +117,7 @@ export function TopBar({
             </Suspense>
           </div>
         ) : (
-          current && <span key={current.href} className="animate-fade hidden truncate rounded-full border border-line bg-white/70 px-4 py-2 text-[13px] text-ink lg:inline-block">{current.label}</span>
+          current && <span key={current.href} className="animate-fade hidden truncate rounded-full border border-line bg-white px-4 py-2 text-[13px] text-ink lg:inline-block">{current.label}</span>
         )}
       </div>
 
@@ -164,7 +164,7 @@ export function SearchPill({ className }: { className?: string }) {
       type="button"
       onClick={() => window.dispatchEvent(new Event(OPEN_SEARCH_EVENT))}
       className={cn(
-        "group flex h-12 w-full items-center gap-3 rounded-full border border-line bg-white/70 px-5 text-[13px] text-slate-400 transition-all hover:border-line-strong hover:bg-white",
+        "group flex h-12 w-full items-center gap-3 rounded-full border border-line bg-white px-5 text-[13px] text-slate-400 transition-all hover:border-line-strong hover:bg-white",
         className,
       )}
     >
@@ -278,7 +278,7 @@ function MobileDrawer({ groups, pathname, hotelName, onClose }: { groups: Return
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", stiffness: 320, damping: 34 }}
-        className="absolute inset-y-3 end-auto start-3 w-72 overflow-y-auto rounded-3xl border border-line bg-frame p-4"
+        className="absolute inset-y-3 end-auto start-3 w-72 overflow-y-auto rounded-3xl border border-line bg-white p-4"
       >
         <p className="mb-3 px-2 text-[15px] font-semibold text-ink">{hotelName}</p>
         {groups.map((g, gi) => (

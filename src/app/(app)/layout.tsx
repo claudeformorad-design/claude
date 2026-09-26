@@ -17,12 +17,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const roleLabel = ctx.can(PERMISSIONS.hotelManage) ? "مدير الفندق" : ctx.can(PERMISSIONS.journalCreate) ? "محاسب" : "مستخدم";
 
   return (
-    <div className="h-screen p-0 md:p-5 xl:p-7">
+    <div className="flex h-screen bg-frame">
       <Suspense fallback={null}>
         <RouteProgress />
       </Suspense>
       <PointerEffects />
-      <div className="app-frame flex h-full flex-col overflow-hidden md:rounded-[30px]">
+      <div className="flex min-w-0 flex-1 flex-col">
         <TopBar
           labels={t.nav}
           hotelName={hotelName}
@@ -33,7 +33,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         />
         <div className="flex min-h-0 flex-1">
           <Sidebar labels={t.nav} />
-          <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-10 pt-2 md:pe-2 md:ps-6">{children}</main>
+          <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-10 pt-5 md:pe-7 md:ps-3">{children}</main>
         </div>
       </div>
     </div>

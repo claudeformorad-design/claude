@@ -244,13 +244,19 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="space-y-5 pb-4">
-      {/* عنوان الصفحة + البحث */}
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="min-w-0 space-y-1">
-          <p className="text-[13px] text-muted-foreground">تابع أداء فندقك المالي لحظة بلحظة — {businessDate}</p>
-          <h1 className="text-[32px] font-normal leading-tight tracking-tight text-ink">{t.dashboard.title}</h1>
+      {/* لافتة ملوّنة: العنوان والتاريخ والبحث (الألوان داخل النظام) */}
+      <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-l from-[#fb8c2b] via-[#e8457a] to-[#2e90fa] p-6 text-white md:p-8">
+        <div aria-hidden className="pointer-events-none absolute -end-16 -top-24 size-72 rounded-full bg-white/15" />
+        <div aria-hidden className="pointer-events-none absolute -bottom-28 start-1/3 size-80 rounded-full bg-white/10" />
+        <div aria-hidden className="bar-stripes pointer-events-none absolute inset-0 opacity-30" />
+        <div className="relative flex flex-wrap items-end justify-between gap-5">
+          <div className="min-w-0 space-y-1.5">
+            <p className="text-[13px] text-white/85">{businessDate}</p>
+            <h1 className="text-[32px] font-normal leading-tight tracking-tight">{t.dashboard.title}</h1>
+            <p className="text-[13px] text-white/85">تابع أداء فندقك المالي لحظة بلحظة — كل رقم من القيود المرحّلة مباشرة</p>
+          </div>
+          <SearchPill className="max-w-md border-white/40 bg-white/95 text-slate-500 hover:bg-white" />
         </div>
-        <SearchPill className="max-w-md" />
       </div>
 
       {/* مبدّل الفترة على الشاشات الصغيرة (على الكبيرة في رأس الصفحة) */}
@@ -280,7 +286,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           {/* الشبكة الرئيسية (بترتيب التصميم المرجعي) */}
           <div className="stagger grid gap-4 xl:grid-cols-12">
             {/* مركز الإجراءات (مثل «مهامي») */}
-            <Panel className="xl:col-span-3" title="مركز الإجراءات" action={quick[0] ? { href: quick[0].href, icon: Plus, label: quick[0].label } : undefined}>
+            <Panel className="xl:col-span-3" title="مركز الإجراءات" accent="#fb8c2b" action={quick[0] ? { href: quick[0].href, icon: Plus, label: quick[0].label } : undefined}>
               <div className="mb-3 flex items-center gap-2">
                 <span className="rounded-full bg-ink px-3 py-1.5 text-[12px] text-white">التنبيهات <span className="num">{alerts.length}</span></span>
                 <span className="rounded-full border border-line bg-white px-3 py-1.5 text-[12px] text-slate-600">إجراءات سريعة</span>
@@ -301,30 +307,30 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             {/* الوسط */}
             <div className="space-y-4 xl:col-span-6">
               <div className="grid gap-4 md:grid-cols-2">
-                <Panel title="حالة الفواتير" action={canInvoices ? { href: "/invoices", icon: ArrowUpLeft, label: "الفواتير" } : undefined}>
+                <Panel title="حالة الفواتير" accent="#12b76a" action={canInvoices ? { href: "/invoices", icon: ArrowUpLeft, label: "الفواتير" } : undefined}>
                   {canInvoices ? (
                     <DonutChart segments={invoiceSegments} centerTitle="إجمالي الفواتير" centerValue={String(invoiceTotal)}
                       emptyTitle="لا توجد فواتير بعد" emptyHint="تظهر عند إصدار فاتورة من الفوليو أو فاتورة مباشرة." />
                   ) : <NoAccess text={t.errors.permission_denied} />}
                 </Panel>
-                <Panel title="الإيراد مقابل المصروف" action={{ href: "/reports/income-statement", icon: ArrowUpLeft, label: t.nav.incomeStatement }}>
+                <Panel title="الإيراد مقابل المصروف" accent="#2e90fa" action={{ href: "/reports/income-statement", icon: ArrowUpLeft, label: t.nav.incomeStatement }}>
                   <IncomeExpenseChart data={chartData} currency={currency} labels={{ revenue: r.revenue, expenses: r.expenses, net: "صافي النتيجة" }} />
                 </Panel>
               </div>
-              <Panel title="أعمار الذمم المدينة" action={canAging ? { href: "/reports/aging", icon: ArrowUpLeft, label: t.nav.aging } : undefined}
+              <Panel title="أعمار الذمم المدينة" accent="#7a2ef0" action={canAging ? { href: "/reports/aging", icon: ArrowUpLeft, label: t.nav.aging } : undefined}
                 badge={canAging ? <span className="num rounded-full border border-line bg-white px-3 py-1 text-[12px] text-ink">{agingTotal.toFixed(2)} {currency}</span> : undefined}>
                 {canAging ? (
                   <StripedBars rows={agingRows} currency={currency} emptyTitle="لا توجد ذمم مدينة قائمة" emptyHint="تظهر الفواتير الآجلة غير المسددة هنا موزّعة حسب تاريخ استحقاقها." />
                 ) : <NoAccess text={t.errors.permission_denied} />}
               </Panel>
-              <Panel title="اتجاه ADR وRevPAR والإشغال" action={{ href: "/reports/rooms", icon: ArrowUpLeft, label: t.nav.roomStats }}>
+              <Panel title="اتجاه ADR وRevPAR والإشغال" accent="#fb8c2b" action={{ href: "/reports/rooms", icon: ArrowUpLeft, label: t.nav.roomStats }}>
                 <RoomTrendChart data={roomTrend} currency={currency} />
               </Panel>
             </div>
 
             {/* العمود الأخير */}
             <div className="space-y-4 xl:col-span-3">
-              <Panel title="مؤشرات الغرف" action={{ href: "/reports/rooms", icon: BedDouble, label: t.nav.roomStats }}>
+              <Panel title="مؤشرات الغرف" accent="#e8457a" action={{ href: "/reports/rooms", icon: BedDouble, label: t.nav.roomStats }}>
                 <div className="space-y-2.5">
                   <MeetingTile label={rangeLabel} title="نسبة الإشغال" value={pct(rangeRooms.occupancy)}
                     hint={totalRooms > 0 ? `${totalRooms} غرفة متاحة للبيع` : "حدّد عدد الغرف في الإعدادات"} href="/reports/rooms" />
@@ -337,7 +343,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 </Link>
               </Panel>
 
-              <Panel id="reconciliation" title="سلامة الربط" action={{ href: "/reports/trial-balance", icon: ShieldCheck, label: t.nav.trialBalance }}
+              <Panel id="reconciliation" title="سلامة الربط" accent="#12b76a" action={{ href: "/reports/trial-balance", icon: ShieldCheck, label: t.nav.trialBalance }}
                 badge={<span className={cn("rounded-full px-2.5 py-1 text-[11px]", unreconciled.length ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700")}>
                   {unreconciled.length ? `${unreconciled.length} فرق` : "متطابقة"}</span>}>
                 <div className="space-y-2.5">
@@ -372,7 +378,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
           {/* الصف الثاني */}
           <div className="stagger grid gap-4 xl:grid-cols-12">
-            <Panel className="xl:col-span-6" title="الإيرادات حسب القسم" action={canProfit ? { href: "/reports/profitability", icon: ArrowUpLeft, label: t.nav.profitability } : undefined}
+            <Panel className="xl:col-span-6" title="الإيرادات حسب القسم" accent="#2e90fa" action={canProfit ? { href: "/reports/profitability", icon: ArrowUpLeft, label: t.nav.profitability } : undefined}
               badge={<span className="rounded-full border border-line bg-white px-2.5 py-1 text-[11px] text-slate-600">{rangeLabel}</span>}>
               {canProfit ? (
                 <>
@@ -393,7 +399,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
 
 
-            <Panel className="xl:col-span-6" title="الأرصدة المفتوحة الآن">
+            <Panel className="xl:col-span-6" title="الأرصدة المفتوحة الآن" accent="#7a2ef0">
               <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
                 <BalanceTile label="ذمم النزلاء" value={bal("guest_ledger")} href="/folios?status=open" dot="#2e90fa" />
                 <BalanceTile label="ودائع النزلاء" value={bal("guest_deposits")} href="/folios" dot="#7a2ef0" />
@@ -415,9 +421,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 // مكونات العرض
 // =============================================================================
 function Panel({
-  title, action, badge, className, id, children,
+  title, action, badge, className, id, accent = "#2e90fa", children,
 }: {
   title: string;
+  accent?: string;
   action?: { href: string; icon: typeof BookOpen; label: string };
   badge?: React.ReactNode;
   className?: string;
@@ -427,7 +434,10 @@ function Panel({
   return (
     <section id={id} className={cn("surface p-5", className)}>
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="min-w-0 truncate text-[15px] font-medium text-ink">{title}</h2>
+        <h2 className="flex min-w-0 items-center gap-2 text-[15px] font-medium text-ink">
+          <span className="h-4 w-1 shrink-0 rounded-full" style={{ background: accent }} />
+          <span className="truncate">{title}</span>
+        </h2>
         <div className="flex shrink-0 items-center gap-2">
           {badge}
           {action && (
@@ -455,16 +465,18 @@ function StatTile({
   valueClass?: string;
 }) {
   return (
-    <div className="surface group p-5 transition-colors duration-200 hover:border-line-strong">
+    <div className="surface group relative overflow-hidden p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_16px_32px_-20px_rgba(17,24,39,0.35)]"
+      style={{ backgroundImage: `linear-gradient(160deg, ${color}1f 0%, transparent 55%)` }}>
       <div className="flex items-center justify-between">
-        <span className="flex size-10 items-center justify-center rounded-full border border-line bg-white" style={{ color }}>
-          <Icon className="size-[18px]" />
+        <span className="flex size-11 items-center justify-center rounded-2xl text-white shadow-lg transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110"
+          style={{ background: color, boxShadow: `0 10px 22px -10px ${color}` }}>
+          <Icon className="size-5" />
         </span>
-        <Link href={href} className="flex items-center gap-1 text-[12px] text-slate-500 transition-colors hover:text-ink">
-          التفاصيل <ChevronLeft className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
+        <Link href={href} className="flex items-center gap-1 rounded-full border border-line bg-white px-3 py-1 text-[12px] text-slate-600 transition-colors hover:border-ink hover:bg-ink hover:text-white">
+          التفاصيل <ChevronLeft className="size-3.5" />
         </Link>
       </div>
-      <p className={cn("mt-4 text-[26px] font-normal leading-none tracking-tight text-ink", valueClass)}>
+      <p className={cn("mt-5 text-[26px] font-normal leading-none tracking-tight text-ink", valueClass)}>
         <AnimatedNumber value={value.toNumber()} text={formatAmount(value)} />
         <span className="ms-1.5 text-[12px] text-slate-500">{currency}</span>
       </p>
