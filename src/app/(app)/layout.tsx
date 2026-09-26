@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { cookies } from "next/headers";
+import { SIDEBAR_COOKIE } from "@/components/layout/nav-config";
 import { PointerEffects } from "@/components/layout/pointer-effects";
 import { RouteProgress } from "@/components/layout/route-progress";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -14,6 +16,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { t } = await getI18n();
   const hotelName = ctx.hotel.name_ar || ctx.hotel.name_en || "";
   // وصف الدور من الصلاحيات الفعلية (بدون افتراض)
+  const sidebarExpanded = (await cookies()).get(SIDEBAR_COOKIE)?.value === "1";
   const roleLabel = ctx.can(PERMISSIONS.hotelManage) ? "مدير الفندق" : ctx.can(PERMISSIONS.journalCreate) ? "محاسب" : "مستخدم";
 
   return (
@@ -32,7 +35,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           signOut={isSupabaseConfigured() ? signOutAction : undefined}
         />
         <div className="flex min-h-0 flex-1">
-          <Sidebar labels={t.nav} />
+          <Sidebar labels={t.nav} initialExpanded={sidebarExpanded} />
           <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-10 pt-5 md:pe-7 md:ps-3">{children}</main>
         </div>
       </div>

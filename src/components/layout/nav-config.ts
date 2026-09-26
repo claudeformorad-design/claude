@@ -91,3 +91,6 @@ export const isActivePath = (pathname: string, href: string) =>
 
 /** حدث عام لفتح البحث السريع من أي مكان (زر الرأس أو حقل البحث في الصفحة) */
 export const OPEN_SEARCH_EVENT = "open-command-palette";
+
+/** كوكي حالة الشريط الجانبي (موسّع بالأسماء أو أيقونات) — يُقرأ في الخادم فيُرسم دون وميض */
+export const SIDEBAR_COOKIE = "sidebar_expanded";
