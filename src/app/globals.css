@@ -1,58 +1,96 @@
 @import "tailwindcss";
 
 /* =============================================================================
-   نظام التصميم: ملء الشاشة بخلفية رمادية فاتحة هادئة، وشريط جانبي أبيض كامل
-   بأقسام ملوّنة، وبطاقات فاتحة بحدود رفيعة، وحبوب (Pills) مُحدّدة وأزرار دائرية.
-   الألوان والتدرّجات داخل النظام نفسه (البطاقات والمخططات والأيقونات) لا في الأطراف.
-   لا شفافية ولا ضبابية (وضوح تام للأرقام).
+   نظام التصميم المرجعي (ثيم الداشبورد):
+   • خلفية خارجية بيج دافئ #E7DFC9، ومنطقة العمل #F7F7F6، والبطاقات بيضاء، والشريط الجانبي #FAFAF9
+   • تباعد سخي بدل الحدود؛ الحدود نادرة (#ECECE9، 1px)
+   • نقطة تركيز واحدة: زر أساسي أسود واحد في الشاشة؛ الباقي محايد
+   • ألوان حالة باستيل متسقة (خلفية فاتحة + نص أغمق من نفس العائلة)
+   • ظل واحد خفيف جدًا؛ لا تدرّجات ولا شفافية
    ============================================================================= */
 
 @theme inline {
-  --font-sans: var(--font-readex), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-plex), ui-sans-serif, system-ui, sans-serif;
 
-  --color-ink: #111318;
-  --color-ink-soft: #2a2e37;
-  --color-frame: #e7edf6;
-  --color-panel: #f5f8fd;
+  /* المحايدات */
+  --color-ink: #111111;
+  --color-ink-soft: #2b2b2a;
+  --color-frame: #e7dfc9;
+  --color-content: #f7f7f6;
+  --color-sidebar: #fafaf9;
+  --color-panel: #fafaf9;
   --color-tile: #ffffff;
-  --color-line: #dde5f0;
-  --color-line-strong: #cbd6e4;
-  --color-subtle: #eef3f9;
-  --color-canvas: var(--color-frame);
+  --color-line: #ecece9;
+  --color-line-strong: #deded9;
+  --color-subtle: #f2f2f0;
+  --color-canvas: var(--color-content);
 
-  --color-brand-blue: #2e90fa;
-  --color-brand-orange: #fb8c2b;
-  --color-brand-green: #12b76a;
-  --color-brand-red: #f0445a;
-  --color-brand-purple: #7a2ef0;
-  --color-brand-yellow: #f7b928;
+  /* الرماديات دافئة (تعيد تعريف slate في كل النظام) */
+  --color-slate-50: #fafaf9;
+  --color-slate-100: #f2f2f0;
+  --color-slate-200: #e6e6e2;
+  --color-slate-300: #d3d3ce;
+  --color-slate-400: #b7b7b2;
+  --color-slate-500: #8a8a85;
+  --color-slate-600: #6e6e6a;
+  --color-slate-700: #4a4a47;
+  --color-slate-800: #2b2b2a;
+  --color-slate-900: #111111;
 
-  --color-background: var(--color-frame);
-  --color-foreground: #111318;
-  --color-card: var(--color-panel);
-  --color-card-foreground: #111318;
+  /* ألوان الحالة الباستيل: tint للخلفية، والأساسي للنص/الأيقونة */
+  --color-urgent: #e2665c;
+  --color-urgent-tint: #fde7e2;
+  --color-success: #4e9b63;
+  --color-success-tint: #dff2e3;
+  --color-info: #9b5de0;
+  --color-info-tint: #eee1fb;
+  --color-pending: #c9584e;
+  --color-pending-tint: #fbdad5;
+  --color-review: #7c63c9;
+  --color-review-tint: #e9e1f7;
+  --color-neutral: #6e6e6a;
+  --color-neutral-tint: #ededeb;
+  --color-amber: #b8873a;
+  --color-amber-tint: #f6ebda;
+  --color-sky: #4a82bf;
+  --color-sky-tint: #dae7f6;
+
+  /* أسماء قديمة تُستخدم في الصفحات، معاد ربطها بالعائلة الباستيل */
+  --color-brand-blue: var(--color-sky);
+  --color-brand-orange: var(--color-amber);
+  --color-brand-green: var(--color-success);
+  --color-brand-red: var(--color-urgent);
+  --color-brand-purple: var(--color-info);
+  --color-brand-yellow: var(--color-amber);
+
+  --color-background: var(--color-content);
+  --color-foreground: #111111;
+  --color-card: #ffffff;
+  --color-card-foreground: #111111;
   --color-popover: #ffffff;
-  --color-popover-foreground: #111318;
+  --color-popover-foreground: #111111;
   --color-primary: var(--color-ink);
   --color-primary-foreground: #ffffff;
   --color-secondary: var(--color-subtle);
-  --color-secondary-foreground: #111318;
+  --color-secondary-foreground: #111111;
   --color-muted: var(--color-subtle);
-  --color-muted-foreground: #6b7280;
-  --color-accent: #e8f1fe;
-  --color-accent-foreground: #1d6fd8;
-  --color-destructive: #dc2626;
-  --color-success: #12b76a;
-  --color-warning: #d97706;
+  --color-muted-foreground: #8a8a85;
+  --color-accent: var(--color-subtle);
+  --color-accent-foreground: #111111;
+  --color-destructive: var(--color-urgent);
+  --color-warning: var(--color-amber);
   --color-border: var(--color-line);
   --color-input: var(--color-line);
-  --color-ring: var(--color-brand-blue);
+  --color-ring: var(--color-ink);
 
   --radius-card: 1.25rem;
 
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-lift: 0 8px 16px rgba(0, 0, 0, 0.08);
+
   --animate-rise: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
   --animate-fade: fade 0.45s ease backwards;
-    --animate-stripes: stripes 1.4s linear infinite;
+  --animate-stripes: stripes 1.4s linear infinite;
   --animate-draw: draw 1.5s cubic-bezier(0.65, 0, 0.35, 1) backwards;
   --animate-grow-x: grow-x 1.1s cubic-bezier(0.16, 1, 0.3, 1) backwards;
   --animate-pop: pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
@@ -66,17 +104,18 @@
     background: var(--color-frame);
   }
   body {
-    color: #111318;
+    color: #111111;
     font-family: var(--font-sans);
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
   ::selection {
-    background: #2e90fa;
+    background: #111111;
     color: #fff;
   }
   input[type="checkbox"],
   input[type="radio"] {
-    accent-color: #111318;
+    accent-color: #111111;
     width: 1rem;
     height: 1rem;
     cursor: pointer;
@@ -91,36 +130,29 @@
   font-feature-settings: "tnum";
 }
 
-/* ---- الإطار الرئيسي للتطبيق ---- */
-.app-frame {
-  background: var(--color-frame);
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  box-shadow: 0 40px 90px -40px rgba(17, 24, 39, 0.45), 0 2px 6px rgba(17, 24, 39, 0.06);
-}
-
 /* ---- الأسطح ---- */
-/* بطاقات فاتحة بحدود بيضاء وظل ناعم (إحساس التصميم المرجعي المشرق) */
+/* بطاقة: بيضاء، زوايا 20px، ظل واحد خفيف جدًا، بلا حدود */
 .surface {
-  background: var(--color-panel);
-  border: 1px solid #ffffff;
+  background: #fff;
   border-radius: var(--radius-card);
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px -16px rgba(30, 64, 120, 0.18);
+  box-shadow: var(--shadow-soft);
 }
+/* عنصر صغير داخل منطقة العمل */
 .tile {
   background: #fff;
-  border: 1px solid #e3eaf3;
-  border-radius: 1rem;
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-soft);
 }
-/* جدول داخل بطاقة: البطاقة هي السطح، فلا يتكرر الإطار */
+/* جدول داخل بطاقة: البطاقة هي السطح، فلا يتكرر الإطار ولا الظل */
 [data-slot="card"] [data-slot="table"] {
-  border: 0;
   border-radius: 0;
   background: transparent;
+  box-shadow: none;
 }
 
 /* ---- لون القسم الحالي (يُضبط في template.tsx حسب القسم؛ الافتراضي أزرق) ---- */
 :root {
-  --section: #2e90fa;
+  --section: #111111;
 }
 
 /* ---- شريط أدوات الفلاتر فوق الجداول (موحّد في كل الصفحات) ---- */
@@ -130,10 +162,10 @@
   align-items: flex-end;
   gap: 0.5rem;
   margin-bottom: 1rem;
-  padding: 0.75rem;
+  padding: 1rem;
   background: #fff;
-  border: 1px solid var(--color-line);
-  border-radius: 1rem;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
 }
 
 /* ---- حركة دخول الصفحة وأقسامها (CSS فقط؛ لا تُخفي شيئًا إن لم يعمل JavaScript) ---- */
@@ -165,12 +197,12 @@ tbody.rows-animate > tr {
 
 /* ---- تخطيط مائل (أشرطة ودوائر المخططات) ---- */
 .bar-stripes {
-  background-image: repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.3) 0 5px, transparent 5px 10px);
+  background-image: repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.28) 0 5px, transparent 5px 10px);
   background-size: 14px 14px;
   animation: var(--animate-stripes);
 }
 .track-stripes {
-  background: repeating-linear-gradient(-45deg, #e4e8ee 0 5px, #eef1f5 5px 10px);
+  background: repeating-linear-gradient(-45deg, #ecece9 0 5px, #f4f4f2 5px 10px);
 }
 
 /* ---- كنس أجزاء الدائرة ---- */
@@ -193,7 +225,7 @@ tbody.rows-animate > tr {
 
 /* ---- هيكل التحميل ---- */
 .skeleton {
-  background: #e6ebf1;
+  background: #ecece9;
   animation: skeleton-pulse 1.4s ease-in-out infinite;
 }
 @keyframes skeleton-pulse {
@@ -251,14 +283,14 @@ tbody.rows-animate > tr {
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.25); border-radius: 9999px; border: 2px solid transparent; background-clip: padding-box; }
-::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.45); background-clip: padding-box; }
+::-webkit-scrollbar-thumb { background: rgba(110, 110, 106, 0.25); border-radius: 9999px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: rgba(110, 110, 106, 0.45); background-clip: padding-box; }
 
 @media print {
   aside, header, button, .no-print { display: none !important; }
   main { overflow: visible !important; padding: 0 !important; }
   html, body { background: white !important; color: black; }
-  .app-frame, .surface, .tile { background: white !important; box-shadow: none !important; border-color: #ddd !important; }
+  .surface, .tile { background: white !important; box-shadow: none !important; border-color: #ddd !important; }
   .stagger > *, .page-enter, tbody.rows-animate > tr { animation: none !important; }
   @page { size: A4; margin: 12mm; }
 }

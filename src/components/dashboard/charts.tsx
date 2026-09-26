@@ -138,17 +138,17 @@ export function IncomeExpenseChart({
         <svg viewBox={`0 0 ${W} ${H}`} className="h-[230px] w-full overflow-visible" role="img" aria-label={`${labels.revenue} / ${labels.expenses}`}>
           {ticks.map((v, k) => (
             <g key={k}>
-              <line x1={padX + axisW} x2={W - padX} y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="3 5" />
-              <text x={padX} y={y(v) + 4} fill="#94a3b8" fontSize="10.5">{compact(v)}</text>
+              <line x1={padX + axisW} x2={W - padX} y1={y(v)} y2={y(v)} stroke="#ecece9" strokeDasharray="3 5" />
+              <text x={padX} y={y(v) + 4} fill="#b7b7b2" fontSize="10.5">{compact(v)}</text>
             </g>
           ))}
-          <path d={area} fill={CHART_COLORS.revenue} fillOpacity={0.08} className="animate-fade" style={{ animationDelay: "0.6s" }} />
+          <path d={area} fill={CHART_COLORS.revenue} fillOpacity={0.05} className="animate-fade" style={{ animationDelay: "0.6s" }} />
           <path d={linePath(exp)} fill="none" stroke={CHART_COLORS.expenses} strokeWidth="2" strokeLinejoin="round" pathLength={1}
             strokeDasharray="1" className="animate-draw" />
           <path d={linePath(rev)} fill="none" stroke={CHART_COLORS.revenue} strokeWidth="2.25" strokeLinejoin="round" pathLength={1}
             strokeDasharray="1" className="animate-draw" />
           {hover !== null && (
-            <line x1={x(hover)} x2={x(hover)} y1={padT} y2={padT + plotH} stroke="#0e1116" strokeOpacity="0.35" strokeDasharray="4 4" />
+            <line x1={x(hover)} x2={x(hover)} y1={padT} y2={padT + plotH} stroke="#111111" strokeOpacity="0.35" strokeDasharray="4 4" />
           )}
           {data.map((_, i) => (
             <g key={i}>
@@ -156,7 +156,7 @@ export function IncomeExpenseChart({
                 className="animate-pop transition-all" style={{ animationDelay: `${0.8 + i * 0.06}s` }} />
               <circle cx={exp[i]!.x} cy={exp[i]!.y} r={hover === i ? 6 : 3.5} fill="#fff" stroke={CHART_COLORS.expenses} strokeWidth="2.5"
                 className="animate-pop transition-all" style={{ animationDelay: `${0.8 + i * 0.06}s` }} />
-              <text x={x(i)} y={H - 8} textAnchor="middle" fill={hover === i ? "#0e1116" : "#94a3b8"} fontSize="10.5">{monthLabel(data[i]!.month, true)}</text>
+              <text x={x(i)} y={H - 8} textAnchor="middle" fill={hover === i ? "#111111" : "#b7b7b2"} fontSize="10.5">{monthLabel(data[i]!.month, true)}</text>
               <rect x={x(i) - plotW / data.length / 2} y={padT} width={plotW / data.length} height={plotH} fill="transparent"
                 onMouseEnter={() => setHover(i)} className="cursor-crosshair" />
             </g>
@@ -167,7 +167,7 @@ export function IncomeExpenseChart({
             key={hover}
             initial={{ opacity: 0, y: 6, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            className="pointer-events-none absolute top-1 z-10 w-48 -translate-x-1/2 rounded-xl border border-line bg-white p-3 text-[11px] text-ink shadow-[0_12px_30px_-12px_rgba(17,24,39,0.35)]"
+            className="pointer-events-none absolute top-1 z-10 w-48 -translate-x-1/2 rounded-xl bg-white p-3 text-[11px] text-ink shadow-lift"
             style={{ left: `${(x(hover) / W) * 100}%` }}
           >
             <p className="mb-1.5 font-medium">{monthLabel(h.month)}</p>
@@ -242,7 +242,7 @@ export function DonutChart({
                 </pattern>
               ))}
             </defs>
-            <circle cx={c} cy={c} r={r} fill="none" stroke="#e9edf2" strokeWidth={sw} />
+            <circle cx={c} cy={c} r={r} fill="none" stroke="#f0f0ee" strokeWidth={sw} />
             {items.map((s, i) => {
               const before = items.slice(0, i).reduce((acc, x) => acc + x.value, 0) / total;
               const len = Math.max((s.value / total) * circ - gap, 0.5);
@@ -262,7 +262,7 @@ export function DonutChart({
           </svg>
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
             <span className="max-w-24 truncate text-[11px] text-muted-foreground">{a ? a.label : centerTitle}</span>
-            <span key={a?.label ?? "total"} className="animate-pop num text-lg font-semibold text-ink">
+            <span key={a?.label ?? "total"} className="animate-pop num text-lg font-bold text-ink">
               {a ? `${fmt((a.value / total) * 100, 1)}%` : centerValue}
             </span>
           </div>
@@ -354,8 +354,8 @@ export function RoomTrendChart({
       <svg viewBox={`0 0 ${W} ${H}`} className="h-[200px] w-full overflow-visible" role="img" aria-label="ADR / RevPAR">
         {rScale.ticks.map((v, k) => (
           <g key={k}>
-            <line x1={padX + axisW} x2={W - padX} y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="3 5" />
-            <text x={padX} y={y(v) + 4} fill="#94a3b8" fontSize="10.5">{compact(v)}</text>
+            <line x1={padX + axisW} x2={W - padX} y1={y(v)} y2={y(v)} stroke="#ecece9" strokeDasharray="3 5" />
+            <text x={padX} y={y(v) + 4} fill="#b7b7b2" fontSize="10.5">{compact(v)}</text>
           </g>
         ))}
         <path d={linePath(adr)} fill="none" stroke={CHART_COLORS.revenue} strokeWidth="2.75" pathLength={1} strokeDasharray="1" className="animate-draw" />
@@ -364,8 +364,8 @@ export function RoomTrendChart({
           <g key={i}>
             {adr[i] && <circle cx={adr[i].x} cy={adr[i].y} r={3.5} fill="#fff" stroke={CHART_COLORS.revenue} strokeWidth="2.5" />}
             {rp[i] && <circle cx={rp[i].x} cy={rp[i].y} r={3.5} fill="#fff" stroke={CHART_COLORS.expenses} strokeWidth="2.5" />}
-            <text x={x(i)} y={H - 26} textAnchor="middle" fill="#94a3b8" fontSize="10.5">{monthLabel(d.month, true)}</text>
-            <text x={x(i)} y={H - 8} textAnchor="middle" fill="#0e1116" fontSize="10.5" fontWeight="500">
+            <text x={x(i)} y={H - 26} textAnchor="middle" fill="#b7b7b2" fontSize="10.5">{monthLabel(d.month, true)}</text>
+            <text x={x(i)} y={H - 8} textAnchor="middle" fill="#111111" fontSize="10.5" fontWeight="500">
               {d.occupancy === null ? "—" : `${fmt(d.occupancy, 1)}%`}
             </text>
           </g>

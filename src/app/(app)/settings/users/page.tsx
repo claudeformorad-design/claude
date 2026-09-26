@@ -53,7 +53,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
           </CardHeader>
           <CardContent className="space-y-2">
             {(roles.data ?? []).filter((r) => !r.is_system).map((r) => (
-              <Link key={r.id} href={`/settings/users?role=${r.id}`} className="block rounded-md border p-2 hover:bg-accent">{label(r)} <span className="text-xs text-muted-foreground num">{r.code}</span></Link>
+              <Link key={r.id} href={`/settings/users?role=${r.id}`} className="block rounded-[10px] bg-panel p-3 hover:bg-subtle">{label(r)} <span className="text-xs text-muted-foreground num">{r.code}</span></Link>
             ))}
           </CardContent>
         </Card>

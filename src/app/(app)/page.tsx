@@ -7,7 +7,10 @@ import {
   StripedBars,
 } from "@/components/dashboard/charts";
 import { Money } from "@/components/money";
+import { Scale, TrendingDown, TrendingUp, Wallet, Plus } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { AGING_BUCKETS, type AgingBucket } from "@/lib/accounting/aging";
@@ -51,11 +54,11 @@ const CONTROL_LABELS: Record<LedgerControl, { title: string; sub: string; href: 
 };
 
 const BUCKET_META: Record<AgingBucket, { label: string; color: string }> = {
-  current: { label: "غير مستحقة بعد", color: "#12b76a" },
-  "1_30": { label: "متأخرة 1–30 يومًا", color: "#2e90fa" },
-  "31_60": { label: "متأخرة 31–60 يومًا", color: "#f7b928" },
-  "61_90": { label: "متأخرة 61–90 يومًا", color: "#f0445a" },
-  over_90: { label: "متأخرة أكثر من 90 يومًا", color: "#7a2ef0" },
+  current: { label: "غير مستحقة بعد", color: "#4e9b63" },
+  "1_30": { label: "متأخرة 1–30 يومًا", color: "#4a82bf" },
+  "31_60": { label: "متأخرة 31–60 يومًا", color: "#b8873a" },
+  "61_90": { label: "متأخرة 61–90 يومًا", color: "#e2665c" },
+  over_90: { label: "متأخرة أكثر من 90 يومًا", color: "#9b5de0" },
 };
 
 function currencySymbol(code: string): string {
@@ -215,8 +218,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   ].filter(Boolean) as { href: string; label: string }[];
 
   const invoiceSegments = [
-    { label: "مصدرة", value: invIssued?.count ?? 0, color: CHART_COLORS.expenses },
-    { label: "مدفوعة جزئيًا", value: invPartial?.count ?? 0, color: CHART_COLORS.revenue },
+    { label: "مصدرة", value: invIssued?.count ?? 0, color: CHART_COLORS.pending },
+    { label: "مدفوعة جزئيًا", value: invPartial?.count ?? 0, color: CHART_COLORS.partial },
     { label: "مدفوعة", value: invPaid?.count ?? 0, color: CHART_COLORS.net },
   ];
   const invoiceTotal = invoiceSegments.reduce((s, x) => s + x.value, 0);
@@ -237,27 +240,28 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   ];
 
   return (
-    <div className="space-y-4 pb-6">
-      {/* العنوان + الإجراءات السريعة */}
-      <div className="flex flex-wrap items-end justify-between gap-3 pb-1">
-        <div>
-          <p className="text-[13px] text-muted-foreground">{businessDate}</p>
-          <h1 className="mt-0.5 text-[28px] font-normal tracking-tight text-ink">{t.dashboard.title}</h1>
+    <div className="space-y-6 pb-6">
+      {/* العنوان + الإجراء الأساسي الوحيد + الإجراءات الثانوية */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="space-y-1">
+          <p className="text-[12px] text-muted-foreground">{businessDate}</p>
+          <h1 className="text-[24px] font-bold leading-tight text-ink">{t.dashboard.title}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {quick.map((q, i) => (
-            <Link key={q.href} href={q.href}
-              className={cn("rounded-full px-4 py-2 text-[13px] transition-colors", i === 0 ? "bg-ink text-white hover:bg-ink-soft" : "border border-line bg-white text-ink hover:border-line-strong")}>
-              {q.label}
-            </Link>
+            <Button key={q.href} asChild variant={i === 0 ? "default" : "outline"}>
+              <Link href={q.href}>{i === 0 && <Plus />}{q.label}</Link>
+            </Button>
           ))}
         </div>
       </div>
 
-      <nav className="flex items-center gap-1 overflow-x-auto lg:hidden">
+      {/* الفترة: تبويب واحد نشط */}
+      <nav aria-label="الفترة" className="inline-flex max-w-full items-center gap-1 overflow-x-auto rounded-xl bg-subtle p-1">
         {RANGES.map((x) => (
-          <Link key={x.key} href={x.key === "month" ? "/" : `/?range=${x.key}`}
-            className={cn("whitespace-nowrap rounded-full px-3 py-1.5 text-[12px]", range === x.key ? "bg-ink text-white" : "text-slate-600 hover:bg-white")}>
+          <Link key={x.key} href={x.key === "month" ? "/" : `/?range=${x.key}`} aria-current={range === x.key ? "page" : undefined}
+            className={cn("whitespace-nowrap rounded-[10px] px-4 py-1.5 text-[13px] transition-colors",
+              range === x.key ? "bg-white font-medium text-ink shadow-soft" : "text-slate-500 hover:text-ink")}>
             {x.label}
           </Link>
         ))}
@@ -265,13 +269,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
       {/* تنبيهات (تظهر فقط عند وجود ما يستدعي إجراءً) */}
       {alerts.length > 0 && (
-        <section className="surface divide-y divide-line px-5 py-1">
+        <section className="surface px-6 py-2">
           {alerts.map((a) => (
             <Link key={a.title} href={a.href} className="group flex items-center gap-3 py-2.5">
-              <span className={cn("size-2 shrink-0 rounded-full", a.tone === "red" ? "bg-brand-red" : a.tone === "amber" ? "bg-brand-orange" : "bg-brand-blue")} />
-              <span className="text-[13px] text-ink group-hover:underline">{a.title}</span>
-              <span className="hidden text-[12px] text-muted-foreground sm:inline">— {a.text}</span>
-              <span className="ms-auto text-[12px] text-muted-foreground">←</span>
+              <Badge variant={a.tone === "red" ? "destructive" : a.tone === "amber" ? "warning" : "info"}>{a.tone === "red" ? "عاجل" : a.tone === "amber" ? "تنبيه" : "للعلم"}</Badge>
+              <span className="text-[13px] font-medium text-ink group-hover:underline">{a.title}</span>
+              <span className="hidden text-[13px] text-muted-foreground sm:inline">{a.text}</span>
+              <span className="ms-auto text-[12px] text-slate-400">←</span>
             </Link>
           ))}
         </section>
@@ -282,16 +286,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {canFin && (
         <>
           {/* شريط الأرقام الرئيسية: بطاقة واحدة مقسّمة */}
-          <section className="surface grid grid-cols-2 divide-line lg:grid-cols-4 lg:divide-x lg:divide-x-reverse">
-            <Kpi label="الإيرادات" sub={rangeLabel} value={revenue} currency={currency} href="/reports/income-statement" />
-            <Kpi label="المصروفات" sub={rangeLabel} value={expenses} currency={currency} href="/reports/income-statement" />
-            <Kpi label="صافي النتيجة" sub={rangeLabel} value={net} currency={currency} tone={net.isNegative() ? "neg" : "pos"}
+          <section className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
+            <Kpi icon={TrendingUp} label="الإيرادات" sub={rangeLabel} value={revenue} currency={currency} href="/reports/income-statement" />
+            <Kpi icon={TrendingDown} label="المصروفات" sub={rangeLabel} value={expenses} currency={currency} href="/reports/income-statement" />
+            <Kpi icon={Scale} label="صافي النتيجة" sub={rangeLabel} value={net} currency={currency} tone={net.isNegative() ? "neg" : undefined}
               href={canProfit ? "/reports/profitability" : "/reports/income-statement"} />
-            <Kpi label="النقدية والبنوك" sub="الرصيد الحالي" value={cashBalance} currency={currency} tone={cashBalance.isNegative() ? "neg" : undefined} href="/reports/daily-cash" />
+            <Kpi icon={Wallet} label="النقدية والبنوك" sub="الرصيد الحالي" value={cashBalance} currency={currency} tone={cashBalance.isNegative() ? "neg" : undefined} href="/reports/daily-cash" />
           </section>
 
           {/* الأداء + ما يحتاج انتباهك */}
-          <div className="grid gap-4 xl:grid-cols-12">
+          <div className="grid gap-5 xl:grid-cols-12">
             <Card2 className="xl:col-span-8" title="الإيرادات والمصروفات" note="آخر 6 أشهر" link={{ href: "/reports/income-statement", label: t.nav.incomeStatement }}>
               <IncomeExpenseChart data={chartData} currency={currency} labels={{ revenue: r.revenue, expenses: r.expenses, net: "صافي النتيجة" }} />
             </Card2>
@@ -320,7 +324,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </div>
 
           {/* الفواتير والذمم */}
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-5 md:grid-cols-2">
             <Card2 title="حالة الفواتير" note={canInvoices ? `${invoiceTotal} فاتورة` : undefined} link={canInvoices ? { href: "/invoices", label: t.nav.invoices } : undefined}>
               {canInvoices ? (
                 <DonutChart segments={invoiceSegments} centerTitle="الفواتير" centerValue={String(invoiceTotal)}
@@ -335,14 +339,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </div>
 
           {/* الأرصدة والمطابقة + الأقسام والغرف */}
-          <div className="grid gap-4 xl:grid-cols-5">
+          <div className="grid gap-5 xl:grid-cols-5">
             <Card2 className="flex flex-col xl:col-span-3" title="الأرصدة ومطابقتها مع الأستاذ" note={unreconciled.length ? `${unreconciled.length} فرق` : "مطابقة"} noteTone={unreconciled.length ? "neg" : "pos"}>
               <table className="mb-3 w-full text-[13px]" id="reconciliation">
                 <thead>
                   <tr className="text-[12px] text-muted-foreground">
                     <th className="pb-2 text-start font-normal">الحساب</th>
                     <th className="pb-2 text-end font-normal">الرصيد ({currency})</th>
-                    <th className="w-24 pb-2 text-end font-normal">الأستاذ العام</th>
+                    <th className="w-28 pb-2 text-end font-normal">الأستاذ العام</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -353,8 +357,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                       <tr key={b.control}>
                         <td className="py-2.5"><Link href={CONTROL_LABELS[b.control].href} className="text-ink hover:underline">{b.label}</Link></td>
                         <td className="num py-2.5 text-end text-ink"><Money value={bal(b.control)} locale="ar" /></td>
-                        <td className={cn("py-2.5 text-end text-[12px]", ok ? "text-brand-green" : "text-brand-red")}>
-                          {ok ? "مطابق" : <>فرق <Money value={row!.diff} locale="ar" /></>}
+                        <td className="py-2.5 text-end">
+                          {ok ? <Badge variant="success">مطابق</Badge> : <Badge variant="destructive">فرق <Money value={row!.diff} locale="ar" /></Badge>}
                         </td>
                       </tr>
                     );
@@ -371,12 +375,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 return tb ? (
                   <p className="mt-auto border-t border-line pt-3 text-[12px] text-muted-foreground">
                     ميزان المراجعة: مدين <span className="num text-ink"><Money value={tb.gl_balance} locale="ar" /></span> · دائن <span className="num text-ink"><Money value={tb.subledger_balance} locale="ar" /></span>
-                    <span className={tb.diff.isZero() ? "text-brand-green" : "text-brand-red"}> — {tb.diff.isZero() ? "متوازن" : "غير متوازن"}</span>
+                    <span className={tb.diff.isZero() ? "text-success" : "text-urgent"}> — {tb.diff.isZero() ? "متوازن" : "غير متوازن"}</span>
                   </p>
                 ) : null;
               })()}
             </Card2>
-            <div className="flex min-w-0 flex-col gap-4 xl:col-span-2">
+            <div className="flex min-w-0 flex-col gap-5 xl:col-span-2">
               <Card2 title="الإيرادات حسب القسم" note={rangeLabel} link={canProfit ? { href: "/reports/profitability", label: t.nav.profitability } : undefined}>
                 {!canProfit ? <NoAccess text={t.errors.permission_denied} /> : deptSegments.length === 0 ? (
                   <p className="py-6 text-[13px] text-muted-foreground">لا توجد إيرادات مرحّلة في هذه الفترة.</p>
@@ -398,7 +402,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                     <p className="mt-4 border-t border-line pt-3 text-[12px] text-muted-foreground">
                       المجموع <span className="num text-ink">{deptTotal.toFixed(2)}</span> من إيراد الفترة <span className="num text-ink">{revenue.toFixed(2)}</span> {currency}
                       {negativeDepts.length > 0 && (
-                        <span className="block text-amber-700">
+                        <span className="block text-amber">
                           تسويات صافية سالبة: {negativeDepts.map((d) => `${deptLabel(d.departmentId)} (${d.revenue.toFixed(2)})`).join("، ")}
                         </span>
                       )}
@@ -439,18 +443,18 @@ function Card2({
   children: React.ReactNode;
 }) {
   return (
-    <section className={cn("surface min-w-0 p-5", className)}>
-      <header className="mb-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h2 className="flex items-baseline gap-2 text-[14px] font-medium text-ink">
+    <section className={cn("surface min-w-0 p-6", className)}>
+      <header className="mb-5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h2 className="flex items-baseline gap-2 text-[15px] font-semibold text-ink">
           {title}
           {note && (
-            <span className={cn("text-[12px] font-normal", noteTone === "neg" ? "text-brand-red" : noteTone === "pos" ? "text-brand-green" : "text-muted-foreground")}>
+            <span className={cn("text-[12px] font-normal", noteTone === "neg" ? "text-urgent" : noteTone === "pos" ? "text-success" : "text-muted-foreground")}>
               {note}
             </span>
           )}
         </h2>
         {link && (
-          <Link href={link.href} className="shrink-0 text-[12px] text-muted-foreground transition-colors hover:text-ink">
+          <Link href={link.href} className="shrink-0 text-[12px] text-slate-400 transition-colors hover:text-ink">
             {link.label} ←
           </Link>
         )}
@@ -461,23 +465,30 @@ function Card2({
 }
 
 function Kpi({
-  label, sub, value, currency, href, tone,
+  icon: Icon, label, sub, value, currency, href, tone,
 }: {
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
   sub: string;
   value: MoneyValue;
   currency: string;
   href: string;
-  tone?: "pos" | "neg";
+  tone?: "neg";
 }) {
   return (
-    <Link href={href} className="group block px-5 py-4 transition-colors hover:bg-white/70 [&:nth-child(n+3)]:border-t [&:nth-child(n+3)]:border-line lg:[&:nth-child(n+3)]:border-t-0">
-      <p className="truncate text-[12px] text-muted-foreground">{label} <span className="hidden text-slate-400 sm:inline">· {sub}</span></p>
-      <p className={cn("mt-1.5 text-[24px] leading-none tracking-tight text-ink", tone === "neg" && "text-brand-red", tone === "pos" && "text-brand-green")}>
+    <div className="surface min-w-0 p-4 sm:p-5">
+      <div className="mb-4 flex items-center justify-between sm:mb-5">
+        <span className="flex size-9 items-center justify-center rounded-[10px] bg-ink text-white">
+          <Icon className="size-[17px] stroke-[1.75]" />
+        </span>
+        <Link href={href} aria-label={`تفاصيل ${label}`} className="text-[12px] text-slate-400 transition-colors hover:text-ink"><span className="hidden sm:inline">التفاصيل </span>←</Link>
+      </div>
+      <p className={cn("truncate text-[18px] font-bold leading-tight text-ink sm:text-[22px]", tone === "neg" && "text-urgent")}>
         <AnimatedNumber value={value.toNumber()} text={formatAmount(value)} />
-        <span className="ms-1.5 text-[12px] text-slate-400">{currency}</span>
+        <span className="ms-1.5 text-[12px] font-normal text-slate-400">{currency}</span>
       </p>
-    </Link>
+      <p className="mt-1 truncate text-[13px] text-muted-foreground">{label} · {sub}</p>
+    </div>
   );
 }
 
@@ -490,7 +501,7 @@ function Figure({ label, value, unit }: { label: string; value: string; unit?: s
   return (
     <div>
       <dt className="text-[12px] text-muted-foreground">{label}</dt>
-      <dd className="mt-1 text-[20px] leading-none text-ink">
+      <dd className="mt-1.5 text-[20px] font-bold leading-none text-ink">
         <span className="num">{value}</span>
         {unit && <span className="ms-1 text-[11px] text-slate-400">{unit}</span>}
       </dd>

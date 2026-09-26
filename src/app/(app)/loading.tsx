@@ -4,12 +4,12 @@ export default function Loading() {
     <div className="animate-fade space-y-6" aria-busy="true" aria-label="جارٍ التحميل">
       <div className="space-y-3">
         <div className="skeleton h-4 w-56 rounded-full" />
-        <div className="skeleton h-9 w-80 rounded-2xl" />
+        <div className="skeleton h-9 w-80 rounded-[20px]" />
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }, (_, i) => (
           <div key={i} className="surface space-y-4 p-5">
-            <div className="skeleton size-11 rounded-2xl" />
+            <div className="skeleton size-11 rounded-[20px]" />
             <div className="skeleton h-7 w-2/3 rounded-xl" />
             <div className="skeleton h-3 w-1/2 rounded-full" />
           </div>
@@ -17,7 +17,7 @@ export default function Loading() {
       </div>
       <div className="surface space-y-3 p-5">
         {Array.from({ length: 6 }, (_, i) => (
-          <div key={i} className="skeleton h-10 rounded-2xl" style={{ opacity: 1 - i * 0.12 }} />
+          <div key={i} className="skeleton h-10 rounded-[20px]" style={{ opacity: 1 - i * 0.12 }} />
         ))}
       </div>
     </div>

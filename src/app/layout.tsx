@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { Readex_Pro } from "next/font/google";
+import { IBM_Plex_Sans_Arabic } from "next/font/google";
 import { directionOf } from "@/i18n/config";
 import { getI18n } from "@/i18n/server";
 import "./globals.css";
 
-// خط عربي/لاتيني هندسي حديث بأوزان متغيرة
-const readex = Readex_Pro({
+// خط Sans-serif هندسي نظيف للعربية واللاتينية (نظام التصميم المرجعي)
+const plex = IBM_Plex_Sans_Arabic({
   subsets: ["arabic", "latin"],
-  variable: "--font-readex",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-plex",
   display: "swap",
 });
 
@@ -19,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { locale } = await getI18n();
   return (
-    <html lang={locale} dir={directionOf(locale)} className={readex.variable}>
+    <html lang={locale} dir={directionOf(locale)} className={plex.variable}>
       <body className="min-h-screen font-sans">
         {children}
       </body>

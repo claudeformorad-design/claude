@@ -7,17 +7,17 @@ import type { Dictionary } from "@/i18n/dictionaries/ar";
 
 export type NavLabels = Dictionary["nav"];
 export type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }> };
-/** color: لون المجموعة (أيقونات القائمة والعنصر النشط) */
+/** color: لون المجموعة (محايد في نظام التصميم الحالي؛ عنصر نشط واحد فقط يتميّز) */
 export type NavGroup = { title?: string; icon: NavItem["icon"]; color: string; items: NavItem[] };
 
 /** شجرة التنقل الوحيدة في النظام (الشريط الجانبي + البحث السريع) */
 export function navGroups(l: NavLabels): NavGroup[] {
   return [
-    { title: l.dashboard, icon: LayoutDashboard, color: "#111318", items: [{ href: "/", label: l.dashboard, icon: LayoutDashboard }] },
+    { title: l.dashboard, icon: LayoutDashboard, color: "#111111", items: [{ href: "/", label: l.dashboard, icon: LayoutDashboard }] },
     {
       title: l.groupGl,
       icon: BookOpen,
-      color: "#2e90fa",
+      color: "#111111",
       items: [
         { href: "/accounts", label: l.accounts, icon: ListTree },
         { href: "/journal", label: l.journal, icon: BookOpen },
@@ -26,7 +26,7 @@ export function navGroups(l: NavLabels): NavGroup[] {
     {
       title: l.groupRevenue,
       icon: BedDouble,
-      color: "#fb8c2b",
+      color: "#111111",
       items: [
         { href: "/folios", label: l.folios, icon: BedDouble },
         { href: "/invoices", label: l.invoices, icon: FileText },
@@ -37,7 +37,7 @@ export function navGroups(l: NavLabels): NavGroup[] {
     {
       title: l.groupPayables,
       icon: ShoppingCart,
-      color: "#12b76a",
+      color: "#111111",
       items: [
         { href: "/vendors", label: l.vendors, icon: Truck },
         { href: "/purchase-orders", label: l.purchaseOrders, icon: ShoppingCart },
@@ -49,7 +49,7 @@ export function navGroups(l: NavLabels): NavGroup[] {
     {
       title: l.groupAssets,
       icon: Boxes,
-      color: "#7a2ef0",
+      color: "#111111",
       items: [
         { href: "/assets", label: l.fixedAssets, icon: Building2 },
         { href: "/inventory", label: l.stock, icon: Boxes },
@@ -58,7 +58,7 @@ export function navGroups(l: NavLabels): NavGroup[] {
     {
       title: l.groupReports,
       icon: BarChart3,
-      color: "#e8457a",
+      color: "#111111",
       items: [
         { href: "/reports/income-statement", label: l.incomeStatement, icon: TrendingUp },
         { href: "/reports/balance-sheet", label: l.balanceSheet, icon: Scale },
@@ -74,7 +74,7 @@ export function navGroups(l: NavLabels): NavGroup[] {
     {
       title: l.groupAdmin,
       icon: Settings,
-      color: "#475569",
+      color: "#111111",
       items: [
         { href: "/settings/hotel", label: l.hotelSettings, icon: Settings },
         { href: "/settings/revenue", label: l.revenueSettings, icon: Wallet },

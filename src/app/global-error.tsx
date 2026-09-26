@@ -12,7 +12,7 @@ export default function GlobalError({
   return (
     <html lang="ar" dir="rtl">
       <body style={{ fontFamily: "system-ui, sans-serif", background: "#edf1f6" }} className="min-h-screen flex items-center justify-center p-4">
-        <div className="max-w-md w-full rounded-[28px] border border-white bg-white p-8 shadow-xl text-center space-y-4">
+        <div className="max-w-md w-full rounded-[20px] bg-white p-8 shadow-sm text-center space-y-4">
           <h2 className="text-xl font-bold text-slate-900">حدث خطأ عام في النظام</h2>
           <p className="text-xs text-slate-500">
             يرجى تحديث الصفحة أو المحاولة مرة أخرى.
@@ -21,7 +21,7 @@ export default function GlobalError({
           <button
             type="button"
             onClick={() => reset()}
-            className="rounded-full bg-slate-900 px-5 py-2.5 text-xs font-medium text-white hover:bg-slate-700"
+            className="rounded-[10px] bg-slate-900 px-5 py-2.5 text-xs font-medium text-white hover:bg-slate-700"
           >
             إعادة المحاولة
           </button>

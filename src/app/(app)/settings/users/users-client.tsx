@@ -68,7 +68,7 @@ export function RoleEditor({ t, role, permissions }: {
       </div>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {modules.map((m) => (
-          <div key={m} className="rounded-md border p-2">
+          <div key={m} className="rounded-[10px] bg-panel p-3">
             <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">{m}</p>
             {permissions.filter((p) => p.module === m).map((p) => (
               <label key={p.code} className="flex items-center gap-1.5 text-sm">

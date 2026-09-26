@@ -27,14 +27,14 @@ export function ResetHotelDataButton() {
   };
 
   return (
-    <div className="rounded-2xl border border-red-200 bg-red-50/50 p-5 shadow-2xs">
+    <div className="rounded-xl bg-urgent-tint/60 p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <AlertOctagon className="size-4 text-red-600 font-bold" />
-            <h4 className="text-sm font-bold text-red-900">تصفير وضع التجربة بالكامل</h4>
+            <AlertOctagon className="size-4 stroke-[1.75] text-urgent" />
+            <h4 className="text-[14px] font-semibold text-ink">تصفير وضع التجربة بالكامل</h4>
           </div>
-          <p className="text-xs text-red-700 max-w-xl">
+          <p className="max-w-xl text-[13px] leading-relaxed text-muted-foreground">
             يحذف قاعدة بيانات التجربة المحلية بالكامل (الفندق، الإعدادات، القيود، الفوليو، الفواتير، السندات وكل الحركات) ويعيدك لشاشة إعداد فندق جديد. متاح في وضع التجربة فقط، ولا يمكن التراجع عنه.
           </p>
         </div>
@@ -44,7 +44,7 @@ export function ResetHotelDataButton() {
             type="button"
             variant="destructive"
             onClick={() => setOpen(true)}
-            className="shrink-0 rounded-xl bg-red-600 hover:bg-red-700 text-xs font-bold text-white shadow-xs"
+            className="shrink-0 bg-white text-urgent shadow-soft hover:bg-white"
           >
             <RotateCcw className="size-3.5 me-1" />
             تصفير بيانات النظام
@@ -60,7 +60,7 @@ export function ResetHotelDataButton() {
                   setOpen(false);
                   setConfirmed(false);
                 }}
-                className="rounded-xl text-xs"
+                
               >
                 إلغاء
               </Button>
@@ -70,7 +70,7 @@ export function ResetHotelDataButton() {
                 size="sm"
                 disabled={!confirmed || isPending || success}
                 onClick={handleReset}
-                className="rounded-xl bg-red-700 hover:bg-red-800 text-xs font-extrabold text-white"
+                className="bg-urgent text-white hover:bg-pending"
               >
                 {success ? (
                   <>
@@ -84,16 +84,16 @@ export function ResetHotelDataButton() {
                 )}
               </Button>
             </div>
-            <label className="flex items-center gap-1.5 text-[11px] text-red-800 cursor-pointer">
+            <label className="flex cursor-pointer items-center gap-1.5 text-[12px] text-slate-600">
               <input
                 type="checkbox"
                 checked={confirmed}
                 onChange={(e) => setConfirmed(e.target.checked)}
-                className="size-3.5 rounded border-red-300 text-red-600"
+                className="size-3.5"
               />
               أنا متأكد من حذف جميع بيانات التجربة
             </label>
-            {failed && <p className="text-[11px] text-red-700">تعذّر التصفير — أعد المحاولة، وإن تكرر فأعد تشغيل الخادم.</p>}
+            {failed && <p className="text-[12px] text-urgent">تعذّر التصفير — أعد المحاولة، وإن تكرر فأعد تشغيل الخادم.</p>}
           </div>
         )}
       </div>

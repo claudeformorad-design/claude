@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 export default function NotFound() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
-      <p className="num text-5xl text-ink">404</p>
+      <p className="num text-5xl font-bold text-ink">404</p>
       <p className="text-[15px] text-ink">المستند أو الصفحة غير موجودة</p>
       <p className="max-w-md text-[13px] leading-relaxed text-muted-foreground">
         ربما الرابط غير صحيح، أو المستند يخص فندقًا آخر.

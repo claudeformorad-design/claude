@@ -81,7 +81,7 @@ export function RevenueSettingForm({
           {select("revenue_account_id", rs.revenueAccount, accounts)}
           {text("default_price", rs.defaultPrice, { dir: "ltr", inputMode: "decimal" })}
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-4" {...register("price_includes_tax")} />{t.folio.priceIncludesTax}</label>
-          <div className="space-y-1 rounded-md border p-2">
+          <div className="space-y-1 rounded-[10px] bg-panel p-3">
             <p className="text-xs text-muted-foreground">{rs.appliedTaxes}</p>
             {taxes.length === 0 && <p className="text-sm text-muted-foreground">{t.common.none}</p>}
             {taxes.map((x) => (

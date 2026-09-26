@@ -39,7 +39,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   return (
     <>
       <PageHeader title={t.nav.stock} description={i.subtitle}
-        actions={can && <Button asChild><Link href="/inventory?new=1">{i.newItem}</Link></Button>} />
+        actions={can && <Button asChild variant="outline"><Link href="/inventory?new=1">{i.newItem}</Link></Button>} />
       {can && (edit || sp.new) && (
         <Card className="mb-6"><CardHeader><CardTitle>{edit ? t.common.edit : i.newItem}</CardTitle></CardHeader><CardContent>
           <SimpleForm key={edit?.id ?? "new"} columns={4} submitLabel={t.common.save} errors={t.errors} action={saveItemAction} onDone="/inventory"

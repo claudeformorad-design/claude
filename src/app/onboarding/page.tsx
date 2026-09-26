@@ -16,7 +16,7 @@ export default async function OnboardingPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
-      <Card className="app-frame animate-rise w-full max-w-2xl rounded-[32px]">
+      <Card className="animate-rise w-full max-w-2xl">
         <CardHeader>
           <CardTitle className="text-xl">{t.onboarding.title}</CardTitle>
           <CardDescription>{t.onboarding.subtitle}</CardDescription>

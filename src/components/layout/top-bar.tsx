@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { AnimatePresence, LayoutGroup, motion } from "motion/react";
-import { Building2, CalendarCheck, CornerDownLeft, LogOut, Menu, Search, Settings, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "motion/react";
+import { CalendarCheck, ChevronLeft, CornerDownLeft, LogOut, Menu, Search, Settings, X } from "lucide-react";
 import Link from "@/components/link";
 import { cn } from "@/lib/utils";
 import { OPEN_SEARCH_EVENT, isActivePath, navGroups, type NavItem, type NavLabels } from "./nav-config";
@@ -12,43 +12,6 @@ import { OPEN_SEARCH_EVENT, isActivePath, navGroups, type NavItem, type NavLabel
 const norm = (s: string) =>
   s.toLowerCase().replace(/[ً-ْ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي");
 
-const RANGES = [
-  { key: "today", label: "اليوم" },
-  { key: "7d", label: "آخر 7 أيام" },
-  { key: "month", label: "هذا الشهر" },
-  { key: "fy", label: "السنة المالية" },
-] as const;
-
-/** مبدّل فترة لوحة التحكم (حبوب مُحدّدة في منتصف الرأس كما في التصميم المرجعي) */
-function RangePills() {
-  const search = useSearchParams();
-  const current = RANGES.some((r) => r.key === search.get("range")) ? search.get("range") : "month";
-  return (
-    <LayoutGroup id="range">
-      <nav className="flex items-center gap-1.5">
-        {RANGES.map((r) => {
-          const active = current === r.key;
-          return (
-            <Link
-              key={r.key}
-              href={r.key === "month" ? "/" : `/?range=${r.key}`}
-              className={cn(
-                "relative whitespace-nowrap rounded-full border px-4 py-2 text-[13px] transition-colors duration-200",
-                active ? "border-ink text-white" : "border-line bg-white text-slate-600 hover:border-line-strong hover:text-ink",
-              )}
-            >
-              {active && <motion.span layoutId="range-active" className="absolute inset-0 rounded-full bg-ink" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
-              <span className="relative z-10">{r.label}</span>
-            </Link>
-          );
-        })}
-        <Link href="/reports/income-statement" className="whitespace-nowrap rounded-full border border-line bg-white px-4 py-2 text-[13px] text-slate-600 transition-colors hover:border-line-strong hover:text-ink">
-          التقارير
-        </Link>
-      </nav>
-    </LayoutGroup>
-  );
-}
 
 export function TopBar({
   labels,
@@ -89,89 +52,53 @@ export function TopBar({
   }, []);
 
   const initials = (userName || userEmail || "؟").trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("");
-  const iconBtn = "flex size-10 shrink-0 items-center justify-center rounded-full border border-line bg-white text-slate-600 transition-all duration-200 hover:border-line-strong hover:bg-white hover:text-ink";
+  const iconBtn = "flex size-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-500 shadow-soft transition-colors duration-200 hover:text-ink";
+  const group = current ? groups.find((g) => g.items.includes(current)) : undefined;
 
   return (
-    <header className="no-print flex h-[76px] shrink-0 items-center gap-3 px-4 md:px-7">
+    <header className="no-print flex h-[72px] shrink-0 items-center gap-3 px-4 md:px-10">
       <button type="button" onClick={() => setDrawerOpen(true)} className={cn(iconBtn, "md:hidden")} aria-label="القائمة">
-        <Menu className="size-[18px]" />
+        <Menu className="size-[18px] stroke-[1.75]" />
       </button>
 
-      {/* الشعار واسم المنشأة */}
-      <Link href="/" className="flex min-w-0 items-center gap-2.5">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-ink text-white">
-          <Building2 className="size-[18px]" />
-        </span>
-        <span className="hidden min-w-0 leading-tight sm:block">
-          <span className="block max-w-44 truncate text-[15px] font-medium text-ink">{hotelName}</span>
-          <span className="block text-[10.5px] text-muted-foreground">النظام المحاسبي الفندقي</span>
-        </span>
-      </Link>
-
-      {/* الوسط: مبدّل الفترة في لوحة التحكم، واسم الصفحة في غيرها */}
-      <div className="flex min-w-0 flex-1 justify-start md:justify-center">
-        {pathname === "/" ? (
-          <div className="hidden lg:block">
-            <Suspense fallback={null}>
-              <RangePills />
-            </Suspense>
-          </div>
-        ) : (
-          current && <span key={current.href} className="animate-fade hidden truncate rounded-full border border-line bg-white px-4 py-2 text-[13px] text-ink lg:inline-block">{current.label}</span>
+      {/* مسار التنقّل */}
+      <nav aria-label="المسار" className="flex min-w-0 flex-1 items-center gap-2 text-[13px] text-muted-foreground">
+        <span className="truncate md:hidden text-ink font-medium">{hotelName}</span>
+        <span className="hidden truncate md:inline">{hotelName}</span>
+        {group?.title && group.items.length > 1 && (
+          <>
+            <ChevronLeft className="hidden size-3.5 shrink-0 text-slate-300 md:block" />
+            <span className="hidden truncate md:inline">{group.title}</span>
+          </>
         )}
-      </div>
+        {current && (
+          <>
+            <ChevronLeft className="hidden size-3.5 shrink-0 text-slate-300 md:block" />
+            <span key={current.href} className="animate-fade hidden truncate text-ink md:inline">{current.label}</span>
+          </>
+        )}
+      </nav>
 
       <div className="flex items-center gap-2">
-        <button type="button" onClick={() => setPaletteOpen(true)} className={iconBtn} title="بحث (Ctrl K)" aria-label="بحث">
-          <Search className="size-[18px]" />
+        <button type="button" onClick={() => setPaletteOpen(true)} className={cn(iconBtn, "md:hidden")} title="بحث (Ctrl K)" aria-label="بحث">
+          <Search className="size-[18px] stroke-[1.75]" />
         </button>
-        <Link href="/periods" className={cn(iconBtn, "hidden sm:flex")} title={labels.periods}>
-          <CalendarCheck className="size-[18px]" />
+        <Link href="/periods" className={cn(iconBtn, "hidden sm:flex")} title={labels.periods} aria-label={labels.periods}>
+          <CalendarCheck className="size-[18px] stroke-[1.75]" />
         </Link>
-        <Link href="/settings/hotel" className={cn(iconBtn, "hover:rotate-45")} title={labels.hotelSettings}>
-          <Settings className="size-[18px]" />
+        <Link href="/settings/hotel" className={iconBtn} title={labels.hotelSettings} aria-label={labels.hotelSettings}>
+          <Settings className="size-[18px] stroke-[1.75]" />
         </Link>
-        <div className="ms-1 flex items-center gap-2.5">
-          <div className="flex size-10 items-center justify-center rounded-full bg-brand-blue text-[13px] font-medium text-white">
-            {initials}
-          </div>
-          <div className="hidden leading-tight md:block">
-            <p className="max-w-40 truncate text-[13px] font-medium text-ink">{userName || userEmail}</p>
-            <p className="max-w-40 truncate text-[11px] text-muted-foreground">{roleLabel}</p>
-          </div>
-          {signOut && (
-            <form action={signOut}>
-              <button type="submit" title="تسجيل الخروج" className="flex size-8 items-center justify-center rounded-full text-slate-500 hover:bg-white hover:text-brand-red">
-                <LogOut className="size-4" />
-              </button>
-            </form>
-          )}
-        </div>
+        <span title={`${userName || userEmail} · ${roleLabel}`} className="flex size-10 items-center justify-center rounded-full bg-ink text-[13px] font-medium text-white md:hidden">
+          {initials}
+        </span>
       </div>
 
       <AnimatePresence>{paletteOpen && <CommandPalette groups={groups} onClose={() => setPaletteOpen(false)} />}</AnimatePresence>
       <AnimatePresence>
-        {drawerOpen && <MobileDrawer groups={groups} pathname={pathname} hotelName={hotelName} onClose={() => setDrawerOpen(false)} />}
+        {drawerOpen && <MobileDrawer groups={groups} pathname={pathname} hotelName={hotelName} signOut={signOut} onClose={() => setDrawerOpen(false)} />}
       </AnimatePresence>
     </header>
-  );
-}
-
-/** حقل بحث كبير (مثل التصميم المرجعي) يفتح البحث السريع */
-export function SearchPill({ className }: { className?: string }) {
-  return (
-    <button
-      type="button"
-      onClick={() => window.dispatchEvent(new Event(OPEN_SEARCH_EVENT))}
-      className={cn(
-        "group flex h-12 w-full items-center gap-3 rounded-full border border-line bg-white px-5 text-[13px] text-slate-400 transition-all hover:border-line-strong hover:bg-white",
-        className,
-      )}
-    >
-      <Search className="size-[18px] transition-transform group-hover:scale-110" />
-      <span className="flex-1 truncate text-start">ابحث عن صفحة أو تقرير أو إجراء…</span>
-      <kbd className="hidden rounded-md border border-line bg-panel px-1.5 py-0.5 text-[10px] text-slate-500 sm:inline">Ctrl K</kbd>
-    </button>
   );
 }
 
@@ -206,7 +133,7 @@ function CommandPalette({ groups, onClose }: { groups: ReturnType<typeof navGrou
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-slate-900/30 px-4 pt-[12vh]"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-ink/20 px-4 pt-[12vh]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -216,11 +143,11 @@ function CommandPalette({ groups, onClose }: { groups: ReturnType<typeof navGrou
         role="dialog"
         aria-modal="true"
         onMouseDown={(e) => e.stopPropagation()}
-        initial={{ opacity: 0, y: -20, scale: 0.96, filter: "blur(8px)" }}
-        animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+        initial={{ opacity: 0, y: -20, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -10, scale: 0.98 }}
         transition={{ type: "spring", stiffness: 380, damping: 30 }}
-        className="w-full max-w-xl overflow-hidden rounded-3xl border border-line bg-white shadow-[0_30px_80px_-24px_rgba(17,24,39,0.45)]"
+        className="w-full max-w-xl overflow-hidden rounded-[20px] bg-white shadow-lift"
       >
         <div className="flex items-center gap-3 border-b border-line px-5">
           <Search className="size-5 text-slate-400" />
@@ -250,16 +177,16 @@ function CommandPalette({ groups, onClose }: { groups: ReturnType<typeof navGrou
                 onMouseEnter={() => setIndex(i)}
                 onClick={() => go(item)}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-start text-[13px] transition-colors",
-                  i === safeIndex ? "bg-ink text-white" : "text-ink hover:bg-subtle",
+                  "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[13px] transition-colors",
+                  i === safeIndex ? "bg-subtle font-medium text-ink" : "text-slate-600",
                 )}
               >
-                <span className={cn("flex size-8 items-center justify-center rounded-full", i === safeIndex ? "bg-white/15" : "bg-subtle")}>
-                  <item.icon className="size-4" />
+                <span className={cn("flex size-8 items-center justify-center rounded-lg", i === safeIndex ? "bg-white shadow-soft" : "bg-subtle")}>
+                  <item.icon className="size-4 stroke-[1.75]" />
                 </span>
                 <span className="flex-1">{item.label}</span>
-                {item.group && <span className={cn("text-[11px]", i === safeIndex ? "text-white/60" : "text-slate-400")}>{item.group}</span>}
-                {i === safeIndex && <CornerDownLeft className="size-3.5 text-white/60" />}
+                {item.group && <span className={cn("text-[11px]", "text-slate-400")}>{item.group}</span>}
+                {i === safeIndex && <CornerDownLeft className="size-3.5 text-slate-400" />}
               </button>
             </motion.li>
           ))}
@@ -269,16 +196,16 @@ function CommandPalette({ groups, onClose }: { groups: ReturnType<typeof navGrou
   );
 }
 
-function MobileDrawer({ groups, pathname, hotelName, onClose }: { groups: ReturnType<typeof navGroups>; pathname: string; hotelName: string; onClose: () => void }) {
+function MobileDrawer({ groups, pathname, hotelName, signOut, onClose }: { groups: ReturnType<typeof navGroups>; pathname: string; hotelName: string; signOut?: () => Promise<void>; onClose: () => void }) {
   return (
-    <motion.div className="fixed inset-0 z-50 bg-slate-900/30 md:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+    <motion.div className="fixed inset-0 z-50 bg-ink/20 md:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
       <motion.nav
         onClick={(e) => e.stopPropagation()}
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", stiffness: 320, damping: 34 }}
-        className="absolute inset-y-3 end-auto start-3 w-72 overflow-y-auto rounded-3xl border border-line bg-white p-4"
+        className="absolute inset-y-3 end-auto start-3 w-72 overflow-y-auto rounded-[20px] bg-sidebar p-4 shadow-lift"
       >
         <p className="mb-3 px-2 text-[15px] font-semibold text-ink">{hotelName}</p>
         {groups.map((g, gi) => (
@@ -290,16 +217,24 @@ function MobileDrawer({ groups, pathname, hotelName, onClose }: { groups: Return
                 href={item.href}
                 onClick={onClose}
                 className={cn(
-                  "flex h-10 items-center gap-3 rounded-full px-3 text-[13px]",
-                  isActivePath(pathname, item.href) ? "bg-ink text-white" : "text-slate-600 hover:bg-white",
+                  "flex h-10 items-center gap-3 rounded-[10px] px-3 text-[13px]",
+                  isActivePath(pathname, item.href) ? "bg-white font-medium text-ink shadow-soft" : "text-slate-500 hover:text-ink",
                 )}
               >
-                <item.icon className="size-[18px]" />
+                <item.icon className="size-[18px] stroke-[1.75]" />
                 {item.label}
               </Link>
             ))}
           </div>
         ))}
+        {signOut && (
+          <form action={signOut} className="mt-2 px-1">
+            <button type="submit" className="flex h-10 w-full items-center gap-3 rounded-[10px] px-2 text-[13px] text-slate-500 hover:text-urgent">
+              <LogOut className="size-[18px] stroke-[1.75]" />
+              تسجيل الخروج
+            </button>
+          </form>
+        )}
       </motion.nav>
     </motion.div>
   );

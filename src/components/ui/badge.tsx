@@ -2,17 +2,21 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
+/** وسم حالة: حبة كاملة الاستدارة، خلفية باستيل فاتحة ونص أغمق من نفس العائلة */
 const badgeVariants = cva(
-  "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors",
+  "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-medium leading-5",
   {
     variants: {
       variant: {
-        default: "border-ink bg-ink text-white",
-        secondary: "border-line bg-subtle text-slate-700",
-        success: "border-green-200 bg-green-50 text-green-700",
-        warning: "border-amber-200 bg-amber-50 text-amber-700",
-        destructive: "border-red-200 bg-red-50 text-red-700",
-        outline: "border-line bg-white/70 text-slate-600",
+        default: "bg-neutral-tint text-neutral",
+        secondary: "bg-neutral-tint text-neutral",
+        outline: "bg-neutral-tint text-neutral",
+        success: "bg-success-tint text-success",
+        warning: "bg-amber-tint text-amber",
+        destructive: "bg-urgent-tint text-urgent",
+        info: "bg-info-tint text-info",
+        review: "bg-review-tint text-review",
+        pending: "bg-pending-tint text-pending",
       },
     },
     defaultVariants: { variant: "default" },

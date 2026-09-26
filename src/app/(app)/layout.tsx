@@ -19,24 +19,32 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const sidebarExpanded = (await cookies()).get(SIDEBAR_COOKIE)?.value === "1";
   const roleLabel = ctx.can(PERMISSIONS.hotelManage) ? "مدير الفندق" : ctx.can(PERMISSIONS.journalCreate) ? "محاسب" : "مستخدم";
 
+  const signOut = isSupabaseConfigured() ? signOutAction : undefined;
+
   return (
-    <div className="flex h-screen bg-frame">
+    // الخلفية الخارجية بيج دافئ، والواجهة فوقها بملء الشاشة تقريبًا
+    <div className="flex h-screen bg-frame md:p-2.5">
       <Suspense fallback={null}>
         <RouteProgress />
       </Suspense>
       <PointerEffects />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar
+      <div className="flex min-w-0 flex-1 overflow-hidden bg-content md:rounded-[20px] md:shadow-soft">
+        <Sidebar
           labels={t.nav}
           hotelName={hotelName}
-          userName={ctx.profile?.full_name ?? ""}
-          userEmail={ctx.user.email ?? ""}
-          roleLabel={roleLabel}
-          signOut={isSupabaseConfigured() ? signOutAction : undefined}
+          user={{ name: ctx.profile?.full_name ?? "", email: ctx.user.email ?? "", role: roleLabel, signOut }}
+          initialExpanded={sidebarExpanded}
         />
-        <div className="flex min-h-0 flex-1">
-          <Sidebar labels={t.nav} initialExpanded={sidebarExpanded} />
-          <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-10 pt-5 md:pe-7 md:ps-3">{children}</main>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <TopBar
+            labels={t.nav}
+            hotelName={hotelName}
+            userName={ctx.profile?.full_name ?? ""}
+            userEmail={ctx.user.email ?? ""}
+            roleLabel={roleLabel}
+            signOut={signOut}
+          />
+          <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-12 pt-1 md:px-10">{children}</main>
         </div>
       </div>
     </div>

@@ -10,11 +10,11 @@ export function Alert({
     <div
       role="alert"
       className={cn(
-        "animate-fade rounded-2xl border px-5 py-3.5 text-[13px]",
-        variant === "default" && "border-line bg-white text-ink",
-        variant === "warning" && "border-amber-200 bg-amber-50 text-amber-800",
-        variant === "destructive" && "border-red-200 bg-red-50 text-red-700",
-        variant === "success" && "border-green-200 bg-green-50 text-green-800",
+        "animate-fade rounded-xl px-5 py-3.5 text-[13px] leading-relaxed",
+        variant === "default" && "bg-neutral-tint text-slate-700",
+        variant === "warning" && "bg-amber-tint text-amber",
+        variant === "destructive" && "bg-urgent-tint text-urgent",
+        variant === "success" && "bg-success-tint text-success",
         className,
       )}
       {...props}
