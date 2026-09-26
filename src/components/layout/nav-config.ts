@@ -1,23 +1,21 @@
 import {
-  Banknote, BedDouble, BookOpen, Boxes, Building2, CalendarCheck, Clock, FileSpreadsheet, FileText, History, Landmark,
+  BarChart3, Banknote, BedDouble, BookOpen, Boxes, Building2, CalendarCheck, Clock, FileSpreadsheet, FileText, History, Landmark,
   LayoutDashboard, ListChecks, ListTree, Percent, PieChart, Receipt, Scale, Settings, ShieldCheck, ShoppingCart,
   TrendingUp, Truck, UserCog, Users, Wallet, Waves,
 } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 
-/** كوكي حالة طي الشريط الجانبي (يُقرأ في الخادم لرسم الحالة الصحيحة دون وميض) */
-export const SIDEBAR_COOKIE = "sidebar_collapsed";
-
 export type NavLabels = Dictionary["nav"];
 export type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }> };
-export type NavGroup = { title?: string; items: NavItem[] };
+export type NavGroup = { title?: string; icon: NavItem["icon"]; items: NavItem[] };
 
 /** شجرة التنقل الوحيدة في النظام (الشريط الجانبي + البحث السريع) */
 export function navGroups(l: NavLabels): NavGroup[] {
   return [
-    { items: [{ href: "/", label: l.dashboard, icon: LayoutDashboard }] },
+    { title: l.dashboard, icon: LayoutDashboard, items: [{ href: "/", label: l.dashboard, icon: LayoutDashboard }] },
     {
       title: l.groupGl,
+      icon: BookOpen,
       items: [
         { href: "/accounts", label: l.accounts, icon: ListTree },
         { href: "/journal", label: l.journal, icon: BookOpen },
@@ -25,6 +23,7 @@ export function navGroups(l: NavLabels): NavGroup[] {
     },
     {
       title: l.groupRevenue,
+      icon: BedDouble,
       items: [
         { href: "/folios", label: l.folios, icon: BedDouble },
         { href: "/invoices", label: l.invoices, icon: FileText },
@@ -34,6 +33,7 @@ export function navGroups(l: NavLabels): NavGroup[] {
     },
     {
       title: l.groupPayables,
+      icon: ShoppingCart,
       items: [
         { href: "/vendors", label: l.vendors, icon: Truck },
         { href: "/purchase-orders", label: l.purchaseOrders, icon: ShoppingCart },
@@ -44,6 +44,7 @@ export function navGroups(l: NavLabels): NavGroup[] {
     },
     {
       title: l.groupAssets,
+      icon: Boxes,
       items: [
         { href: "/assets", label: l.fixedAssets, icon: Building2 },
         { href: "/inventory", label: l.stock, icon: Boxes },
@@ -51,6 +52,7 @@ export function navGroups(l: NavLabels): NavGroup[] {
     },
     {
       title: l.groupReports,
+      icon: BarChart3,
       items: [
         { href: "/reports/income-statement", label: l.incomeStatement, icon: TrendingUp },
         { href: "/reports/balance-sheet", label: l.balanceSheet, icon: Scale },
@@ -65,6 +67,7 @@ export function navGroups(l: NavLabels): NavGroup[] {
     },
     {
       title: l.groupAdmin,
+      icon: Settings,
       items: [
         { href: "/settings/hotel", label: l.hotelSettings, icon: Settings },
         { href: "/settings/revenue", label: l.revenueSettings, icon: Wallet },
@@ -78,3 +81,6 @@ export function navGroups(l: NavLabels): NavGroup[] {
 
 export const isActivePath = (pathname: string, href: string) =>
   href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+
+/** حدث عام لفتح البحث السريع من أي مكان (زر الرأس أو حقل البحث في الصفحة) */
+export const OPEN_SEARCH_EVENT = "open-command-palette";

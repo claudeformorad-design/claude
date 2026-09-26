@@ -29,6 +29,23 @@ function monthLabel(m: string, short = false): string {
   return short ? name : `${name} ${y ?? ""}`.trim();
 }
 
+/** عرض الحاوية الفعلي حتى تُرسم المخططات بمقاسها الحقيقي (نص بحجم ثابت مهما ضاقت البطاقة) */
+function useWidth<T extends HTMLElement>(fallback: number) {
+  const ref = useRef<T>(null);
+  const [width, setWidth] = useState(fallback);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      const w = Math.round(entry?.contentRect.width ?? 0);
+      if (w > 0) setWidth(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, width] as const;
+}
+
 function linePath(pts: ({ x: number; y: number } | null)[]): string {
   let d = "";
   let pen = false;
@@ -42,8 +59,8 @@ function linePath(pts: ({ x: number; y: number } | null)[]): string {
 
 function EmptyChart({ icon: Icon = Activity, title, hint }: { icon?: typeof Activity; title: string; hint: string }) {
   return (
-    <div className="flex min-h-44 flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300/80 bg-white/40 px-4 py-8 text-center">
-      <div className="animate-pop mb-3 flex size-11 items-center justify-center rounded-2xl bg-ink text-white">
+    <div className="flex min-h-44 flex-col items-center justify-center rounded-2xl border border-dashed border-line-strong bg-white/60 px-4 py-8 text-center">
+      <div className="animate-pop mb-3 flex size-11 items-center justify-center rounded-full border border-line bg-white text-slate-500">
         <Icon className="size-5" />
       </div>
       <p className="text-[13px] font-medium text-ink">{title}</p>
@@ -83,10 +100,11 @@ export function IncomeExpenseChart({
   labels: { revenue: string; expenses: string; net: string };
 }) {
   const [hover, setHover] = useState<number | null>(null);
+  const [boxRef, W] = useWidth<HTMLDivElement>(360);
   if (!data.some((d) => d.revenue !== 0 || d.expenses !== 0)) {
     return <EmptyChart title="لا توجد حركات مرحّلة بعد" hint="يُرسم المخطط من القيود المرحّلة في الأستاذ العام تلقائيًا." />;
   }
-  const W = 560, H = 230, padX = 18, padT = 18, padB = 34, axisW = 44;
+  const H = 230, padX = 6, padT = 18, padB = 30, axisW = 40;
   const plotW = W - padX * 2 - axisW, plotH = H - padT - padB;
   const top = Math.max(...data.map((d) => Math.max(d.revenue, d.expenses)), 0);
   const bottom = Math.min(...data.map((d) => Math.min(d.revenue, d.expenses)), 0);
@@ -103,11 +121,11 @@ export function IncomeExpenseChart({
 
   return (
     <div className="space-y-3" data-chart="financial">
-      <div className="relative" onMouseLeave={() => setHover(null)}>
+      <div ref={boxRef} className="relative" onMouseLeave={() => setHover(null)}>
         <svg viewBox={`0 0 ${W} ${H}`} className="h-[230px] w-full overflow-visible" role="img" aria-label={`${labels.revenue} / ${labels.expenses}`}>
           <defs>
             <linearGradient id="revArea" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={CHART_COLORS.revenue} stopOpacity="0.28" />
+              <stop offset="0%" stopColor={CHART_COLORS.revenue} stopOpacity="0.18" />
               <stop offset="100%" stopColor={CHART_COLORS.revenue} stopOpacity="0" />
             </linearGradient>
           </defs>
@@ -118,9 +136,9 @@ export function IncomeExpenseChart({
             </g>
           ))}
           <path d={area} fill="url(#revArea)" className="animate-fade" style={{ animationDelay: "0.6s" }} />
-          <path d={linePath(exp)} fill="none" stroke={CHART_COLORS.expenses} strokeWidth="2.5" strokeLinejoin="round" pathLength={1}
+          <path d={linePath(exp)} fill="none" stroke={CHART_COLORS.expenses} strokeWidth="2" strokeLinejoin="round" pathLength={1}
             strokeDasharray="1" className="animate-draw" />
-          <path d={linePath(rev)} fill="none" stroke={CHART_COLORS.revenue} strokeWidth="3" strokeLinejoin="round" pathLength={1}
+          <path d={linePath(rev)} fill="none" stroke={CHART_COLORS.revenue} strokeWidth="2.25" strokeLinejoin="round" pathLength={1}
             strokeDasharray="1" className="animate-draw" />
           {hover !== null && (
             <line x1={x(hover)} x2={x(hover)} y1={padT} y2={padT + plotH} stroke="#0e1116" strokeOpacity="0.35" strokeDasharray="4 4" />
@@ -142,13 +160,13 @@ export function IncomeExpenseChart({
             key={hover}
             initial={{ opacity: 0, y: 6, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            className="pointer-events-none absolute top-1 z-10 w-48 -translate-x-1/2 rounded-2xl bg-ink/95 p-3 text-[11px] text-white shadow-xl"
+            className="pointer-events-none absolute top-1 z-10 w-48 -translate-x-1/2 rounded-xl border border-line bg-white p-3 text-[11px] text-ink shadow-[0_12px_30px_-12px_rgba(17,24,39,0.35)]"
             style={{ left: `${(x(hover) / W) * 100}%` }}
           >
             <p className="mb-1.5 font-medium">{monthLabel(h.month)}</p>
             <Row color={CHART_COLORS.revenue} label={labels.revenue} value={h.revenue} currency={currency} />
             <Row color={CHART_COLORS.expenses} label={labels.expenses} value={h.expenses} currency={currency} />
-            <div className="mt-1.5 border-t border-white/15 pt-1.5">
+            <div className="mt-1.5 border-t border-line pt-1.5">
               <Row color={CHART_COLORS.net} label={labels.net} value={h.revenue - h.expenses} currency={currency} />
             </div>
           </motion.div>
@@ -166,8 +184,8 @@ export function IncomeExpenseChart({
 function Row({ color, label, value, currency }: { color: string; label: string; value: number; currency: string }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="flex items-center gap-1.5 text-white/70"><span className="size-2 rounded-full" style={{ background: color }} />{label}</span>
-      <span className="num">{fmt(value, 2)} <span className="text-white/50">{currency}</span></span>
+      <span className="flex items-center gap-1.5 text-slate-500"><span className="size-2 rounded-full" style={{ background: color }} />{label}</span>
+      <span className="num">{fmt(value, 2)} <span className="text-slate-400">{currency}</span></span>
     </div>
   );
 }
@@ -199,22 +217,31 @@ export function DonutChart({
   const total = items.reduce((s, x) => s + x.value, 0);
   if (!items.length || total <= 0) return <EmptyChart icon={PieIcon} title={emptyTitle} hint={emptyHint} />;
 
-  const size = 190, c = size / 2, r = 70, sw = 26, circ = 2 * Math.PI * r;
-  const gap = items.length > 1 ? 4 : 0;
+  const size = 190, c = size / 2, r = 68, sw = 30, circ = 2 * Math.PI * r;
+  const gap = items.length > 1 ? 5 : 0;
   const a = active !== null ? items[active] : undefined;
+  const uid = items.map((x) => x.label).join("").length + items.length;
 
   return (
     <div className="flex flex-col items-center gap-4" data-chart="donut">
       <div className="relative">
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-          <circle cx={c} cy={c} r={r} fill="none" stroke="#eef1f6" strokeWidth={sw} />
+          <defs>
+            {items.map((s, i) => (
+              <pattern key={s.label} id={`stripe-${uid}-${i}`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <rect width="7" height="7" fill={s.color} />
+                <rect width="2.5" height="7" fill="#ffffff" fillOpacity="0.28" />
+              </pattern>
+            ))}
+          </defs>
+          <circle cx={c} cy={c} r={r} fill="none" stroke="#e9edf2" strokeWidth={sw} />
           {items.map((s, i) => {
             const before = items.slice(0, i).reduce((acc, x) => acc + x.value, 0) / total;
             const len = Math.max((s.value / total) * circ - gap, 0.5);
             return (
               <circle
                 key={s.label}
-                cx={c} cy={c} r={r} fill="none" stroke={s.color} strokeLinecap={items.length > 1 ? "round" : "butt"}
+                cx={c} cy={c} r={r} fill="none" stroke={`url(#stripe-${uid}-${i})`}
                 strokeDasharray={`${len} ${circ}`}
                 strokeDashoffset={-before * circ}
                 strokeWidth={active === i ? sw + 6 : sw}
@@ -271,7 +298,7 @@ export function StripedBars({
               <span className="num font-medium text-ink">{r.amountText}</span> <span className="text-[11px]">{currency}</span>
             </span>
           </div>
-          <div className="h-3.5 overflow-hidden rounded-full bg-[repeating-linear-gradient(-45deg,#e7ebf1_0_6px,#f1f4f8_6px_12px)]">
+          <div className="track-stripes h-4 overflow-hidden rounded-full">
             <div
               className="bar-stripes animate-grow-x h-full rounded-full"
               style={{
@@ -297,10 +324,11 @@ export function RoomTrendChart({
   data: { month: string; adr: number | null; revpar: number | null; occupancy: number | null; nights: number }[];
   currency: string;
 }) {
+  const [boxRef, W] = useWidth<HTMLDivElement>(360);
   if (!data.some((d) => d.nights > 0)) {
     return <EmptyChart icon={TrendingUp} title="لا توجد ليالٍ مباعة في الفترة" hint="تُحسب من رسوم فئة «غرف» على الفوليو وعدد الغرف في إعدادات الفندق." />;
   }
-  const W = 520, H = 200, padX = 18, axisW = 40, padT = 16, padB = 46;
+  const H = 200, padX = 6, axisW = 36, padT = 16, padB = 46;
   const plotW = W - padX * 2 - axisW, plotH = H - padT - padB;
   const maxV = Math.max(...data.map((d) => Math.max(d.adr ?? 0, d.revpar ?? 0)), 1) * 1.2;
   const x = (i: number) => padX + axisW + (data.length === 1 ? plotW / 2 : (plotW * i) / (data.length - 1));
@@ -309,7 +337,7 @@ export function RoomTrendChart({
   const rp = data.map((d, i) => (d.revpar === null ? null : { x: x(i), y: y(d.revpar) }));
 
   return (
-    <div className="space-y-2" data-chart="rooms">
+    <div ref={boxRef} className="space-y-2" data-chart="rooms">
       <svg viewBox={`0 0 ${W} ${H}`} className="h-[200px] w-full overflow-visible" role="img" aria-label="ADR / RevPAR">
         {[0, maxV / 2, maxV].map((v, k) => (
           <g key={k}>

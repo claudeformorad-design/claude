@@ -1,28 +1,68 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "motion/react";
-import { CornerDownLeft, LogOut, Menu, Search, Settings, X } from "lucide-react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { AnimatePresence, LayoutGroup, motion } from "motion/react";
+import { Building2, CalendarCheck, CornerDownLeft, LogOut, Menu, Search, Settings, X } from "lucide-react";
 import Link from "@/components/link";
 import { cn } from "@/lib/utils";
-import { isActivePath, navGroups, type NavItem, type NavLabels } from "./nav-config";
+import { OPEN_SEARCH_EVENT, isActivePath, navGroups, type NavItem, type NavLabels } from "./nav-config";
 
 /** تطبيع عربي بسيط للبحث: توحيد الألف والتاء المربوطة والياء وإزالة التشكيل */
 const norm = (s: string) =>
   s.toLowerCase().replace(/[ً-ْ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي");
+
+const RANGES = [
+  { key: "today", label: "اليوم" },
+  { key: "7d", label: "آخر 7 أيام" },
+  { key: "month", label: "هذا الشهر" },
+  { key: "fy", label: "السنة المالية" },
+] as const;
+
+/** مبدّل فترة لوحة التحكم (حبوب مُحدّدة في منتصف الرأس كما في التصميم المرجعي) */
+function RangePills() {
+  const search = useSearchParams();
+  const current = RANGES.some((r) => r.key === search.get("range")) ? search.get("range") : "month";
+  return (
+    <LayoutGroup id="range">
+      <nav className="flex items-center gap-1.5">
+        {RANGES.map((r) => {
+          const active = current === r.key;
+          return (
+            <Link
+              key={r.key}
+              href={r.key === "month" ? "/" : `/?range=${r.key}`}
+              className={cn(
+                "relative whitespace-nowrap rounded-full border px-4 py-2 text-[13px] transition-colors duration-200",
+                active ? "border-ink text-white" : "border-line bg-white/70 text-slate-600 hover:border-line-strong hover:text-ink",
+              )}
+            >
+              {active && <motion.span layoutId="range-active" className="absolute inset-0 rounded-full bg-ink" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
+              <span className="relative z-10">{r.label}</span>
+            </Link>
+          );
+        })}
+        <Link href="/reports/income-statement" className="whitespace-nowrap rounded-full border border-line bg-white/70 px-4 py-2 text-[13px] text-slate-600 transition-colors hover:border-line-strong hover:text-ink">
+          التقارير
+        </Link>
+      </nav>
+    </LayoutGroup>
+  );
+}
 
 export function TopBar({
   labels,
   hotelName,
   userName,
   userEmail,
+  roleLabel,
   signOut,
 }: {
   labels: NavLabels;
   hotelName: string;
   userName: string;
   userEmail: string;
+  roleLabel: string;
   signOut?: () => Promise<void>;
 }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -39,64 +79,69 @@ export function TopBar({
         setPaletteOpen(true);
       }
     };
+    const onOpen = () => setPaletteOpen(true);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener(OPEN_SEARCH_EVENT, onOpen);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener(OPEN_SEARCH_EVENT, onOpen);
+    };
   }, []);
 
   const initials = (userName || userEmail || "؟").trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("");
+  const iconBtn = "flex size-10 shrink-0 items-center justify-center rounded-full border border-line bg-white/70 text-slate-600 transition-all duration-200 hover:border-line-strong hover:bg-white hover:text-ink";
 
   return (
-    <header className="no-print flex shrink-0 items-center gap-3 px-5 pb-2 pt-5 md:px-8">
-      <button
-        type="button"
-        onClick={() => setDrawerOpen(true)}
-        className="flex size-10 items-center justify-center rounded-full border border-white/80 bg-white/70 text-ink md:hidden"
-        aria-label="القائمة"
-      >
+    <header className="no-print flex h-[72px] shrink-0 items-center gap-3 px-4 md:px-5">
+      <button type="button" onClick={() => setDrawerOpen(true)} className={cn(iconBtn, "md:hidden")} aria-label="القائمة">
         <Menu className="size-[18px]" />
       </button>
 
-      <div className="hidden min-w-0 items-center gap-2 text-[13px] text-muted-foreground lg:flex">
-        <span className="truncate">{hotelName}</span>
-        {current && current.href !== "/" && (
-          <>
-            <span className="text-slate-300">/</span>
-            <span key={current.href} className="animate-fade truncate font-medium text-ink">
-              {current.label}
-            </span>
-          </>
+      {/* الشعار واسم المنشأة */}
+      <Link href="/" className="flex min-w-0 items-center gap-2.5">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-ink text-white">
+          <Building2 className="size-[18px]" />
+        </span>
+        <span className="hidden min-w-0 leading-tight sm:block">
+          <span className="block max-w-44 truncate text-[15px] font-medium text-ink">{hotelName}</span>
+          <span className="block text-[10.5px] text-muted-foreground">النظام المحاسبي الفندقي</span>
+        </span>
+      </Link>
+
+      {/* الوسط: مبدّل الفترة في لوحة التحكم، واسم الصفحة في غيرها */}
+      <div className="flex min-w-0 flex-1 justify-center">
+        {pathname === "/" ? (
+          <div className="hidden lg:block">
+            <Suspense fallback={null}>
+              <RangePills />
+            </Suspense>
+          </div>
+        ) : (
+          current && <span key={current.href} className="animate-fade hidden truncate rounded-full border border-line bg-white/70 px-4 py-2 text-[13px] text-ink lg:inline-block">{current.label}</span>
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={() => setPaletteOpen(true)}
-        className="group ms-auto flex h-11 w-full max-w-md items-center gap-3 rounded-full border border-white/90 bg-white/70 px-4 text-[13px] text-slate-400 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] transition-all hover:bg-white hover:shadow-[0_8px_24px_-14px_rgba(15,23,42,0.35)]"
-      >
-        <Search className="size-[18px] text-slate-400 transition-transform group-hover:scale-110" />
-        <span className="flex-1 truncate text-start">ابحث عن صفحة أو تقرير…</span>
-        <kbd className="hidden rounded-md border border-line bg-subtle px-1.5 py-0.5 text-[10px] text-slate-500 sm:inline">Ctrl K</kbd>
-      </button>
-
       <div className="flex items-center gap-2">
-        <Link
-          href="/settings/hotel"
-          title={labels.hotelSettings}
-          className="flex size-11 items-center justify-center rounded-full border border-white/90 bg-white/70 text-slate-600 transition-all hover:rotate-45 hover:bg-white hover:text-ink"
-        >
+        <button type="button" onClick={() => setPaletteOpen(true)} className={iconBtn} title="بحث (Ctrl K)" aria-label="بحث">
+          <Search className="size-[18px]" />
+        </button>
+        <Link href="/periods" className={cn(iconBtn, "hidden sm:flex")} title={labels.periods}>
+          <CalendarCheck className="size-[18px]" />
+        </Link>
+        <Link href="/settings/hotel" className={cn(iconBtn, "hover:rotate-45")} title={labels.hotelSettings}>
           <Settings className="size-[18px]" />
         </Link>
-        <div className="flex items-center gap-2.5 rounded-full border border-white/90 bg-white/70 py-1 pe-4 ps-1">
-          <div className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-orange to-brand-blue text-[13px] font-semibold text-white shadow-inner">
+        <div className="ms-1 flex items-center gap-2.5">
+          <div className="flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-brand-orange to-brand-blue text-[13px] font-medium text-white">
             {initials}
           </div>
-          <div className="hidden leading-tight sm:block">
+          <div className="hidden leading-tight md:block">
             <p className="max-w-40 truncate text-[13px] font-medium text-ink">{userName || userEmail}</p>
-            <p className="max-w-40 truncate text-[11px] text-muted-foreground">{hotelName}</p>
+            <p className="max-w-40 truncate text-[11px] text-muted-foreground">{roleLabel}</p>
           </div>
           {signOut && (
             <form action={signOut}>
-              <button type="submit" title="تسجيل الخروج" className="ms-1 flex size-8 items-center justify-center rounded-full text-slate-500 hover:bg-white hover:text-brand-red">
+              <button type="submit" title="تسجيل الخروج" className="flex size-8 items-center justify-center rounded-full text-slate-500 hover:bg-white hover:text-brand-red">
                 <LogOut className="size-4" />
               </button>
             </form>
@@ -109,6 +154,24 @@ export function TopBar({
         {drawerOpen && <MobileDrawer groups={groups} pathname={pathname} hotelName={hotelName} onClose={() => setDrawerOpen(false)} />}
       </AnimatePresence>
     </header>
+  );
+}
+
+/** حقل بحث كبير (مثل التصميم المرجعي) يفتح البحث السريع */
+export function SearchPill({ className }: { className?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={() => window.dispatchEvent(new Event(OPEN_SEARCH_EVENT))}
+      className={cn(
+        "group flex h-12 w-full items-center gap-3 rounded-full border border-line bg-white/70 px-5 text-[13px] text-slate-400 transition-all hover:border-line-strong hover:bg-white",
+        className,
+      )}
+    >
+      <Search className="size-[18px] transition-transform group-hover:scale-110" />
+      <span className="flex-1 truncate text-start">ابحث عن صفحة أو تقرير أو إجراء…</span>
+      <kbd className="hidden rounded-md border border-line bg-panel px-1.5 py-0.5 text-[10px] text-slate-500 sm:inline">Ctrl K</kbd>
+    </button>
   );
 }
 
@@ -143,7 +206,7 @@ function CommandPalette({ groups, onClose }: { groups: ReturnType<typeof navGrou
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-slate-900/25 px-4 pt-[12vh] backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-slate-900/30 px-4 pt-[12vh]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -157,7 +220,7 @@ function CommandPalette({ groups, onClose }: { groups: ReturnType<typeof navGrou
         animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
         exit={{ opacity: 0, y: -10, scale: 0.98 }}
         transition={{ type: "spring", stiffness: 380, damping: 30 }}
-        className="glass-card w-full max-w-xl overflow-hidden rounded-3xl"
+        className="w-full max-w-xl overflow-hidden rounded-3xl border border-line bg-white shadow-[0_30px_80px_-24px_rgba(17,24,39,0.45)]"
       >
         <div className="flex items-center gap-3 border-b border-line px-5">
           <Search className="size-5 text-slate-400" />
@@ -208,14 +271,14 @@ function CommandPalette({ groups, onClose }: { groups: ReturnType<typeof navGrou
 
 function MobileDrawer({ groups, pathname, hotelName, onClose }: { groups: ReturnType<typeof navGroups>; pathname: string; hotelName: string; onClose: () => void }) {
   return (
-    <motion.div className="fixed inset-0 z-50 bg-slate-900/25 backdrop-blur-sm md:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+    <motion.div className="fixed inset-0 z-50 bg-slate-900/30 md:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
       <motion.nav
         onClick={(e) => e.stopPropagation()}
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", stiffness: 320, damping: 34 }}
-        className="glass-card absolute inset-y-3 end-auto start-3 w-72 overflow-y-auto rounded-3xl p-4"
+        className="absolute inset-y-3 end-auto start-3 w-72 overflow-y-auto rounded-3xl border border-line bg-frame p-4"
       >
         <p className="mb-3 px-2 text-[15px] font-semibold text-ink">{hotelName}</p>
         {groups.map((g, gi) => (

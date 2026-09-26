@@ -21,7 +21,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale} dir={directionOf(locale)} className={readex.variable}>
       <body className="min-h-screen font-sans">
-        <div className="app-backdrop" aria-hidden />
         {children}
       </body>
     </html>
