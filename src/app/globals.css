@@ -12,12 +12,12 @@
 
   --color-ink: #111318;
   --color-ink-soft: #2a2e37;
-  --color-frame: #edf1f6;
-  --color-panel: #f7f9fc;
+  --color-frame: #e7edf6;
+  --color-panel: #f5f8fd;
   --color-tile: #ffffff;
-  --color-line: #e3e8ef;
-  --color-line-strong: #d5dce6;
-  --color-subtle: #f1f4f8;
+  --color-line: #dde5f0;
+  --color-line-strong: #cbd6e4;
+  --color-subtle: #eef3f9;
   --color-canvas: var(--color-frame);
 
   --color-brand-blue: #2e90fa;
@@ -99,14 +99,16 @@
 }
 
 /* ---- الأسطح ---- */
+/* بطاقات فاتحة بحدود بيضاء وظل ناعم (إحساس التصميم المرجعي المشرق) */
 .surface {
   background: var(--color-panel);
-  border: 1px solid var(--color-line);
+  border: 1px solid #ffffff;
   border-radius: var(--radius-card);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px -16px rgba(30, 64, 120, 0.18);
 }
 .tile {
   background: #fff;
-  border: 1px solid var(--color-line);
+  border: 1px solid #e3eaf3;
   border-radius: 1rem;
 }
 /* جدول داخل بطاقة: البطاقة هي السطح، فلا يتكرر الإطار */

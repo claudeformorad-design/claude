@@ -5,9 +5,14 @@ import {
   BedDouble,
   BookOpen,
   CheckCircle2,
+  CalendarDays,
+  ChevronDown,
   ChevronLeft,
+  CircleCheck,
   Coins,
+  Plus,
   Scale,
+  SlidersHorizontal,
   TrendingDown,
   TrendingUp,
   Wallet,
@@ -239,45 +244,127 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     blue: { bg: "bg-[#e8f1fe]", icon: "text-brand-blue" },
   } as const;
 
-  // إجماليات آخر 6 أشهر (لرأس المخطط) — من نفس صفوف الأستاذ
-  const sixRevenue = (trend ?? []).reduce((a, m) => a.plus(toMoney(m.revenue)), ZERO);
-  const sixExpenses = (trend ?? []).reduce((a, m) => a.plus(toMoney(m.expenses)), ZERO);
-  const sixNet = sixRevenue.minus(sixExpenses);
-  const rangeBadge = <span className="rounded-full bg-subtle px-2.5 py-1 text-[11px] text-slate-600">{rangeLabel}</span>;
+  const rangeBadge = <span className="rounded-full border border-line bg-white px-2.5 py-1 text-[11px] text-slate-600">{rangeLabel}</span>;
+  const tasks = [
+    ...alerts.map((a) => ({ key: a.title, href: a.href, tone: ALERT_TONE[a.tone].bg, iconTone: ALERT_TONE[a.tone].icon, icon: AlertTriangle, title: a.title, text: a.text })),
+    ...quick.map((q) => ({ key: q.href, href: q.href, tone: q.tone, iconTone: q.iconTone, icon: q.icon, title: q.label, text: q.hint })),
+  ];
 
   return (
     <div className="space-y-5 pb-4">
-      {/* لافتة ملوّنة: العنوان والتاريخ والبحث */}
-      <div className="relative overflow-hidden rounded-[24px] bg-ink px-6 py-7 text-white md:px-8">
-        {/* دوائر ملوّنة صلبة للزينة (بلا تدرّجات) */}
-        <div aria-hidden className="pointer-events-none absolute -end-10 -top-16 size-44 rounded-full bg-brand-orange/90" />
-        <div aria-hidden className="pointer-events-none absolute end-28 -top-6 size-16 rounded-full bg-brand-blue" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-20 end-44 size-36 rounded-full bg-[#e8457a]/85" />
-        <div className="relative flex flex-wrap items-center justify-between gap-5">
-          <div className="min-w-0 space-y-1.5">
-            <p className="text-[13px] text-white/70">{businessDate}</p>
-            <h1 className="text-[32px] font-normal leading-tight tracking-tight">{t.dashboard.title}</h1>
-            <p className="text-[13px] text-white/70">تابع أداء فندقك المالي لحظة بلحظة — كل رقم من القيود المرحّلة مباشرة</p>
-          </div>
-          <div className="w-full max-w-md space-y-3">
-            <SearchPill className="border-transparent bg-white text-slate-500 hover:bg-white" />
-            <nav className="flex items-center gap-1.5 overflow-x-auto lg:hidden">
-              {RANGES.map((x) => (
-                <Link key={x.key} href={x.key === "month" ? "/" : `/?range=${x.key}`}
-                  className={cn("whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px]", range === x.key ? "bg-white text-ink" : "bg-white/15 text-white hover:bg-white/25")}>
-                  {x.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
+      {/* العنوان والبحث مباشرة على الخلفية (كما في التصميم المرجعي) */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0 space-y-1">
+          <p className="text-[14px] text-slate-600">تابع أداء فندقك المالي — {businessDate}</p>
+          <h1 className="text-[34px] font-normal leading-tight tracking-tight text-ink">{t.dashboard.title}</h1>
         </div>
+        <SearchPill className="max-w-md bg-white/80" />
       </div>
+
+      <nav className="flex max-w-full items-center gap-1.5 overflow-x-auto lg:hidden">
+        {RANGES.map((x) => (
+          <Link key={x.key} href={x.key === "month" ? "/" : `/?range=${x.key}`}
+            className={cn("whitespace-nowrap rounded-full border px-4 py-2 text-[13px]", range === x.key ? "border-ink bg-ink text-white" : "border-line bg-white text-slate-600")}>
+            {x.label}
+          </Link>
+        ))}
+      </nav>
 
       {!canFin && <Alert>{t.errors.permission_denied}</Alert>}
 
       {canFin && (
         <>
-          {/* بطاقات المؤشرات */}
+          {/* الشبكة الرئيسية بترتيب التصميم المرجعي */}
+          <div className="stagger grid gap-4 xl:grid-cols-12">
+            {/* مهامي ← مركز الإجراءات */}
+            <Panel className="xl:col-span-3" title="مركز الإجراءات" accent="#fb8c2b"
+              action={quick[0] ? { href: quick[0].href, icon: Plus, label: quick[0].label } : undefined}>
+              <div className="mb-3 flex items-center gap-2">
+                <span className="rounded-full bg-ink px-3.5 py-1.5 text-[12px] text-white">{rangeLabel}</span>
+                <Link href="/journal?status=draft" className="rounded-full border border-line bg-white px-3.5 py-1.5 text-[12px] text-slate-600 hover:border-line-strong">المسودات</Link>
+              </div>
+              <div className="mb-3 flex items-center justify-between rounded-full border border-line bg-white px-3 py-2 text-[12px] text-ink">
+                <span className="flex items-center gap-2">
+                  <span className="num flex size-6 items-center justify-center rounded-full bg-ink text-[11px] text-white">{alerts.length}</span>
+                  تنبيهات مفتوحة
+                </span>
+                <ChevronDown className="size-4 text-slate-400" />
+              </div>
+              <div className="space-y-2.5">
+                {alerts.length === 0 && (
+                  <TaskCard tone="bg-[#e3f6ea]" icon={CheckCircle2} iconTone="text-brand-green" title="كل شيء على ما يرام" text="الفترة مفتوحة والدفاتر متطابقة." done />
+                )}
+                {tasks.map((x) => (
+                  <TaskCard key={x.key} href={x.href} tone={x.tone} icon={x.icon} iconTone={x.iconTone} title={x.title} text={x.text} />
+                ))}
+              </div>
+            </Panel>
+
+            {/* الوسط */}
+            <div className="space-y-4 xl:col-span-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                <Panel title="حالة الفواتير" accent="#12b76a" action={canInvoices ? { href: "/invoices", icon: ArrowUpLeft, label: t.nav.invoices } : undefined}>
+                  {canInvoices ? (
+                    <DonutChart segments={invoiceSegments} centerTitle="إجمالي الفواتير" centerValue={String(invoiceTotal)}
+                      emptyTitle="لا توجد فواتير بعد" emptyHint="تظهر عند إصدار فاتورة من الفوليو أو فاتورة مباشرة." />
+                  ) : <NoAccess text={t.errors.permission_denied} />}
+                </Panel>
+                <Panel title="الإيراد مقابل المصروف" accent="#2e90fa" action={{ href: "/reports/income-statement", icon: ArrowUpLeft, label: t.nav.incomeStatement }}>
+                  <IncomeExpenseChart data={chartData} currency={currency} labels={{ revenue: r.revenue, expenses: r.expenses, net: "صافي النتيجة" }} />
+                </Panel>
+              </div>
+              <Panel title="أعمار الذمم المدينة" accent="#7a2ef0" action={canAging ? { href: "/reports/aging", icon: SlidersHorizontal, label: t.nav.aging } : undefined}
+                badge={canAging ? <span className="num rounded-full border border-line bg-white px-3 py-1 text-[12px] text-ink">{agingTotal.toFixed(2)} {currency}</span> : undefined}>
+                {canAging ? (
+                  <StripedBars rows={agingRows} currency={currency} emptyTitle="لا توجد ذمم مدينة قائمة" emptyHint="تظهر الفواتير الآجلة غير المسددة هنا حسب استحقاقها." />
+                ) : <NoAccess text={t.errors.permission_denied} />}
+              </Panel>
+            </div>
+
+            {/* العمود الأخير: اجتماعاتي ← مؤشرات الغرف، التذاكر ← سلامة الربط */}
+            <div className="space-y-4 xl:col-span-3">
+              <Panel title="مؤشرات الغرف" accent="#e8457a" action={{ href: "/reports/rooms", icon: CalendarDays, label: t.nav.roomStats }}>
+                <div className="space-y-2.5">
+                  <MeetingTile label={rangeLabel} title="نسبة الإشغال" value={pct(rangeRooms.occupancy)} href="/reports/rooms" icon={BedDouble} color="#e8457a" />
+                  <MeetingTile label={rangeLabel} title="متوسط سعر الغرفة" value={rangeRooms.adr ? `${rangeRooms.adr.toFixed(2)} ${currency}` : "—"} href="/reports/rooms" icon={TrendingUp} color="#2e90fa" />
+                  <MeetingTile label={rangeLabel} title="RevPAR" value={rangeRooms.revpar ? `${rangeRooms.revpar.toFixed(2)} ${currency}` : "—"} href="/reports/rooms" icon={Scale} color="#12b76a" />
+                </div>
+                <Link href="/reports/rooms" className="mt-3 inline-flex items-center gap-1 text-[12px] text-slate-600 hover:text-ink">
+                  عرض كل المؤشرات <ChevronLeft className="size-3.5" />
+                </Link>
+              </Panel>
+
+              <Panel id="reconciliation" title="سلامة الربط" accent="#12b76a" action={{ href: "/reports/trial-balance", icon: SlidersHorizontal, label: t.nav.trialBalance }}>
+                <div className="space-y-2.5">
+                  {reconRows.slice(0, 4).map((x) => {
+                    const meta = CONTROL_LABELS[x.control];
+                    const ok = x.diff.isZero();
+                    return (
+                      <div key={x.control} className={cn("tile p-3", !ok && "border-red-200 bg-red-50")}>
+                        <div className="flex items-start gap-2.5">
+                          <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-full", ok ? "bg-[#e3f6ea] text-brand-green" : "bg-red-100 text-brand-red")}>
+                            {ok ? <CheckCircle2 className="size-[18px]" /> : <AlertTriangle className="size-[18px]" />}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[13px] font-medium text-ink">{meta.title}</p>
+                            <p className="truncate text-[11px] text-muted-foreground">{ok ? meta.sub : "يوجد فرق بين الأستاذ والدفتر الفرعي"}</p>
+                            <Link href={meta.href} className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-subtle px-2.5 py-0.5 text-[11px] text-slate-700 transition-colors hover:bg-ink hover:text-white">
+                              عرض <ChevronLeft className="size-3" />
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className={cn("mt-3 text-[12px]", unreconciled.length ? "text-red-700" : "text-brand-green")}>
+                  {unreconciled.length ? `${unreconciled.length} فرق في المطابقة` : "كل الدفاتر مطابقة للأستاذ العام"}
+                </p>
+              </Panel>
+            </div>
+          </div>
+
+          {/* ملخص الفترة */}
           <div className="stagger grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatTile icon={TrendingUp} label={`الإيرادات — ${rangeLabel}`} value={revenue} currency={currency} href="/reports/income-statement" color="#2e90fa" />
             <StatTile icon={TrendingDown} label={`المصروفات — ${rangeLabel}`} value={expenses} currency={currency} href="/reports/income-statement" color="#fb8c2b" />
@@ -287,100 +374,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               valueClass={cashBalance.isNegative() ? "text-brand-red" : undefined} />
           </div>
 
-          {/* الصف 1: الأداء المالي + مركز الإجراءات */}
-          <div className="stagger grid gap-4 xl:grid-cols-12">
-            <Panel className="xl:col-span-8" title="الإيراد مقابل المصروف — آخر 6 أشهر" accent="#2e90fa"
-              action={{ href: "/reports/income-statement", icon: ArrowUpLeft, label: t.nav.incomeStatement }}>
-              <div className="mb-4 grid grid-cols-3 gap-3">
-                <Figure label="إجمالي الإيرادات" value={sixRevenue} currency={currency} color="#2e90fa" />
-                <Figure label="إجمالي المصروفات" value={sixExpenses} currency={currency} color="#fb8c2b" />
-                <Figure label="صافي النتيجة" value={sixNet} currency={currency} color={sixNet.isNegative() ? "#f0445a" : "#12b76a"} />
-              </div>
-              <IncomeExpenseChart data={chartData} currency={currency} labels={{ revenue: r.revenue, expenses: r.expenses, net: "صافي النتيجة" }} />
-            </Panel>
-
-            <Panel className="xl:col-span-4" title="مركز الإجراءات" accent="#fb8c2b"
-              badge={<span className={cn("rounded-full px-2.5 py-1 text-[11px]", alerts.length ? "bg-[#fdecee] text-brand-red" : "bg-[#e5f6ec] text-brand-green")}>
-                {alerts.length ? `${alerts.length} تنبيه` : "لا تنبيهات"}</span>}>
-              <div className="space-y-2">
-                {alerts.length === 0 && (
-                  <div className="flex items-center gap-3 rounded-2xl bg-[#e5f6ec] p-3.5">
-                    <CheckCircle2 className="size-5 shrink-0 text-brand-green" />
-                    <div>
-                      <p className="text-[13px] font-medium text-ink">كل شيء على ما يرام</p>
-                      <p className="text-[11px] text-slate-600">الفترة مفتوحة والدفاتر متطابقة.</p>
-                    </div>
-                  </div>
-                )}
-                {alerts.map((a) => (
-                  <Link key={a.title} href={a.href} className={cn("group flex items-center gap-3 rounded-2xl p-3 transition-all duration-200 hover:-translate-y-0.5", ALERT_TONE[a.tone].bg)}>
-                    <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl bg-white", ALERT_TONE[a.tone].icon)}>
-                      <AlertTriangle className="size-[17px]" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] font-medium text-ink">{a.title}</p>
-                      <p className="truncate text-[11px] text-slate-600">{a.text}</p>
-                    </div>
-                    <ChevronLeft className="size-4 shrink-0 text-slate-400 transition-transform group-hover:-translate-x-0.5" />
-                  </Link>
-                ))}
-              </div>
-              {quick.length > 0 && (
-                <>
-                  <p className="mb-2 mt-5 text-[11px] text-slate-400">إجراءات سريعة</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {quick.map((q) => (
-                      <Link key={q.href} href={q.href} className={cn("group flex flex-col items-center gap-2 rounded-2xl p-3 text-center transition-all duration-200 hover:-translate-y-0.5", q.tone)}>
-                        <span className={cn("flex size-10 items-center justify-center rounded-xl bg-white shadow-sm transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110", q.iconTone)}>
-                          <q.icon className="size-[18px]" />
-                        </span>
-                        <span className="text-[11.5px] leading-tight text-ink">{q.label}</span>
-                      </Link>
-                    ))}
-                  </div>
-                </>
-              )}
-            </Panel>
-          </div>
-
-          {/* الصف 2: الفواتير + أعمار الذمم + الغرف */}
-          <div className="stagger grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <Panel title="حالة الفواتير" accent="#12b76a" action={canInvoices ? { href: "/invoices", icon: ArrowUpLeft, label: t.nav.invoices } : undefined}>
-              {canInvoices ? (
-                <DonutChart segments={invoiceSegments} centerTitle="إجمالي الفواتير" centerValue={String(invoiceTotal)}
-                  emptyTitle="لا توجد فواتير بعد" emptyHint="تظهر عند إصدار فاتورة من الفوليو أو فاتورة مباشرة." />
-              ) : <NoAccess text={t.errors.permission_denied} />}
-            </Panel>
-
-            <Panel title="أعمار الذمم المدينة" accent="#7a2ef0" action={canAging ? { href: "/reports/aging", icon: ArrowUpLeft, label: t.nav.aging } : undefined}
-              badge={canAging ? <span className="num rounded-full bg-subtle px-2.5 py-1 text-[11px] text-ink">{agingTotal.toFixed(2)} {currency}</span> : undefined}>
-              {canAging ? (
-                <StripedBars rows={agingRows} currency={currency} emptyTitle="لا توجد ذمم مدينة قائمة" emptyHint="تظهر الفواتير الآجلة غير المسددة هنا حسب استحقاقها." />
-              ) : <NoAccess text={t.errors.permission_denied} />}
-            </Panel>
-
-            <Panel className="md:col-span-2 xl:col-span-1" title="مؤشرات الغرف" accent="#e8457a" badge={rangeBadge}
-              action={{ href: "/reports/rooms", icon: ArrowUpLeft, label: t.nav.roomStats }}>
-              <div className="grid grid-cols-2 gap-2.5">
-                <Metric icon={BedDouble} color="#e8457a" label="نسبة الإشغال" value={pct(rangeRooms.occupancy)} />
-                <Metric icon={TrendingUp} color="#2e90fa" label="ADR" value={rangeRooms.adr ? rangeRooms.adr.toFixed(2) : "—"} unit={rangeRooms.adr ? currency : undefined} />
-                <Metric icon={Scale} color="#12b76a" label="RevPAR" value={rangeRooms.revpar ? rangeRooms.revpar.toFixed(2) : "—"} unit={rangeRooms.revpar ? currency : undefined} />
-                <Metric icon={BookOpen} color="#fb8c2b" label="الليالي المباعة / المتاحة" value={`${rangeRooms.roomNightsSold.toString()} / ${rangeRooms.roomNightsAvailable.toString()}`} />
-              </div>
-              <p className="mt-3 text-[11px] text-muted-foreground">
-                {totalRooms > 0 ? `${totalRooms} غرفة متاحة للبيع` : "حدّد عدد الغرف في إعدادات الفندق لحساب الإشغال"} — فوليوهات مفتوحة: <span className="num">{openFolios?.count ?? 0}</span>
-              </p>
-            </Panel>
-          </div>
-
-          {/* الصف 3: الأقسام + اتجاه الغرف + سلامة الربط */}
+          {/* الأقسام + اتجاه الغرف + الأرصدة */}
           <div className="stagger grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <Panel title="الإيرادات حسب القسم" accent="#2e90fa" badge={rangeBadge}
               action={canProfit ? { href: "/reports/profitability", icon: ArrowUpLeft, label: t.nav.profitability } : undefined}>
               {canProfit ? (
                 <>
                   <DonutChart segments={deptSegments} centerTitle="إيراد الأقسام"
-                    centerValue={deptSegments.reduce((a, x) => a.plus(toMoney(x.display)), ZERO).toFixed(2)}
+                    centerValue={deptSegments.reduce((a2, x) => a2.plus(toMoney(x.display)), ZERO).toFixed(2)}
                     emptyTitle="لا توجد إيرادات أقسام في الفترة" emptyHint="تُوزَّع الإيرادات حسب القسم المسجّل على رمز الإيراد أو بند القيد." />
                   <p className="mt-4 border-t border-line pt-3 text-[11px] text-muted-foreground">
                     إجمالي الإيراد في الأستاذ للفترة: <span className="num text-ink">{revenue.toFixed(2)}</span> {currency}
@@ -398,42 +399,18 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               <RoomTrendChart data={roomTrend} currency={currency} />
             </Panel>
 
-            <Panel className="md:col-span-2 xl:col-span-1" id="reconciliation" title="سلامة الربط" accent="#12b76a"
-              badge={<span className={cn("rounded-full px-2.5 py-1 text-[11px]", unreconciled.length ? "bg-[#fdecee] text-brand-red" : "bg-[#e5f6ec] text-brand-green")}>
-                {unreconciled.length ? `${unreconciled.length} فرق` : "كل الدفاتر متطابقة"}</span>}>
-              <div className="divide-y divide-line">
-                {reconRows.map((x) => {
-                  const meta = CONTROL_LABELS[x.control];
-                  const ok = x.diff.isZero();
-                  return (
-                    <Link key={x.control} href={meta.href} className="group flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
-                      <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-full", ok ? "bg-[#e5f6ec] text-brand-green" : "bg-[#fdecee] text-brand-red")}>
-                        {ok ? <CheckCircle2 className="size-4" /> : <AlertTriangle className="size-4" />}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] text-ink transition-colors group-hover:text-brand-blue">{meta.title}</p>
-                        {ok ? <p className="truncate text-[11px] text-muted-foreground">{meta.sub}</p>
-                          : <p className="text-[11px] text-red-700">الفرق: <Money value={x.diff} locale="ar" /> {currency}</p>}
-                      </div>
-                      <span className="num shrink-0 text-[13px] text-ink"><Money value={x.subledger_balance} locale="ar" /></span>
-                    </Link>
-                  );
-                })}
+            <Panel className="md:col-span-2 xl:col-span-1" title="الأرصدة المفتوحة الآن" accent="#7a2ef0">
+              <div className="grid grid-cols-2 gap-2.5">
+                <BalanceTile label="ذمم النزلاء" value={bal("guest_ledger")} href="/folios?status=open" color="#2e90fa" icon={BedDouble} />
+                <BalanceTile label="ودائع النزلاء" value={bal("guest_deposits")} href="/folios" color="#7a2ef0" icon={Wallet} />
+                <BalanceTile label="الذمم المدينة" value={bal("accounts_receivable")} href="/reports/aging" color="#12b76a" icon={TrendingUp} />
+                <BalanceTile label="الذمم الدائنة" value={bal("accounts_payable")} href="/reports/aging?kind=payable" color="#fb8c2b" icon={TrendingDown} />
+                <BalanceTile label="قيمة المخزون" value={bal("inventory")} href="/inventory" color="#e8457a" icon={Coins} />
+                <BalanceTile label="قيود مسودة" count={draftCount} href="/journal?status=draft" color="#64748b" icon={BookOpen} />
               </div>
+              <p className="mt-3 text-[11px] text-muted-foreground">بـ {currency} — من الدفاتر الفرعية المطابَقة مع الأستاذ العام.</p>
             </Panel>
           </div>
-
-          {/* الصف 4: الأرصدة المفتوحة */}
-          <Panel title="الأرصدة المفتوحة الآن" accent="#7a2ef0" badge={<span className="text-[11px] text-muted-foreground">بـ {currency} — من الدفاتر الفرعية المطابَقة مع الأستاذ</span>}>
-            <div className="stagger grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-              <BalanceTile label="ذمم النزلاء" value={bal("guest_ledger")} href="/folios?status=open" color="#2e90fa" icon={BedDouble} />
-              <BalanceTile label="ودائع النزلاء" value={bal("guest_deposits")} href="/folios" color="#7a2ef0" icon={Wallet} />
-              <BalanceTile label="الذمم المدينة" value={bal("accounts_receivable")} href="/reports/aging" color="#12b76a" icon={TrendingUp} />
-              <BalanceTile label="الذمم الدائنة" value={bal("accounts_payable")} href="/reports/aging?kind=payable" color="#fb8c2b" icon={TrendingDown} />
-              <BalanceTile label="قيمة المخزون" value={bal("inventory")} href="/inventory" color="#e8457a" icon={Coins} />
-              <BalanceTile label="قيود مسودة" count={draftCount} href="/journal?status=draft" color="#64748b" icon={BookOpen} />
-            </div>
-          </Panel>
         </>
       )}
     </div>
@@ -513,37 +490,6 @@ function formatAmount(v: MoneyValue): string {
   return new Intl.NumberFormat("ar-SA-u-nu-latn", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(v.toFixed(2)));
 }
 
-/** رقم ملخص فوق المخطط */
-function Figure({ label, value, currency, color }: { label: string; value: MoneyValue; currency: string; color: string }) {
-  return (
-    <div className="rounded-2xl border border-line bg-white p-3">
-      <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-        <span className="size-2 rounded-full" style={{ background: color }} />
-        {label}
-      </p>
-      <p className="mt-1 truncate text-[17px] text-ink" style={value.isNegative() ? { color } : undefined}>
-        <Money value={value} locale="ar" /> <span className="text-[11px] text-slate-400">{currency}</span>
-      </p>
-    </div>
-  );
-}
-
-/** مؤشر صغير بأيقونة ملوّنة */
-function Metric({ icon: Icon, color, label, value, unit }: { icon: typeof BookOpen; color: string; label: string; value: string; unit?: string }) {
-  return (
-    <div className="rounded-2xl border border-line bg-white p-3.5">
-      <span className="flex size-8 items-center justify-center rounded-xl" style={{ background: `${color}1a`, color }}>
-        <Icon className="size-4" />
-      </span>
-      <p className="mt-2.5 truncate text-[20px] leading-none text-ink">
-        <span className="num">{value}</span>
-        {unit && <span className="ms-1 text-[11px] text-slate-400">{unit}</span>}
-      </p>
-      <p className="mt-1.5 truncate text-[11px] text-muted-foreground">{label}</p>
-    </div>
-  );
-}
-
 function BalanceTile({
   label, value, count, href, color, icon: Icon,
 }: {
@@ -565,6 +511,51 @@ function BalanceTile({
       <p className="mt-2 truncate text-[18px] text-ink">
         {value !== undefined ? <Money value={value} locale="ar" /> : <span className="num">{count ?? 0}</span>}
       </p>
+    </Link>
+  );
+}
+
+/** بطاقة باستيل (مثل «مهامي» في التصميم المرجعي) */
+function TaskCard({
+  href, tone, icon: Icon, iconTone, title, text, done,
+}: {
+  href?: string;
+  tone: string;
+  icon: typeof BookOpen;
+  iconTone: string;
+  title: string;
+  text: string;
+  done?: boolean;
+}) {
+  const body = (
+    <>
+      <div className="flex items-start justify-between gap-2">
+        <span className={cn("flex size-9 items-center justify-center rounded-xl bg-white shadow-sm transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110", iconTone)}>
+          <Icon className="size-[18px]" />
+        </span>
+        {done ? <CheckCircle2 className="size-5 text-brand-green" /> : <CircleCheck className="size-5 text-slate-400 transition-colors group-hover:text-ink" />}
+      </div>
+      <p className="mt-2.5 text-[13px] font-medium text-ink">{title}</p>
+      <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">{text}</p>
+    </>
+  );
+  const cls = cn("group block rounded-2xl p-3.5 transition-transform duration-300 hover:-translate-y-0.5", tone);
+  return href ? <Link href={href} className={cls}>{body}</Link> : <div className={cls}>{body}</div>;
+}
+
+/** بطاقة بيضاء (مثل «اجتماعاتي») */
+function MeetingTile({ label, title, value, href, icon: Icon, color }: { label: string; title: string; value: string; href: string; icon: typeof BookOpen; color: string }) {
+  return (
+    <Link href={href} className="tile group flex items-center gap-3 p-3 transition-colors hover:border-line-strong">
+      <div className="w-14 shrink-0 text-[11px] leading-tight text-muted-foreground">{label}</div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[13px] font-medium text-ink">{title}</p>
+        <p className="mt-0.5 flex items-center gap-1.5 truncate text-[13px] text-ink">
+          <span className="flex size-5 items-center justify-center rounded-md" style={{ background: `${color}1a`, color }}><Icon className="size-3" /></span>
+          <span className="num">{value}</span>
+        </p>
+      </div>
+      <ArrowUpLeft className="size-4 shrink-0 text-slate-400 transition-transform group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-ink" />
     </Link>
   );
 }

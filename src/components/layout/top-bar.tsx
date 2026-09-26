@@ -92,7 +92,7 @@ export function TopBar({
   const iconBtn = "flex size-10 shrink-0 items-center justify-center rounded-full border border-line bg-white text-slate-600 transition-all duration-200 hover:border-line-strong hover:bg-white hover:text-ink";
 
   return (
-    <header className="no-print flex h-[72px] shrink-0 items-center gap-3 border-b border-line bg-white px-4 md:px-7">
+    <header className="no-print flex h-[76px] shrink-0 items-center gap-3 px-4 md:px-7">
       <button type="button" onClick={() => setDrawerOpen(true)} className={cn(iconBtn, "md:hidden")} aria-label="القائمة">
         <Menu className="size-[18px]" />
       </button>
