@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 export default function Template({ children }: { children: React.ReactNode }) {
   return (
     <motion.div
+      className="stagger"
       initial={{ opacity: 0, y: 18, filter: "blur(8px)" }}
       // transitionEnd يزيل الفلتر بعد الحركة حتى لا يصبح هذا العنصر حاويًا للعناصر الثابتة (fixed)
       animate={{ opacity: 1, y: 0, filter: "blur(0px)", transitionEnd: { filter: "none", transform: "none" } }}

@@ -242,7 +242,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="animate-rise space-y-1">
           <p className="text-[13px] text-muted-foreground">{businessDate} — تابع أداء فندقك المالي لحظة بلحظة</p>
-          <h1 className="text-[34px] font-semibold leading-tight tracking-tight text-ink">{t.dashboard.title}</h1>
+          <h1 className="text-shimmer text-[34px] font-semibold leading-tight tracking-tight">{t.dashboard.title}</h1>
         </div>
         <nav className="animate-rise flex max-w-full items-center gap-1 overflow-x-auto rounded-full border border-white/90 bg-white/60 p-1 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)]" style={{ animationDelay: "0.08s" }}>
           {RANGES.map((x) => (
@@ -462,7 +462,7 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section id={id} className={cn("glass-card rounded-[28px] p-5 transition-shadow duration-300 hover:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_22px_48px_-24px_rgba(15,23,42,0.3)]", className)}>
+    <section id={id} className={cn("glass-card spotlight rounded-[28px] p-5 transition-shadow duration-300 hover:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_22px_48px_-24px_rgba(15,23,42,0.3)]", className)}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="flex min-w-0 items-center gap-2 text-[16px] font-semibold text-ink">
           <Icon className="size-[18px] text-slate-400" />
@@ -495,7 +495,7 @@ function StatTile({
   valueClass?: string;
 }) {
   return (
-    <Link href={href} className="glass-card group relative overflow-hidden rounded-[28px] p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_24px_48px_-24px_rgba(15,23,42,0.35)]">
+    <Link href={href} className="glass-card spotlight tilt group relative overflow-hidden rounded-[28px] p-5 hover:-translate-y-1 hover:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_24px_48px_-24px_rgba(15,23,42,0.35)]">
       <div className="pointer-events-none absolute -end-10 -top-10 size-32 rounded-full opacity-20 blur-2xl transition-opacity duration-500 group-hover:opacity-40" style={{ background: accent }} />
       <div className="flex items-center justify-between">
         <span className="flex size-11 items-center justify-center rounded-2xl text-white shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[-6deg]" style={{ background: accent }}>

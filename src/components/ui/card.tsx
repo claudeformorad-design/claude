@@ -6,7 +6,7 @@ export function Card({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card"
       className={cn(
-        "glass-card rounded-[var(--radius-card)] text-foreground transition-[box-shadow,transform] duration-300 hover:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_18px_40px_-20px_rgba(15,23,42,0.28)]",
+        "glass-card spotlight rounded-[var(--radius-card)] text-foreground transition-[box-shadow,transform] duration-300 hover:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_18px_40px_-20px_rgba(15,23,42,0.28)]",
         className,
       )}
       {...props}

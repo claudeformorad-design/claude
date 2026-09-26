@@ -44,7 +44,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
         description={t.customers.subtitle}
         actions={canManage && <Button asChild><Link href="/customers?new=1"><Plus />{t.customers.newCustomer}</Link></Button>}
       />
-      <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
+      <div className={`grid gap-6 ${initial ? "xl:grid-cols-[1fr_380px]" : ""}`}>
         <Card className="overflow-hidden">
           <Table>
             <TableHeader>

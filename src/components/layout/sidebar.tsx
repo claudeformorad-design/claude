@@ -32,12 +32,15 @@ export function Sidebar({ labels, hotelName, initialCollapsed }: { labels: NavLa
       className="relative hidden h-full shrink-0 flex-col border-e border-white/70 md:flex"
     >
       <div className={cn("flex items-center gap-3 px-5 pb-4 pt-6", collapsed && "justify-center px-0")}>
-        <motion.div
-          whileHover={{ rotate: -8, scale: 1.06 }}
-          className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-ink text-white shadow-[0_10px_24px_-10px_rgba(14,17,22,0.7)]"
-        >
-          <Building2 className="size-5" />
-        </motion.div>
+        <div className="relative shrink-0">
+          <span aria-hidden className="logo-glow absolute -inset-1 rounded-2xl" />
+          <motion.div
+            whileHover={{ rotate: -8, scale: 1.06 }}
+            className="relative flex size-11 items-center justify-center rounded-2xl bg-ink text-white shadow-[0_10px_24px_-10px_rgba(14,17,22,0.7)]"
+          >
+            <Building2 className="size-5" />
+          </motion.div>
+        </div>
         {!collapsed && (
           <motion.div initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} className="min-w-0">
             <p className="truncate text-[15px] font-semibold text-ink">{hotelName}</p>

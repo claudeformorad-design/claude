@@ -31,7 +31,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
     <>
       <PageHeader title={t.nav.vendors} description={t.payables.vendorsSubtitle}
         actions={can && <Button asChild><Link href="/vendors?new=1"><Plus />{t.payables.newVendor}</Link></Button>} />
-      <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
+      <div className={`grid gap-6 ${initial ? "xl:grid-cols-[1fr_380px]" : ""}`}>
         <Card className="overflow-hidden">
           <Table>
             <TableHeader><TableRow>

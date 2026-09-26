@@ -65,7 +65,7 @@ export default async function AccountsPage({
           )
         }
       />
-      <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
+      <div className={`grid gap-6 ${formInitial ? "xl:grid-cols-[1fr_380px]" : ""}`}>
         <Card className="overflow-hidden">
           <Table>
             <TableHeader>

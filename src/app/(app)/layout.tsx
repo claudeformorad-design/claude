@@ -1,5 +1,8 @@
+import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { SIDEBAR_COOKIE } from "@/components/layout/nav-config";
+import { PointerEffects } from "@/components/layout/pointer-effects";
+import { RouteProgress } from "@/components/layout/route-progress";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 import { requireAppContext } from "@/lib/auth/context";
@@ -15,6 +18,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="h-screen p-0 md:p-4">
+      <Suspense fallback={null}>
+        <RouteProgress />
+      </Suspense>
+      <PointerEffects />
       <div className="glass-shell flex h-full overflow-hidden md:rounded-[32px]">
         <Sidebar labels={t.nav} hotelName={hotelName} initialCollapsed={collapsed} />
         <div className="flex min-w-0 flex-1 flex-col">
