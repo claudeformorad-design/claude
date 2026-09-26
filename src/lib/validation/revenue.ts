@@ -7,16 +7,29 @@ import { isValidAmount, toMoney } from "@/lib/accounting/money";
  * (الأرصدة، الحدود الائتمانية، الصلاحيات)؛ هنا نتحقق من الشكل لتغذية راجعة سريعة.
  */
 const text = (max = 200) => z.string().trim().max(max);
-const optionalText = (max = 500) => z.string().trim().max(max).transform((v) => (v === "" ? null : v));
-const optionalUuid = z.string().trim().transform((v) => (v === "" ? null : v)).pipe(z.uuid().nullable());
+// الحقول الاختيارية تقبل الغياب (حقل غير معروض في النموذج) أو النص الفارغ ⇒ null
+const optionalText = (max = 500) =>
+  z.string().trim().max(max).optional().transform((v) => (v === undefined || v === "" ? null : v));
+const optionalUuid = z
+  .string()
+  .trim()
+  .optional()
+  .transform((v) => (v === undefined || v === "" ? null : v))
+  .pipe(z.uuid().nullable());
 const code = z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{1,20}$/, "code_format");
 const positiveAmount = z.string().trim().refine((v) => isValidAmount(v) && toMoney(v).gt(0), "invalid_amount");
 const optionalAmount = z
   .string()
   .trim()
-  .refine((v) => v === "" || (isValidAmount(v) && !toMoney(v).isNegative()), "invalid_amount")
-  .transform((v) => (v === "" ? null : toMoney(v).toFixed()));
-const optionalDate = z.string().trim().refine((v) => v === "" || isIsoDate(v), "invalid_date").transform((v) => (v === "" ? null : v));
+  .optional()
+  .refine((v) => v === undefined || v === "" || (isValidAmount(v) && !toMoney(v).isNegative()), "invalid_amount")
+  .transform((v) => (v === undefined || v === "" ? null : toMoney(v).toFixed()));
+const optionalDate = z
+  .string()
+  .trim()
+  .optional()
+  .refine((v) => v === undefined || v === "" || isIsoDate(v), "invalid_date")
+  .transform((v) => (v === undefined || v === "" ? null : v));
 
 // ----------------------------------------------------------------------------- الإعدادات
 export const taxRateFormSchema = z.object({

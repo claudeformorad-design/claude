@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { Money } from "@/components/money";
@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
-import { todayInTimeZone } from "@/lib/accounting/fiscal";
+import { formatDateTime, todayInTimeZone } from "@/lib/accounting/fiscal";
 import { sumMoney } from "@/lib/accounting/money";
 import { listAccounts, listDepartments } from "@/services/accounts.service";
 import { getJournalEntry } from "@/services/journal.service";
@@ -40,7 +40,7 @@ export default async function JournalEntryPage({ params }: { params: Promise<{ i
     [t.common.currency, isForeign ? <span key="c" className="num">{entry.currency_code} × {entry.exchange_rate}</span> : entry.currency_code],
     [t.journal.createdBy, entry.created_by ? users[entry.created_by] ?? "—" : "—"],
     [t.journal.postedBy, entry.posted_by ? users[entry.posted_by] ?? "—" : "—"],
-    [t.journal.postedAt, entry.posted_at ? <span key="pa" className="num">{new Date(entry.posted_at).toLocaleString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-GB", { timeZone: ctx.hotel.timezone })}</span> : "—"],
+    [t.journal.postedAt, entry.posted_at ? <span key="pa" className="num">{formatDateTime(entry.posted_at, ctx.hotel.timezone)}</span> : "—"],
   ];
 
   return (

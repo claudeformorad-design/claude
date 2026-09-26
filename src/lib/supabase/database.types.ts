@@ -542,7 +542,7 @@ export type Database = {
         Returns: string;
       };
       gl_account_activity: {
-        Args: { p_hotel_id: string; p_fiscal_year_start: string; p_from: string; p_to: string };
+        Args: { p_hotel_id: string; p_fiscal_year_start: string; p_from: string; p_to: string; p_exclude_closing?: boolean };
         Returns: {
           account_id: string;
           prior_years_debit: string;

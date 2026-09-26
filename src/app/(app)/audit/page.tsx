@@ -7,17 +7,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { getI18n } from "@/i18n/server";
+import { formatDateTime } from "@/lib/accounting/fiscal";
 
 export default async function AuditPage({ searchParams }: { searchParams: Promise<{ table?: string; page?: string }> }) {
   const ctx = await requireAppContext(PERMISSIONS.auditView);
-  const { locale, t } = await getI18n();
+  const { t } = await getI18n();
   const sp = await searchParams;
   const page = Math.max(0, Number(sp.page ?? 0) || 0);
   let q = ctx.supabase.from("audit_log_view").select("*").eq("hotel_id", ctx.hotel.id).order("occurred_at", { ascending: false }).range(page * 100, page * 100 + 99);
   if (sp.table) q = q.eq("table_name", sp.table.trim());
   const { data } = await q;
   const a = t.admin;
-  const fmt = new Intl.DateTimeFormat(locale === "ar" ? "ar-SA-u-nu-latn" : "en-GB", { dateStyle: "short", timeStyle: "medium", timeZone: ctx.hotel.timezone });
   return (
     <>
       <PageHeader title={t.nav.audit} description={a.auditSubtitle} />
@@ -33,7 +33,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
           <TableBody>
             {(data ?? []).map((r) => (
               <TableRow key={r.id}>
-                <TableCell className="num whitespace-nowrap">{fmt.format(new Date(r.occurred_at))}</TableCell>
+                <TableCell className="num whitespace-nowrap">{formatDateTime(r.occurred_at, ctx.hotel.timezone, true)}</TableCell>
                 <TableCell>{r.actor_name || "—"}</TableCell>
                 <TableCell className="num">{r.table_name}</TableCell>
                 <TableCell><Badge variant={r.action === "DELETE" ? "destructive" : r.action === "INSERT" ? "success" : "outline"}>{r.action}</Badge></TableCell>

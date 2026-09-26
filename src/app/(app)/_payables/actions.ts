@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { optDate, optText } from "@/lib/validation/common";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isIsoDate } from "@/lib/accounting/fiscal";
@@ -10,8 +11,7 @@ import { saveVendor } from "@/services/payables.service";
 import { raise, type ActionResult, toActionResult } from "@/services/errors";
 
 const amount = z.string().trim().refine((v) => isValidAmount(v) && toMoney(v).gt(0), "invalid_amount").transform((v) => toMoney(v).toFixed());
-const optDate = z.string().trim().refine((v) => v === "" || isIsoDate(v)).transform((v) => (v === "" ? null : v));
-const opt = z.string().trim().transform((v) => (v === "" ? null : v));
+const opt = optText;
 const line = z.object({
   description: z.string().trim().min(1).max(300),
   account_id: z.uuid(),

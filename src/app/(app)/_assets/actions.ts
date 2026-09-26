@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { optText } from "@/lib/validation/common";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isIsoDate } from "@/lib/accounting/fiscal";
@@ -11,7 +12,7 @@ import { raise, type ActionResult, toActionResult } from "@/services/errors";
 const amount = (allowZero = false) =>
   z.string().trim().refine((v) => isValidAmount(v) && (allowZero ? !toMoney(v).isNegative() : toMoney(v).gt(0))).transform((v) => toMoney(v).toFixed());
 const date = z.string().refine(isIsoDate);
-const opt = z.string().trim().transform((v) => (v === "" ? null : v));
+const opt = optText;
 const fail = { ok: false as const, error: "validation" as const };
 
 export async function registerAssetAction(input: unknown): Promise<ActionResult<string>> {

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { FileSpreadsheet } from "lucide-react";
 import { Money } from "@/components/money";

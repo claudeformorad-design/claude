@@ -2,12 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { optText } from "@/lib/validation/common";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isValidAmount, toMoney } from "@/lib/accounting/money";
 import { raise, type ActionResult, toActionResult } from "@/services/errors";
 
-const opt = z.string().trim().transform((v) => (v === "" ? null : v));
+const opt = optText;
 const optAmount = z.string().trim().refine((v) => v === "" || (isValidAmount(v) && !toMoney(v).isNegative())).transform((v) => (v === "" ? null : toMoney(v).toFixed()));
 const fail = { ok: false as const, error: "validation" as const };
 const done = <T,>(r: ActionResult<T>, path: string) => { if (r.ok) revalidatePath(path); return r; };

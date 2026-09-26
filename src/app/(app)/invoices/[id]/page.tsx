@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/link";
 import { notFound } from "next/navigation";
 import { Money } from "@/components/money";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,10 +18,12 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const ctx = await requireAppContext(PERMISSIONS.invoicesView);
   const { locale, t } = await getI18n();
-  const [detail, taxes, creditNotes] = await Promise.all([
+  const [detail, taxes, creditNotes, folio] = await Promise.all([
     getInvoice(ctx.supabase, ctx.hotel.id, id),
     listTaxRates(ctx.supabase, ctx.hotel.id),
     ctx.supabase.from("credit_notes").select("id, credit_note_number, issue_date, total::text, reason").eq("invoice_id", id),
+    ctx.supabase.from("invoices").select("folio_id").eq("id", id).maybeSingle()
+      .then(async ({ data }) => data?.folio_id ? (await ctx.supabase.from("guest_folios").select("folio_number, room_number").eq("id", data.folio_id).maybeSingle()).data : null),
   ]);
   if (!detail) notFound();
   const { invoice: inv, items } = detail;
@@ -62,7 +64,8 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
             {inv.folio_id && (
               <div className="sm:text-end">
                 <p className="text-sm text-muted-foreground">{t.nav.folios}</p>
-                <Link href={`/folios/${inv.folio_id}`} className="text-primary hover:underline print:no-underline">{t.folio.folioNumber}</Link>
+                <Link href={`/folios/${inv.folio_id}`} className="num text-primary hover:underline print:no-underline">{folio?.folio_number ?? t.folio.folioNumber}</Link>
+                {folio?.room_number && <p className="text-sm">{t.folio.room} <span className="num">{folio.room_number}</span></p>}
               </div>
             )}
           </div>

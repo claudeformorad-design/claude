@@ -39,4 +39,13 @@ npm run test:db     # ترحيلات + اختبارات SQL على PostgreSQL م
 npm run typecheck && npm run lint
 ```
 
+### اختبارات شاملة على مكدس Supabase حقيقي (e2e/)
+
+```bash
+npx supabase start                         # أو أي مشروع Supabase مع تطبيق الترحيلات
+ANON_KEY=... npm run e2e:api               # 31 فحصًا: عزل الفنادق، منع المجهول، عدم التعديل، عدم الانتحال
+npm run build && npm start                 # ثم:
+CHROME=/path/to/chrome npm run e2e:ui      # جولتان في متصفح حقيقي: كل الصفحات وكل النماذج والتدفقات المحاسبية
+```
+
 `test:db` يتطلب PostgreSQL 15+ مثبتًا محليًا (يستخدم `initdb` في مجلد مؤقت، ومحاكاة مصغرة لـ `auth.uid()` الخاصة بـ Supabase).

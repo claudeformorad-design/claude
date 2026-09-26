@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/link";
 import { getI18n } from "@/i18n/server";
 import { Button } from "@/components/ui/button";
 

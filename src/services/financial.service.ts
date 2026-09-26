@@ -16,9 +16,9 @@ async function statementAccounts(supabase: SupabaseServerClient, hotelId: string
   return (data ?? []).map((a) => ({ ...a, name: (locale === "en" && a.name_en) || a.name_ar }));
 }
 
-async function activity(supabase: SupabaseServerClient, hotelId: string, fyStart: string, from: string, to: string) {
+async function activity(supabase: SupabaseServerClient, hotelId: string, fyStart: string, from: string, to: string, excludeClosing = false) {
   const { data, error } = await supabase
-    .rpc("gl_account_activity", { p_hotel_id: hotelId, p_fiscal_year_start: fyStart, p_from: from, p_to: to })
+    .rpc("gl_account_activity", { p_hotel_id: hotelId, p_fiscal_year_start: fyStart, p_from: from, p_to: to, p_exclude_closing: excludeClosing })
     .select("account_id, prior_years_debit::text, prior_years_credit::text, ytd_before_debit::text, ytd_before_credit::text, period_debit::text, period_credit::text");
   raise(error);
   return data ?? [];
@@ -27,7 +27,7 @@ async function activity(supabase: SupabaseServerClient, hotelId: string, fyStart
 /** قائمة الدخل للفترة */
 export async function getIncomeStatement(supabase: SupabaseServerClient, hotel: HotelRow, from: string, to: string, locale: string) {
   const fy = await resolveFiscalYearStart(supabase, hotel.id, from, hotel.fiscal_year_start_month);
-  const [accounts, act] = await Promise.all([statementAccounts(supabase, hotel.id, locale), activity(supabase, hotel.id, fy, from, to)]);
+  const [accounts, act] = await Promise.all([statementAccounts(supabase, hotel.id, locale), activity(supabase, hotel.id, fy, from, to, true)]);
   const movements = new Map(act.map((a) => [a.account_id, toMoney(a.period_debit).minus(toMoney(a.period_credit))]));
   return buildIncomeStatement(accounts, movements);
 }

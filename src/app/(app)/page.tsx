@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/link";
 import { BedDouble, FileClock, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { DepartmentRevenueChart, RevenueExpenseChart } from "@/components/dashboard/charts";

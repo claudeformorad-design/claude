@@ -44,3 +44,13 @@ export function fiscalYearStart(date: IsoDate, startMonth: number): IsoDate {
 export function todayInTimeZone(timeZone: string, now: Date = new Date()): IsoDate {
   return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
 }
+
+/** تاريخ ووقت بصيغة ثابتة لا لبس فيها في الاتجاهين (2026-09-26 13:05) بتوقيت الفندق */
+export function formatDateTime(iso: string, timeZone: string, withSeconds = false): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit",
+    second: withSeconds ? "2-digit" : undefined, hourCycle: "h23",
+  }).formatToParts(new Date(iso));
+  const g = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${g("year")}-${g("month")}-${g("day")} ${g("hour")}:${g("minute")}${withSeconds ? `:${g("second")}` : ""}`;
+}
