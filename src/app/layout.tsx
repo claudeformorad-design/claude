@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans_Arabic, Inter } from "next/font/google";
+import { Readex_Pro } from "next/font/google";
 import { directionOf } from "@/i18n/config";
 import { getI18n } from "@/i18n/server";
 import "./globals.css";
 
-const arabic = IBM_Plex_Sans_Arabic({
-  subsets: ["arabic"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-arabic",
+// خط عربي/لاتيني هندسي حديث بأوزان متغيرة
+const readex = Readex_Pro({
+  subsets: ["arabic", "latin"],
+  variable: "--font-readex",
   display: "swap",
 });
-const latin = Inter({ subsets: ["latin"], variable: "--font-latin", display: "swap" });
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -20,8 +19,11 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { locale } = await getI18n();
   return (
-    <html lang={locale} dir={directionOf(locale)} className={`${arabic.variable} ${latin.variable}`}>
-      <body className="min-h-screen font-sans">{children}</body>
+    <html lang={locale} dir={directionOf(locale)} className={readex.variable}>
+      <body className="min-h-screen font-sans">
+        <div className="app-backdrop" aria-hidden />
+        {children}
+      </body>
     </html>
   );
 }

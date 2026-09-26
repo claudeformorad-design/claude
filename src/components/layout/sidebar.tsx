@@ -1,172 +1,106 @@
 "use client";
 
-import Link from "@/components/link";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
-import {
-  BedDouble, BookOpen, Boxes, Building2, FileSpreadsheet, FileText, LayoutDashboard, ListTree,
-  Landmark, PieChart, Percent, CalendarCheck, ShieldCheck, History, TrendingUp, Waves, ListChecks, Banknote, Receipt, Scale, Settings, ShoppingCart, Truck, UserCog, Users, Wallet, Clock,
-} from "lucide-react";
+import { LayoutGroup, motion } from "motion/react";
+import { Building2, PanelRightClose, PanelRightOpen } from "lucide-react";
+import Link from "@/components/link";
 import { cn } from "@/lib/utils";
+import { SIDEBAR_COOKIE, isActivePath, navGroups, type NavLabels } from "./nav-config";
 
-export interface NavLabels {
-  dashboard: string;
-  accounts: string;
-  journal: string;
-  trialBalance: string;
-  groupGl: string;
-  groupReports: string;
-  comingSoon: string;
-  revenue: string;
-  payments: string;
-  receivables: string;
-  payables: string;
-  expenses: string;
-  assets: string;
-  inventory: string;
-  settings: string;
-  groupRevenue: string;
-  folios: string;
-  invoices: string;
-  vouchers: string;
-  customers: string;
-  revenueSettings: string;
-  groupPayables: string;
-  vendors: string;
-  purchaseOrders: string;
-  bills: string;
-  payroll: string;
-  bank: string;
-  aging: string;
-  groupAssets: string;
-  fixedAssets: string;
-  stock: string;
-  profitability: string;
-  incomeStatement: string;
-  balanceSheet: string;
-  cashFlow: string;
-  dailyCash: string;
-  roomStats: string;
-  taxReturn: string;
-  periods: string;
-  hotelSettings: string;
-  users: string;
-  audit: string;
-  groupAdmin: string;
-}
-
-type Item = { href: string; label: string; icon: React.ComponentType<{ className?: string }>; soon?: boolean };
-
-export function Sidebar({ labels, hotelName }: { labels: NavLabels; hotelName: string }) {
+/**
+ * شريط جانبي زجاجي قابل للطي: موسّع (أيقونة + اسم) أو شريط أيقونات دائرية.
+ * العنصر النشط «حبة» داكنة تنزلق بين العناصر (layoutId). الحالة محفوظة في كوكي
+ * حتى تُرسم من الخادم بنفس الشكل دون وميض.
+ */
+export function Sidebar({ labels, hotelName, initialCollapsed }: { labels: NavLabels; hotelName: string; initialCollapsed: boolean }) {
   const pathname = usePathname();
-  const groups: { title?: string; items: Item[] }[] = [
-    { items: [{ href: "/", label: labels.dashboard, icon: LayoutDashboard }] },
-    {
-      title: labels.groupGl,
-      items: [
-        { href: "/accounts", label: labels.accounts, icon: ListTree },
-        { href: "/journal", label: labels.journal, icon: BookOpen },
-      ],
-    },
-    {
-      title: labels.groupRevenue,
-      items: [
-        { href: "/folios", label: labels.folios, icon: BedDouble },
-        { href: "/invoices", label: labels.invoices, icon: FileText },
-        { href: "/vouchers", label: labels.vouchers, icon: Receipt },
-        { href: "/customers", label: labels.customers, icon: Users },
-      ],
-    },
-    {
-      title: labels.groupPayables,
-      items: [
-        { href: "/vendors", label: labels.vendors, icon: Truck },
-        { href: "/purchase-orders", label: labels.purchaseOrders, icon: ShoppingCart },
-        { href: "/bills", label: labels.bills, icon: FileSpreadsheet },
-        { href: "/payroll", label: labels.payroll, icon: UserCog },
-        { href: "/bank", label: labels.bank, icon: Landmark },
-      ],
-    },
-    {
-      title: labels.groupAssets,
-      items: [
-        { href: "/assets", label: labels.fixedAssets, icon: Building2 },
-        { href: "/inventory", label: labels.stock, icon: Boxes },
-      ],
-    },
-    {
-      title: labels.groupReports,
-      items: [
-        { href: "/reports/income-statement", label: labels.incomeStatement, icon: TrendingUp },
-        { href: "/reports/balance-sheet", label: labels.balanceSheet, icon: Scale },
-        { href: "/reports/cash-flow", label: labels.cashFlow, icon: Waves },
-        { href: "/reports/trial-balance", label: labels.trialBalance, icon: ListChecks },
-        { href: "/reports/rooms", label: labels.roomStats, icon: BedDouble },
-        { href: "/reports/daily-cash", label: labels.dailyCash, icon: Banknote },
-        { href: "/reports/tax-return", label: labels.taxReturn, icon: Percent },
-        { href: "/reports/aging", label: labels.aging, icon: Clock },
-        { href: "/reports/profitability", label: labels.profitability, icon: PieChart },
-      ],
-    },
-    {
-      title: labels.groupAdmin,
-      items: [
-        { href: "/settings/hotel", label: labels.hotelSettings, icon: Settings },
-        { href: "/settings/revenue", label: labels.revenueSettings, icon: Wallet },
-        { href: "/settings/users", label: labels.users, icon: ShieldCheck },
-        { href: "/periods", label: labels.periods, icon: CalendarCheck },
-        { href: "/audit", label: labels.audit, icon: History },
-      ],
-    },
-  ];
+  const [collapsed, setCollapsed] = useState(initialCollapsed);
+  const groups = navGroups(labels);
 
-  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+  const toggle = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    document.cookie = `${SIDEBAR_COOKIE}=${next ? "1" : "0"}; path=/; max-age=31536000; samesite=lax`;
+  };
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-e border-[#1E293B] bg-[#0F172A] text-white shadow-lg">
-      <div className="flex items-center gap-3 border-b border-white/10 px-5 py-4 bg-[#1E293B]/50 backdrop-blur-md">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#FFD369] text-[#0F172A] shadow-sm font-black gold-glow">
-          <Building2 className="size-5 font-bold" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-extrabold text-white tracking-tight">{hotelName}</p>
-          <p className="text-[10.5px] font-bold text-[#FFD369] tracking-wide">النظام المحاسبي الفندقي</p>
-        </div>
+    <motion.aside
+      initial={false}
+      animate={{ width: collapsed ? 84 : 256 }}
+      transition={{ type: "spring", stiffness: 260, damping: 30 }}
+      className="relative hidden h-full shrink-0 flex-col border-e border-white/70 md:flex"
+    >
+      <div className={cn("flex items-center gap-3 px-5 pb-4 pt-6", collapsed && "justify-center px-0")}>
+        <motion.div
+          whileHover={{ rotate: -8, scale: 1.06 }}
+          className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-ink text-white shadow-[0_10px_24px_-10px_rgba(14,17,22,0.7)]"
+        >
+          <Building2 className="size-5" />
+        </motion.div>
+        {!collapsed && (
+          <motion.div initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} className="min-w-0">
+            <p className="truncate text-[15px] font-semibold text-ink">{hotelName}</p>
+            <p className="text-[11px] text-muted-foreground">النظام المحاسبي الفندقي</p>
+          </motion.div>
+        )}
       </div>
-      <nav className="flex-1 space-y-4 overflow-y-auto p-3 scrollbar-thin">
-        {groups.map((group, gi) => (
-          <div key={gi} className="space-y-1">
-            {group.title && (
-              <p className="px-3 pb-1 pt-2.5 text-[10px] font-black uppercase tracking-widest text-[#94A3B8]">{group.title}</p>
-            )}
-            {group.items.map((item) =>
-              item.soon ? (
-                <span
-                  key={item.label}
-                  className="flex cursor-not-allowed items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-[#64748B]"
-                >
-                  <item.icon className="size-4" />
-                  <span className="flex-1">{item.label}</span>
-                  <span className="rounded-md bg-[#1E293B] px-1.5 py-0.5 text-[10px] text-[#94A3B8]">{labels.comingSoon}</span>
-                </span>
-              ) : (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "group flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold transition-all duration-150",
-                    isActive(item.href)
-                      ? "bg-[#FFD369] text-[#0F172A] font-extrabold shadow-sm gold-glow translate-x-0.5"
-                      : "text-slate-300 hover:bg-white/10 hover:text-white",
-                  )}
-                >
-                  <item.icon className={cn("size-4 transition-transform group-hover:scale-110", isActive(item.href) ? "text-[#0F172A]" : "text-[#94A3B8]")} />
-                  {item.label}
-                </Link>
-              ),
-            )}
-          </div>
-        ))}
-      </nav>
-    </aside>
+
+      <LayoutGroup id="sidebar">
+        <nav className="flex-1 space-y-4 overflow-y-auto overflow-x-hidden px-3 pb-4">
+          {groups.map((group, gi) => (
+            <div key={gi} className="space-y-1">
+              {group.title &&
+                (collapsed ? (
+                  <div className="mx-auto my-2 h-px w-8 bg-slate-300/60" />
+                ) : (
+                  <p className="px-3 pb-1 pt-2 text-[11px] font-medium text-slate-400">{group.title}</p>
+                ))}
+              {group.items.map((item) => {
+                const active = isActivePath(pathname, item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    title={collapsed ? item.label : undefined}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "group relative flex h-10 items-center gap-3 rounded-full text-[13px] transition-colors duration-200",
+                      collapsed ? "mx-auto w-10 justify-center" : "px-3",
+                      active ? "text-white" : "text-slate-600 hover:bg-white/70 hover:text-ink",
+                    )}
+                  >
+                    {active && (
+                      <motion.span
+                        layoutId="nav-active"
+                        className="absolute inset-0 rounded-full bg-ink shadow-[0_8px_20px_-8px_rgba(14,17,22,0.7)]"
+                        transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                      />
+                    )}
+                    <item.icon className={cn("relative z-10 size-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110", active ? "text-white" : "text-slate-500")} />
+                    {!collapsed && <span className="relative z-10 truncate">{item.label}</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+      </LayoutGroup>
+
+      <div className="border-t border-white/70 p-3">
+        <button
+          type="button"
+          onClick={toggle}
+          className={cn(
+            "flex h-10 w-full items-center gap-3 rounded-full px-3 text-[13px] text-slate-500 transition-colors hover:bg-white/70 hover:text-ink",
+            collapsed && "justify-center px-0",
+          )}
+          aria-label={collapsed ? "توسيع القائمة" : "طي القائمة"}
+        >
+          {collapsed ? <PanelRightOpen className="size-[18px]" /> : <PanelRightClose className="size-[18px]" />}
+          {!collapsed && <span>طي القائمة</span>}
+        </button>
+      </div>
+    </motion.aside>
   );
 }

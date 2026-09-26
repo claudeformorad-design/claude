@@ -1,18 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { TrendingUp, Layers, BarChart3, Activity, PieChart as PieIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { animate, motion, useInView } from "motion/react";
+import { Activity, PieChart as PieIcon, TrendingUp } from "lucide-react";
+import { CHART_COLORS } from "./chart-colors";
 
 /**
- * مخططات لوحة التحكم (SVG خفيف بلا مكتبات). كل القيم تأتي من الأستاذ العام والدفاتر الفرعية
- * كما هي — لا تقدير ولا تقريب في البيانات؛ التقريب للعرض فقط.
- * يدعم المخطط المالي القيم السالبة (صافي خسارة) دون قصّها إلى صفر.
+ * مخططات لوحة التحكم (SVG خفيف بحركة ناعمة). القيم تُمرَّر كما هي من الأستاذ العام
+ * والدفاتر الفرعية — لا تقدير ولا تنعيم للبيانات؛ التقريب للعرض فقط، والخطوط مستقيمة
+ * بين النقاط حتى لا يُظهر المنحنى قيمة لم تحدث.
  */
 
 const fmt = (v: number, digits = 0) =>
   new Intl.NumberFormat("ar-SA-u-nu-latn", { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(v);
 
-/** اختصار المحاور: 12.5k / 1.2M */
 const compact = (v: number) => {
   const a = Math.abs(v);
   if (a >= 1_000_000) return `${fmt(v / 1_000_000, 1)}M`;
@@ -20,386 +21,319 @@ const compact = (v: number) => {
   return fmt(v);
 };
 
-const PALETTE = ["#FFD369", "#222831", "#D97706", "#393E46", "#059669", "#64748B", "#475569", "#B45309"];
 
 const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
-/** "2026-09" ⇒ "سبتمبر 2026" (السنة لتمييز الأشهر عبر نهاية السنة) */
-export function monthLabel(m: string, withYear = true): string {
+function monthLabel(m: string, short = false): string {
   const [y, mo] = m.split("-");
   const name = MONTHS[parseInt(mo ?? "1", 10) - 1] ?? m;
-  return withYear && y ? `${name} ${y}` : name;
+  return short ? name : `${name} ${y ?? ""}`.trim();
 }
 
-/**
- * مسار خطي بين النقاط. عمدًا بلا تنعيم: المنحنيات الناعمة تتجاوز القيم الفعلية
- * (قد تُظهر خسارة أو سعرًا سالبًا لم يحدث). النقاط null تقطع الخط (شهر بلا بيانات).
- */
 function linePath(pts: ({ x: number; y: number } | null)[]): string {
   let d = "";
   let pen = false;
   for (const p of pts) {
     if (!p) { pen = false; continue; }
-    d += `${pen ? " L" : " M"} ${p.x} ${p.y}`;
+    d += `${pen ? " L" : " M"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`;
     pen = true;
   }
   return d.trim();
 }
 
-function EmptyChart({ icon: Icon, title, hint }: { icon: typeof Activity; title: string; hint: string }) {
+function EmptyChart({ icon: Icon = Activity, title, hint }: { icon?: typeof Activity; title: string; hint: string }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#CBD5E1] bg-[#F8FAF9]/60 px-4 py-12 text-center">
-      <div className="mb-3 flex size-11 items-center justify-center rounded-2xl bg-[#222831] text-[#FFD369] shadow-xs">
+    <div className="flex min-h-44 flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300/80 bg-white/40 px-4 py-8 text-center">
+      <div className="animate-pop mb-3 flex size-11 items-center justify-center rounded-2xl bg-ink text-white">
         <Icon className="size-5" />
       </div>
-      <p className="text-sm font-bold text-[#0F172A]">{title}</p>
-      <p className="mt-1 max-w-sm text-xs text-[#64748B]">{hint}</p>
+      <p className="text-[13px] font-medium text-ink">{title}</p>
+      <p className="mt-1 max-w-xs text-[11px] leading-relaxed text-muted-foreground">{hint}</p>
     </div>
   );
 }
 
 // =============================================================================
-// الإيرادات مقابل المصروفات + صافي النتيجة (شهري)
+// رقم متحرك: يعدّ من الصفر حتى القيمة عند ظهوره. النص النهائي هو القيمة الدقيقة المنسّقة من الخادم.
 // =============================================================================
-export interface FinancialDataPoint {
-  month: string;
-  revenue: number;
-  expenses: number;
+export function AnimatedNumber({ value, text, digits = 2, className }: { value: number; text: string; digits?: number; className?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true });
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !inView || !Number.isFinite(value) || value === 0) return;
+    const controls = animate(0, value, {
+      duration: 1.4,
+      ease: [0.16, 1, 0.3, 1],
+      onUpdate: (v) => { el.textContent = fmt(v, digits); },
+      onComplete: () => { el.textContent = text; },
+    });
+    return () => controls.stop();
+  }, [inView, value, text, digits]);
+  return <span ref={ref} className={`num ${className ?? ""}`}>{text}</span>;
 }
 
-export function ExecutiveFinancialChart({
-  data,
-  labels,
-  currency,
+// =============================================================================
+// الإيرادات مقابل المصروفات (خطان + تلميح عند المرور)
+// =============================================================================
+export function IncomeExpenseChart({
+  data, currency, labels,
 }: {
-  data: FinancialDataPoint[];
-  labels: { revenue: string; expenses: string; net: string };
+  data: { month: string; revenue: number; expenses: number }[];
   currency: string;
+  labels: { revenue: string; expenses: string; net: string };
 }) {
-  const [viewMode, setViewMode] = useState<"composed" | "area" | "bar">("composed");
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
-
-  const hasData = data.some((d) => d.revenue !== 0 || d.expenses !== 0);
-  if (!hasData) {
-    return (
-      <EmptyChart
-        icon={Activity}
-        title="لا توجد حركات مالية مرحّلة في الفترة"
-        hint="يظهر المخطط تلقائيًا من القيود المرحّلة في الأستاذ العام (فوليو، فواتير، سندات، قيود يدوية...)."
-      />
-    );
+  const [hover, setHover] = useState<number | null>(null);
+  if (!data.some((d) => d.revenue !== 0 || d.expenses !== 0)) {
+    return <EmptyChart title="لا توجد حركات مرحّلة بعد" hint="يُرسم المخطط من القيود المرحّلة في الأستاذ العام تلقائيًا." />;
   }
-
-  const rows = data.map((d) => ({ ...d, net: d.revenue - d.expenses }));
-  const top = Math.max(...rows.map((d) => Math.max(d.revenue, d.expenses, d.net)), 0);
-  const bottom = Math.min(...rows.map((d) => Math.min(d.net, 0)), 0);
-  const span = top - bottom || 1;
-  const maxVal = top + span * 0.12;
-  const minVal = bottom < 0 ? bottom - span * 0.08 : 0;
-
-  const W = 720, H = 270, padL = 16, padR = 70, padT = 24, padB = 40;
-  const plotW = W - padL - padR, plotH = H - padT - padB;
-  const slot = plotW / rows.length;
-  const xAt = (i: number) => padL + slot * (i + 0.5);
-  const yAt = (v: number) => padT + ((maxVal - v) / (maxVal - minVal)) * plotH;
-  const y0 = yAt(0);
-
-  const ptsRev = rows.map((d, i) => ({ x: xAt(i), y: yAt(d.revenue) }));
-  const ptsExp = rows.map((d, i) => ({ x: xAt(i), y: yAt(d.expenses) }));
-  const ptsNet = rows.map((d, i) => ({ x: xAt(i), y: yAt(d.net) }));
-  const area = (pts: { x: number; y: number }[]) =>
-    `${linePath(pts)} L ${pts[pts.length - 1]!.x} ${y0} L ${pts[0]!.x} ${y0} Z`;
-
-  const ticks = Array.from({ length: 5 }, (_, k) => minVal + ((maxVal - minVal) * k) / 4);
-  const active = rows[hoveredIdx ?? rows.length - 1]!;
-  const barW = Math.min(22, slot / 3.2);
-
-  const modes = [
-    { key: "composed" as const, label: "مركّب", icon: TrendingUp },
-    { key: "area" as const, label: "مساحي", icon: Layers },
-    { key: "bar" as const, label: "أعمدة", icon: BarChart3 },
-  ];
+  const W = 560, H = 230, padX = 18, padT = 18, padB = 34, axisW = 44;
+  const plotW = W - padX * 2 - axisW, plotH = H - padT - padB;
+  const top = Math.max(...data.map((d) => Math.max(d.revenue, d.expenses)), 0);
+  const bottom = Math.min(...data.map((d) => Math.min(d.revenue, d.expenses)), 0);
+  const maxV = top + (top - bottom || 1) * 0.15;
+  const minV = bottom < 0 ? bottom * 1.15 : 0;
+  const x = (i: number) => padX + axisW + (data.length === 1 ? plotW / 2 : (plotW * i) / (data.length - 1));
+  const y = (v: number) => padT + ((maxV - v) / (maxV - minV)) * plotH;
+  const rev = data.map((d, i) => ({ x: x(i), y: y(d.revenue) }));
+  const exp = data.map((d, i) => ({ x: x(i), y: y(d.expenses) }));
+  const base = y(Math.max(minV, 0));
+  const area = `${linePath(rev)} L ${rev[rev.length - 1]!.x} ${base} L ${rev[0]!.x} ${base} Z`;
+  const ticks = [0, 1, 2, 3].map((k) => minV + ((maxV - minV) * k) / 3);
+  const h = hover !== null ? data[hover] : undefined;
 
   return (
-    <div className="space-y-4" data-chart="financial">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E8F0] pb-3">
-        <div className="grid grid-cols-3 gap-4 text-[11px]">
-          <div>
-            <p className="font-semibold text-[#64748B]">{labels.revenue} — {monthLabel(active.month)}</p>
-            <p className="num text-sm font-black text-[#0F172A]">{fmt(active.revenue, 2)} <span className="text-[10px] text-[#64748B]">{currency}</span></p>
-          </div>
-          <div>
-            <p className="font-semibold text-[#64748B]">{labels.expenses}</p>
-            <p className="num text-sm font-black text-[#0F172A]">{fmt(active.expenses, 2)} <span className="text-[10px] text-[#64748B]">{currency}</span></p>
-          </div>
-          <div>
-            <p className="font-semibold text-[#64748B]">{labels.net}</p>
-            <p className={`num text-sm font-black ${active.net < 0 ? "text-[#D97706]" : "text-[#059669]"}`}>
-              {fmt(active.net, 2)} <span className="text-[10px] text-[#64748B]">{currency}</span>
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center rounded-xl border border-[#CBD5E1] bg-[#F1F5F9] p-1 shadow-2xs">
-          {modes.map((m) => (
-            <button
-              key={m.key}
-              type="button"
-              onClick={() => setViewMode(m.key)}
-              className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition-all ${
-                viewMode === m.key ? "bg-[#222831] text-[#FFD369] shadow-xs" : "text-[#64748B] hover:text-[#0F172A]"
-              }`}
-            >
-              <m.icon className="size-3" />
-              {m.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="relative w-full overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F8FAF9]/50 p-2">
-        <svg viewBox={`0 0 ${W} ${H}`} className="h-[270px] w-full select-none overflow-visible" role="img" aria-label={`${labels.revenue} / ${labels.expenses}`}>
+    <div className="space-y-3" data-chart="financial">
+      <div className="relative" onMouseLeave={() => setHover(null)}>
+        <svg viewBox={`0 0 ${W} ${H}`} className="h-[230px] w-full overflow-visible" role="img" aria-label={`${labels.revenue} / ${labels.expenses}`}>
           <defs>
-            <linearGradient id="goldAreaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#FFD369" stopOpacity="0.6" />
-              <stop offset="95%" stopColor="#FFD369" stopOpacity="0.04" />
+            <linearGradient id="revArea" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={CHART_COLORS.revenue} stopOpacity="0.28" />
+              <stop offset="100%" stopColor={CHART_COLORS.revenue} stopOpacity="0" />
             </linearGradient>
-            <linearGradient id="darkAreaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#222831" stopOpacity="0.45" />
-              <stop offset="95%" stopColor="#222831" stopOpacity="0.02" />
-            </linearGradient>
-            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#222831" floodOpacity="0.25" />
-            </filter>
           </defs>
-
           {ticks.map((v, k) => (
             <g key={k}>
-              <line x1={padL} y1={yAt(v)} x2={W - padR} y2={yAt(v)} stroke="#E2E8F0" strokeDasharray="4 4" />
-              <text x={W - padR + 10} y={yAt(v) + 4} fill="#64748B" fontSize="10.5" fontWeight="600">{compact(v)}</text>
+              <line x1={padX + axisW} x2={W - padX} y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="3 5" />
+              <text x={padX} y={y(v) + 4} fill="#94a3b8" fontSize="10.5">{compact(v)}</text>
             </g>
           ))}
-          {minVal < 0 && <line x1={padL} y1={y0} x2={W - padR} y2={y0} stroke="#64748B" strokeWidth="1" />}
-
-          {rows.map((_, i) => (
-            <rect
-              key={`hit-${i}`}
-              x={xAt(i) - slot / 2}
-              y={padT}
-              width={slot}
-              height={plotH}
-              fill="#222831"
-              fillOpacity={hoveredIdx === i ? 0.04 : 0}
-              rx="8"
-              className="cursor-pointer"
-              onMouseEnter={() => setHoveredIdx(i)}
-              onMouseLeave={() => setHoveredIdx(null)}
-            />
-          ))}
-
-          {viewMode === "area" && (
-            <g className="pointer-events-none">
-              <path d={area(ptsRev)} fill="url(#goldAreaGrad)" />
-              <path d={linePath(ptsRev)} fill="none" stroke="#FFD369" strokeWidth="3.5" />
-              <path d={area(ptsExp)} fill="url(#darkAreaGrad)" />
-              <path d={linePath(ptsExp)} fill="none" stroke="#222831" strokeWidth="2.5" />
-            </g>
+          <path d={area} fill="url(#revArea)" className="animate-fade" style={{ animationDelay: "0.6s" }} />
+          <path d={linePath(exp)} fill="none" stroke={CHART_COLORS.expenses} strokeWidth="2.5" strokeLinejoin="round" pathLength={1}
+            strokeDasharray="1" className="animate-draw" />
+          <path d={linePath(rev)} fill="none" stroke={CHART_COLORS.revenue} strokeWidth="3" strokeLinejoin="round" pathLength={1}
+            strokeDasharray="1" className="animate-draw" />
+          {hover !== null && (
+            <line x1={x(hover)} x2={x(hover)} y1={padT} y2={padT + plotH} stroke="#0e1116" strokeOpacity="0.35" strokeDasharray="4 4" />
           )}
-
-          {(viewMode === "composed" || viewMode === "bar") && (
-            <g className="pointer-events-none">
-              {rows.map((d, i) => {
-                const cx = xAt(i);
-                const revTop = Math.min(yAt(d.revenue), y0);
-                const expTop = Math.min(yAt(d.expenses), y0);
-                return (
-                  <g key={i}>
-                    <rect x={cx - barW - 2} y={revTop} width={barW} height={Math.abs(y0 - yAt(d.revenue))} fill="#FFD369" rx="5"
-                      filter={hoveredIdx === i ? "url(#glow)" : undefined} />
-                    <rect x={cx + 2} y={expTop} width={barW} height={Math.abs(y0 - yAt(d.expenses))} fill="#222831" rx="5" />
-                  </g>
-                );
-              })}
+          {data.map((_, i) => (
+            <g key={i}>
+              <circle cx={rev[i]!.x} cy={rev[i]!.y} r={hover === i ? 6 : 3.5} fill="#fff" stroke={CHART_COLORS.revenue} strokeWidth="2.5"
+                className="animate-pop transition-all" style={{ animationDelay: `${0.8 + i * 0.06}s` }} />
+              <circle cx={exp[i]!.x} cy={exp[i]!.y} r={hover === i ? 6 : 3.5} fill="#fff" stroke={CHART_COLORS.expenses} strokeWidth="2.5"
+                className="animate-pop transition-all" style={{ animationDelay: `${0.8 + i * 0.06}s` }} />
+              <text x={x(i)} y={H - 8} textAnchor="middle" fill={hover === i ? "#0e1116" : "#94a3b8"} fontSize="10.5">{monthLabel(data[i]!.month, true)}</text>
+              <rect x={x(i) - plotW / data.length / 2} y={padT} width={plotW / data.length} height={plotH} fill="transparent"
+                onMouseEnter={() => setHover(i)} className="cursor-crosshair" />
             </g>
-          )}
-
-          {viewMode === "composed" && (
-            <g className="pointer-events-none">
-              <path d={linePath(ptsNet)} fill="none" stroke="#059669" strokeWidth="3" strokeDasharray="3 3" />
-              {ptsNet.map((p, i) => (
-                <circle key={i} cx={p.x} cy={p.y} r={hoveredIdx === i ? 6 : 4} fill={rows[i]!.net < 0 ? "#D97706" : "#059669"} stroke="#FFFFFF" strokeWidth="2" />
-              ))}
-            </g>
-          )}
-
-          {rows.map((d, i) => (
-            <text key={`x-${i}`} x={xAt(i)} y={H - 12} textAnchor="middle" fill={hoveredIdx === i ? "#0F172A" : "#64748B"}
-              fontSize="11" fontWeight={hoveredIdx === i ? 800 : 600}>
-              {monthLabel(d.month)}
-            </text>
           ))}
         </svg>
+        {h && hover !== null && (
+          <motion.div
+            key={hover}
+            initial={{ opacity: 0, y: 6, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className="pointer-events-none absolute top-1 z-10 w-48 -translate-x-1/2 rounded-2xl bg-ink/95 p-3 text-[11px] text-white shadow-xl"
+            style={{ left: `${(x(hover) / W) * 100}%` }}
+          >
+            <p className="mb-1.5 font-medium">{monthLabel(h.month)}</p>
+            <Row color={CHART_COLORS.revenue} label={labels.revenue} value={h.revenue} currency={currency} />
+            <Row color={CHART_COLORS.expenses} label={labels.expenses} value={h.expenses} currency={currency} />
+            <div className="mt-1.5 border-t border-white/15 pt-1.5">
+              <Row color={CHART_COLORS.net} label={labels.net} value={h.revenue - h.expenses} currency={currency} />
+            </div>
+          </motion.div>
+        )}
       </div>
-
-      <div className="flex flex-wrap items-center justify-center gap-6 border-t border-[#E2E8F0]/60 pt-1 text-xs">
-        <Legend color="bg-[#FFD369]" label={labels.revenue} />
-        <Legend color="bg-[#222831]" label={labels.expenses} />
-        {viewMode === "composed" && <Legend color="bg-[#059669]" label={labels.net} />}
-        <span className="text-[10.5px] text-[#64748B]">المبالغ بـ {currency}</span>
+      <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-600">
+        <Dot color={CHART_COLORS.revenue} label={labels.revenue} />
+        <Dot color={CHART_COLORS.expenses} label={labels.expenses} />
+        <span className="ms-auto text-slate-400">المبالغ بـ {currency}</span>
       </div>
     </div>
   );
 }
 
-function Legend({ color, label }: { color: string; label: string }) {
+function Row({ color, label, value, currency }: { color: string; label: string; value: number; currency: string }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className={`size-3 rounded-md shadow-xs ${color}`} />
-      <span className="font-bold text-[#0F172A]">{label}</span>
+    <div className="flex items-center justify-between gap-2">
+      <span className="flex items-center gap-1.5 text-white/70"><span className="size-2 rounded-full" style={{ background: color }} />{label}</span>
+      <span className="num">{fmt(value, 2)} <span className="text-white/50">{currency}</span></span>
     </div>
   );
 }
 
+function Dot({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className="size-2.5 rounded-full" style={{ background: color }} />
+      {label}
+    </span>
+  );
+}
+
 // =============================================================================
-// توزيع الإيرادات على الأقسام (مراكز الإيراد)
+// دائرة (Donut) بحركة كنس للأجزاء
 // =============================================================================
-export function ExecutiveDepartmentDonut({
-  data, currency, ledgerTotal, note,
+export function DonutChart({
+  segments, centerTitle, centerValue, emptyTitle, emptyHint, valueSuffix,
 }: {
-  data: { name: string; value: number }[];
-  currency: string;
-  /** إجمالي إيراد الفترة في الأستاذ العام — للتحقق من أن توزيع الأقسام يغطيه بالكامل */
-  ledgerTotal: number;
-  note?: string;
+  segments: { label: string; value: number; color: string; display?: string }[];
+  centerTitle: string;
+  centerValue: string;
+  emptyTitle: string;
+  emptyHint: string;
+  valueSuffix?: string;
 }) {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const items = data.filter((d) => d.value > 0).sort((a, b) => b.value - a.value);
-  const total = items.reduce((s, d) => s + d.value, 0);
+  const [active, setActive] = useState<number | null>(null);
+  const items = segments.filter((s) => s.value > 0);
+  const total = items.reduce((s, x) => s + x.value, 0);
+  if (!items.length || total <= 0) return <EmptyChart icon={PieIcon} title={emptyTitle} hint={emptyHint} />;
 
-  if (items.length === 0 || total <= 0) {
-    return (
-      <EmptyChart
-        icon={PieIcon}
-        title="لا توجد إيرادات أقسام هذا الشهر"
-        hint="تُوزَّع الإيرادات تلقائيًا حسب القسم المسجّل على رمز الإيراد أو بند القيد."
-      />
-    );
-  }
-
-  const size = 200, c = size / 2, r = 78, sw = 24, circ = 2 * Math.PI * r;
-  const segs = items.map((d, i) => {
-    const f = d.value / total;
-    const before = items.slice(0, i).reduce((s, x) => s + x.value, 0) / total;
-    return { ...d, color: PALETTE[i % PALETTE.length]!, dash: `${f * circ} ${circ}`, offset: -before * circ, pct: (f * 100).toFixed(1) };
-  });
-  const active = hoveredIndex !== null ? segs[hoveredIndex] : undefined;
+  const size = 190, c = size / 2, r = 70, sw = 26, circ = 2 * Math.PI * r;
+  const gap = items.length > 1 ? 4 : 0;
+  const a = active !== null ? items[active] : undefined;
 
   return (
-    <div className="flex flex-col gap-4" data-chart="departments">
-      <div className="relative flex items-center justify-center py-2">
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="rotate-[-90deg] select-none">
-          <circle cx={c} cy={c} r={r} fill="transparent" stroke="#F1F5F9" strokeWidth={sw} />
-          {segs.map((s, i) => (
-            <circle key={i} cx={c} cy={c} r={r} fill="transparent" stroke={s.color}
-              strokeWidth={hoveredIndex === i ? sw + 4 : sw} strokeDasharray={s.dash} strokeDashoffset={s.offset}
-              className="cursor-pointer transition-all duration-300"
-              onMouseEnter={() => setHoveredIndex(i)} onMouseLeave={() => setHoveredIndex(null)} />
-          ))}
+    <div className="flex flex-col items-center gap-4" data-chart="donut">
+      <div className="relative">
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+          <circle cx={c} cy={c} r={r} fill="none" stroke="#eef1f6" strokeWidth={sw} />
+          {items.map((s, i) => {
+            const before = items.slice(0, i).reduce((acc, x) => acc + x.value, 0) / total;
+            const len = Math.max((s.value / total) * circ - gap, 0.5);
+            return (
+              <motion.circle
+                key={s.label}
+                cx={c} cy={c} r={r} fill="none" stroke={s.color} strokeLinecap={items.length > 1 ? "round" : "butt"}
+                strokeDashoffset={-before * circ}
+                initial={{ strokeDasharray: `0 ${circ}`, strokeWidth: sw }}
+                animate={{ strokeDasharray: `${len} ${circ}`, strokeWidth: active === i ? sw + 6 : sw }}
+                transition={{ strokeDasharray: { duration: 1.1, delay: 0.15 + i * 0.12, ease: [0.16, 1, 0.3, 1] }, strokeWidth: { duration: 0.2 } }}
+                onMouseEnter={() => setActive(i)} onMouseLeave={() => setActive(null)}
+                className="cursor-pointer"
+              />
+            );
+          })}
         </svg>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="max-w-[110px] truncate text-[10px] font-bold text-[#64748B]">{active ? active.name : "إجمالي إيراد الأقسام"}</span>
-          <span className="num text-sm font-extrabold text-[#0F172A]">{active ? `${active.pct}%` : fmt(total, 2)}</span>
-          <span className="text-[10px] font-bold text-[#059669]">{active ? `${fmt(active.value, 2)} ${currency}` : currency}</span>
+          <span className="max-w-24 truncate text-[11px] text-muted-foreground">{a ? a.label : centerTitle}</span>
+          <motion.span key={a?.label ?? "total"} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="num text-lg font-semibold text-ink">
+            {a ? `${fmt((a.value / total) * 100, 1)}%` : centerValue}
+          </motion.span>
         </div>
       </div>
-      <div className="scrollbar-thin max-h-[170px] space-y-2 overflow-y-auto pe-1">
-        {segs.map((d, i) => (
-          <div key={i} onMouseEnter={() => setHoveredIndex(i)} onMouseLeave={() => setHoveredIndex(null)}
-            className={`flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2 text-xs transition-all ${
-              hoveredIndex === i ? "border-[#FFD369] bg-white shadow-xs" : "border-[#E2E8F0] bg-[#F8FAF9] hover:bg-white"
-            }`}>
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: d.color }} />
-              <span className="truncate font-bold text-[#0F172A]">{d.name}</span>
-            </div>
-            <div className="flex shrink-0 items-center gap-2.5">
-              <span className="num font-extrabold text-[#0F172A]">{fmt(d.value, 2)}</span>
-              <span className={`rounded-lg px-1.5 py-0.5 text-[10px] font-extrabold ${
-                hoveredIndex === i ? "bg-[#222831] text-[#FFD369]" : "border border-[#CBD5E1] bg-white text-[#222831]"
-              }`}>{d.pct}%</span>
-            </div>
-          </div>
+      <div className="flex w-full flex-wrap justify-center gap-x-4 gap-y-2 text-[12px]">
+        {items.map((s, i) => (
+          <button key={s.label} type="button" onMouseEnter={() => setActive(i)} onMouseLeave={() => setActive(null)}
+            className={`flex items-center gap-1.5 rounded-full px-2 py-0.5 transition-colors ${active === i ? "bg-white" : ""}`}>
+            <span className="size-2.5 rounded-full" style={{ background: s.color }} />
+            <span className="text-slate-600">{s.label}:</span>
+            <span className="num font-medium text-ink">{s.display ?? fmt(s.value)}</span>
+            {valueSuffix && <span className="text-slate-400">{valueSuffix}</span>}
+          </button>
         ))}
-      </div>
-      <div className="space-y-1 border-t border-[#E2E8F0] pt-2 text-[10.5px] text-[#64748B]">
-        <p>
-          إجمالي إيراد الشهر في الأستاذ العام: <span className="num font-bold text-[#0F172A]">{fmt(ledgerTotal, 2)}</span> {currency}
-        </p>
-        {note && <p className="text-[#D97706]">{note}</p>}
       </div>
     </div>
   );
 }
 
 // =============================================================================
-// اتجاه مؤشرات الغرف شهريًا (من إحصاءات الغرف الفعلية لكل شهر)
+// أشرطة مخططة متحركة (مثل «نظرة على الفواتير»)
 // =============================================================================
-export interface RoomTrendPoint {
-  month: string;
-  adr: number | null;
-  revpar: number | null;
-  occupancy: number | null;
-  nights: number;
+export function StripedBars({
+  rows, currency, emptyTitle, emptyHint,
+}: {
+  rows: { label: string; count: number; amount: number; amountText: string; color: string }[];
+  currency: string;
+  emptyTitle: string;
+  emptyHint: string;
+}) {
+  const max = Math.max(...rows.map((r) => r.amount), 0);
+  if (max <= 0) return <EmptyChart title={emptyTitle} hint={emptyHint} />;
+  return (
+    <div className="space-y-4" data-chart="bars">
+      {rows.map((r, i) => (
+        <div key={r.label} className="space-y-1.5">
+          <div className="flex items-center justify-between text-[13px]">
+            <span className="font-medium text-ink">{r.label}</span>
+            <span className="text-slate-500">
+              <span className="num">{r.count}</span> <span className="mx-1 text-slate-300">|</span>
+              <span className="num font-medium text-ink">{r.amountText}</span> <span className="text-[11px]">{currency}</span>
+            </span>
+          </div>
+          <div className="h-3.5 overflow-hidden rounded-full bg-[repeating-linear-gradient(-45deg,#e7ebf1_0_6px,#f1f4f8_6px_12px)]">
+            <div
+              className="bar-stripes animate-grow-x h-full rounded-full"
+              style={{
+                width: `${Math.max((r.amount / max) * 100, r.amount > 0 ? 3 : 0)}%`,
+                backgroundColor: r.color,
+                transformOrigin: "right",
+                animationDelay: `${0.1 + i * 0.1}s`,
+              }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
-export function HotelKpiTrendChart({ data, currency }: { data: RoomTrendPoint[]; currency: string }) {
-  const hasData = data.some((d) => d.nights > 0);
-  if (!hasData) {
-    return (
-      <EmptyChart
-        icon={TrendingUp}
-        title="لا توجد ليالٍ مباعة في الفترة"
-        hint="تُحسب ADR وRevPAR والإشغال من رسوم فئة «غرف» المرحّلة على الفوليو وعدد الغرف في إعدادات الفندق."
-      />
-    );
+// =============================================================================
+// اتجاه ADR وRevPAR والإشغال شهريًا
+// =============================================================================
+export function RoomTrendChart({
+  data, currency,
+}: {
+  data: { month: string; adr: number | null; revpar: number | null; occupancy: number | null; nights: number }[];
+  currency: string;
+}) {
+  if (!data.some((d) => d.nights > 0)) {
+    return <EmptyChart icon={TrendingUp} title="لا توجد ليالٍ مباعة في الفترة" hint="تُحسب من رسوم فئة «غرف» على الفوليو وعدد الغرف في إعدادات الفندق." />;
   }
-
-  const W = 500, H = 190, padL = 16, padR = 60, padT = 18, padB = 44;
-  const plotW = W - padL - padR, plotH = H - padT - padB;
-  const maxVal = Math.max(...data.map((d) => Math.max(d.adr ?? 0, d.revpar ?? 0)), 1) * 1.2;
-  const slot = plotW / data.length;
-  const xAt = (i: number) => padL + slot * (i + 0.5);
-  const yAt = (v: number) => padT + plotH - (v / maxVal) * plotH;
-  const ptsAdr = data.map((d, i) => (d.adr === null ? null : { x: xAt(i), y: yAt(d.adr) }));
-  const ptsRev = data.map((d, i) => (d.revpar === null ? null : { x: xAt(i), y: yAt(d.revpar) }));
+  const W = 520, H = 200, padX = 18, axisW = 40, padT = 16, padB = 46;
+  const plotW = W - padX * 2 - axisW, plotH = H - padT - padB;
+  const maxV = Math.max(...data.map((d) => Math.max(d.adr ?? 0, d.revpar ?? 0)), 1) * 1.2;
+  const x = (i: number) => padX + axisW + (data.length === 1 ? plotW / 2 : (plotW * i) / (data.length - 1));
+  const y = (v: number) => padT + plotH - (v / maxV) * plotH;
+  const adr = data.map((d, i) => (d.adr === null ? null : { x: x(i), y: y(d.adr) }));
+  const rp = data.map((d, i) => (d.revpar === null ? null : { x: x(i), y: y(d.revpar) }));
 
   return (
-    <div className="space-y-3" data-chart="rooms">
-      <div className="w-full overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F8FAF9]/60 p-1.5">
-        <svg viewBox={`0 0 ${W} ${H}`} className="h-[190px] w-full select-none overflow-visible" role="img" aria-label="ADR / RevPAR">
-          
-          {[0, maxVal / 2, maxVal].map((v, k) => (
-            <g key={k}>
-              <line x1={padL} y1={yAt(v)} x2={W - padR} y2={yAt(v)} stroke="#E2E8F0" strokeDasharray="3 3" />
-              <text x={W - padR + 8} y={yAt(v) + 3} fill="#64748B" fontSize="9.5" fontWeight="600">{compact(v)}</text>
-            </g>
-          ))}
-          <path d={linePath(ptsAdr)} fill="none" stroke="#FFD369" strokeWidth="2.5" />
-          <path d={linePath(ptsRev)} fill="none" stroke="#222831" strokeWidth="2" />
-          {data.map((d, i) => (
-            <g key={i}>
-              {ptsAdr[i] && <circle cx={ptsAdr[i].x} cy={ptsAdr[i].y} r={3.5} fill="#FFD369" stroke="#222831" strokeWidth="1.5" />}
-              {ptsRev[i] && <circle cx={ptsRev[i].x} cy={ptsRev[i].y} r={3.5} fill="#222831" stroke="#FFFFFF" strokeWidth="1.5" />}
-              <text x={xAt(i)} y={H - 24} textAnchor="middle" fill="#64748B" fontSize="10" fontWeight="600">{monthLabel(d.month)}</text>
-              <text x={xAt(i)} y={H - 8} textAnchor="middle" fill="#0F172A" fontSize="9.5" fontWeight="700">
-                {d.occupancy === null ? "—" : `${fmt(d.occupancy, 1)}%`}
-              </text>
-            </g>
-          ))}
-        </svg>
-      </div>
-      <div className="flex flex-wrap items-center justify-center gap-5 border-t border-[#E2E8F0] pt-2 text-xs">
-        <Legend color="bg-[#FFD369]" label="ADR" />
-        <Legend color="bg-[#222831]" label="RevPAR" />
-        <span className="text-[10.5px] text-[#64748B]">الرقم أسفل كل شهر = نسبة الإشغال • المبالغ بـ {currency}</span>
+    <div className="space-y-2" data-chart="rooms">
+      <svg viewBox={`0 0 ${W} ${H}`} className="h-[200px] w-full overflow-visible" role="img" aria-label="ADR / RevPAR">
+        {[0, maxV / 2, maxV].map((v, k) => (
+          <g key={k}>
+            <line x1={padX + axisW} x2={W - padX} y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="3 5" />
+            <text x={padX} y={y(v) + 4} fill="#94a3b8" fontSize="10.5">{compact(v)}</text>
+          </g>
+        ))}
+        <path d={linePath(adr)} fill="none" stroke={CHART_COLORS.revenue} strokeWidth="2.75" pathLength={1} strokeDasharray="1" className="animate-draw" />
+        <path d={linePath(rp)} fill="none" stroke={CHART_COLORS.expenses} strokeWidth="2.25" pathLength={1} strokeDasharray="1" className="animate-draw" />
+        {data.map((d, i) => (
+          <g key={i}>
+            {adr[i] && <circle cx={adr[i].x} cy={adr[i].y} r={3.5} fill="#fff" stroke={CHART_COLORS.revenue} strokeWidth="2.5" />}
+            {rp[i] && <circle cx={rp[i].x} cy={rp[i].y} r={3.5} fill="#fff" stroke={CHART_COLORS.expenses} strokeWidth="2.5" />}
+            <text x={x(i)} y={H - 26} textAnchor="middle" fill="#94a3b8" fontSize="10.5">{monthLabel(d.month, true)}</text>
+            <text x={x(i)} y={H - 8} textAnchor="middle" fill="#0e1116" fontSize="10.5" fontWeight="500">
+              {d.occupancy === null ? "—" : `${fmt(d.occupancy, 1)}%`}
+            </text>
+          </g>
+        ))}
+      </svg>
+      <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-600">
+        <Dot color={CHART_COLORS.revenue} label="ADR" />
+        <Dot color={CHART_COLORS.expenses} label="RevPAR" />
+        <span className="ms-auto text-slate-400">أسفل كل شهر: نسبة الإشغال • المبالغ بـ {currency}</span>
       </div>
     </div>
   );

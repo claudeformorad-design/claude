@@ -3,49 +3,32 @@ import { cn } from "@/lib/utils";
 
 export function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
-    <div className="relative w-full overflow-x-auto rounded-2xl border border-[#E2E8F0] bg-white shadow-2xs">
-      <table className={cn("w-full caption-bottom text-xs border-collapse", className)} {...props} />
+    <div className="glass-card relative w-full overflow-x-auto rounded-[var(--radius-card)]">
+      <table className={cn("w-full caption-bottom border-collapse text-[13px]", className)} {...props} />
     </div>
   );
 }
 
 export function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
-  return (
-    <thead className={cn("bg-[#F8FAF9] border-b border-[#E2E8F0] uppercase tracking-wider text-[11px] font-extrabold text-[#475569]", className)} {...props} />
-  );
+  return <thead className={cn("border-b border-line bg-subtle/70 text-xs text-muted-foreground", className)} {...props} />;
 }
 
 export function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
-  return <tbody className={cn("[&_tr:last-child]:border-0 divide-y divide-[#E2E8F0]/70", className)} {...props} />;
+  return <tbody className={cn("rows-animate [&_tr:last-child]:border-0", className)} {...props} />;
 }
 
 export function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
-  return (
-    <tfoot className={cn("border-t-2 border-[#1E293B] bg-[#F8FAF9] font-extrabold text-xs text-[#0F172A]", className)} {...props} />
-  );
+  return <tfoot className={cn("border-t-2 border-ink/80 bg-subtle/80 text-[13px] font-semibold text-ink", className)} {...props} />;
 }
 
 export function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
-  return (
-    <tr
-      className={cn(
-        "border-b border-[#E2E8F0]/70 transition-all hover:bg-[#F1F5F9]/60 hover:text-[#0F172A]",
-        className
-      )}
-      {...props}
-    />
-  );
+  return <tr className={cn("border-b border-line/80 transition-colors duration-150 hover:bg-white/80", className)} {...props} />;
 }
 
 export function TableHead({ className, ...props }: React.ComponentProps<"th">) {
-  return (
-    <th
-      className={cn("h-11 px-4 text-start align-middle font-extrabold whitespace-nowrap text-[#475569] text-[11px]", className)}
-      {...props}
-    />
-  );
+  return <th className={cn("h-11 whitespace-nowrap px-4 text-start align-middle font-medium", className)} {...props} />;
 }
 
 export function TableCell({ className, ...props }: React.ComponentProps<"td">) {
-  return <td className={cn("px-4 py-3.5 align-middle text-xs text-[#0F172A] font-medium", className)} {...props} />;
+  return <td className={cn("px-4 py-3 align-middle text-[13px] text-ink", className)} {...props} />;
 }

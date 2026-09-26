@@ -6,8 +6,8 @@ export function Card({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card"
       className={cn(
-        "rounded-2xl border border-[#E2E8F0] bg-white text-[#0F172A] shadow-2xs transition-all hover:border-[#CBD5E1]",
-        className
+        "glass-card rounded-[var(--radius-card)] text-foreground transition-[box-shadow,transform] duration-300 hover:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_18px_40px_-20px_rgba(15,23,42,0.28)]",
+        className,
       )}
       {...props}
     />
@@ -15,15 +15,15 @@ export function Card({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 export function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("flex flex-col gap-1.5 p-6 pb-4", className)} {...props} />;
+  return <div className={cn("flex flex-col gap-1 p-6 pb-4", className)} {...props} />;
 }
 
 export function CardTitle({ className, ...props }: React.ComponentProps<"h3">) {
-  return <h3 className={cn("text-base sm:text-lg font-extrabold text-[#0F172A] leading-tight tracking-tight", className)} {...props} />;
+  return <h3 className={cn("text-[17px] font-semibold leading-tight text-ink", className)} {...props} />;
 }
 
 export function CardDescription({ className, ...props }: React.ComponentProps<"p">) {
-  return <p className={cn("text-xs text-[#64748B] font-medium leading-relaxed", className)} {...props} />;
+  return <p className={cn("text-xs leading-relaxed text-muted-foreground", className)} {...props} />;
 }
 
 export function CardContent({ className, ...props }: React.ComponentProps<"div">) {
@@ -31,5 +31,5 @@ export function CardContent({ className, ...props }: React.ComponentProps<"div">
 }
 
 export function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("flex items-center p-6 pt-0 border-t border-[#E2E8F0] mt-4 pt-4", className)} {...props} />;
+  return <div className={cn("mt-4 flex items-center border-t border-line p-6 pt-4", className)} {...props} />;
 }
