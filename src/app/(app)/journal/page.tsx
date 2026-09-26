@@ -14,6 +14,8 @@ import { isIsoDate } from "@/lib/accounting/fiscal";
 import { listJournalEntries } from "@/services/journal.service";
 import { getI18n } from "@/i18n/server";
 import { StatusBadge } from "./status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { BookOpen } from "lucide-react";
 
 export default async function JournalPage({
   searchParams,
@@ -73,7 +75,15 @@ export default async function JournalPage({
           <TableBody>
             {entries.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">{t.common.noData}</TableCell>
+                <TableCell colSpan={6} className="py-8">
+                  <EmptyState
+                    title="دفتر القيود فارغ"
+                    description="لم يتم إدخال أي قيود محاسبية بعد. يمكنك إنشاء قيد جديد كبدء لميزانيتك الفندقية."
+                    actionHref="/journal/new"
+                    actionLabel="تسجيل قيد جديد"
+                    icon={BookOpen}
+                  />
+                </TableCell>
               </TableRow>
             )}
             {entries.map((e) => (

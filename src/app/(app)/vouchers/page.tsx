@@ -12,6 +12,8 @@ import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { listVouchers } from "@/services/vouchers.service";
 import { getI18n } from "@/i18n/server";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Receipt } from "lucide-react";
 
 export default async function VouchersPage({ searchParams }: { searchParams: Promise<{ type?: string; q?: string }> }) {
   const ctx = await requireAppContext(PERMISSIONS.paymentsView);
@@ -55,7 +57,17 @@ export default async function VouchersPage({ searchParams }: { searchParams: Pro
           </TableHeader>
           <TableBody>
             {vouchers.length === 0 && (
-              <TableRow><TableCell colSpan={7} className="py-10 text-center text-muted-foreground">{t.common.noData}</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={7} className="py-8">
+                  <EmptyState
+                    title="سجل سندات القبض والصرف فارغ"
+                    description="لم يتم إصدار أي سند قبض أو صرف بعد. يمكنك تسجيل سند قبض جديد من النزلاء أو سند صرف للموردين."
+                    actionHref="/vouchers/new?type=receipt"
+                    actionLabel="إصدار سند قبض جديد"
+                    icon={Receipt}
+                  />
+                </TableCell>
+              </TableRow>
             )}
             {vouchers.map((v) => (
               <TableRow key={v.id} className={v.status === "voided" ? "opacity-60" : ""}>

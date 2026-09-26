@@ -102,3 +102,23 @@ export async function periodAction(op: "close" | "open" | "closeYear" | "newYear
     return undefined;
   }), "/periods");
 }
+
+export async function resetHotelDataAction(): Promise<ActionResult<undefined>> {
+  const ctx = await requireAppContext(PERMISSIONS.hotelManage);
+  return done(await toActionResult(async () => {
+    const hotelId = ctx.hotel.id;
+    // Safely delete transaction tables in foreign key order
+    await ctx.supabase.from("folio_transactions").delete().eq("hotel_id", hotelId);
+    await ctx.supabase.from("guest_folios").delete().eq("hotel_id", hotelId);
+    await ctx.supabase.from("invoices").delete().eq("hotel_id", hotelId);
+    await ctx.supabase.from("payments").delete().eq("hotel_id", hotelId);
+    await ctx.supabase.from("vendor_bills").delete().eq("hotel_id", hotelId);
+    await ctx.supabase.from("purchase_orders").delete().eq("hotel_id", hotelId);
+    await ctx.supabase.from("payroll_runs").delete().eq("hotel_id", hotelId);
+    await ctx.supabase.from("bank_statement_lines").delete().eq("hotel_id", hotelId);
+    await ctx.supabase.from("fixed_assets").delete().eq("hotel_id", hotelId);
+    await ctx.supabase.from("journal_entries").delete().eq("hotel_id", hotelId);
+    return undefined;
+  }), "/");
+}
+

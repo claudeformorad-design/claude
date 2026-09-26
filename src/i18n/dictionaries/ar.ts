@@ -31,7 +31,7 @@ export const ar = {
     status: "الحالة",
     currency: "العملة",
     optional: "اختياري",
-    language: "English",
+    language: "العربية",
     noData: "لا توجد بيانات",
     signOut: "تسجيل الخروج",
   },

@@ -122,36 +122,44 @@ export function Sidebar({ labels, hotelName }: { labels: NavLabels; hotelName: s
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-e bg-card">
-      <div className="border-b px-5 py-4">
-        <p className="truncate font-semibold">{hotelName}</p>
+    <aside className="flex h-full w-64 shrink-0 flex-col border-e border-[#1E293B] bg-[#0F172A] text-white shadow-lg">
+      <div className="flex items-center gap-3 border-b border-white/10 px-5 py-4 bg-[#1E293B]/50 backdrop-blur-md">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#FFD369] text-[#0F172A] shadow-sm font-black gold-glow">
+          <Building2 className="size-5 font-bold" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-extrabold text-white tracking-tight">{hotelName}</p>
+          <p className="text-[10.5px] font-bold text-[#FFD369] tracking-wide">النظام المحاسبي الفندقي</p>
+        </div>
       </div>
-      <nav className="flex-1 space-y-5 overflow-y-auto p-3">
+      <nav className="flex-1 space-y-4 overflow-y-auto p-3 scrollbar-thin">
         {groups.map((group, gi) => (
           <div key={gi} className="space-y-1">
             {group.title && (
-              <p className="px-3 pb-1 text-xs font-medium text-muted-foreground">{group.title}</p>
+              <p className="px-3 pb-1 pt-2.5 text-[10px] font-black uppercase tracking-widest text-[#94A3B8]">{group.title}</p>
             )}
             {group.items.map((item) =>
               item.soon ? (
                 <span
                   key={item.label}
-                  className="flex cursor-not-allowed items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground/70"
+                  className="flex cursor-not-allowed items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-[#64748B]"
                 >
                   <item.icon className="size-4" />
                   <span className="flex-1">{item.label}</span>
-                  <span className="rounded bg-muted px-1.5 text-[10px]">{labels.comingSoon}</span>
+                  <span className="rounded-md bg-[#1E293B] px-1.5 py-0.5 text-[10px] text-[#94A3B8]">{labels.comingSoon}</span>
                 </span>
               ) : (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent",
-                    isActive(item.href) && "bg-accent font-medium text-accent-foreground",
+                    "group flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold transition-all duration-150",
+                    isActive(item.href)
+                      ? "bg-[#FFD369] text-[#0F172A] font-extrabold shadow-sm gold-glow translate-x-0.5"
+                      : "text-slate-300 hover:bg-white/10 hover:text-white",
                   )}
                 >
-                  <item.icon className="size-4" />
+                  <item.icon className={cn("size-4 transition-transform group-hover:scale-110", isActive(item.href) ? "text-[#0F172A]" : "text-[#94A3B8]")} />
                   {item.label}
                 </Link>
               ),

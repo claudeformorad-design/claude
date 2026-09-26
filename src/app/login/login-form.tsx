@@ -54,7 +54,16 @@ export function LoginForm({ t }: { t: Pick<Dictionary, "auth" | "errors"> }) {
       <Button type="submit" className="w-full" disabled={signingIn || signingUp}>
         {mode === "in" ? t.auth.signIn : t.auth.signUp}
       </Button>
-      <Button type="button" variant="link" className="w-full" onClick={() => setMode(mode === "in" ? "up" : "in")}>
+      <Button
+        type="button"
+        variant="ghost"
+        className="w-full cursor-pointer text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setMode((m) => (m === "in" ? "up" : "in"));
+        }}
+      >
         {mode === "in" ? t.auth.noAccount : t.auth.haveAccount}
       </Button>
     </form>

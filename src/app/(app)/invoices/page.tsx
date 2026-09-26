@@ -14,6 +14,8 @@ import { toMoney } from "@/lib/accounting/money";
 import { listInvoices } from "@/services/invoices.service";
 import { getI18n } from "@/i18n/server";
 import { InvoiceStatusBadge } from "./status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { FileText } from "lucide-react";
 
 export default async function InvoicesPage({ searchParams }: { searchParams: Promise<{ status?: string; q?: string; customer?: string }> }) {
   const ctx = await requireAppContext(PERMISSIONS.invoicesView);
@@ -53,7 +55,17 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
           </TableHeader>
           <TableBody>
             {invoices.length === 0 && (
-              <TableRow><TableCell colSpan={7} className="py-10 text-center text-muted-foreground">{t.common.noData}</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={7} className="py-8">
+                  <EmptyState
+                    title="لا توجد فواتير ضريبية صادرة"
+                    description="لم يتم إصدار أي فاتورة ضريبية بعد. يمكنك إصدار فاتورة مباشرة للنزلاء أو الشركات."
+                    actionHref="/invoices/new"
+                    actionLabel="إصدار فاتورة جديدة"
+                    icon={FileText}
+                  />
+                </TableCell>
+              </TableRow>
             )}
             {invoices.map((i) => (
               <TableRow key={i.id}>

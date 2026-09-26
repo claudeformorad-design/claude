@@ -14,7 +14,7 @@ import { getI18n } from "@/i18n/server";
 import { cn } from "@/lib/utils";
 import { AccountForm } from "./account-form";
 
-export const metadata = { title: "Chart of Accounts" };
+export const metadata = { title: "دليل الحسابات" };
 
 export default async function AccountsPage({
   searchParams,

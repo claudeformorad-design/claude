@@ -61,7 +61,7 @@ export async function getRoomStats(supabase: SupabaseServerClient, hotelId: stri
     .rpc("room_statistics", { p_hotel_id: hotelId, p_from: from, p_to: to })
     .select("business_date, room_nights::text, room_revenue::text, rooms_available");
   raise(error);
-  const days = (data ?? []) as unknown as (RoomDay & { business_date: string })[];
+  const days = (Array.isArray(data) ? data : []) as unknown as (RoomDay & { business_date: string })[];
   return { days, kpis: roomKpis(days) };
 }
 
@@ -70,7 +70,7 @@ export async function getDailyCash(supabase: SupabaseServerClient, hotelId: stri
     .rpc("daily_cash_report", { p_hotel_id: hotelId, p_date: date })
     .select("payment_method_id, method_name, source, receipts::text, payments::text");
   raise(error);
-  return (data ?? []) as unknown as { payment_method_id: string; method_name: string; source: "folio" | "voucher"; receipts: string; payments: string }[];
+  return (Array.isArray(data) ? data : []) as unknown as { payment_method_id: string; method_name: string; source: "folio" | "voucher"; receipts: string; payments: string }[];
 }
 
 export async function getMonthlyPnl(supabase: SupabaseServerClient, hotelId: string, from: string, to: string) {
@@ -78,5 +78,5 @@ export async function getMonthlyPnl(supabase: SupabaseServerClient, hotelId: str
     .rpc("monthly_pnl", { p_hotel_id: hotelId, p_from: from, p_to: to })
     .select("month, revenue::text, expenses::text");
   raise(error);
-  return (data ?? []) as unknown as { month: string; revenue: string; expenses: string }[];
+  return (Array.isArray(data) ? data : []) as unknown as { month: string; revenue: string; expenses: string }[];
 }

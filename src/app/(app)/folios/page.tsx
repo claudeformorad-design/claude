@@ -12,6 +12,8 @@ import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { listFolios } from "@/services/folio.service";
 import { getI18n } from "@/i18n/server";
+import { EmptyState } from "@/components/ui/empty-state";
+import { BedDouble } from "lucide-react";
 
 export default async function FoliosPage({ searchParams }: { searchParams: Promise<{ status?: string; q?: string }> }) {
   const ctx = await requireAppContext(PERMISSIONS.folioView);
@@ -55,7 +57,17 @@ export default async function FoliosPage({ searchParams }: { searchParams: Promi
           </TableHeader>
           <TableBody>
             {folios.length === 0 && (
-              <TableRow><TableCell colSpan={8} className="py-10 text-center text-muted-foreground">{t.common.noData}</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={8} className="py-8">
+                  <EmptyState
+                    title="لا توجد حسابات نزلاء (فوليو) مفتوحة"
+                    description="لم يتم فتح أي فوليو حالياً. يمكنك إضافة فتح حساب نزيل أو مجموعة عند وصول الضيوف."
+                    actionHref="/folios/new"
+                    actionLabel="فتح حساب فوليو جديد"
+                    icon={BedDouble}
+                  />
+                </TableCell>
+              </TableRow>
             )}
             {folios.map((f) => (
               <TableRow key={f.id}>

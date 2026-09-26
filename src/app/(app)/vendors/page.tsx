@@ -10,6 +10,8 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import { listVendors } from "@/services/payables.service";
 import { getI18n } from "@/i18n/server";
 import { VendorForm } from "./vendor-form";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Truck } from "lucide-react";
 
 export default async function VendorsPage({ searchParams }: { searchParams: Promise<{ edit?: string; new?: string }> }) {
   const ctx = await requireAppContext(PERMISSIONS.vendorsView);
@@ -38,7 +40,19 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
               <TableHead>{t.common.status}</TableHead>{can && <TableHead />}
             </TableRow></TableHeader>
             <TableBody>
-              {vendors.length === 0 && <TableRow><TableCell colSpan={6} className="py-10 text-center text-muted-foreground">{t.common.noData}</TableCell></TableRow>}
+              {vendors.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-8">
+                    <EmptyState
+                      title="سجل الموردين فارغ"
+                      description="لم يتم تسجيل أي موردين بعد. يمكنك إضافة الموردين المعتمدين للفندق لإصدار فواتير الشراء وأوامر التوريد."
+                      actionHref="/vendors?new=1"
+                      actionLabel="إضافة مورد جديد"
+                      icon={Truck}
+                    />
+                  </TableCell>
+                </TableRow>
+              )}
               {vendors.map((v) => (
                 <TableRow key={v.id}>
                   <TableCell className="num">{v.code}</TableCell>

@@ -20,10 +20,13 @@ export interface RoomKpis {
 
 export function roomKpis(days: readonly RoomDay[]): RoomKpis {
   let sold = ZERO, available = ZERO, revenue = ZERO;
-  for (const d of days) {
-    sold = sold.plus(toMoney(d.room_nights));
-    available = available.plus(d.rooms_available);
-    revenue = revenue.plus(toMoney(d.room_revenue));
+  if (Array.isArray(days)) {
+    for (const d of days) {
+      if (!d) continue;
+      sold = sold.plus(toMoney(d.room_nights));
+      available = available.plus(toMoney(d.rooms_available ?? 0));
+      revenue = revenue.plus(toMoney(d.room_revenue));
+    }
   }
   return {
     roomNightsSold: sold,

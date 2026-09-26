@@ -4,7 +4,7 @@
   "private": true,
   "description": "نظام محاسبي فندقي شامل — Hotel Accounting System",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3000 -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -26,6 +26,7 @@
     "decimal.js": "^10.6.0",
     "exceljs": "^4.4.0",
     "lucide-react": "^1.48.0",
+    "motion": "^13.4.4",
     "next": "^16.3.6",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
