@@ -32,7 +32,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
           <Button asChild><Link href="/invoices/new"><Plus />{t.invoices.newDirect}</Link></Button>
         )}
       />
-      <form className="mb-4 flex flex-wrap gap-2">
+      <form className="toolbar">
         <Input name="q" defaultValue={sp.q} placeholder={t.common.search} className="w-56" />
         <NativeSelect name="status" defaultValue={sp.status ?? ""} className="w-40">
           <option value="">{t.common.status}</option>

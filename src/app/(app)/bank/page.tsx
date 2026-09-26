@@ -34,7 +34,7 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
   return (
     <>
       <PageHeader title={t.nav.bank} description={t.payables.bankSubtitle} />
-      <form className="mb-4 flex gap-2">
+      <form className="toolbar">
         <NativeSelect name="account" defaultValue={accountId} className="w-72">
           {banks.map((a) => <option key={a.id} value={a.id}>{a.code} — {name(a)}</option>)}
         </NativeSelect>

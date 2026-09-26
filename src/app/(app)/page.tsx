@@ -248,22 +248,23 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   return (
     <div className="space-y-5 pb-4">
       {/* لافتة ملوّنة: العنوان والتاريخ والبحث */}
-      <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-l from-[#fb8c2b] via-[#e8457a] to-[#2e90fa] px-6 py-7 text-white md:px-8">
-        <div aria-hidden className="pointer-events-none absolute -end-16 -top-24 size-72 rounded-full bg-white/15" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-32 start-1/3 size-80 rounded-full bg-white/10" />
-        <div aria-hidden className="bar-stripes pointer-events-none absolute inset-0 opacity-20" />
+      <div className="relative overflow-hidden rounded-[24px] bg-ink px-6 py-7 text-white md:px-8">
+        {/* دوائر ملوّنة صلبة للزينة (بلا تدرّجات) */}
+        <div aria-hidden className="pointer-events-none absolute -end-10 -top-16 size-44 rounded-full bg-brand-orange/90" />
+        <div aria-hidden className="pointer-events-none absolute end-28 -top-6 size-16 rounded-full bg-brand-blue" />
+        <div aria-hidden className="pointer-events-none absolute -bottom-20 end-44 size-36 rounded-full bg-[#e8457a]/85" />
         <div className="relative flex flex-wrap items-center justify-between gap-5">
           <div className="min-w-0 space-y-1.5">
-            <p className="text-[13px] text-white/85">{businessDate}</p>
+            <p className="text-[13px] text-white/70">{businessDate}</p>
             <h1 className="text-[32px] font-normal leading-tight tracking-tight">{t.dashboard.title}</h1>
-            <p className="text-[13px] text-white/85">تابع أداء فندقك المالي لحظة بلحظة — كل رقم من القيود المرحّلة مباشرة</p>
+            <p className="text-[13px] text-white/70">تابع أداء فندقك المالي لحظة بلحظة — كل رقم من القيود المرحّلة مباشرة</p>
           </div>
           <div className="w-full max-w-md space-y-3">
-            <SearchPill className="border-white/40 bg-white/95 text-slate-500 hover:bg-white" />
+            <SearchPill className="border-transparent bg-white text-slate-500 hover:bg-white" />
             <nav className="flex items-center gap-1.5 overflow-x-auto lg:hidden">
               {RANGES.map((x) => (
                 <Link key={x.key} href={x.key === "month" ? "/" : `/?range=${x.key}`}
-                  className={cn("whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px]", range === x.key ? "bg-white text-ink" : "bg-white/20 text-white hover:bg-white/30")}>
+                  className={cn("whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px]", range === x.key ? "bg-white text-ink" : "bg-white/15 text-white hover:bg-white/25")}>
                   {x.label}
                 </Link>
               ))}
@@ -487,8 +488,8 @@ function StatTile({
   valueClass?: string;
 }) {
   return (
-    <div className="surface group relative overflow-hidden p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_16px_32px_-20px_rgba(17,24,39,0.35)]"
-      style={{ backgroundImage: `linear-gradient(160deg, ${color}1f 0%, transparent 55%)` }}>
+    <div className="surface group relative overflow-hidden p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_16px_32px_-20px_rgba(17,24,39,0.35)]">
+      <span aria-hidden className="absolute inset-x-0 top-0 h-1" style={{ background: color }} />
       <div className="flex items-center justify-between">
         <span className="flex size-11 items-center justify-center rounded-2xl text-white transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110"
           style={{ background: color, boxShadow: `0 10px 22px -10px ${color}` }}>

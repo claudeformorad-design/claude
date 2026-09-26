@@ -28,7 +28,7 @@ export default async function AgingPage({ searchParams }: { searchParams: Promis
     <>
       <PageHeader title={t.nav.aging} description={t.payables.agingSubtitle}
         actions={<Button asChild variant="outline"><a href={`/api/export/aging-${kind}?to=${asOf}`}><FileSpreadsheet />{t.reports.exportExcel}</a></Button>} />
-      <form className="mb-4 flex flex-wrap gap-2">
+      <form className="toolbar">
         <NativeSelect name="kind" defaultValue={kind} className="w-56">
           <option value="receivable">{t.payables.receivable}</option><option value="payable">{t.payables.payable}</option>
         </NativeSelect>

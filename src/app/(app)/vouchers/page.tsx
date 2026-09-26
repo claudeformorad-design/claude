@@ -33,7 +33,7 @@ export default async function VouchersPage({ searchParams }: { searchParams: Pro
           </>
         }
       />
-      <form className="mb-4 flex flex-wrap gap-2">
+      <form className="toolbar">
         <Input name="q" defaultValue={sp.q} placeholder={t.common.search} className="w-56" />
         <NativeSelect name="type" defaultValue={sp.type ?? ""} className="w-36">
           <option value="">{t.vouchers.type}</option>

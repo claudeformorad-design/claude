@@ -21,7 +21,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <PageHeader title={t.nav.audit} description={a.auditSubtitle} />
-      <form className="mb-4 flex gap-2">
+      <form className="toolbar">
         <Input name="table" defaultValue={sp.table} placeholder={a.table} dir="ltr" className="w-60" />
         <Button type="submit" variant="outline">{t.common.apply}</Button>
       </form>

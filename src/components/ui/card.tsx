@@ -16,7 +16,15 @@ export function CardHeader({ className, ...props }: React.ComponentProps<"div">)
 }
 
 export function CardTitle({ className, ...props }: React.ComponentProps<"h3">) {
-  return <h3 className={cn("text-[15px] font-medium leading-tight text-ink", className)} {...props} />;
+  return (
+    <h3
+      className={cn(
+        "flex items-center gap-2 text-[15px] font-medium leading-tight text-ink before:h-4 before:w-1 before:shrink-0 before:rounded-full before:bg-[var(--section)] before:content-['']",
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 export function CardDescription({ className, ...props }: React.ComponentProps<"p">) {

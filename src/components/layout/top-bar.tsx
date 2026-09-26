@@ -99,7 +99,7 @@ export function TopBar({
 
       {/* الشعار واسم المنشأة */}
       <Link href="/" className="flex min-w-0 items-center gap-2.5">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-orange via-[#e8457a] to-brand-blue text-white">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-ink text-white">
           <Building2 className="size-[18px]" />
         </span>
         <span className="hidden min-w-0 leading-tight sm:block">
@@ -132,7 +132,7 @@ export function TopBar({
           <Settings className="size-[18px]" />
         </Link>
         <div className="ms-1 flex items-center gap-2.5">
-          <div className="flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-brand-orange to-brand-blue text-[13px] font-medium text-white">
+          <div className="flex size-10 items-center justify-center rounded-full bg-brand-blue text-[13px] font-medium text-white">
             {initials}
           </div>
           <div className="hidden leading-tight md:block">

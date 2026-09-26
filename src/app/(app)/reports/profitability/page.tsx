@@ -44,7 +44,7 @@ export default async function ProfitabilityPage({ searchParams }: { searchParams
     <>
       <PageHeader title={t.nav.profitability} description={p.subtitle}
         actions={<Button asChild variant="outline"><a href={`/api/export/profitability?from=${from}&to=${to}`}><FileSpreadsheet />{t.reports.exportExcel}</a></Button>} />
-      <form className="mb-4 flex flex-wrap gap-2">
+      <form className="toolbar">
         <Input type="date" name="from" defaultValue={from} dir="ltr" className="w-40" aria-label={t.common.from} />
         <Input type="date" name="to" defaultValue={to} dir="ltr" className="w-40" aria-label={t.common.to} />
         <Button type="submit" variant="outline">{t.common.apply}</Button>

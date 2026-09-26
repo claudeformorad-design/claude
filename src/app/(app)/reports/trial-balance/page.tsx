@@ -42,7 +42,7 @@ export default async function TrialBalancePage({
       <PageHeader title={t.trialBalance.title} description={`${t.trialBalance.subtitle} (${ctx.hotel.base_currency})`}
         actions={<Button asChild variant="outline"><a href={`/api/export/trial-balance?from=${from}&to=${to}`}><FileSpreadsheet />{t.reports.exportExcel}</a></Button>} />
 
-      <form className="mb-4 flex flex-wrap items-end gap-2">
+      <form className="toolbar">
         <label className="space-y-1 text-sm">
           <span className="text-muted-foreground">{t.common.from}</span>
           <Input type="date" name="from" defaultValue={from} dir="ltr" className="w-40" />

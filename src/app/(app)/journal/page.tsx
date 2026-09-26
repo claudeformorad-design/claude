@@ -48,7 +48,7 @@ export default async function JournalPage({
         }
       />
 
-      <form className="mb-4 flex flex-wrap items-end gap-2">
+      <form className="toolbar">
         <Input name="q" defaultValue={sp.q} placeholder={t.common.search} className="w-56" />
         <NativeSelect name="status" defaultValue={status ?? ""} className="w-36">
           <option value="">{t.common.status}</option>

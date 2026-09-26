@@ -31,7 +31,7 @@ export default async function FoliosPage({ searchParams }: { searchParams: Promi
           <Button asChild><Link href="/folios/new"><Plus />{t.folio.newFolio}</Link></Button>
         )}
       />
-      <form className="mb-4 flex flex-wrap gap-2">
+      <form className="toolbar">
         <Input name="q" defaultValue={sp.q} placeholder={t.common.search} className="w-56" />
         <NativeSelect name="status" defaultValue={status} className="w-36">
           <option value="open">{t.folio.statuses.open}</option>

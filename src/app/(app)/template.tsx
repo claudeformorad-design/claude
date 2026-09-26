@@ -1,8 +1,17 @@
+"use client";
+
+import { useSection } from "@/components/layout/use-section";
+
 /**
- * انتقال الصفحات: يُعاد تركيب هذا المكوّن مع كل تنقّل، فتُعاد حركة CSS تلقائيًا.
- * الحركة CSS خالصة (لا تعتمد على JavaScript) حتى يبقى المحتوى ظاهرًا دائمًا،
- * وأقسام الصفحة تظهر متتابعة (stagger).
+ * يُعاد تركيبه مع كل تنقّل: حركة دخول CSS (لا تُخفي شيئًا بلا JavaScript)، وأقسام الصفحة
+ * تظهر متتابعة، ولون القسم الحالي يُمرَّر كمتغير --section لكل عناصر الصفحة.
  */
 export default function Template({ children }: { children: React.ReactNode }) {
-  return <div className="page-enter stagger">{children}</div>;
+  const section = useSection();
+  const color = section && section.item.href !== "/" ? section.group.color : "#2e90fa";
+  return (
+    <div className="page-enter stagger" style={{ ["--section" as string]: color }}>
+      {children}
+    </div>
+  );
 }

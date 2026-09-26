@@ -123,19 +123,13 @@ export function IncomeExpenseChart({
     <div className="space-y-3" data-chart="financial">
       <div ref={boxRef} className="relative" onMouseLeave={() => setHover(null)}>
         <svg viewBox={`0 0 ${W} ${H}`} className="h-[230px] w-full overflow-visible" role="img" aria-label={`${labels.revenue} / ${labels.expenses}`}>
-          <defs>
-            <linearGradient id="revArea" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={CHART_COLORS.revenue} stopOpacity="0.18" />
-              <stop offset="100%" stopColor={CHART_COLORS.revenue} stopOpacity="0" />
-            </linearGradient>
-          </defs>
           {ticks.map((v, k) => (
             <g key={k}>
               <line x1={padX + axisW} x2={W - padX} y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="3 5" />
               <text x={padX} y={y(v) + 4} fill="#94a3b8" fontSize="10.5">{compact(v)}</text>
             </g>
           ))}
-          <path d={area} fill="url(#revArea)" className="animate-fade" style={{ animationDelay: "0.6s" }} />
+          <path d={area} fill={CHART_COLORS.revenue} fillOpacity={0.08} className="animate-fade" style={{ animationDelay: "0.6s" }} />
           <path d={linePath(exp)} fill="none" stroke={CHART_COLORS.expenses} strokeWidth="2" strokeLinejoin="round" pathLength={1}
             strokeDasharray="1" className="animate-draw" />
           <path d={linePath(rev)} fill="none" stroke={CHART_COLORS.revenue} strokeWidth="2.25" strokeLinejoin="round" pathLength={1}
