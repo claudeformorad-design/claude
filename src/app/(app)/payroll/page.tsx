@@ -1,0 +1,43 @@
+import Link from "next/link";
+import { Plus } from "lucide-react";
+import { PageHeader } from "@/components/layout/page-header";
+import { Money } from "@/components/money";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { requireAppContext } from "@/lib/auth/context";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { listPayrollRuns } from "@/services/payables.service";
+import { getI18n } from "@/i18n/server";
+
+export default async function PayrollPage() {
+  const ctx = await requireAppContext(PERMISSIONS.payrollManage);
+  const { locale, t } = await getI18n();
+  const runs = await listPayrollRuns(ctx.supabase, ctx.hotel.id);
+  return (
+    <>
+      <PageHeader title={t.nav.payroll} description={t.payables.payrollSubtitle}
+        actions={<Button asChild><Link href="/payroll/new"><Plus />{t.payables.newPayroll}</Link></Button>} />
+      <Card className="overflow-hidden">
+        <Table>
+          <TableHeader><TableRow>
+            <TableHead>#</TableHead><TableHead>{t.payables.month}</TableHead><TableHead>{t.common.date}</TableHead>
+            <TableHead className="text-end">{t.payables.gross}</TableHead><TableHead className="text-end">{t.payables.net}</TableHead><TableHead />
+          </TableRow></TableHeader>
+          <TableBody>
+            {runs.length === 0 && <TableRow><TableCell colSpan={6} className="py-10 text-center text-muted-foreground">{t.common.noData}</TableCell></TableRow>}
+            {runs.map((r) => (
+              <TableRow key={r.id}>
+                <TableCell className="num">{r.run_number}</TableCell><TableCell className="num">{r.period_month.slice(0, 7)}</TableCell>
+                <TableCell className="num">{r.posting_date}</TableCell>
+                <TableCell className="text-end"><Money value={r.total_gross} locale={locale} /></TableCell>
+                <TableCell className="text-end"><Money value={r.total_net} locale={locale} /></TableCell>
+                <TableCell className="text-end">{r.journal_entry_id && <Link className="text-primary hover:underline" href={`/journal/${r.journal_entry_id}`}>{t.journal.entry}</Link>}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+    </>
+  );
+}

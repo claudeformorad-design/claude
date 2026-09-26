@@ -7,3 +7,4 @@ export * from "./errors";
 export * from "./tax";
 export * from "./folio";
 export * from "./receivables";
+export * from "./aging";

@@ -286,6 +286,40 @@ export type PaymentAllocationRow = {
   payment_id: string; invoice_id: string; hotel_id: string; amount: string; created_at: string; created_by: string | null;
 };
 
+
+// ----------------------------------------------------------------------------- المرحلة 3
+export type BillStatus = "open" | "partially_paid" | "paid";
+export type VendorRow = Audit & {
+  id: string; hotel_id: string; code: string; name_ar: string; name_en: string | null; tax_number: string | null;
+  phone: string | null; email: string | null; address: string | null; payment_terms_days: number;
+  default_account_id: string | null; is_active: boolean;
+};
+export type PurchaseOrderRow = {
+  id: string; hotel_id: string; po_number: string; vendor_id: string; order_date: string;
+  status: "open" | "billed" | "cancelled"; notes: string | null; created_at: string; created_by: string | null;
+};
+export type VendorBillRow = {
+  id: string; hotel_id: string; bill_number: string; vendor_id: string; vendor_invoice_no: string | null; po_id: string | null;
+  bill_date: string; due_date: string; subtotal: string; tax_total: string; total: string; amount_paid: string;
+  status: BillStatus; journal_entry_id: string | null; notes: string | null; created_at: string; created_by: string | null;
+};
+export type VendorBillLineRow = {
+  id: string; bill_id: string; hotel_id: string; line_no: number; description: string; account_id: string;
+  department_id: string | null; quantity: string; unit_price: string; net_amount: string; tax_rate_id: string | null; tax_amount: string;
+};
+export type PayrollRunRow = {
+  id: string; hotel_id: string; run_number: string; period_month: string; posting_date: string;
+  total_gross: string; total_net: string; journal_entry_id: string | null; notes: string | null; created_at: string;
+};
+export type BankStatementLineRow = {
+  id: string; hotel_id: string; account_id: string; txn_date: string; description: string; reference: string | null;
+  amount: string; matched_line_id: string | null; matched_at: string | null; matched_by: string | null; created_at: string;
+};
+export type AgingRow = {
+  party_id: string; party_name: string; document_id: string; document_number: string; document_date: string;
+  due_date: string; outstanding: string; days_overdue: number; bucket: "current" | "1_30" | "31_60" | "61_90" | "over_90";
+};
+
 type FolioMoneyArgs = {
   p_folio_id: string; p_payment_method_id: string; p_amount: string;
   p_business_date?: string | null; p_reference?: string | null; p_description?: string | null;
@@ -321,6 +355,13 @@ export type Database = {
       invoice_taxes: ReadOnlyTable<InvoiceTaxRow>;
       payments: ReadOnlyTable<PaymentRow>;
       payment_allocations: ReadOnlyTable<PaymentAllocationRow>;
+      vendors: Table<VendorRow, "hotel_id" | "code" | "name_ar">;
+      purchase_orders: ReadOnlyTable<PurchaseOrderRow>;
+      vendor_bills: ReadOnlyTable<VendorBillRow>;
+      vendor_bill_lines: ReadOnlyTable<VendorBillLineRow>;
+      payroll_runs: ReadOnlyTable<PayrollRunRow>;
+      credit_notes: ReadOnlyTable<{ id: string; hotel_id: string; credit_note_number: string; invoice_id: string; issue_date: string; net_amount: string; tax_amount: string; total: string; reason: string; created_at: string }>;
+      bank_statement_lines: Table<BankStatementLineRow, "hotel_id" | "account_id" | "txn_date" | "description" | "amount">;
     };
     Views: {
       folio_balances: {
@@ -345,6 +386,19 @@ export type Database = {
       };
     };
     Functions: {
+      create_purchase_order: { Args: { p_hotel_id: string; p_vendor_id: string; p_lines: Json; p_order_date?: string | null; p_notes?: string | null }; Returns: string };
+      create_vendor_bill: {
+        Args: { p_hotel_id: string; p_vendor_id: string; p_lines?: Json | null; p_po_id?: string | null; p_bill_date?: string | null; p_vendor_invoice_no?: string | null; p_notes?: string | null };
+        Returns: string;
+      };
+      pay_vendor: {
+        Args: { p_hotel_id: string; p_vendor_id: string; p_payment_method_id: string; p_allocations: Json; p_payment_date?: string | null; p_reference?: string | null; p_description?: string | null };
+        Returns: string;
+      };
+      post_payroll: { Args: { p_hotel_id: string; p_period_month: string; p_lines: Json; p_posting_date?: string | null; p_notes?: string | null }; Returns: string };
+      create_credit_note: { Args: { p_invoice_id: string; p_amount: string; p_reason: string; p_date?: string | null }; Returns: string };
+      auto_match_bank_lines: { Args: { p_hotel_id: string; p_account_id: string }; Returns: number };
+      aging_report: { Args: { p_hotel_id: string; p_kind: "receivable" | "payable"; p_as_of?: string | null }; Returns: AgingRow[] };
       open_folio: {
         Args: {
           p_hotel_id: string; p_guest_name: string; p_folio_type?: FolioType; p_customer_id?: string | null;

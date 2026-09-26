@@ -29,6 +29,15 @@ export const PERMISSIONS = {
   paymentsReceipt: "payments.receipt",
   paymentsDisbursement: "payments.disbursement",
   paymentsVoid: "payments.void",
+  vendorsView: "vendors.view",
+  vendorsManage: "vendors.manage",
+  purchasesManage: "purchases.manage",
+  billsView: "bills.view",
+  billsCreate: "bills.create",
+  payrollManage: "payroll.manage",
+  bankReconcile: "bank.reconcile",
+  creditNote: "invoices.credit_note",
+  agingView: "reports.aging.view",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

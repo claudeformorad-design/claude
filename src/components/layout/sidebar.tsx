@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BedDouble, BookOpen, Boxes, Building2, FileSpreadsheet, FileText, HandCoins, LayoutDashboard, ListTree,
-  Receipt, Scale, Settings, ShoppingCart, Users, Wallet,
+  BedDouble, BookOpen, Boxes, Building2, FileSpreadsheet, FileText, LayoutDashboard, ListTree,
+  Landmark, Receipt, Scale, Settings, ShoppingCart, Truck, UserCog, Users, Wallet, Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +30,13 @@ export interface NavLabels {
   vouchers: string;
   customers: string;
   revenueSettings: string;
+  groupPayables: string;
+  vendors: string;
+  purchaseOrders: string;
+  bills: string;
+  payroll: string;
+  bank: string;
+  aging: string;
 }
 
 type Item = { href: string; label: string; icon: React.ComponentType<{ className?: string }>; soon?: boolean };
@@ -55,15 +62,25 @@ export function Sidebar({ labels, hotelName }: { labels: NavLabels; hotelName: s
       ],
     },
     {
+      title: labels.groupPayables,
+      items: [
+        { href: "/vendors", label: labels.vendors, icon: Truck },
+        { href: "/purchase-orders", label: labels.purchaseOrders, icon: ShoppingCart },
+        { href: "/bills", label: labels.bills, icon: FileSpreadsheet },
+        { href: "/payroll", label: labels.payroll, icon: UserCog },
+        { href: "/bank", label: labels.bank, icon: Landmark },
+      ],
+    },
+    {
       title: labels.groupReports,
-      items: [{ href: "/reports/trial-balance", label: labels.trialBalance, icon: Scale }],
+      items: [
+        { href: "/reports/trial-balance", label: labels.trialBalance, icon: Scale },
+        { href: "/reports/aging", label: labels.aging, icon: Clock },
+      ],
     },
     {
       items: [
         { href: "/settings/revenue", label: labels.revenueSettings, icon: Wallet },
-        { href: "#", label: labels.receivables, icon: HandCoins, soon: true },
-        { href: "#", label: labels.payables, icon: FileSpreadsheet, soon: true },
-        { href: "#", label: labels.expenses, icon: ShoppingCart, soon: true },
         { href: "#", label: labels.assets, icon: Building2, soon: true },
         { href: "#", label: labels.inventory, icon: Boxes, soon: true },
         { href: "#", label: labels.settings, icon: Settings, soon: true },

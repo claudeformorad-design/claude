@@ -11,13 +11,18 @@ import { listTaxRates } from "@/services/revenue-settings.service";
 import { getI18n } from "@/i18n/server";
 import { InvoiceStatusBadge } from "../status-badge";
 import { PrintButton } from "./print-button";
+import { CreditNoteForm } from "./credit-note";
 
 /** فاتورة ضريبية قابلة للطباعة (تصدير PDF الرسمي في المرحلة 5) */
 export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const ctx = await requireAppContext(PERMISSIONS.invoicesView);
   const { locale, t } = await getI18n();
-  const [detail, taxes] = await Promise.all([getInvoice(ctx.supabase, ctx.hotel.id, id), listTaxRates(ctx.supabase, ctx.hotel.id)]);
+  const [detail, taxes, creditNotes] = await Promise.all([
+    getInvoice(ctx.supabase, ctx.hotel.id, id),
+    listTaxRates(ctx.supabase, ctx.hotel.id),
+    ctx.supabase.from("credit_notes").select("id, credit_note_number, issue_date, total::text, reason").eq("invoice_id", id),
+  ]);
   if (!detail) notFound();
   const { invoice: inv, items } = detail;
   const taxById = new Map(taxes.map((x) => [x.id, x]));
@@ -135,9 +140,22 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
               </ul>
             </div>
           )}
+          {(creditNotes.data ?? []).length > 0 && (
+            <div>
+              <p className="mb-2 text-sm font-semibold">{t.payables.creditNote}</p>
+              <ul className="space-y-1 text-sm">
+                {(creditNotes.data ?? []).map((c) => (
+                  <li key={c.id}><span className="num">{c.credit_note_number}</span> · <span className="num">{c.issue_date}</span> · {m(c.total)} — {c.reason}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           {inv.notes && <p className="text-sm text-muted-foreground">{inv.notes}</p>}
         </CardContent>
       </Card>
+      {ctx.can(PERMISSIONS.creditNote) && toMoney(inv.amount_due).gt(toMoney(inv.amount_paid)) && (
+        <CreditNoteForm invoiceId={inv.id} t={{ payables: t.payables, folio: t.folio, errors: t.errors }} />
+      )}
     </div>
   );
 }
