@@ -65,7 +65,7 @@ export function Sidebar({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const railBtn = "flex size-11 items-center justify-center rounded-xl text-slate-500 transition-colors duration-200 hover:text-ink";
+  const railBtn = "flex size-11 items-center justify-center rounded-xl text-slate-600 transition-colors duration-200 hover:bg-subtle hover:text-ink";
 
   return (
     <motion.aside
@@ -82,7 +82,7 @@ export function Sidebar({
         {expanded && (
           <span className="min-w-0 leading-tight">
             <span className="block truncate text-[15px] font-semibold text-ink">{hotelName}</span>
-            <span className="block text-[11px] text-muted-foreground">النظام المحاسبي الفندقي</span>
+            <span className="block text-[11.5px] text-slate-500">النظام المحاسبي الفندقي</span>
           </span>
         )}
       </Link>
@@ -91,7 +91,7 @@ export function Sidebar({
       <div className={cn("mb-4", expanded ? "px-4" : "flex justify-center")}>
         {expanded ? (
           <button type="button" onClick={openSearch}
-            className="flex h-10 w-full items-center gap-2.5 rounded-[10px] bg-subtle px-3 text-[13px] text-slate-400 transition-colors hover:text-slate-600">
+            className="flex h-10 w-full items-center gap-2.5 rounded-[10px] bg-subtle px-3 text-[13px] text-slate-500 transition-colors hover:text-ink">
             <Search className="size-4 stroke-[1.75]" />
             <span className="flex-1 text-start">بحث</span>
             <kbd className="text-[10px] text-slate-400">Ctrl K</kbd>
@@ -126,10 +126,10 @@ export function Sidebar({
                       show(i, e.currentTarget);
                     }
                   }}
-                  className={cn("group relative", railBtn, active && "text-ink", open?.index === i && !active && "text-ink")}
+                  className={cn("group relative", railBtn, active && "text-accent1 hover:bg-transparent hover:text-accent1", open?.index === i && !active && "bg-subtle text-ink")}
                 >
                   {active && (
-                    <motion.span layoutId="rail-active" className="absolute inset-0 rounded-xl bg-white shadow-soft" transition={{ type: "spring", stiffness: 420, damping: 34 }} />
+                    <motion.span layoutId="rail-active" className="absolute inset-0 rounded-xl bg-accent1-tint" transition={{ type: "spring", stiffness: 420, damping: 34 }} />
                   )}
                   <g.icon className="relative z-10 size-[19px] stroke-[1.75]" />
                 </Link>
@@ -157,7 +157,7 @@ export function Sidebar({
       <div className={cn("mt-3 space-y-2", expanded ? "px-4" : "flex flex-col items-center")}>
         {expanded ? (
           <div className="flex items-center gap-3 rounded-xl bg-subtle p-3">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-ink text-[12px] font-medium text-white">{initialsOf(user.name || user.email)}</span>
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent2 text-[12px] font-medium text-white">{initialsOf(user.name || user.email)}</span>
             <span className="min-w-0 flex-1 leading-tight">
               <span className="block truncate text-[13px] font-medium text-ink">{user.name || user.email}</span>
               <span className="block truncate text-[11px] text-muted-foreground">{user.email || user.role}</span>
@@ -171,7 +171,7 @@ export function Sidebar({
             )}
           </div>
         ) : (
-          <span title={`${user.name || user.email} · ${user.role}`} className="flex size-9 items-center justify-center rounded-full bg-ink text-[12px] font-medium text-white">
+          <span title={`${user.name || user.email} · ${user.role}`} className="flex size-9 items-center justify-center rounded-full bg-accent2 text-[12px] font-medium text-white">
             {initialsOf(user.name || user.email)}
           </span>
         )}
@@ -181,7 +181,7 @@ export function Sidebar({
           aria-label={expanded ? "طي القائمة" : "توسيع القائمة"}
           title={expanded ? "طي القائمة" : "توسيع القائمة"}
           className={cn(
-            "flex h-10 items-center gap-2.5 rounded-[10px] text-[13px] text-slate-500 transition-colors duration-200 hover:bg-subtle hover:text-ink",
+            "flex h-10 items-center gap-2.5 rounded-[10px] text-[13px] font-medium text-slate-600 transition-colors duration-200 hover:bg-subtle hover:text-ink",
             expanded ? "w-full px-3" : "size-11 justify-center",
           )}
         >
@@ -217,7 +217,7 @@ function Flyout({
       style={{ top: maxTop, right }}
       className="fixed z-50 w-60 rounded-2xl bg-white p-2 shadow-lift"
     >
-      <p className="px-3 pb-1.5 pt-1 text-[11px] text-slate-400">{group.title}</p>
+      <p className="px-3 pb-1.5 pt-1 text-[11.5px] font-semibold text-slate-500">{group.title}</p>
       {group.items.map((item, i) => {
         const active = isActivePath(pathname, item.href);
         return (
@@ -227,7 +227,7 @@ function Flyout({
               href={item.href}
               className={cn(
                 "flex h-10 items-center gap-3 rounded-[10px] px-3 text-[13px] transition-colors",
-                active ? "bg-subtle font-medium text-ink" : "text-slate-500 hover:text-ink",
+                active ? "bg-accent1-tint font-semibold text-accent1" : "text-slate-700 hover:bg-subtle hover:text-ink",
               )}
             >
               <item.icon className="size-[17px] shrink-0 stroke-[1.75]" />
@@ -256,7 +256,7 @@ function ExpandedNav({ groups, pathname }: { groups: NavGroup[]; pathname: strin
       >
         {groups.map((g) => (
           <div key={g.title} className="space-y-0.5">
-            {g.items.length > 1 && <p className="px-3 pb-1 text-[11px] text-slate-400">{g.title}</p>}
+            {g.items.length > 1 && <p className="px-3 pb-1.5 text-[11.5px] font-semibold text-slate-500">{g.title}</p>}
             {g.items.map((item) => {
               const active = item.href === activeHref;
               return (
@@ -265,14 +265,14 @@ function ExpandedNav({ groups, pathname }: { groups: NavGroup[]; pathname: strin
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "relative flex h-10 items-center gap-3 rounded-[10px] px-3 text-[13px] transition-colors duration-200",
-                    active ? "font-medium text-ink" : "text-slate-500 hover:text-ink",
+                    "relative flex h-10 items-center gap-3 rounded-[10px] px-3 text-[13.5px] font-medium transition-colors duration-200",
+                    active ? "font-semibold text-accent1" : "text-slate-700 hover:bg-subtle hover:text-ink",
                   )}
                 >
                   {active && (
-                    <motion.span layoutId="expanded-active" className="absolute inset-0 rounded-[10px] bg-white shadow-soft" transition={{ type: "spring", stiffness: 420, damping: 36 }} />
+                    <motion.span layoutId="expanded-active" className="absolute inset-0 rounded-[10px] bg-accent1-tint" transition={{ type: "spring", stiffness: 420, damping: 36 }} />
                   )}
-                  <item.icon className="relative z-10 size-[18px] shrink-0 stroke-[1.75]" />
+                  <item.icon className="relative z-10 size-[18px] shrink-0 stroke-[1.9]" />
                   <span className="relative z-10 truncate">{item.label}</span>
                 </Link>
               );

@@ -7,7 +7,9 @@ import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isValidAmount, toMoney } from "@/lib/accounting/money";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { wipeLocalDb } from "@/lib/supabase/local-db";
+import { DEMO_DATA_SQL } from "@/lib/supabase/demo-data.sql";
+import { isDemoDataActive, loadDemoData, removeDemoData, wipeLocalDb } from "@/lib/supabase/local-db";
+import { describeDatabaseError } from "@/lib/accounting/errors";
 import { raise, type ActionResult, toActionResult } from "@/services/errors";
 
 const opt = optText;
@@ -113,6 +115,33 @@ export async function resetHotelDataAction(): Promise<ActionResult<undefined>> {
   await requireAppContext(PERMISSIONS.hotelManage);
   if (isSupabaseConfigured()) return { ok: false, error: "permission_denied", details: "Reset is only available in local trial mode" };
   await wipeLocalDb();
+  revalidatePath("/", "layout");
+  return { ok: true, data: undefined };
+}
+
+/**
+ * بيانات تجريبية مؤقتة (وضع التجربة فقط): تُولَّد عبر دوال النظام الحقيقية بعد أخذ نسخة من القاعدة،
+ * و«حذفها» يستعيد تلك النسخة حرفيًا — فتعود القاعدة كما كانت قبل التوليد تمامًا.
+ */
+export async function loadDemoDataAction(): Promise<ActionResult<undefined>> {
+  const ctx = await requireAppContext(PERMISSIONS.hotelManage);
+  if (isSupabaseConfigured()) return { ok: false, error: "permission_denied" };
+  if (isDemoDataActive()) return { ok: false, error: "unknown", message: "البيانات التجريبية محمّلة بالفعل" };
+  try {
+    await loadDemoData(ctx.hotel.id, DEMO_DATA_SQL);
+  } catch (e) {
+    console.error(e);
+    const msg = e instanceof Error ? e.message : String(e);
+    return { ok: false, error: "unknown", message: describeDatabaseError(msg) ?? "تعذّر توليد البيانات التجريبية؛ لم يتغير شيء." };
+  }
+  revalidatePath("/", "layout");
+  return { ok: true, data: undefined };
+}
+
+export async function removeDemoDataAction(): Promise<ActionResult<undefined>> {
+  await requireAppContext(PERMISSIONS.hotelManage);
+  if (isSupabaseConfigured()) return { ok: false, error: "permission_denied" };
+  await removeDemoData();
   revalidatePath("/", "layout");
   return { ok: true, data: undefined };
 }

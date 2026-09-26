@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { animate, motion, useInView } from "motion/react";
+import { AnimatePresence, animate, motion, useInView } from "motion/react";
 import { CHART_COLORS } from "./chart-colors";
 
 /**
- * مخططات لوحة التحكم (SVG خفيف بحركة ناعمة). القيم تُمرَّر كما هي من الأستاذ العام
- * والدفاتر الفرعية — لا تقدير ولا تنعيم للبيانات؛ التقريب للعرض فقط، والخطوط مستقيمة
- * بين النقاط حتى لا يُظهر المنحنى قيمة لم تحدث.
+ * مخططات لوحة التحكم (SVG خفيف، تفاعلي، بحركة ناعمة). القيم تُمرَّر كما هي من الأستاذ العام
+ * والدفاتر الفرعية — لا تقدير ولا تنعيم؛ التقريب للعرض فقط.
+ * قواعد الرسم: محور واحد، شبكة باهتة، أعمدة رفيعة بنهايات مستديرة 4px وفاصل 2px بين المتجاورات،
+ * خطوط 2px، مفتاح دائم لأكثر من سلسلة، وتلميح عند المرور على كل عنصر. النصوص بألوان النص لا بلون السلسلة.
  */
 
 const fmt = (v: number, digits = 0) =>
@@ -20,7 +21,6 @@ const compact = (v: number) => {
   return fmt(v);
 };
 
-
 const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
 function monthLabel(m: string, short = false): string {
   const [y, mo] = m.split("-");
@@ -28,10 +28,10 @@ function monthLabel(m: string, short = false): string {
   return short ? name : `${name} ${y ?? ""}`.trim();
 }
 
-/**
- * محور بقيم «مستديرة» (1، 2، 2.5، 5 × 10ⁿ) كما يرسمه المصمم: 0، 400، 800، 1.2k …
- * يعيد حدود المحور وقيم التدريج شاملةً الصفر وأي قيم سالبة.
- */
+const GRID = "#ecece9";
+const AXIS_TEXT = "#75756f";
+
+/** محور بقيم «مستديرة» (1، 2، 2.5، 5 × 10ⁿ) يشمل الصفر وأي قيم سالبة */
 function niceScale(min: number, max: number, count = 4): { lo: number; hi: number; ticks: number[] } {
   const span = max - min || Math.abs(max) || 1;
   const raw = span / count;
@@ -61,23 +61,53 @@ function useWidth<T extends HTMLElement>(fallback: number) {
   return [ref, width] as const;
 }
 
-function linePath(pts: ({ x: number; y: number } | null)[]): string {
-  let d = "";
-  let pen = false;
-  for (const p of pts) {
-    if (!p) { pen = false; continue; }
-    d += `${pen ? " L" : " M"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`;
-    pen = true;
+/** عمود بنهاية مستديرة 4px من جهة القيمة فقط، وقاعدة مستقيمة على خط الصفر */
+function barPath(x: number, w: number, y0: number, y1: number, r = 4): string {
+  const h = Math.abs(y1 - y0);
+  if (h < 0.5) return "";
+  const rr = Math.min(r, w / 2, h);
+  if (y1 < y0) {
+    return `M${x},${y0} V${y1 + rr} Q${x},${y1} ${x + rr},${y1} H${x + w - rr} Q${x + w},${y1} ${x + w},${y1 + rr} V${y0} Z`;
   }
-  return d.trim();
+  return `M${x},${y0} V${y1 - rr} Q${x},${y1} ${x + rr},${y1} H${x + w - rr} Q${x + w},${y1} ${x + w},${y1 - rr} V${y0} Z`;
 }
 
-/** حالة فارغة هادئة: جملة واحدة في مساحة المخطط نفسها، بلا أيقونات أو إطارات */
+/** حالة فارغة هادئة: جملة واحدة في مساحة المخطط نفسها */
 function EmptyChart({ title, hint }: { title: string; hint: string }) {
   return (
     <div className="flex min-h-40 flex-col items-center justify-center px-6 text-center">
-      <p className="text-[13px] text-ink">{title}</p>
-      <p className="mt-1 max-w-xs text-[12px] leading-relaxed text-muted-foreground">{hint}</p>
+      <p className="text-[13px] font-medium text-ink">{title}</p>
+      <p className="mt-1 max-w-xs text-[12px] leading-relaxed text-slate-600">{hint}</p>
+    </div>
+  );
+}
+
+function Tooltip({ children, style }: { children: React.ReactNode; style: React.CSSProperties }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 4, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.14 }}
+      className="pointer-events-none absolute z-20 min-w-44 rounded-xl bg-white p-3 text-[12px] text-ink shadow-lift"
+      style={style}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function TipRow({ color, label, value, suffix, strong }: { color?: string; label: string; value: string; suffix?: string; strong?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-0.5">
+      <span className="flex items-center gap-1.5 text-slate-600">
+        {color && <span className="size-2 rounded-full" style={{ background: color }} />}
+        {label}
+      </span>
+      <span className={`num ${strong ? "font-semibold" : ""}`}>
+        {value}
+        {suffix && <span className="ms-1 text-slate-500">{suffix}</span>}
+      </span>
     </div>
   );
 }
@@ -103,8 +133,48 @@ export function AnimatedNumber({ value, text, digits = 2, className }: { value: 
 }
 
 // =============================================================================
-// الإيرادات مقابل المصروفات (خطان + تلميح عند المرور)
+// خط صغير داخل بطاقة الإحصاء (اتجاه آخر 6 أشهر) مع قيمة الشهر عند المرور
 // =============================================================================
+export function Sparkline({ values, months, color, currency }: { values: number[]; months: string[]; color: string; currency: string }) {
+  const [hover, setHover] = useState<number | null>(null);
+  const [ref, W] = useWidth<HTMLDivElement>(160);
+  if (values.length < 2 || values.every((v) => v === 0)) return <div className="h-10" />;
+  const H = 40, pad = 3;
+  const lo = Math.min(...values, 0), hi = Math.max(...values, 0);
+  const x = (i: number) => pad + ((W - pad * 2) * i) / (values.length - 1);
+  const y = (v: number) => pad + ((hi - v) / (hi - lo || 1)) * (H - pad * 2);
+  const d = values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const area = `${d} L${x(values.length - 1)},${y(Math.max(lo, 0))} L${x(0)},${y(Math.max(lo, 0))} Z`;
+  return (
+    <div ref={ref} className="relative h-10" onMouseLeave={() => setHover(null)}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="h-10 w-full overflow-visible" aria-hidden>
+        <path d={area} fill={color} fillOpacity={0.1} className="animate-fade" style={{ animationDelay: "0.5s" }} />
+        <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" pathLength={1} strokeDasharray="1" className="animate-draw" />
+        {values.map((v, i) => (
+          <g key={i}>
+            {(hover === i || (hover === null && i === values.length - 1)) && (
+              <circle cx={x(i)} cy={y(v)} r={3.5} fill={color} stroke="#fff" strokeWidth="2" />
+            )}
+            <rect x={x(i) - (W / values.length) / 2} y={0} width={W / values.length} height={H} fill="transparent" onMouseEnter={() => setHover(i)} />
+          </g>
+        ))}
+      </svg>
+      {hover !== null && (
+        <div className="pointer-events-none absolute -top-8 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg bg-ink px-2 py-1 text-[11px] text-white"
+          style={{ left: `${(x(hover) / W) * 100}%` }}>
+          {monthLabel(months[hover]!, true)}: <span className="num">{compact(values[hover]!)}</span> {currency}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
+// الإيرادات والمصروفات: أعمدة مجمّعة لكل شهر + خط صافي النتيجة، بنفس المحور
+// المفتاح يُخفي/يُظهر السلاسل (اللون يتبع السلسلة دائمًا)
+// =============================================================================
+type SeriesKey = "revenue" | "expenses" | "net";
+
 export function IncomeExpenseChart({
   data, currency, labels,
 }: {
@@ -113,101 +183,108 @@ export function IncomeExpenseChart({
   labels: { revenue: string; expenses: string; net: string };
 }) {
   const [hover, setHover] = useState<number | null>(null);
-  const [boxRef, W] = useWidth<HTMLDivElement>(360);
+  const [shown, setShown] = useState<Record<SeriesKey, boolean>>({ revenue: true, expenses: true, net: true });
+  const [boxRef, W] = useWidth<HTMLDivElement>(560);
   if (!data.some((d) => d.revenue !== 0 || d.expenses !== 0)) {
     return <EmptyChart title="لا توجد حركات مرحّلة بعد" hint="يُرسم المخطط من القيود المرحّلة في الأستاذ العام تلقائيًا." />;
   }
-  const H = 230, padX = 6, padT = 18, padB = 30, axisW = 40;
-  const plotW = W - padX * 2 - axisW, plotH = H - padT - padB;
-  const top = Math.max(...data.map((d) => Math.max(d.revenue, d.expenses)), 0);
-  const bottom = Math.min(...data.map((d) => Math.min(d.revenue, d.expenses)), 0);
-  const scale = niceScale(bottom < 0 ? bottom * 1.05 : 0, top * 1.05);
-  const maxV = scale.hi, minV = scale.lo;
-  const x = (i: number) => padX + axisW + (data.length === 1 ? plotW / 2 : (plotW * i) / (data.length - 1));
-  const y = (v: number) => padT + ((maxV - v) / (maxV - minV)) * plotH;
-  const rev = data.map((d, i) => ({ x: x(i), y: y(d.revenue) }));
-  const exp = data.map((d, i) => ({ x: x(i), y: y(d.expenses) }));
-  const base = y(Math.max(minV, 0));
-  const area = `${linePath(rev)} L ${rev[rev.length - 1]!.x} ${base} L ${rev[0]!.x} ${base} Z`;
-  const ticks = scale.ticks;
-  const h = hover !== null ? data[hover] : undefined;
+  const rows = data.map((d) => ({ ...d, net: d.revenue - d.expenses }));
+  const H = 260, padT = 16, padB = 30, axisW = 44;
+  const plotW = W - axisW, plotH = H - padT - padB;
+  const vals = rows.flatMap((d) => [shown.revenue ? d.revenue : 0, shown.expenses ? d.expenses : 0, shown.net ? d.net : 0]);
+  const scale = niceScale(Math.min(0, ...vals) * 1.05, Math.max(0, ...vals) * 1.08);
+  const y = (v: number) => padT + ((scale.hi - v) / (scale.hi - scale.lo)) * plotH;
+  const band = plotW / rows.length;
+  // RTL: الشهر الأحدث يسارًا كما يُقرأ المحور الزمني في الواجهة العربية
+  const cx = (i: number) => W - axisW - band * (i + 0.5);
+  const barW = Math.min(22, band * 0.28);
+  const gap = 2;
+  const y0 = y(0);
+  const netPts = rows.map((d, i) => ({ x: cx(i), y: y(d.net) }));
+  const netPath = netPts.map((p, i) => `${i ? "L" : "M"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  const h = hover !== null ? rows[hover] : undefined;
+  const toggle = (k: SeriesKey) => setShown((s) => ({ ...s, [k]: !s[k] }));
+  const series: { key: SeriesKey; label: string; color: string; line?: boolean }[] = [
+    { key: "revenue", label: labels.revenue, color: CHART_COLORS.revenue },
+    { key: "expenses", label: labels.expenses, color: CHART_COLORS.expenses },
+    { key: "net", label: labels.net, color: CHART_COLORS.net, line: true },
+  ];
 
   return (
-    <div className="space-y-3" data-chart="financial">
+    <div className="space-y-4" data-chart="financial">
+      {/* المفتاح (أزرار إظهار/إخفاء) */}
+      <div className="flex flex-wrap items-center gap-2 text-[12px]">
+        {series.map((s) => (
+          <button key={s.key} type="button" onClick={() => toggle(s.key)} aria-pressed={shown[s.key]}
+            className={`flex items-center gap-2 rounded-full px-3 py-1 transition-colors ${shown[s.key] ? "bg-subtle text-ink" : "text-slate-500 line-through"}`}>
+            {s.line ? <span className="h-0.5 w-3.5 rounded-full" style={{ background: s.color }} /> : <span className="size-2.5 rounded-[3px]" style={{ background: s.color }} />}
+            {s.label}
+          </button>
+        ))}
+        <span className="ms-auto text-slate-500">المبالغ بـ {currency}</span>
+      </div>
+
       <div ref={boxRef} className="relative" onMouseLeave={() => setHover(null)}>
-        <svg viewBox={`0 0 ${W} ${H}`} className="h-[230px] w-full overflow-visible" role="img" aria-label={`${labels.revenue} / ${labels.expenses}`}>
-          {ticks.map((v, k) => (
+        <svg viewBox={`0 0 ${W} ${H}`} className="h-[260px] w-full overflow-visible" role="img" aria-label={`${labels.revenue} / ${labels.expenses} / ${labels.net}`}>
+          {scale.ticks.map((v, k) => (
             <g key={k}>
-              <line x1={padX + axisW} x2={W - padX} y1={y(v)} y2={y(v)} stroke="#ecece9" strokeDasharray="3 5" />
-              <text x={padX} y={y(v) + 4} fill="#b7b7b2" fontSize="10.5">{compact(v)}</text>
+              <line x1={0} x2={W - axisW} y1={y(v)} y2={y(v)} stroke={v === 0 ? "#d3d3ce" : GRID} strokeDasharray={v === 0 ? undefined : "3 5"} />
+              <text x={W - axisW + 8} y={y(v) + 4} fill={AXIS_TEXT} fontSize="11" textAnchor="start">{compact(v)}</text>
             </g>
           ))}
-          <path d={area} fill={CHART_COLORS.revenue} fillOpacity={0.05} className="animate-fade" style={{ animationDelay: "0.6s" }} />
-          <path d={linePath(exp)} fill="none" stroke={CHART_COLORS.expenses} strokeWidth="2" strokeLinejoin="round" pathLength={1}
-            strokeDasharray="1" className="animate-draw" />
-          <path d={linePath(rev)} fill="none" stroke={CHART_COLORS.revenue} strokeWidth="2.25" strokeLinejoin="round" pathLength={1}
-            strokeDasharray="1" className="animate-draw" />
-          {hover !== null && (
-            <line x1={x(hover)} x2={x(hover)} y1={padT} y2={padT + plotH} stroke="#111111" strokeOpacity="0.35" strokeDasharray="4 4" />
-          )}
-          {data.map((_, i) => (
-            <g key={i}>
-              <circle cx={rev[i]!.x} cy={rev[i]!.y} r={hover === i ? 6 : 3.5} fill="#fff" stroke={CHART_COLORS.revenue} strokeWidth="2.5"
-                className="animate-pop transition-all" style={{ animationDelay: `${0.8 + i * 0.06}s` }} />
-              <circle cx={exp[i]!.x} cy={exp[i]!.y} r={hover === i ? 6 : 3.5} fill="#fff" stroke={CHART_COLORS.expenses} strokeWidth="2.5"
-                className="animate-pop transition-all" style={{ animationDelay: `${0.8 + i * 0.06}s` }} />
-              <text x={x(i)} y={H - 8} textAnchor="middle" fill={hover === i ? "#111111" : "#b7b7b2"} fontSize="10.5">{monthLabel(data[i]!.month, true)}</text>
-              <rect x={x(i) - plotW / data.length / 2} y={padT} width={plotW / data.length} height={plotH} fill="transparent"
-                onMouseEnter={() => setHover(i)} className="cursor-crosshair" />
+          {rows.map((d, i) => (
+            <g key={d.month}>
+              {hover === i && <rect x={cx(i) - band / 2 + 4} y={padT - 6} width={band - 8} height={plotH + 12} rx={10} fill="#f2f2f0" />}
+              {shown.revenue && (
+                <motion.path d={barPath(cx(i) + gap / 2, barW, y0, y(d.revenue))} fill={CHART_COLORS.revenue}
+                  initial={{ scaleY: 0 }} animate={{ scaleY: 1 }} transition={{ duration: 0.7, delay: 0.1 + i * 0.06, ease: [0.16, 1, 0.3, 1] }}
+                  style={{ transformOrigin: `0px ${y0}px`, transformBox: "view-box" }} opacity={hover === null || hover === i ? 1 : 0.45} />
+              )}
+              {shown.expenses && (
+                <motion.path d={barPath(cx(i) - gap / 2 - barW, barW, y0, y(d.expenses))} fill={CHART_COLORS.expenses}
+                  initial={{ scaleY: 0 }} animate={{ scaleY: 1 }} transition={{ duration: 0.7, delay: 0.16 + i * 0.06, ease: [0.16, 1, 0.3, 1] }}
+                  style={{ transformOrigin: `0px ${y0}px`, transformBox: "view-box" }} opacity={hover === null || hover === i ? 1 : 0.45} />
+              )}
+              <text x={cx(i)} y={H - 8} textAnchor="middle" fill={hover === i ? "#111111" : AXIS_TEXT} fontSize="11" fontWeight={hover === i ? 600 : 400}>
+                {monthLabel(d.month, true)}
+              </text>
             </g>
+          ))}
+          {shown.net && (
+            <>
+              <path d={netPath} fill="none" stroke={CHART_COLORS.net} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"
+                pathLength={1} strokeDasharray="1" className="animate-draw" style={{ animationDelay: "0.5s" }} />
+              {netPts.map((p, i) => (
+                <circle key={i} cx={p.x} cy={p.y} r={hover === i ? 5.5 : 4} fill={CHART_COLORS.net} stroke="#fff" strokeWidth="2"
+                  className="animate-pop" style={{ animationDelay: `${0.9 + i * 0.05}s` }} />
+              ))}
+            </>
+          )}
+          {rows.map((d, i) => (
+            <rect key={`hit-${d.month}`} x={cx(i) - band / 2} y={0} width={band} height={H} fill="transparent" className="cursor-pointer"
+              onMouseEnter={() => setHover(i)} onClick={() => setHover(i)} />
           ))}
         </svg>
-        {h && hover !== null && (
-          <motion.div
-            key={hover}
-            initial={{ opacity: 0, y: 6, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            className="pointer-events-none absolute top-1 z-10 w-48 -translate-x-1/2 rounded-xl bg-white p-3 text-[11px] text-ink shadow-lift"
-            style={{ left: `${(x(hover) / W) * 100}%` }}
-          >
-            <p className="mb-1.5 font-medium">{monthLabel(h.month)}</p>
-            <Row color={CHART_COLORS.revenue} label={labels.revenue} value={h.revenue} currency={currency} />
-            <Row color={CHART_COLORS.expenses} label={labels.expenses} value={h.expenses} currency={currency} />
-            <div className="mt-1.5 border-t border-line pt-1.5">
-              <Row color={CHART_COLORS.net} label={labels.net} value={h.revenue - h.expenses} currency={currency} />
-            </div>
-          </motion.div>
-        )}
-      </div>
-      <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-600">
-        <Dot color={CHART_COLORS.revenue} label={labels.revenue} />
-        <Dot color={CHART_COLORS.expenses} label={labels.expenses} />
-        <span className="ms-auto text-slate-400">المبالغ بـ {currency}</span>
+        <AnimatePresence>
+          {h && hover !== null && (
+            <Tooltip key={hover} style={{ top: 0, left: `${Math.min(Math.max((cx(hover) / W) * 100, 16), 84)}%`, transform: "translateX(-50%)" }}>
+              <p className="mb-1.5 font-semibold">{monthLabel(h.month)}</p>
+              <TipRow color={CHART_COLORS.revenue} label={labels.revenue} value={fmt(h.revenue, 2)} />
+              <TipRow color={CHART_COLORS.expenses} label={labels.expenses} value={fmt(h.expenses, 2)} />
+              <div className="mt-1.5 border-t border-line pt-1.5">
+                <TipRow color={CHART_COLORS.net} label={labels.net} value={fmt(h.net, 2)} suffix={currency} strong />
+                {h.revenue > 0 && <TipRow label="هامش الربح" value={`${fmt((h.net / h.revenue) * 100, 1)}%`} />}
+              </div>
+            </Tooltip>
+          )}
+        </AnimatePresence>
       </div>
     </div>
-  );
-}
-
-function Row({ color, label, value, currency }: { color: string; label: string; value: number; currency: string }) {
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="flex items-center gap-1.5 text-slate-500"><span className="size-2 rounded-full" style={{ background: color }} />{label}</span>
-      <span className="num">{fmt(value, 2)} <span className="text-slate-400">{currency}</span></span>
-    </div>
-  );
-}
-
-function Dot({ color, label }: { color: string; label: string }) {
-  return (
-    <span className="flex items-center gap-1.5">
-      <span className="size-2.5 rounded-full" style={{ background: color }} />
-      {label}
-    </span>
   );
 }
 
 // =============================================================================
-// دائرة (Donut) بحركة كنس للأجزاء
+// دائرة (Donut) بحصص الأجزاء وفواصل 2px، والمركز يعرض الجزء عند المرور
 // =============================================================================
 export function DonutChart({
   segments, centerTitle, centerValue, emptyTitle, emptyHint, valueSuffix,
@@ -224,62 +301,64 @@ export function DonutChart({
   const total = items.reduce((s, x) => s + x.value, 0);
   if (!items.length || total <= 0) return <EmptyChart title={emptyTitle} hint={emptyHint} />;
 
-  const size = 190, c = size / 2, r = 68, sw = 30, circ = 2 * Math.PI * r;
-  const gap = items.length > 1 ? 5 : 0;
+  const size = 188, c = size / 2, r = 70, sw = 22, circ = 2 * Math.PI * r;
+  const gap = items.length > 1 ? 4 : 0;
   const a = items.find((x) => x.label === active);
-  const uid = items.map((x) => x.label).join("").length + items.length;
 
   return (
     <div className="@container" data-chart="donut">
-      <div className="flex flex-col items-center gap-4 @sm:flex-row @sm:justify-center @sm:gap-10">
+      <div className="flex flex-col items-center gap-5 @sm:flex-row @sm:justify-center @sm:gap-10">
         <div className="relative shrink-0">
           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-            <defs>
-              {items.map((s, i) => (
-                <pattern key={s.label} id={`stripe-${uid}-${i}`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                  <rect width="7" height="7" fill={s.color} />
-                  <rect width="2.5" height="7" fill="#ffffff" fillOpacity="0.28" />
-                </pattern>
-              ))}
-            </defs>
-            <circle cx={c} cy={c} r={r} fill="none" stroke="#f0f0ee" strokeWidth={sw} />
+            <circle cx={c} cy={c} r={r} fill="none" stroke="#f2f2f0" strokeWidth={sw} />
             {items.map((s, i) => {
               const before = items.slice(0, i).reduce((acc, x) => acc + x.value, 0) / total;
               const len = Math.max((s.value / total) * circ - gap, 0.5);
               return (
                 <circle
                   key={s.label}
-                  cx={c} cy={c} r={r} fill="none" stroke={`url(#stripe-${uid}-${i})`}
+                  cx={c} cy={c} r={r} fill="none" stroke={s.color}
                   strokeDasharray={`${len} ${circ}`}
                   strokeDashoffset={-before * circ}
-                  strokeWidth={active === s.label ? sw + 6 : sw}
+                  strokeWidth={active === s.label ? sw + 8 : sw}
+                  strokeLinecap="butt"
+                  opacity={active && active !== s.label ? 0.35 : 1}
                   onMouseEnter={() => setActive(s.label)} onMouseLeave={() => setActive(null)}
-                  className="donut-seg cursor-pointer"
+                  className="donut-seg cursor-pointer transition-opacity"
                   style={{ ["--circ" as string]: circ, animationDelay: `${0.15 + i * 0.12}s` }}
                 />
               );
             })}
           </svg>
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="max-w-24 truncate text-[11px] text-muted-foreground">{a ? a.label : centerTitle}</span>
-            <span key={a?.label ?? "total"} className="animate-pop num text-lg font-bold text-ink">
-              {a ? `${fmt((a.value / total) * 100, 1)}%` : centerValue}
+            <span className="max-w-24 truncate text-[12px] text-slate-600">{a ? a.label : centerTitle}</span>
+            <span key={a?.label ?? "total"} className="animate-pop num text-[22px] font-bold text-ink">
+              {a ? `${fmt((a.value / total) * 100, 0)}%` : centerValue}
             </span>
+            {a && <span className="num text-[11px] text-slate-600">{a.display ?? fmt(a.value)}</span>}
           </div>
         </div>
-        <ul className="flex w-full flex-wrap justify-center gap-x-4 gap-y-2 text-[12px] @sm:w-48 @sm:flex-col @sm:gap-1">
-          {/* المفتاح يعرض كل الحالات (حتى الصفرية) حتى تُقرأ الصورة كاملة */}
-          {segments.map((s) => (
-            <li key={s.label}>
-              <button type="button" onMouseEnter={() => setActive(s.label)} onMouseLeave={() => setActive(null)} onFocus={() => setActive(s.label)} onBlur={() => setActive(null)}
-                className={`flex w-full items-center gap-2 rounded-lg px-2 py-1 transition-colors ${active === s.label ? "bg-white" : ""} ${s.value > 0 ? "" : "opacity-50"}`}>
-                <span className="size-2.5 shrink-0 rounded-full" style={{ background: s.color }} />
-                <span className="text-slate-600">{s.label}</span>
-                <span className="num ms-auto ps-3 font-medium text-ink">{s.display ?? fmt(s.value)}</span>
-                {valueSuffix && <span className="text-slate-400">{valueSuffix}</span>}
-              </button>
-            </li>
-          ))}
+        <ul className="w-full space-y-1 text-[13px] @sm:w-52">
+          {segments.map((s) => {
+            const share = total > 0 ? (s.value / total) * 100 : 0;
+            return (
+              <li key={s.label}>
+                <button type="button" onMouseEnter={() => setActive(s.label)} onMouseLeave={() => setActive(null)}
+                  onFocus={() => setActive(s.label)} onBlur={() => setActive(null)}
+                  className={`w-full rounded-lg px-2.5 py-1.5 text-start transition-colors ${active === s.label ? "bg-subtle" : ""} ${s.value > 0 ? "" : "opacity-50"}`}>
+                  <span className="flex items-center gap-2">
+                    <span className="size-2.5 shrink-0 rounded-[3px]" style={{ background: s.color }} />
+                    <span className="text-slate-700">{s.label}</span>
+                    <span className="num ms-auto font-semibold text-ink">{s.display ?? fmt(s.value)}</span>
+                    {valueSuffix && <span className="text-slate-500">{valueSuffix}</span>}
+                  </span>
+                  <span className="mt-1 block h-1 overflow-hidden rounded-full bg-subtle">
+                    <span className="animate-grow-x block h-full rounded-full" style={{ width: `${share}%`, background: s.color, transformOrigin: "right" }} />
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>
@@ -287,7 +366,7 @@ export function DonutChart({
 }
 
 // =============================================================================
-// أشرطة مخططة متحركة (مثل «نظرة على الفواتير»)
+// أشرطة أفقية مع تلميح (أعمار الذمم، الإيرادات حسب القسم)
 // =============================================================================
 export function StripedBars({
   rows, currency, emptyTitle, emptyHint,
@@ -297,85 +376,45 @@ export function StripedBars({
   emptyTitle: string;
   emptyHint: string;
 }) {
+  const [hover, setHover] = useState<number | null>(null);
   const max = Math.max(...rows.map((r) => r.amount), 0);
+  const total = rows.reduce((s, r) => s + r.amount, 0);
   if (max <= 0) return <EmptyChart title={emptyTitle} hint={emptyHint} />;
   return (
-    <div className="space-y-4" data-chart="bars">
+    <div className="space-y-3.5" data-chart="bars" onMouseLeave={() => setHover(null)}>
       {rows.map((r, i) => (
-        <div key={r.label} className="space-y-1.5">
-          <div className="flex items-center justify-between text-[13px]">
-            <span className="font-medium text-ink">{r.label}</span>
-            <span className="text-slate-500">
-              <span className="num">{r.count}</span> <span className="mx-1 text-slate-300">|</span>
-              <span className="num font-medium text-ink">{r.amountText}</span> <span className="text-[11px]">{currency}</span>
+        <div key={r.label} className="relative" onMouseEnter={() => setHover(i)}>
+          <div className="mb-1.5 flex items-baseline justify-between gap-3 text-[13px]">
+            <span className="text-slate-700">{r.label}</span>
+            <span>
+              <span className="num font-semibold text-ink">{r.amountText}</span>
+              <span className="ms-1 text-[11px] text-slate-500">{currency}</span>
             </span>
           </div>
-          <div className="track-stripes h-4 overflow-hidden rounded-full">
+          <div className="h-2.5 overflow-hidden rounded-full bg-subtle">
             <div
-              className="bar-stripes animate-grow-x h-full rounded-full"
+              className="animate-grow-x h-full rounded-full transition-opacity"
               style={{
-                width: `${Math.max((r.amount / max) * 100, r.amount > 0 ? 3 : 0)}%`,
+                width: `${Math.max((r.amount / max) * 100, r.amount > 0 ? 2 : 0)}%`,
                 backgroundColor: r.color,
                 transformOrigin: "right",
-                animationDelay: `${0.1 + i * 0.1}s`,
+                animationDelay: `${0.1 + i * 0.08}s`,
+                opacity: hover === null || hover === i ? 1 : 0.4,
               }}
             />
           </div>
+          <AnimatePresence>
+            {hover === i && r.amount > 0 && (
+              <Tooltip style={{ top: -8, left: 0, transform: "translateY(-100%)" }}>
+                <p className="mb-1 font-semibold">{r.label}</p>
+                <TipRow label="المبلغ" value={r.amountText} suffix={currency} strong />
+                {r.count > 0 && <TipRow label="عدد المستندات" value={fmt(r.count)} />}
+                <TipRow label="الحصة" value={`${fmt((r.amount / total) * 100, 1)}%`} />
+              </Tooltip>
+            )}
+          </AnimatePresence>
         </div>
       ))}
-    </div>
-  );
-}
-
-// =============================================================================
-// اتجاه ADR وRevPAR والإشغال شهريًا
-// =============================================================================
-export function RoomTrendChart({
-  data, currency,
-}: {
-  data: { month: string; adr: number | null; revpar: number | null; occupancy: number | null; nights: number }[];
-  currency: string;
-}) {
-  const [boxRef, W] = useWidth<HTMLDivElement>(360);
-  if (!data.some((d) => d.nights > 0)) {
-    return <EmptyChart title="لا توجد ليالٍ مباعة في الفترة" hint="تُحسب من رسوم فئة «غرف» على الفوليو وعدد الغرف في إعدادات الفندق." />;
-  }
-  const H = 200, padX = 6, axisW = 36, padT = 16, padB = 46;
-  const plotW = W - padX * 2 - axisW, plotH = H - padT - padB;
-  const rScale = niceScale(0, Math.max(...data.map((d) => Math.max(d.adr ?? 0, d.revpar ?? 0)), 1), 2);
-  const maxV = rScale.hi;
-  const x = (i: number) => padX + axisW + (data.length === 1 ? plotW / 2 : (plotW * i) / (data.length - 1));
-  const y = (v: number) => padT + plotH - (v / maxV) * plotH;
-  const adr = data.map((d, i) => (d.adr === null ? null : { x: x(i), y: y(d.adr) }));
-  const rp = data.map((d, i) => (d.revpar === null ? null : { x: x(i), y: y(d.revpar) }));
-
-  return (
-    <div ref={boxRef} className="space-y-2" data-chart="rooms">
-      <svg viewBox={`0 0 ${W} ${H}`} className="h-[200px] w-full overflow-visible" role="img" aria-label="ADR / RevPAR">
-        {rScale.ticks.map((v, k) => (
-          <g key={k}>
-            <line x1={padX + axisW} x2={W - padX} y1={y(v)} y2={y(v)} stroke="#ecece9" strokeDasharray="3 5" />
-            <text x={padX} y={y(v) + 4} fill="#b7b7b2" fontSize="10.5">{compact(v)}</text>
-          </g>
-        ))}
-        <path d={linePath(adr)} fill="none" stroke={CHART_COLORS.revenue} strokeWidth="2.75" pathLength={1} strokeDasharray="1" className="animate-draw" />
-        <path d={linePath(rp)} fill="none" stroke={CHART_COLORS.expenses} strokeWidth="2.25" pathLength={1} strokeDasharray="1" className="animate-draw" />
-        {data.map((d, i) => (
-          <g key={i}>
-            {adr[i] && <circle cx={adr[i].x} cy={adr[i].y} r={3.5} fill="#fff" stroke={CHART_COLORS.revenue} strokeWidth="2.5" />}
-            {rp[i] && <circle cx={rp[i].x} cy={rp[i].y} r={3.5} fill="#fff" stroke={CHART_COLORS.expenses} strokeWidth="2.5" />}
-            <text x={x(i)} y={H - 26} textAnchor="middle" fill="#b7b7b2" fontSize="10.5">{monthLabel(d.month, true)}</text>
-            <text x={x(i)} y={H - 8} textAnchor="middle" fill="#111111" fontSize="10.5" fontWeight="500">
-              {d.occupancy === null ? "—" : `${fmt(d.occupancy, 1)}%`}
-            </text>
-          </g>
-        ))}
-      </svg>
-      <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-600">
-        <Dot color={CHART_COLORS.revenue} label="ADR" />
-        <Dot color={CHART_COLORS.expenses} label="RevPAR" />
-        <span className="ms-auto text-slate-400">أسفل كل شهر: نسبة الإشغال • المبالغ بـ {currency}</span>
-      </div>
     </div>
   );
 }

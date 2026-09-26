@@ -17,7 +17,7 @@
   --color-ink-soft: #2b2b2a;
   --color-frame: #e7dfc9;
   --color-content: #f7f7f6;
-  --color-sidebar: #fafaf9;
+  --color-sidebar: #ffffff;
   --color-panel: #fafaf9;
   --color-tile: #ffffff;
   --color-line: #ecece9;
@@ -29,13 +29,22 @@
   --color-slate-50: #fafaf9;
   --color-slate-100: #f2f2f0;
   --color-slate-200: #e6e6e2;
-  --color-slate-300: #d3d3ce;
-  --color-slate-400: #b7b7b2;
-  --color-slate-500: #8a8a85;
-  --color-slate-600: #6e6e6a;
-  --color-slate-700: #4a4a47;
+  --color-slate-300: #cfcfca;
+  --color-slate-400: #9d9d97;
+  --color-slate-500: #75756f;
+  --color-slate-600: #5a5a56;
+  --color-slate-700: #3f3f3c;
   --color-slate-800: #2b2b2a;
   --color-slate-900: #111111;
+
+  /* اللونان الأساسيان للعناصر الصغيرة (مؤشرات، عنصر نشط، سلاسل المخططات):
+     فيروزي عميق وطيني دافئ — متكاملان ومتناغمان مع البيج والأسود */
+  --color-accent1: #008a7c;
+  --color-accent1-soft: #5fb3a8;
+  --color-accent1-tint: #d9f0ec;
+  --color-accent2: #cc6a38;
+  --color-accent2-soft: #e9b08f;
+  --color-accent2-tint: #fae6da;
 
   /* ألوان الحالة الباستيل: tint للخلفية، والأساسي للنص/الأيقونة */
   --color-urgent: #e2665c;
@@ -74,7 +83,7 @@
   --color-secondary: var(--color-subtle);
   --color-secondary-foreground: #111111;
   --color-muted: var(--color-subtle);
-  --color-muted-foreground: #8a8a85;
+  --color-muted-foreground: #66665f;
   --color-accent: var(--color-subtle);
   --color-accent-foreground: #111111;
   --color-destructive: var(--color-urgent);

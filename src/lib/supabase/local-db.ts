@@ -1,5 +1,5 @@
 import "server-only";
-import { existsSync, readdirSync, readFileSync, rmSync, mkdirSync } from "node:fs";
+import { cpSync, existsSync, readdirSync, readFileSync, renameSync, rmSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { PGlite, type Transaction } from "@electric-sql/pglite";
 import { btree_gist } from "@electric-sql/pglite/contrib/btree_gist";
@@ -115,8 +115,8 @@ export async function catalogQuery<T>(sql: string, params: unknown[] = []): Prom
   return next;
 }
 
-/** تصفير كامل: حذف القاعدة المحلية بالكامل؛ أول طلب بعده يبني قاعدة جديدة فارغة */
-export async function wipeLocalDb(): Promise<void> {
+/** تنفيذ خطوة على ملفات القاعدة بعد إغلاقها (ضمن الطابور حتى لا تتداخل مع أي استعلام) */
+function withClosedDb(fn: () => void): Promise<void> {
   const run = async () => {
     const current = g.__hotelLocalDb;
     g.__hotelLocalDb = undefined;
@@ -127,10 +127,54 @@ export async function wipeLocalDb(): Promise<void> {
         // القاعدة قد تكون فشلت في الإقلاع أصلًا
       }
     }
-    if (existsSync(/*turbopackIgnore: true*/ LOCAL_DATA_DIR)) rmSync(/*turbopackIgnore: true*/ LOCAL_DATA_DIR, { recursive: true, force: true });
+    fn();
   };
   const prev = g.__hotelLocalQueue ?? Promise.resolve();
   const next = prev.then(run, run);
   g.__hotelLocalQueue = next.catch(() => undefined);
   return next;
+}
+
+const rmDir = (dir: string) => {
+  if (existsSync(/*turbopackIgnore: true*/ dir)) rmSync(/*turbopackIgnore: true*/ dir, { recursive: true, force: true });
+};
+
+/** تصفير كامل: حذف القاعدة المحلية بالكامل؛ أول طلب بعده يبني قاعدة جديدة فارغة */
+export function wipeLocalDb(): Promise<void> {
+  return withClosedDb(() => {
+    rmDir(LOCAL_DATA_DIR);
+    rmDir(DEMO_BACKUP_DIR);
+  });
+}
+
+// =============================================================================
+// البيانات التجريبية المؤقتة: نسخة من القاعدة قبل التوليد، والحذف = استعادة تلك النسخة حرفيًا.
+// لا يُحذف أي قيد مرحّل (القيود غير قابلة للحذف)؛ القاعدة تعود كما كانت تمامًا قبل التوليد.
+// =============================================================================
+const DEMO_BACKUP_DIR = `${LOCAL_DATA_DIR}-before-demo`;
+
+export function isDemoDataActive(): boolean {
+  return existsSync(/*turbopackIgnore: true*/ DEMO_BACKUP_DIR);
+}
+
+export async function loadDemoData(hotelId: string, sql: string): Promise<void> {
+  if (isDemoDataActive()) throw new Error("Demo data is already loaded");
+  await withClosedDb(() => cpSync(/*turbopackIgnore: true*/ LOCAL_DATA_DIR, DEMO_BACKUP_DIR, { recursive: true }));
+  try {
+    await withUserTransaction(async (tx) => {
+      await tx.query("select set_config('demo.hotel_id', $1, true)", [hotelId]);
+      await tx.exec(sql);
+    });
+  } catch (e) {
+    await removeDemoData();
+    throw e;
+  }
+}
+
+export function removeDemoData(): Promise<void> {
+  return withClosedDb(() => {
+    if (!existsSync(/*turbopackIgnore: true*/ DEMO_BACKUP_DIR)) return;
+    rmDir(LOCAL_DATA_DIR);
+    renameSync(/*turbopackIgnore: true*/ DEMO_BACKUP_DIR, LOCAL_DATA_DIR);
+  });
 }

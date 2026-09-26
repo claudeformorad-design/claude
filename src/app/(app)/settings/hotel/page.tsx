@@ -10,6 +10,8 @@ import { getI18n } from "@/i18n/server";
 import { saveDepartmentAction, saveHotelAction } from "../../_admin/actions";
 import { SimpleForm } from "../../_assets/simple-form";
 import { ResetHotelDataButton } from "./reset-data-button";
+import { DemoDataCard } from "./demo-data-card";
+import { isDemoDataActive } from "@/lib/supabase/local-db";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export default async function HotelSettingsPage() {
@@ -67,7 +69,12 @@ export default async function HotelSettingsPage() {
           </Card>
         </div>
 
-        {ctx.can(PERMISSIONS.hotelManage) && !isSupabaseConfigured() && <ResetHotelDataButton />}
+        {ctx.can(PERMISSIONS.hotelManage) && !isSupabaseConfigured() && (
+          <div className="space-y-5">
+            <DemoDataCard active={isDemoDataActive()} errors={t.errors} />
+            <ResetHotelDataButton />
+          </div>
+        )}
       </div>
     </>
   );

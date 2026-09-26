@@ -4,6 +4,7 @@ import {
   AnimatedNumber,
   DonutChart,
   IncomeExpenseChart,
+  Sparkline,
   StripedBars,
 } from "@/components/dashboard/charts";
 import { Money } from "@/components/money";
@@ -54,11 +55,11 @@ const CONTROL_LABELS: Record<LedgerControl, { title: string; sub: string; href: 
 };
 
 const BUCKET_META: Record<AgingBucket, { label: string; color: string }> = {
-  current: { label: "غير مستحقة بعد", color: "#4e9b63" },
-  "1_30": { label: "متأخرة 1–30 يومًا", color: "#4a82bf" },
-  "31_60": { label: "متأخرة 31–60 يومًا", color: "#b8873a" },
-  "61_90": { label: "متأخرة 61–90 يومًا", color: "#e2665c" },
-  over_90: { label: "متأخرة أكثر من 90 يومًا", color: "#9b5de0" },
+  current: { label: "غير مستحقة بعد", color: CHART_COLORS.paid },
+  "1_30": { label: "متأخرة 1–30 يومًا", color: CHART_COLORS.overdue[0] },
+  "31_60": { label: "متأخرة 31–60 يومًا", color: CHART_COLORS.overdue[1] },
+  "61_90": { label: "متأخرة 61–90 يومًا", color: CHART_COLORS.overdue[2] },
+  over_90: { label: "متأخرة أكثر من 90 يومًا", color: CHART_COLORS.overdue[3] },
 };
 
 function currencySymbol(code: string): string {
@@ -126,7 +127,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         : null,
       ctx.can(PERMISSIONS.journalView)
         ? supabase.from("journal_entries").select("id, entry_number, entry_date, description, source")
-            .eq("hotel_id", hotel.id).eq("status", "posted").order("posted_at", { ascending: false }).limit(6)
+            .eq("hotel_id", hotel.id).eq("status", "posted")
+            .order("entry_date", { ascending: false }).order("entry_number", { ascending: false }).limit(6)
         : null,
       ctx.can(PERMISSIONS.folioView)
         ? supabase.from("guest_folios").select("id", { count: "exact", head: true }).eq("hotel_id", hotel.id).eq("status", "open")
@@ -183,7 +185,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const deptSegments = deptSummary
     .filter((d) => d.revenue.gt(0))
     .sort((a, b) => b.revenue.comparedTo(a.revenue))
-    .map((d, i) => ({ label: deptLabel(d.departmentId), value: d.revenue.toNumber(), display: d.revenue.toFixed(2), color: CHART_COLORS.palette[i % CHART_COLORS.palette.length]! }));
+    .map((d) => ({ label: deptLabel(d.departmentId), value: d.revenue.toNumber(), display: d.revenue.toFixed(2) }));
   const negativeDepts = deptSummary.filter((d) => d.revenue.isNegative());
 
   // ---- المطابقة والأرصدة ----
@@ -220,7 +222,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const invoiceSegments = [
     { label: "مصدرة", value: invIssued?.count ?? 0, color: CHART_COLORS.pending },
     { label: "مدفوعة جزئيًا", value: invPartial?.count ?? 0, color: CHART_COLORS.partial },
-    { label: "مدفوعة", value: invPaid?.count ?? 0, color: CHART_COLORS.net },
+    { label: "مدفوعة", value: invPaid?.count ?? 0, color: CHART_COLORS.paid },
   ];
   const invoiceTotal = invoiceSegments.reduce((s, x) => s + x.value, 0);
 
@@ -230,7 +232,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const pct = (v: MoneyValue | null) => (v === null ? "—" : `${v.toFixed(1)}%`);
 
   const deptTotal = deptSummary.filter((d) => d.revenue.gt(0)).reduce((a2, d) => a2.plus(d.revenue), ZERO);
-  const deptMax = deptSegments.reduce((m, x) => Math.max(m, x.value), 0);
   const BALANCE_ROWS: { control: LedgerControl; label: string }[] = [
     { control: "guest_ledger", label: "ذمم النزلاء المقيمين" },
     { control: "guest_deposits", label: "ودائع النزلاء" },
@@ -275,7 +276,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               <Badge variant={a.tone === "red" ? "destructive" : a.tone === "amber" ? "warning" : "info"}>{a.tone === "red" ? "عاجل" : a.tone === "amber" ? "تنبيه" : "للعلم"}</Badge>
               <span className="text-[13px] font-medium text-ink group-hover:underline">{a.title}</span>
               <span className="hidden text-[13px] text-muted-foreground sm:inline">{a.text}</span>
-              <span className="ms-auto text-[12px] text-slate-400">←</span>
+              <span className="ms-auto text-[12px] text-slate-500">←</span>
             </Link>
           ))}
         </section>
@@ -287,10 +288,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <>
           {/* شريط الأرقام الرئيسية: بطاقة واحدة مقسّمة */}
           <section className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
-            <Kpi icon={TrendingUp} label="الإيرادات" sub={rangeLabel} value={revenue} currency={currency} href="/reports/income-statement" />
-            <Kpi icon={TrendingDown} label="المصروفات" sub={rangeLabel} value={expenses} currency={currency} href="/reports/income-statement" />
+            <Kpi icon={TrendingUp} label="الإيرادات" sub={rangeLabel} value={revenue} currency={currency} href="/reports/income-statement"
+              spark={{ values: chartData.map((d) => d.revenue), months, color: CHART_COLORS.revenue }} />
+            <Kpi icon={TrendingDown} label="المصروفات" sub={rangeLabel} value={expenses} currency={currency} href="/reports/income-statement"
+              spark={{ values: chartData.map((d) => d.expenses), months, color: CHART_COLORS.expenses }} />
             <Kpi icon={Scale} label="صافي النتيجة" sub={rangeLabel} value={net} currency={currency} tone={net.isNegative() ? "neg" : undefined}
-              href={canProfit ? "/reports/profitability" : "/reports/income-statement"} />
+              href={canProfit ? "/reports/profitability" : "/reports/income-statement"}
+              spark={{ values: chartData.map((d) => d.revenue - d.expenses), months, color: CHART_COLORS.net }} />
             <Kpi icon={Wallet} label="النقدية والبنوك" sub="الرصيد الحالي" value={cashBalance} currency={currency} tone={cashBalance.isNegative() ? "neg" : undefined} href="/reports/daily-cash" />
           </section>
 
@@ -386,19 +390,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   <p className="py-6 text-[13px] text-muted-foreground">لا توجد إيرادات مرحّلة في هذه الفترة.</p>
                 ) : (
                   <>
-                    <ul className="space-y-3.5">
-                      {deptSegments.map((d) => (
-                        <li key={d.label}>
-                          <div className="flex items-baseline justify-between text-[13px]">
-                            <span className="text-ink">{d.label}</span>
-                            <span className="num text-ink">{d.display}</span>
-                          </div>
-                          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-subtle">
-                            <div className="animate-grow-x h-full rounded-full" style={{ width: `${(d.value / deptMax) * 100}%`, background: d.color, transformOrigin: "right" }} />
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
+                    <StripedBars rows={deptSegments.map((d) => ({ label: d.label, count: 0, amount: d.value, amountText: d.display, color: CHART_COLORS.revenue }))}
+                      currency={currency} emptyTitle="" emptyHint="" />
                     <p className="mt-4 border-t border-line pt-3 text-[12px] text-muted-foreground">
                       المجموع <span className="num text-ink">{deptTotal.toFixed(2)}</span> من إيراد الفترة <span className="num text-ink">{revenue.toFixed(2)}</span> {currency}
                       {negativeDepts.length > 0 && (
@@ -454,7 +447,7 @@ function Card2({
           )}
         </h2>
         {link && (
-          <Link href={link.href} className="shrink-0 text-[12px] text-slate-400 transition-colors hover:text-ink">
+          <Link href={link.href} className="shrink-0 text-[12px] text-slate-500 transition-colors hover:text-ink">
             {link.label} ←
           </Link>
         )}
@@ -465,8 +458,9 @@ function Card2({
 }
 
 function Kpi({
-  icon: Icon, label, sub, value, currency, href, tone,
+  icon: Icon, label, sub, value, currency, href, tone, spark,
 }: {
+  spark?: { values: number[]; months: string[]; color: string };
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   sub: string;
@@ -481,13 +475,16 @@ function Kpi({
         <span className="flex size-9 items-center justify-center rounded-[10px] bg-ink text-white">
           <Icon className="size-[17px] stroke-[1.75]" />
         </span>
-        <Link href={href} aria-label={`تفاصيل ${label}`} className="text-[12px] text-slate-400 transition-colors hover:text-ink"><span className="hidden sm:inline">التفاصيل </span>←</Link>
+        <Link href={href} aria-label={`تفاصيل ${label}`} className="text-[12px] text-slate-500 transition-colors hover:text-ink"><span className="hidden sm:inline">التفاصيل </span>←</Link>
       </div>
       <p className={cn("truncate text-[18px] font-bold leading-tight text-ink sm:text-[22px]", tone === "neg" && "text-urgent")}>
         <AnimatedNumber value={value.toNumber()} text={formatAmount(value)} />
-        <span className="ms-1.5 text-[12px] font-normal text-slate-400">{currency}</span>
+        <span className="ms-1.5 text-[12px] font-normal text-slate-500">{currency}</span>
       </p>
-      <p className="mt-1 truncate text-[13px] text-muted-foreground">{label} · {sub}</p>
+      <p className="mt-1 truncate text-[13px] text-slate-600">{label} · {sub}</p>
+      <div className="mt-3">
+        {spark ? <Sparkline values={spark.values} months={spark.months} color={spark.color} currency={currency} /> : <p className="flex h-10 items-end text-[11.5px] text-slate-500">رصيد الصندوق والبنوك في الأستاذ</p>}
+      </div>
     </div>
   );
 }
@@ -503,7 +500,7 @@ function Figure({ label, value, unit }: { label: string; value: string; unit?: s
       <dt className="text-[12px] text-muted-foreground">{label}</dt>
       <dd className="mt-1.5 text-[20px] font-bold leading-none text-ink">
         <span className="num">{value}</span>
-        {unit && <span className="ms-1 text-[11px] text-slate-400">{unit}</span>}
+        {unit && <span className="ms-1 text-[11px] text-slate-500">{unit}</span>}
       </dd>
     </div>
   );

@@ -8,6 +8,7 @@ import { TopBar } from "@/components/layout/top-bar";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { isDemoDataActive } from "@/lib/supabase/local-db";
 import { getI18n } from "@/i18n/server";
 import { signOutAction } from "../login/actions";
 
@@ -22,13 +23,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const signOut = isSupabaseConfigured() ? signOutAction : undefined;
 
   return (
-    // الخلفية الخارجية بيج دافئ، والواجهة فوقها بملء الشاشة تقريبًا
-    <div className="flex h-screen bg-frame md:p-2.5">
+    // ملء الشاشة بلا حدود في الأطراف
+    <div className="flex h-screen bg-content">
       <Suspense fallback={null}>
         <RouteProgress />
       </Suspense>
       <PointerEffects />
-      <div className="flex min-w-0 flex-1 overflow-hidden bg-content md:rounded-[20px] md:shadow-soft">
+      <div className="flex min-w-0 flex-1 overflow-hidden">
         <Sidebar
           labels={t.nav}
           hotelName={hotelName}
@@ -43,6 +44,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             userEmail={ctx.user.email ?? ""}
             roleLabel={roleLabel}
             signOut={signOut}
+            demo={!isSupabaseConfigured() && isDemoDataActive()}
           />
           <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-12 pt-1 md:px-10">{children}</main>
         </div>

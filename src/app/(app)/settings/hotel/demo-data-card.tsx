@@ -1,0 +1,54 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Sparkles, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { actionErrorText } from "@/lib/action-error";
+import { loadDemoDataAction, removeDemoDataAction } from "../../_admin/actions";
+
+/** بيانات تجريبية مؤقتة لمعاينة لوحة التحكم، مع حذفها بالكامل بضغطة */
+export function DemoDataCard({ active, errors }: { active: boolean; errors: Record<string, string> }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  const run = (fn: typeof loadDemoDataAction, to: string) =>
+    start(async () => {
+      setError(null);
+      const r = await fn();
+      if (!r.ok) return setError(actionErrorText(errors, r));
+      router.push(to);
+      router.refresh();
+    });
+
+  return (
+    <div className="surface flex flex-wrap items-center justify-between gap-4 p-6">
+      <div className="flex min-w-0 items-start gap-4">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent1-tint text-accent1">
+          <Sparkles className="size-5 stroke-[1.75]" />
+        </span>
+        <div className="space-y-1">
+          <h3 className="text-[15px] font-semibold text-ink">بيانات تجريبية مؤقتة</h3>
+          <p className="max-w-xl text-[13px] leading-relaxed text-slate-600">
+            {active
+              ? "البيانات التجريبية محمّلة الآن. الحذف يعيد النظام كما كان قبل تحميلها تمامًا — وأي عملية أجريتها بعد التحميل ستُحذف معها."
+              : "تولّد ستة أشهر من النشاط (إقامات، مطعم، مناسبات، مشتريات، رواتب) عبر نفس القيود المحاسبية الحقيقية، لتعاين لوحة التحكم والتقارير. تُحذف بالكامل متى شئت."}
+          </p>
+          {error && <p className="text-[12px] text-urgent">{error}</p>}
+        </div>
+      </div>
+      {active ? (
+        <Button variant="destructive" disabled={pending} onClick={() => run(removeDemoDataAction, "/settings/hotel")}>
+          <Trash2 />
+          {pending ? "جارٍ الحذف…" : "حذف البيانات التجريبية"}
+        </Button>
+      ) : (
+        <Button disabled={pending} onClick={() => run(loadDemoDataAction, "/")}>
+          <Sparkles />
+          {pending ? "جارٍ التوليد… (قد يستغرق دقيقة)" : "إنشاء بيانات تجريبية"}
+        </Button>
+      )}
+    </div>
+  );
+}

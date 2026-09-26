@@ -20,7 +20,9 @@ export function TopBar({
   userEmail,
   roleLabel,
   signOut,
+  demo = false,
 }: {
+  demo?: boolean;
   labels: NavLabels;
   hotelName: string;
   userName: string;
@@ -80,6 +82,13 @@ export function TopBar({
       </nav>
 
       <div className="flex items-center gap-2">
+        {demo && (
+          <Link href="/settings/hotel" title="بيانات تجريبية مؤقتة — احذفها من الإعدادات"
+            className="flex h-8 items-center gap-1.5 rounded-full bg-accent2-tint px-3 text-[12px] font-medium text-accent2">
+            <span className="size-1.5 rounded-full bg-accent2" />
+            بيانات تجريبية
+          </Link>
+        )}
         <button type="button" onClick={() => setPaletteOpen(true)} className={cn(iconBtn, "md:hidden")} title="بحث (Ctrl K)" aria-label="بحث">
           <Search className="size-[18px] stroke-[1.75]" />
         </button>
@@ -89,7 +98,7 @@ export function TopBar({
         <Link href="/settings/hotel" className={iconBtn} title={labels.hotelSettings} aria-label={labels.hotelSettings}>
           <Settings className="size-[18px] stroke-[1.75]" />
         </Link>
-        <span title={`${userName || userEmail} · ${roleLabel}`} className="flex size-10 items-center justify-center rounded-full bg-ink text-[13px] font-medium text-white md:hidden">
+        <span title={`${userName || userEmail} · ${roleLabel}`} className="flex size-10 items-center justify-center rounded-full bg-accent2 text-[13px] font-medium text-white md:hidden">
           {initials}
         </span>
       </div>
@@ -218,7 +227,7 @@ function MobileDrawer({ groups, pathname, hotelName, signOut, onClose }: { group
                 onClick={onClose}
                 className={cn(
                   "flex h-10 items-center gap-3 rounded-[10px] px-3 text-[13px]",
-                  isActivePath(pathname, item.href) ? "bg-white font-medium text-ink shadow-soft" : "text-slate-500 hover:text-ink",
+                  isActivePath(pathname, item.href) ? "bg-accent1-tint font-semibold text-accent1" : "text-slate-700 hover:bg-subtle",
                 )}
               >
                 <item.icon className="size-[18px] stroke-[1.75]" />
