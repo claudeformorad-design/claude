@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { animate, motion, useInView } from "motion/react";
-import { Activity, PieChart as PieIcon, TrendingUp } from "lucide-react";
 import { CHART_COLORS } from "./chart-colors";
 
 /**
@@ -27,6 +26,22 @@ function monthLabel(m: string, short = false): string {
   const [y, mo] = m.split("-");
   const name = MONTHS[parseInt(mo ?? "1", 10) - 1] ?? m;
   return short ? name : `${name} ${y ?? ""}`.trim();
+}
+
+/**
+ * محور بقيم «مستديرة» (1، 2، 2.5، 5 × 10ⁿ) كما يرسمه المصمم: 0، 400، 800، 1.2k …
+ * يعيد حدود المحور وقيم التدريج شاملةً الصفر وأي قيم سالبة.
+ */
+function niceScale(min: number, max: number, count = 4): { lo: number; hi: number; ticks: number[] } {
+  const span = max - min || Math.abs(max) || 1;
+  const raw = span / count;
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  const step = ([1, 2, 2.5, 5, 10].find((m) => m * mag >= raw) ?? 10) * mag;
+  const lo = Math.floor(min / step) * step;
+  const hi = Math.ceil(max / step) * step;
+  const ticks: number[] = [];
+  for (let v = lo; v <= hi + step / 2; v += step) ticks.push(Math.round(v * 1e6) / 1e6);
+  return { lo, hi, ticks };
 }
 
 /** عرض الحاوية الفعلي حتى تُرسم المخططات بمقاسها الحقيقي (نص بحجم ثابت مهما ضاقت البطاقة) */
@@ -57,14 +72,12 @@ function linePath(pts: ({ x: number; y: number } | null)[]): string {
   return d.trim();
 }
 
-function EmptyChart({ icon: Icon = Activity, title, hint }: { icon?: typeof Activity; title: string; hint: string }) {
+/** حالة فارغة هادئة: جملة واحدة في مساحة المخطط نفسها، بلا أيقونات أو إطارات */
+function EmptyChart({ title, hint }: { title: string; hint: string }) {
   return (
-    <div className="flex min-h-44 flex-col items-center justify-center rounded-2xl border border-dashed border-line-strong bg-white/60 px-4 py-8 text-center">
-      <div className="animate-pop mb-3 flex size-11 items-center justify-center rounded-full border border-line bg-white text-slate-500">
-        <Icon className="size-5" />
-      </div>
-      <p className="text-[13px] font-medium text-ink">{title}</p>
-      <p className="mt-1 max-w-xs text-[11px] leading-relaxed text-muted-foreground">{hint}</p>
+    <div className="flex min-h-40 flex-col items-center justify-center px-6 text-center">
+      <p className="text-[13px] text-ink">{title}</p>
+      <p className="mt-1 max-w-xs text-[12px] leading-relaxed text-muted-foreground">{hint}</p>
     </div>
   );
 }
@@ -108,15 +121,15 @@ export function IncomeExpenseChart({
   const plotW = W - padX * 2 - axisW, plotH = H - padT - padB;
   const top = Math.max(...data.map((d) => Math.max(d.revenue, d.expenses)), 0);
   const bottom = Math.min(...data.map((d) => Math.min(d.revenue, d.expenses)), 0);
-  const maxV = top + (top - bottom || 1) * 0.15;
-  const minV = bottom < 0 ? bottom * 1.15 : 0;
+  const scale = niceScale(bottom < 0 ? bottom * 1.05 : 0, top * 1.05);
+  const maxV = scale.hi, minV = scale.lo;
   const x = (i: number) => padX + axisW + (data.length === 1 ? plotW / 2 : (plotW * i) / (data.length - 1));
   const y = (v: number) => padT + ((maxV - v) / (maxV - minV)) * plotH;
   const rev = data.map((d, i) => ({ x: x(i), y: y(d.revenue) }));
   const exp = data.map((d, i) => ({ x: x(i), y: y(d.expenses) }));
   const base = y(Math.max(minV, 0));
   const area = `${linePath(rev)} L ${rev[rev.length - 1]!.x} ${base} L ${rev[0]!.x} ${base} Z`;
-  const ticks = [0, 1, 2, 3].map((k) => minV + ((maxV - minV) * k) / 3);
+  const ticks = scale.ticks;
   const h = hover !== null ? data[hover] : undefined;
 
   return (
@@ -206,63 +219,68 @@ export function DonutChart({
   emptyHint: string;
   valueSuffix?: string;
 }) {
-  const [active, setActive] = useState<number | null>(null);
+  const [active, setActive] = useState<string | null>(null);
   const items = segments.filter((s) => s.value > 0);
   const total = items.reduce((s, x) => s + x.value, 0);
-  if (!items.length || total <= 0) return <EmptyChart icon={PieIcon} title={emptyTitle} hint={emptyHint} />;
+  if (!items.length || total <= 0) return <EmptyChart title={emptyTitle} hint={emptyHint} />;
 
   const size = 190, c = size / 2, r = 68, sw = 30, circ = 2 * Math.PI * r;
   const gap = items.length > 1 ? 5 : 0;
-  const a = active !== null ? items[active] : undefined;
+  const a = items.find((x) => x.label === active);
   const uid = items.map((x) => x.label).join("").length + items.length;
 
   return (
-    <div className="flex flex-col items-center gap-4" data-chart="donut">
-      <div className="relative">
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-          <defs>
-            {items.map((s, i) => (
-              <pattern key={s.label} id={`stripe-${uid}-${i}`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                <rect width="7" height="7" fill={s.color} />
-                <rect width="2.5" height="7" fill="#ffffff" fillOpacity="0.28" />
-              </pattern>
-            ))}
-          </defs>
-          <circle cx={c} cy={c} r={r} fill="none" stroke="#e9edf2" strokeWidth={sw} />
-          {items.map((s, i) => {
-            const before = items.slice(0, i).reduce((acc, x) => acc + x.value, 0) / total;
-            const len = Math.max((s.value / total) * circ - gap, 0.5);
-            return (
-              <circle
-                key={s.label}
-                cx={c} cy={c} r={r} fill="none" stroke={`url(#stripe-${uid}-${i})`}
-                strokeDasharray={`${len} ${circ}`}
-                strokeDashoffset={-before * circ}
-                strokeWidth={active === i ? sw + 6 : sw}
-                onMouseEnter={() => setActive(i)} onMouseLeave={() => setActive(null)}
-                className="donut-seg cursor-pointer"
-                style={{ ["--circ" as string]: circ, animationDelay: `${0.15 + i * 0.12}s` }}
-              />
-            );
-          })}
-        </svg>
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="max-w-24 truncate text-[11px] text-muted-foreground">{a ? a.label : centerTitle}</span>
-          <span key={a?.label ?? "total"} className="animate-pop num text-lg font-semibold text-ink">
-            {a ? `${fmt((a.value / total) * 100, 1)}%` : centerValue}
-          </span>
+    <div className="@container" data-chart="donut">
+      <div className="flex flex-col items-center gap-4 @sm:flex-row @sm:justify-center @sm:gap-10">
+        <div className="relative shrink-0">
+          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+            <defs>
+              {items.map((s, i) => (
+                <pattern key={s.label} id={`stripe-${uid}-${i}`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                  <rect width="7" height="7" fill={s.color} />
+                  <rect width="2.5" height="7" fill="#ffffff" fillOpacity="0.28" />
+                </pattern>
+              ))}
+            </defs>
+            <circle cx={c} cy={c} r={r} fill="none" stroke="#e9edf2" strokeWidth={sw} />
+            {items.map((s, i) => {
+              const before = items.slice(0, i).reduce((acc, x) => acc + x.value, 0) / total;
+              const len = Math.max((s.value / total) * circ - gap, 0.5);
+              return (
+                <circle
+                  key={s.label}
+                  cx={c} cy={c} r={r} fill="none" stroke={`url(#stripe-${uid}-${i})`}
+                  strokeDasharray={`${len} ${circ}`}
+                  strokeDashoffset={-before * circ}
+                  strokeWidth={active === s.label ? sw + 6 : sw}
+                  onMouseEnter={() => setActive(s.label)} onMouseLeave={() => setActive(null)}
+                  className="donut-seg cursor-pointer"
+                  style={{ ["--circ" as string]: circ, animationDelay: `${0.15 + i * 0.12}s` }}
+                />
+              );
+            })}
+          </svg>
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+            <span className="max-w-24 truncate text-[11px] text-muted-foreground">{a ? a.label : centerTitle}</span>
+            <span key={a?.label ?? "total"} className="animate-pop num text-lg font-semibold text-ink">
+              {a ? `${fmt((a.value / total) * 100, 1)}%` : centerValue}
+            </span>
+          </div>
         </div>
-      </div>
-      <div className="flex w-full flex-wrap justify-center gap-x-4 gap-y-2 text-[12px]">
-        {items.map((s, i) => (
-          <button key={s.label} type="button" onMouseEnter={() => setActive(i)} onMouseLeave={() => setActive(null)}
-            className={`flex items-center gap-1.5 rounded-full px-2 py-0.5 transition-colors ${active === i ? "bg-white" : ""}`}>
-            <span className="size-2.5 rounded-full" style={{ background: s.color }} />
-            <span className="text-slate-600">{s.label}:</span>
-            <span className="num font-medium text-ink">{s.display ?? fmt(s.value)}</span>
-            {valueSuffix && <span className="text-slate-400">{valueSuffix}</span>}
-          </button>
-        ))}
+        <ul className="flex w-full flex-wrap justify-center gap-x-4 gap-y-2 text-[12px] @sm:w-48 @sm:flex-col @sm:gap-1">
+          {/* المفتاح يعرض كل الحالات (حتى الصفرية) حتى تُقرأ الصورة كاملة */}
+          {segments.map((s) => (
+            <li key={s.label}>
+              <button type="button" onMouseEnter={() => setActive(s.label)} onMouseLeave={() => setActive(null)} onFocus={() => setActive(s.label)} onBlur={() => setActive(null)}
+                className={`flex w-full items-center gap-2 rounded-lg px-2 py-1 transition-colors ${active === s.label ? "bg-white" : ""} ${s.value > 0 ? "" : "opacity-50"}`}>
+                <span className="size-2.5 shrink-0 rounded-full" style={{ background: s.color }} />
+                <span className="text-slate-600">{s.label}</span>
+                <span className="num ms-auto ps-3 font-medium text-ink">{s.display ?? fmt(s.value)}</span>
+                {valueSuffix && <span className="text-slate-400">{valueSuffix}</span>}
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
@@ -320,11 +338,12 @@ export function RoomTrendChart({
 }) {
   const [boxRef, W] = useWidth<HTMLDivElement>(360);
   if (!data.some((d) => d.nights > 0)) {
-    return <EmptyChart icon={TrendingUp} title="لا توجد ليالٍ مباعة في الفترة" hint="تُحسب من رسوم فئة «غرف» على الفوليو وعدد الغرف في إعدادات الفندق." />;
+    return <EmptyChart title="لا توجد ليالٍ مباعة في الفترة" hint="تُحسب من رسوم فئة «غرف» على الفوليو وعدد الغرف في إعدادات الفندق." />;
   }
   const H = 200, padX = 6, axisW = 36, padT = 16, padB = 46;
   const plotW = W - padX * 2 - axisW, plotH = H - padT - padB;
-  const maxV = Math.max(...data.map((d) => Math.max(d.adr ?? 0, d.revpar ?? 0)), 1) * 1.2;
+  const rScale = niceScale(0, Math.max(...data.map((d) => Math.max(d.adr ?? 0, d.revpar ?? 0)), 1), 2);
+  const maxV = rScale.hi;
   const x = (i: number) => padX + axisW + (data.length === 1 ? plotW / 2 : (plotW * i) / (data.length - 1));
   const y = (v: number) => padT + plotH - (v / maxV) * plotH;
   const adr = data.map((d, i) => (d.adr === null ? null : { x: x(i), y: y(d.adr) }));
@@ -333,7 +352,7 @@ export function RoomTrendChart({
   return (
     <div ref={boxRef} className="space-y-2" data-chart="rooms">
       <svg viewBox={`0 0 ${W} ${H}`} className="h-[200px] w-full overflow-visible" role="img" aria-label="ADR / RevPAR">
-        {[0, maxV / 2, maxV].map((v, k) => (
+        {rScale.ticks.map((v, k) => (
           <g key={k}>
             <line x1={padX + axisW} x2={W - padX} y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="3 5" />
             <text x={padX} y={y(v) + 4} fill="#94a3b8" fontSize="10.5">{compact(v)}</text>

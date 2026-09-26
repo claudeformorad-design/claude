@@ -5,7 +5,7 @@ export function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card"
-      className={cn("surface text-foreground transition-colors duration-200 hover:border-line-strong", className)}
+      className={cn("surface min-w-0 text-foreground transition-colors duration-200 hover:border-line-strong", className)}
       {...props}
     />
   );

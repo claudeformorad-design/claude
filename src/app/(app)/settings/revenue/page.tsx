@@ -74,7 +74,7 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
     <>
       <PageHeader title={rs.title} description={rs.subtitle} />
       <div className={`grid gap-6 ${formKind && initial ? "xl:grid-cols-[1fr_380px]" : ""}`}>
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           {section(rs.taxes, "tax", [t.customers.code, t.customers.name, rs.kind, rs.rate, rs.account, t.common.status],
             taxes.map((x) => (
               <TableRow key={x.id}>

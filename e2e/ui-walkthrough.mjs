@@ -148,7 +148,7 @@ await step("occupancy KPI computed", async () => {
   await go("/reports/rooms");
   if (!(await page.locator("body").innerText()).match(/\d+\.\d%/)) throw new Error("no occupancy %");
 });
-await step("dashboard renders charts", async () => { await go("/"); await page.locator("[data-chart=financial] svg").first().waitFor({ timeout: 10000 }); await page.locator("#reconciliation").waitFor(); if (await page.locator("#reconciliation .text-red-700").count()) throw new Error("reconciliation difference on dashboard"); await page.screenshot({ path: `${SHOTS}/dashboard.png`, fullPage: true }); });
+await step("dashboard renders charts", async () => { await go("/"); await page.locator("[data-chart=financial] svg").first().waitFor({ timeout: 10000 }); await page.locator("#reconciliation").waitFor(); if ((await page.locator("#reconciliation").innerText()).includes("فرق")) throw new Error("reconciliation difference on dashboard"); await page.screenshot({ path: `${SHOTS}/dashboard.png`, fullPage: true }); });
 await step("excel export downloads", async () => {
   const res = await page.request.get(`${BASE}/api/export/income-statement`);
   if (res.status() !== 200 || !(res.headers()["content-type"] ?? "").includes("spreadsheet")) throw new Error(`status ${res.status()}`);
