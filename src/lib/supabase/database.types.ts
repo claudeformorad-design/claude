@@ -331,10 +331,11 @@ export type FixedAssetRow = {
   vendor_bill_id: string | null; journal_entry_id: string | null; disposal_date: string | null; disposal_proceeds: string | null;
   disposal_journal_entry_id: string | null; notes: string | null; created_at: string; created_by: string | null;
 };
+export type LedgerControl = "guest_ledger" | "guest_deposits" | "accounts_receivable" | "accounts_payable" | "inventory" | "trial_balance";
 export type InventoryItemRow = Audit & {
   id: string; hotel_id: string; sku: string; name_ar: string; name_en: string | null; unit: string;
   inventory_account_id: string; expense_account_id: string; reorder_level: string; quantity_on_hand: string;
-  average_cost: string; is_active: boolean;
+  average_cost: string; stock_value: string; is_active: boolean;
 };
 export type InventoryTxnRow = {
   id: string; hotel_id: string; item_id: string; txn_type: "receipt" | "issue" | "adjustment"; txn_date: string;
@@ -427,6 +428,10 @@ export type Database = {
       cash_flow_lines: { Args: { p_hotel_id: string; p_from: string; p_to: string }; Returns: { activity: "operating" | "investing" | "financing"; account_id: string; amount: string }[] };
       cash_balance: { Args: { p_hotel_id: string; p_as_of: string }; Returns: string };
       daily_cash_report: { Args: { p_hotel_id: string; p_date: string }; Returns: { payment_method_id: string; method_name: string; source: string; receipts: string; payments: string }[] };
+      ledger_reconciliation: {
+        Args: { p_hotel_id: string };
+        Returns: { control: LedgerControl; gl_balance: string; subledger_balance: string; reconciling_items: string; difference: string }[];
+      };
       monthly_pnl: { Args: { p_hotel_id: string; p_from: string; p_to: string }; Returns: { month: string; revenue: string; expenses: string }[] };
       register_fixed_asset: {
         Args: {

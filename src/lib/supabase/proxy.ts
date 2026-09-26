@@ -1,16 +1,52 @@
+import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import type { Database } from "./database.types";
+import { isSupabaseConfigured, supabaseEnv } from "./env";
 
-/** تمرير الطلبات مباشرة إلى النظام الفندقي دون الحاجة لتسجيل دخول */
+const PUBLIC_PATHS = ["/login"];
+
+/**
+ * وضع التجربة المحلي (بدون Supabase): لا يوجد تسجيل دخول — مستخدم تشغيل محلي واحد.
+ * مع Supabase: تحديث الجلسة في كل طلب وتحويل غير المسجلين إلى صفحة الدخول.
+ */
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
-  const pathname = request.nextUrl.pathname;
+  if (!isSupabaseConfigured()) {
+    if (request.nextUrl.pathname.startsWith("/login")) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/";
+      redirectUrl.search = "";
+      return NextResponse.redirect(redirectUrl);
+    }
+    return NextResponse.next({ request });
+  }
 
-  // إذا حاول المستخدم فتح صفحة الدخول أو الإعداد، يتم توجيهه مباشرة للنظام
-  if (pathname === "/login" || pathname === "/onboarding") {
+  let response = NextResponse.next({ request });
+  const { url, anonKey } = supabaseEnv();
+
+  const supabase = createServerClient<Database>(url, anonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        response = NextResponse.next({ request });
+        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+      },
+    },
+  });
+
+  // مهم: getUser يتحقق من الرمز لدى خادم Supabase (وليس فقط قراءة الكوكي)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const isPublic = PUBLIC_PATHS.some((p) => request.nextUrl.pathname.startsWith(p));
+  if (!user && !isPublic) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/";
+    redirectUrl.pathname = "/login";
     redirectUrl.search = "";
     return NextResponse.redirect(redirectUrl);
   }
-
-  return NextResponse.next({ request });
+  return response;
 }

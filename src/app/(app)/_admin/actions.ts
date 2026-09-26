@@ -6,6 +6,8 @@ import { optText } from "@/lib/validation/common";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isValidAmount, toMoney } from "@/lib/accounting/money";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { wipeLocalDb } from "@/lib/supabase/local-db";
 import { raise, type ActionResult, toActionResult } from "@/services/errors";
 
 const opt = optText;
@@ -103,22 +105,14 @@ export async function periodAction(op: "close" | "open" | "closeYear" | "newYear
   }), "/periods");
 }
 
+/**
+ * تصفير وضع التجربة: حذف القاعدة المحلية بالكامل والبدء من شاشة إعداد الفندق.
+ * غير متاح إطلاقًا مع Supabase: السجلات المحاسبية المرحّلة لا تُحذف (عكس فقط).
+ */
 export async function resetHotelDataAction(): Promise<ActionResult<undefined>> {
-  const ctx = await requireAppContext(PERMISSIONS.hotelManage);
-  return done(await toActionResult(async () => {
-    const hotelId = ctx.hotel.id;
-    // Safely delete transaction tables in foreign key order
-    await ctx.supabase.from("folio_transactions").delete().eq("hotel_id", hotelId);
-    await ctx.supabase.from("guest_folios").delete().eq("hotel_id", hotelId);
-    await ctx.supabase.from("invoices").delete().eq("hotel_id", hotelId);
-    await ctx.supabase.from("payments").delete().eq("hotel_id", hotelId);
-    await ctx.supabase.from("vendor_bills").delete().eq("hotel_id", hotelId);
-    await ctx.supabase.from("purchase_orders").delete().eq("hotel_id", hotelId);
-    await ctx.supabase.from("payroll_runs").delete().eq("hotel_id", hotelId);
-    await ctx.supabase.from("bank_statement_lines").delete().eq("hotel_id", hotelId);
-    await ctx.supabase.from("fixed_assets").delete().eq("hotel_id", hotelId);
-    await ctx.supabase.from("journal_entries").delete().eq("hotel_id", hotelId);
-    return undefined;
-  }), "/");
+  await requireAppContext(PERMISSIONS.hotelManage);
+  if (isSupabaseConfigured()) return { ok: false, error: "permission_denied", details: "Reset is only available in local trial mode" };
+  await wipeLocalDb();
+  revalidatePath("/", "layout");
+  return { ok: true, data: undefined };
 }
-

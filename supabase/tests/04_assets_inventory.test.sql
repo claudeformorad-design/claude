@@ -145,6 +145,30 @@ begin
   assert pg_temp.gl(h, 'inventory_food') = (select quantity_on_hand * average_cost from public.inventory_items where id = (select v from ids where k = 'rice')), 'GL inventory = stock value';
 end $$;
 
+-- وارد مرتبط بفاتورة مورد لا يتجاوز قيمة بنودها على حساب المخزون (الفاتورة 500 ووارد منها 500)
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000d1');
+select pg_temp.expect_error($q$
+  select public.post_inventory_movement((select v from ids where k = 'rice'), 'receipt', 1, current_date, 1, null, (select v from ids where k = 'bill'))
+$q$, 'exceed the vendor bill');
+
+-- لا انجراف تقريب: 3 وحدات بقيمة 10.00 تُصرف واحدة واحدة (3.33 + 3.34 + 3.33) ⇒ القيمة والأستاذ صفر بالضبط
+insert into public.inventory_items (hotel_id, sku, name_ar, unit, inventory_account_id, expense_account_id)
+select id, 'OIL-1L', 'زيت', 'btl', (select v from ids where k = 'acc_1120'), (select v from ids where k = 'acc_5101') from h4;
+insert into ids select 'oil', id from public.inventory_items where hotel_id = (select id from h4) and sku = 'OIL-1L';
+select public.post_inventory_movement((select v from ids where k = 'oil'), 'receipt', 3, current_date, 3.333333);
+select public.post_inventory_movement((select v from ids where k = 'oil'), 'issue', 1, current_date, null, (select v from ids where k = 'dept_fnb'));
+select public.post_inventory_movement((select v from ids where k = 'oil'), 'issue', 1, current_date, null, (select v from ids where k = 'dept_fnb'));
+select public.post_inventory_movement((select v from ids where k = 'oil'), 'issue', 1, current_date, null, (select v from ids where k = 'dept_fnb'));
+select pg_temp.act_as(null);
+do $$
+declare h uuid := (select id from h4);
+begin
+  assert (select quantity_on_hand = 0 and stock_value = 0 from public.inventory_items where id = (select v from ids where k = 'oil')), 'oil fully consumed';
+  assert (select array_agg(total_cost order by total_cost) from public.inventory_transactions
+          where item_id = (select v from ids where k = 'oil') and txn_type = 'issue') = array[3.33, 3.33, 3.34]::numeric[], 'issue values';
+  assert pg_temp.gl(h, 'inventory_food') = (select sum(stock_value) from public.inventory_items where hotel_id = h), 'GL inventory = Σ stock value (no drift)';
+end $$;
+
 -- =============================================================================
 -- ربحية الأقسام
 -- =============================================================================
@@ -157,13 +181,25 @@ begin
   assert (select sum(amount) from public.department_profitability((select id from h4), date_trunc('year', current_date)::date, current_date)
           where department_id = fnb and account_type = 'revenue') = 1000, 'F&B revenue';
   assert (select sum(amount) from public.department_profitability((select id from h4), date_trunc('year', current_date)::date, current_date)
-          where department_id = fnb and account_type = 'expense') = 440 + 55, 'F&B costs (COGS + shortage)';
+          where department_id = fnb and account_type = 'expense') = 440 + 55 + 10, 'F&B costs (COGS + shortage + oil issues)';
 end $$;
 
 select pg_temp.act_as(null);
 do $$ begin
   assert (select sum(debit) = sum(credit) from public.journal_entry_lines l join public.journal_entries j on j.id = l.journal_entry_id
           and j.status = 'posted' where l.hotel_id = (select id from h4)), 'GL balanced';
+end $$;
+
+
+-- ثابت عام: كل حسابات المراقبة تطابق دفاترها الفرعية وميزان المراجعة متوازن لكل فندق في هذا الاختبار
+select pg_temp.act_as(null);
+do $$
+declare r record;
+begin
+  for r in select h.id, h.name_ar, x.* from public.hotels h cross join lateral public.ledger_reconciliation(h.id) x loop
+    assert r.difference = 0, format('reconciliation %s (%s): gl %s, subledger %s, reconciling %s',
+      r.control, r.name_ar, r.gl_balance, r.subledger_balance, r.reconciling_items);
+  end loop;
 end $$;
 
 \o

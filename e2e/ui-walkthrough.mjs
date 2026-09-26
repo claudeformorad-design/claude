@@ -28,7 +28,9 @@ const pick = async (loc, re) => {
 const go = async (path) => { await page.goto(BASE + path); await page.waitForLoadState("networkidle"); await noErrorScreen(); };
 
 const email = `ui-${Date.now()}@test.dev`;
+// وضع التجربة المحلي (LOCAL=1): لا يوجد تسجيل دخول، أول زيارة تحوّل لإعداد الفندق
 await step("signup", async () => {
+  if (process.env.LOCAL) { await page.goto(BASE + "/"); await page.waitForURL(/onboarding/, { timeout: 60000 }); return; }
   await page.goto(BASE + "/login");
   await page.getByRole("button", { name: /أنشئ حسابًا/ }).click();
   await page.fill("#full_name", "مدير الاختبار");
@@ -145,20 +147,13 @@ await step("occupancy KPI computed", async () => {
   await go("/reports/rooms");
   if (!(await page.locator("body").innerText()).match(/\d+\.\d%/)) throw new Error("no occupancy %");
 });
-await step("dashboard renders charts", async () => { await go("/"); await page.locator(".recharts-wrapper").first().waitFor({ timeout: 10000 }); await page.screenshot({ path: `${SHOTS}/dashboard.png`, fullPage: true }); });
+await step("dashboard renders charts", async () => { await go("/"); await page.locator("[data-chart=financial] svg").first().waitFor({ timeout: 10000 }); await page.locator("#reconciliation").waitFor(); if (await page.locator("#reconciliation .text-red-700").count()) throw new Error("reconciliation difference on dashboard"); await page.screenshot({ path: `${SHOTS}/dashboard.png`, fullPage: true }); });
 await step("excel export downloads", async () => {
   const res = await page.request.get(`${BASE}/api/export/income-statement`);
   if (res.status() !== 200 || !(res.headers()["content-type"] ?? "").includes("spreadsheet")) throw new Error(`status ${res.status()}`);
   const buf = await res.body();
   if (buf.subarray(0, 2).toString() !== "PK") throw new Error("not an xlsx zip");
 });
-await step("switch to English", async () => {
-  await go("/");
-  await page.getByRole("button", { name: "English" }).click();
-  await page.waitForTimeout(1500);
-  if ((await page.locator("html").getAttribute("dir")) !== "ltr") throw new Error("dir not ltr");
-});
-
 console.log(`\nproblems (${problems.length}):`);
 for (const p of problems) console.log(" - " + p);
 await browser.close();

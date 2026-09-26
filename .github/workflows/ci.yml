@@ -12,10 +12,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+      # المشروع يعتمد bun.lock لإدارة الحزم
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
       - name: Database tests (PostgreSQL 16 preinstalled on runner)
         run: npm run test:db
+      - name: Database tests (embedded PGlite — same engine as local trial mode)
+        run: npm run test:db:pglite

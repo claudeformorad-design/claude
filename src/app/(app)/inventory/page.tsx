@@ -21,7 +21,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   const sp = await searchParams;
   const [itemsRes, accounts, departments, bills] = await Promise.all([
     ctx.supabase.from("inventory_items")
-      .select("id, hotel_id, sku, name_ar, name_en, unit, inventory_account_id, expense_account_id, reorder_level::text, quantity_on_hand::text, average_cost::text, is_active, created_at, created_by, updated_at, updated_by")
+      .select("id, hotel_id, sku, name_ar, name_en, unit, inventory_account_id, expense_account_id, reorder_level::text, quantity_on_hand::text, average_cost::text, stock_value::text, is_active, created_at, created_by, updated_at, updated_by")
       .eq("hotel_id", ctx.hotel.id).order("sku"),
     listAccounts(ctx.supabase, ctx.hotel.id),
     listDepartments(ctx.supabase, ctx.hotel.id),
@@ -87,7 +87,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                   <TableCell className="num">{x.sku}</TableCell><TableCell>{name(x)}</TableCell><TableCell>{x.unit}</TableCell>
                   <TableCell className="num text-end">{toMoney(x.quantity_on_hand).toString()}</TableCell>
                   <TableCell className="text-end"><Money value={x.average_cost} locale={locale} decimals={4} /></TableCell>
-                  <TableCell className="text-end"><Money value={toMoney(x.quantity_on_hand).times(toMoney(x.average_cost))} locale={locale} /></TableCell>
+                  <TableCell className="text-end"><Money value={x.stock_value} locale={locale} /></TableCell>
                   <TableCell>{low && <Badge variant="warning">{i.lowStock}</Badge>}</TableCell>
                   {can && <TableCell className="text-end"><Button asChild variant="ghost" size="sm"><Link href={`/inventory?edit=${x.id}`}>{t.common.edit}</Link></Button></TableCell>}
                 </TableRow>

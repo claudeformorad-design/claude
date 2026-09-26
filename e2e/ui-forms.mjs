@@ -30,11 +30,16 @@ const bodyHas = async (...texts) => { const b = await page.locator("body").inner
 
 // مستخدم وفندق جديدان
 const email = `forms-${Date.now()}@test.dev`;
-await page.goto(BASE + "/login");
-await page.getByRole("button", { name: /أنشئ حسابًا/ }).click();
-await page.fill("#email", email); await page.fill("#password", "Passw0rd!123");
-await page.getByRole("button", { name: "إنشاء الحساب" }).click();
-await page.waitForURL(/onboarding/); await page.fill("#name_ar", "فندق النماذج");
+if (process.env.LOCAL) {
+  // وضع التجربة المحلي: قاعدة جديدة فارغة ⇒ أول زيارة تحوّل لإعداد الفندق
+  await page.goto(BASE + "/"); await page.waitForURL(/onboarding/, { timeout: 60000 });
+} else {
+  await page.goto(BASE + "/login");
+  await page.getByRole("button", { name: /أنشئ حسابًا/ }).click();
+  await page.fill("#email", email); await page.fill("#password", "Passw0rd!123");
+  await page.getByRole("button", { name: "إنشاء الحساب" }).click();
+  await page.waitForURL(/onboarding/);
+} await page.fill("#name_ar", "فندق النماذج");
 await page.getByRole("button", { name: "إنشاء الفندق" }).click();
 await page.waitForURL((u) => u.pathname === "/");
 

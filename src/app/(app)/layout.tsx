@@ -1,14 +1,13 @@
 import { ShieldCheck } from "lucide-react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Badge } from "@/components/ui/badge";
-import { ResetSystemButton } from "@/components/layout/reset-system-button";
 import { requireAppContext } from "@/lib/auth/context";
 import { getI18n } from "@/i18n/server";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requireAppContext();
   const { t } = await getI18n();
-  const hotelName = ctx.hotel.name_ar || ctx.hotel.name_en || "فندق الأفق الفاخر";
+  const hotelName = ctx.hotel.name_ar || ctx.hotel.name_en || "";
 
   return (
     <div className="flex h-screen bg-[#F8FAF9]">
@@ -24,7 +23,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <ResetSystemButton />
             <div className="flex items-center gap-2">
               <Badge variant="default" className="gap-1.5 bg-[#0F172A] text-[#FFD369] border-[#0F172A] px-2.5 py-1 text-[11px] font-extrabold shadow-2xs">
                 <ShieldCheck className="size-3.5 text-[#FFD369]" />

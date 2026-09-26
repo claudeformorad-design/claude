@@ -166,5 +166,17 @@ select pg_temp.expect_error($q$
   select public.post_folio_charge((select v from ids where k = 'f'), (select id from public.charge_codes where hotel_id = (select id from h6) and code = 'ROOM'), 100)
 $q$, 'is closed');
 
+
+-- ثابت عام: كل حسابات المراقبة تطابق دفاترها الفرعية وميزان المراجعة متوازن لكل فندق في هذا الاختبار
+select pg_temp.act_as(null);
+do $$
+declare r record;
+begin
+  for r in select h.id, h.name_ar, x.* from public.hotels h cross join lateral public.ledger_reconciliation(h.id) x loop
+    assert r.difference = 0, format('reconciliation %s (%s): gl %s, subledger %s, reconciling %s',
+      r.control, r.name_ar, r.gl_balance, r.subledger_balance, r.reconciling_items);
+  end loop;
+end $$;
+
 \o
 \echo '  ✓ approvals, year-end closing, user management and tax return tests passed'

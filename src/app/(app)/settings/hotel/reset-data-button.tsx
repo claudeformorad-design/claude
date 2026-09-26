@@ -18,10 +18,7 @@ export function ResetHotelDataButton() {
       const res = await resetHotelDataAction();
       if (res.ok) {
         setSuccess(true);
-        setTimeout(() => {
-          router.push("/");
-          router.refresh();
-        }, 1000);
+        setTimeout(() => { router.replace("/onboarding"); router.refresh(); }, 800);
       }
     });
   };
@@ -32,10 +29,10 @@ export function ResetHotelDataButton() {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <AlertOctagon className="size-4 text-red-600 font-bold" />
-            <h4 className="text-sm font-bold text-red-900">تصفير وتهيئة النظام بالكامل (Fresh Start)</h4>
+            <h4 className="text-sm font-bold text-red-900">تصفير وضع التجربة بالكامل</h4>
           </div>
           <p className="text-xs text-red-700 max-w-xl">
-            يؤدي هذا الإجراء إلى مسح كافة الحركات والمعاملات (القيود اليومية، الفوليو، الفواتير، السندات، فواتير الموردين) لتبدأ المنشأة كمنشأة جديدة تماماً برصيد صفري مع الحفاظ على دليل الحسابات الموحد وإعدادات الفندق.
+            يحذف قاعدة بيانات التجربة المحلية بالكامل (الفندق، الإعدادات، القيود، الفوليو، الفواتير، السندات وكل الحركات) ويعيدك لشاشة إعداد فندق جديد. متاح في وضع التجربة فقط، ولا يمكن التراجع عنه.
           </p>
         </div>
 
@@ -68,7 +65,7 @@ export function ResetHotelDataButton() {
                 type="button"
                 variant="destructive"
                 size="sm"
-                disabled={isPending || success}
+                disabled={!confirmed || isPending || success}
                 onClick={handleReset}
                 className="rounded-xl bg-red-700 hover:bg-red-800 text-xs font-extrabold text-white"
               >
@@ -80,7 +77,7 @@ export function ResetHotelDataButton() {
                 ) : isPending ? (
                   "جاري التصفير..."
                 ) : (
-                  "تأكيد مسح جميع الحركات الآن"
+                  "تأكيد الحذف الكامل الآن"
                 )}
               </Button>
             </div>
@@ -91,7 +88,7 @@ export function ResetHotelDataButton() {
                 onChange={(e) => setConfirmed(e.target.checked)}
                 className="size-3.5 rounded border-red-300 text-red-600"
               />
-              أنا متأكد من رغبتي في تصفير جميع الحركات
+              أنا متأكد من حذف جميع بيانات التجربة
             </label>
           </div>
         )}

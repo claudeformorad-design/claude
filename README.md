@@ -18,8 +18,22 @@ Next.js 16 (App Router) · TypeScript (strict) · Supabase (PostgreSQL + Auth + 
 
 ## التشغيل
 
+### وضع التجربة المحلي (بدون Supabase)
+
 ```bash
-npm install
+bun install
+bun run dev                       # http://localhost:3000
+```
+
+إذا لم تُضبط متغيرات Supabase يعمل النظام على **قاعدة PostgreSQL مضمّنة (PGlite)** في المجلد `.data/pglite`،
+تُطبَّق عليها ملفات `supabase/migrations` نفسها حرفيًا — أي نفس قواعد المحاسبة والصلاحيات والتحقق المختبرة.
+القاعدة تبدأ **فارغة تمامًا** (لا بيانات تجريبية): أول زيارة تفتح شاشة إعداد الفندق. لا يوجد تسجيل دخول في هذا الوضع
+(مستخدم تشغيل محلي واحد بدور المدير العام). للبدء من جديد: الإعدادات ← الفندق ← «تصفير وضع التجربة»، أو احذف `.data/`.
+
+### مع Supabase (الإنتاج)
+
+```bash
+bun install
 cp .env.example .env.local        # ضع رابط ومفتاح مشروع Supabase
 
 # تطبيق الترحيلات على مشروع Supabase
@@ -36,6 +50,7 @@ npm run dev                       # http://localhost:3000
 ```bash
 npm test            # اختبارات الوحدة للمنطق المحاسبي (القيد المزدوج، ميزان المراجعة، المبالغ، السنة المالية)
 npm run test:db     # ترحيلات + اختبارات SQL على PostgreSQL محلي مؤقت (التوازن، عدم التعديل، العكس، RLS، الفترات المقفلة)
+npm run test:db:pglite  # نفس اختبارات SQL على PGlite (محرك وضع التجربة) — لا يحتاج تثبيت PostgreSQL
 npm run typecheck && npm run lint
 ```
 

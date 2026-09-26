@@ -188,6 +188,12 @@ begin
   assert (select net_amount = 200 and tax_amount = 30 from public.credit_notes where invoice_id = (select v from ids where k = 'inv')), 'credit note split';
   assert -pg_temp.gl(h, 'vat_output') = 120, 'VAT output net of credit note';
   assert pg_temp.gl(h, 'ar_control') = 920, 'AR = invoice outstanding';
+  -- خصم الإشعار يحمل قسم البند ⇒ صافي إيراد القسم = 1000 − 200 ولا يوجد إيراد بلا قسم
+  assert (select sum(amount) from public.department_profitability(h, current_date, current_date)
+          where account_type = 'revenue' and department_id = (select department_id from public.invoice_items
+                                                               where invoice_id = (select v from ids where k = 'inv'))) = 800, 'dept revenue net of credit note';
+  assert not exists (select 1 from public.department_profitability(h, current_date, current_date)
+                     where account_type = 'revenue' and department_id is null), 'no unassigned revenue';
 end $$;
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000c1');
 
@@ -224,6 +230,18 @@ select pg_temp.act_as(null);
 do $$ begin
   assert (select sum(debit) = sum(credit) from public.journal_entry_lines l join public.journal_entries j on j.id = l.journal_entry_id
           and j.status = 'posted' where l.hotel_id = (select id from h3)), 'GL balanced';
+end $$;
+
+
+-- ثابت عام: كل حسابات المراقبة تطابق دفاترها الفرعية وميزان المراجعة متوازن لكل فندق في هذا الاختبار
+select pg_temp.act_as(null);
+do $$
+declare r record;
+begin
+  for r in select h.id, h.name_ar, x.* from public.hotels h cross join lateral public.ledger_reconciliation(h.id) x loop
+    assert r.difference = 0, format('reconciliation %s (%s): gl %s, subledger %s, reconciling %s',
+      r.control, r.name_ar, r.gl_balance, r.subledger_balance, r.reconciling_items);
+  end loop;
 end $$;
 
 \o

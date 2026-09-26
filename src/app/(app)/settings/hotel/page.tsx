@@ -10,6 +10,7 @@ import { getI18n } from "@/i18n/server";
 import { saveDepartmentAction, saveHotelAction } from "../../_admin/actions";
 import { SimpleForm } from "../../_assets/simple-form";
 import { ResetHotelDataButton } from "./reset-data-button";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export default async function HotelSettingsPage() {
   const ctx = await requireAppContext(PERMISSIONS.accountsView);
@@ -66,7 +67,7 @@ export default async function HotelSettingsPage() {
           </Card>
         </div>
 
-        {ctx.can(PERMISSIONS.hotelManage) && <ResetHotelDataButton />}
+        {ctx.can(PERMISSIONS.hotelManage) && !isSupabaseConfigured() && <ResetHotelDataButton />}
       </div>
     </>
   );
