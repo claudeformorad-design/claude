@@ -35,8 +35,8 @@ export default async function ReportPage({ params, searchParams }: {
         <Input type="date" name="to" defaultValue={to} dir="ltr" className="w-40" aria-label={t.common.to} />
         <Button type="submit" variant="outline">{t.common.apply}</Button>
       </form>
-      <ReportView report={table} locale={locale} exportHref={`/api/export/${key}?from=${from}&to=${to}`}
-        labels={{ excel: t.reports.exportExcel, print: t.reports.printPdf }} />
+      <ReportView report={table} locale={locale} reportKey={key} query={`from=${from}&to=${to}`}
+        labels={{ excel: t.reports.exportExcel, pdf: t.reports.printPdf }} />
     </>
   );
 }

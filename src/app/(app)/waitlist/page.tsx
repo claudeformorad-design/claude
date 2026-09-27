@@ -1,9 +1,10 @@
+import { RouteDialog } from "@/components/ui/dialog";
 import Link from "@/components/link";
 import { BellRing, CheckCircle2, Hourglass, Plus, XCircle } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { EntityCell } from "@/components/ui/entity";
 import { FilterTabs } from "@/components/ui/filter-tabs";
@@ -51,7 +52,7 @@ export default async function WaitlistPage({ searchParams }: {
       <PageHeader
         title={t.nav.waitlist}
         description="الطلبات التي لم تتوفر لها غرف. يتغير الطلب إلى «متاح الآن» تلقائيًا عند تحرر غرفة، ويتحول إلى حجز بنقرة."
-        actions={canManage && !showForm && <Button asChild><Link href="/waitlist?new=1"><Plus />إضافة طلب</Link></Button>}
+        actions={canManage && <Button asChild><Link href="/waitlist?new=1"><Plus />إضافة طلب</Link></Button>}
       />
       <StatGrid>
         <Stat icon={Hourglass} tone="ink" label="في الانتظار" value={<span className="num">{waiting.length}</span>} />
@@ -60,7 +61,7 @@ export default async function WaitlistPage({ searchParams }: {
         <Stat icon={XCircle} tone="neutral" label="ملغاة أو منتهية" value={<span className="num">{entries.filter((e) => e.status === "cancelled" || e.is_expired).length}</span>} />
       </StatGrid>
 
-      <div className={`grid items-start gap-6 ${showForm ? "xl:grid-cols-[minmax(0,1fr)_400px]" : ""}`}>
+      <div className="grid gap-6">
         <div className="space-y-4">
           <FilterTabs active={tab} items={[
             { key: "waiting", href: "/waitlist", label: "في الانتظار", count: waiting.length },
@@ -108,13 +109,8 @@ export default async function WaitlistPage({ searchParams }: {
           </Card>
         </div>
         {showForm && (
-          <Card className="h-fit">
-            <CardHeader>
-              <CardTitle>طلب انتظار جديد</CardTitle>
-              <CardDescription>للغرف الليلية. يمكن إضافة الطلب حتى لو كانت هناك غرف متاحة جزئيًا.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {nightlyTypes.length === 0 ? <p className="text-slate-500">عرّف أنواع الغرف أولًا.</p> : (
+          <RouteDialog closeHref="/waitlist" title="طلب انتظار جديد" description="للغرف الليلية. يمكن إضافة الطلب حتى لو كانت هناك غرف متاحة جزئيًا.">
+            {nightlyTypes.length === 0 ? <p className="text-slate-500">عرّف أنواع الغرف أولًا.</p> : (
                 <SimpleForm columns={2} submitLabel="إضافة للانتظار" errors={t.errors} action={addWaitlistAction} onDone="/waitlist"
                   initial={{
                     guest_name: "", phone: "", room_type_id: nightlyTypes.some((x) => x.id === sp.type) ? sp.type! : nightlyTypes[0]!.id,
@@ -129,8 +125,7 @@ export default async function WaitlistPage({ searchParams }: {
                     { name: "children", label: "أطفال", type: "number" }, { name: "notes", label: "ملاحظات" },
                   ]} />
               )}
-            </CardContent>
-          </Card>
+          </RouteDialog>
         )}
       </div>
     </>

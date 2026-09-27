@@ -1,5 +1,5 @@
+import { ExportButtons } from "@/components/reports/export-buttons";
 import { PageHeader } from "@/components/layout/page-header";
-import { FileSpreadsheet } from "lucide-react";
 import { Money } from "@/components/money";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -45,7 +45,7 @@ export default async function ProfitabilityPage({ searchParams }: { searchParams
   return (
     <>
       <PageHeader title={t.nav.profitability} description={p.subtitle}
-        actions={<Button asChild variant="outline"><a href={`/api/export/profitability?from=${from}&to=${to}`}><FileSpreadsheet />{t.reports.exportExcel}</a></Button>} />
+        actions={<ExportButtons report={`profitability`} query={`from=${from}&to=${to}`} labels={{ excel: t.reports.exportExcel, pdf: t.reports.printPdf }} />} />
       <form className="toolbar">
         <Input type="date" name="from" defaultValue={from} dir="ltr" className="w-40" aria-label={t.common.from} />
         <Input type="date" name="to" defaultValue={to} dir="ltr" className="w-40" aria-label={t.common.to} />

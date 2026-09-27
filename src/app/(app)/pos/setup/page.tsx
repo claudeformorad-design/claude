@@ -1,9 +1,10 @@
+import { FormDialog, RouteDialog } from "@/components/ui/dialog";
 import Link from "@/components/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
@@ -27,11 +28,40 @@ export default async function PosSetupPage({ searchParams }: { searchParams: Pro
   const editOutlet = outlets.find((o) => o.id === sp.outlet);
   const food = codes.find((c) => c.code === "FOOD")?.id ?? codes[0]?.id ?? "";
 
+  type Outlet = (typeof outlets)[number];
+  type Item = (typeof items)[number];
+  const outletForm = (o?: Outlet) => (
+    <SimpleForm key={o?.id ?? "new-outlet"} columns={2} submitLabel="حفظ النقطة" errors={t.errors} action={saveOutletAction} onDone="/pos/setup"
+      initial={{ id: o?.id ?? "", code: o?.code ?? "", name_ar: o?.name_ar ?? "", is_active: o?.is_active ?? true }}
+      fields={[{ name: "code", label: "الرمز", ltr: true }, { name: "name_ar", label: "الاسم، مثل المطعم" }, ...(o ? [{ name: "is_active", label: "مفعّلة", checkbox: true as const }] : [])]} />
+  );
+  const itemForm = (i?: Item) => (
+    <SimpleForm key={i?.id ?? "new-item"} columns={2} submitLabel="حفظ الصنف" errors={t.errors} action={savePosItemAction} onDone="/pos/setup"
+      initial={{
+        id: i?.id ?? "", outlet_id: i?.outlet_id ?? outlets[0]?.id ?? "", item_name: i?.name_ar ?? "", category: i?.category ?? "",
+        price: i ? String(Number(i.price)) : "", charge_code_id: i?.charge_code_id ?? food, is_active: i?.is_active ?? true,
+      }}
+      fields={[
+        { name: "outlet_id", label: "النقطة", options: outlets.map((x) => ({ id: x.id, label: x.name_ar })) },
+        { name: "item_name", label: "اسم الصنف" },
+        { name: "category", label: "التصنيف، مثل مشروبات أو أطباق رئيسية" },
+        { name: "price", label: "السعر", type: "number" },
+        { name: "charge_code_id", label: "رمز الإيراد", options: codes.filter((c) => c.is_active).map((c) => ({ id: c.id, label: `${c.code} ${c.name_ar}` })) },
+        ...(i ? [{ name: "is_active", label: "مفعّل", checkbox: true as const }] : []),
+      ]} />
+  );
+
   return (
     <>
       <PageHeader title="إعداد نقاط البيع" description="المطعم والكافيه وخدمة الغرف، بأصنافها وأسعارها"
-        actions={<Button asChild variant="outline"><Link href="/pos">شاشة البيع</Link></Button>} />
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
+        actions={
+          <div className="flex gap-2">
+            <Button asChild variant="outline"><Link href="/pos">شاشة البيع</Link></Button>
+            <FormDialog label="نقطة بيع جديدة" title="نقطة بيع جديدة" variant="outline">{outletForm()}</FormDialog>
+            {outlets.length > 0 && <FormDialog label="صنف جديد" title="صنف جديد">{itemForm()}</FormDialog>}
+          </div>
+        } />
+      <div className="grid gap-6">
         <div className="space-y-6">
           <Card className="overflow-hidden">
             <CardHeader><CardTitle>الأصناف</CardTitle></CardHeader>
@@ -67,36 +97,8 @@ export default async function PosSetupPage({ searchParams }: { searchParams: Pro
             </Table>
           </Card>
         </div>
-        <div className="space-y-6">
-          <Card>
-            <CardHeader><CardTitle>{editOutlet ? "تعديل نقطة البيع" : "نقطة بيع جديدة"}</CardTitle></CardHeader>
-            <CardContent>
-              <SimpleForm key={editOutlet?.id ?? "new-outlet"} columns={1} submitLabel="حفظ النقطة" errors={t.errors} action={saveOutletAction} onDone="/pos/setup"
-                initial={{ id: editOutlet?.id ?? "", code: editOutlet?.code ?? "", name_ar: editOutlet?.name_ar ?? "", is_active: editOutlet?.is_active ?? true }}
-                fields={[{ name: "code", label: "الرمز", ltr: true }, { name: "name_ar", label: "الاسم، مثل المطعم" }, ...(editOutlet ? [{ name: "is_active", label: "مفعّلة", checkbox: true as const }] : [])]} />
-            </CardContent>
-          </Card>
-          {outlets.length > 0 && (
-            <Card>
-              <CardHeader><CardTitle>{editItem ? "تعديل صنف" : "صنف جديد"}</CardTitle></CardHeader>
-              <CardContent>
-                <SimpleForm key={editItem?.id ?? "new-item"} columns={1} submitLabel="حفظ الصنف" errors={t.errors} action={savePosItemAction} onDone="/pos/setup"
-                  initial={{
-                    id: editItem?.id ?? "", outlet_id: editItem?.outlet_id ?? outlets[0]!.id, item_name: editItem?.name_ar ?? "", category: editItem?.category ?? "",
-                    price: editItem ? String(Number(editItem.price)) : "", charge_code_id: editItem?.charge_code_id ?? food, is_active: editItem?.is_active ?? true,
-                  }}
-                  fields={[
-                    { name: "outlet_id", label: "النقطة", options: outlets.map((o) => ({ id: o.id, label: o.name_ar })) },
-                    { name: "item_name", label: "اسم الصنف" },
-                    { name: "category", label: "التصنيف، مثل مشروبات أو أطباق رئيسية" },
-                    { name: "price", label: "السعر", type: "number" },
-                    { name: "charge_code_id", label: "رمز الإيراد", options: codes.filter((c) => c.is_active).map((c) => ({ id: c.id, label: `${c.code} ${c.name_ar}` })) },
-                    ...(editItem ? [{ name: "is_active", label: "مفعّل", checkbox: true as const }] : []),
-                  ]} />
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        {editOutlet && <RouteDialog key={editOutlet.id} closeHref="/pos/setup" title={`تعديل ${editOutlet.name_ar}`}>{outletForm(editOutlet)}</RouteDialog>}
+        {editItem && <RouteDialog key={editItem.id} closeHref="/pos/setup" title={`تعديل ${editItem.name_ar}`}>{itemForm(editItem)}</RouteDialog>}
       </div>
     </>
   );

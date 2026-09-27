@@ -1,3 +1,4 @@
+import { FormDialog } from "@/components/ui/dialog";
 import { Coins } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -34,9 +35,20 @@ export default async function CurrenciesPage() {
 
   return (
     <>
-      <PageHeader title="العملات وأسعار الصرف" description={`العملة الأساسية ${nameOf.get(base) ?? base}، والسعر هو ما تساويه وحدة واحدة من العملة الأجنبية بالعملة الأساسية`} />
+      <PageHeader title="العملات وأسعار الصرف" description={`العملة الأساسية ${nameOf.get(base) ?? base}، والسعر هو ما تساويه وحدة واحدة من العملة الأجنبية بالعملة الأساسية`}
+        actions={
+          <FormDialog label="تسجيل سعر صرف" title="تسجيل سعر صرف" description="تسجيل سعر لنفس اليوم يستبدله">
+            <SimpleForm columns={2} submitLabel="حفظ السعر" errors={t.errors} action={setExchangeRateAction}
+            initial={{ currency: [...used][0] ?? (foreign.find((c) => c.code === "USD") ?? foreign[0])?.code ?? "", rate: "", date: today }}
+            fields={[
+              { name: "currency", label: "العملة", options: foreign.map((c) => ({ id: c.code, label: `${c.code} ${c.name_ar}` })) },
+              { name: "rate", label: `السعر بعملة ${base} لكل وحدة`, type: "number" },
+              { name: "date", label: "التاريخ", type: "date" },
+            ]} />
+          </FormDialog>
+        } />
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="space-y-6">
         <div className="space-y-6">
           <Card className="overflow-hidden">
             <CardHeader><CardTitle>أسعار اليوم</CardTitle><CardDescription>تُستخدم لتحويل المقبوضات بالعملات الأجنبية وفروقات عدّ الصندوق</CardDescription></CardHeader>
@@ -80,18 +92,6 @@ export default async function CurrenciesPage() {
           </Card>
         </div>
 
-        <Card className="h-fit xl:sticky xl:top-0">
-          <CardHeader><CardTitle>تسجيل سعر صرف</CardTitle><CardDescription>تسجيل سعر لنفس اليوم يستبدله</CardDescription></CardHeader>
-          <CardContent>
-            <SimpleForm columns={1} submitLabel="حفظ السعر" errors={t.errors} action={setExchangeRateAction}
-              initial={{ currency: [...used][0] ?? (foreign.find((c) => c.code === "USD") ?? foreign[0])?.code ?? "", rate: "", date: today }}
-              fields={[
-                { name: "currency", label: "العملة", options: foreign.map((c) => ({ id: c.code, label: `${c.code} ${c.name_ar}` })) },
-                { name: "rate", label: `السعر بعملة ${base} لكل وحدة`, type: "number" },
-                { name: "date", label: "التاريخ", type: "date" },
-              ]} />
-          </CardContent>
-        </Card>
       </div>
     </>
   );

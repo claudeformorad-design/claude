@@ -82,8 +82,10 @@ await step("hourly hall type", async () => {
 });
 await step("bulk rooms 101-103 and hall H1", async () => {
   await go("/room-setup?tab=rooms");
+  await page.getByRole("button", { name: "إضافة غرف دفعة واحدة" }).click();
   await pick("#room_type_id", /مزدوجة/); await page.fill("#from_number", "101"); await page.fill("#to_number", "103");
   await page.getByRole("button", { name: "إضافة الغرف" }).click(); await bodyHas("101", "102", "103");
+  await page.getByRole("button", { name: "إضافة غرف دفعة واحدة" }).click();
   await pick("#room_type_id", /قاعة/); await page.fill("#from_number", "1"); await page.fill("#to_number", "1"); await page.fill("#prefix", "H");
   await page.getByRole("button", { name: "إضافة الغرف" }).click(); await bodyHas("H1");
 });
@@ -250,6 +252,7 @@ await step("front desk quick check-in and in-house list", async () => {
 });
 await step("exchange rate and a US-dollar cash method", async () => {
   await go("/settings/currencies");
+  await page.getByRole("button", { name: "تسجيل سعر صرف" }).click();
   await page.selectOption("#currency", "USD"); await page.fill("#rate", "530");
   await page.getByRole("button", { name: "حفظ السعر" }).click();
   await bodyHas("530");
@@ -261,6 +264,7 @@ await step("exchange rate and a US-dollar cash method", async () => {
 });
 await step("cashier shift opens with a float", async () => {
   await go("/cashier");
+  await page.getByRole("button", { name: "فتح وردية" }).click();
   await page.fill("#opening_float", "1000");
   await page.getByRole("button", { name: "فتح الوردية" }).click();
   await bodyHas("SHF-", "إغلاق الوردية");
@@ -292,6 +296,7 @@ await step("dollar deposit, check-out refunds the extra deposit in cash", async 
 await step("closing the shift with a cash shortage posts the difference", async () => {
   await go("/cashier");
   await bodyHas("نقدًا دولار", "نزيل الدولار");
+  await page.getByRole("button", { name: "إغلاق الوردية", exact: true }).click();
   const cash = page.locator("input[id^='count_']").first();
   const usd = page.locator("input[id^='count_']").nth(1);
   const expCash = Number((await cash.getAttribute("placeholder")).replace(/[^\d.]/g, ""));
@@ -318,6 +323,7 @@ await step("guest register lists tonight's in-house guests", async () => {
 });
 await step("rate plan with breakfast reprices a booking", async () => {
   await go("/rate-plans");
+  await page.getByRole("button", { name: "خطة جديدة" }).click();
   await page.fill("#code", "BB"); await page.fill("#name_ar", "مع الإفطار"); await page.fill("#per_night", "25");
   await page.locator("label", { hasText: "الإضافة لكل شخص بالغ" }).locator("input").check();
   await page.locator("label", { hasText: "تشمل الإفطار" }).locator("input").check();
@@ -332,9 +338,11 @@ await step("rate plan with breakfast reprices a booking", async () => {
 });
 await step("point of sale: room charge and paid order with invoice", async () => {
   await go("/pos/setup");
+  await page.getByRole("button", { name: "نقطة بيع جديدة" }).click();
   await page.fill("#code", "REST"); await page.fill("#name_ar", "المطعم");
   await page.getByRole("button", { name: "حفظ النقطة" }).click();
   await bodyHas("المطعم");
+  await page.getByRole("button", { name: "صنف جديد" }).click();
   await page.fill("#item_name", "مندي"); await page.fill("#price", "60");
   await page.getByRole("button", { name: "حفظ الصنف" }).click();
   await bodyHas("مندي", "60.00");

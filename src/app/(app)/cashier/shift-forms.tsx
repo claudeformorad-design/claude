@@ -12,9 +12,11 @@ import { actionErrorText } from "@/lib/action-error";
 import { formatMoney } from "@/lib/accounting/money";
 import { cn } from "@/lib/utils";
 import { closeShiftAction, openShiftAction } from "./actions";
+import { useDialogClose } from "@/components/ui/dialog";
 
 export function OpenShiftForm({ errors, currency }: { errors: Record<string, string>; currency: string }) {
   const router = useRouter();
+  const closeDialog = useDialogClose();
   const [pending, start] = useTransition();
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -24,12 +26,12 @@ export function OpenShiftForm({ errors, currency }: { errors: Record<string, str
       start(async () => {
         setError(null);
         const r = await openShiftAction(amount);
-        if (r.ok) { toast("فُتحت الوردية"); router.refresh(); } else setError(actionErrorText(errors, r));
+        if (r.ok) { toast("فُتحت الوردية"); closeDialog?.(); router.refresh(); } else setError(actionErrorText(errors, r));
       });
     }}>
       {error && <Alert variant="destructive" className="w-full">{error}</Alert>}
       <div className="field-group min-w-56 flex-1 space-y-1.5">
-        <Label htmlFor="opening_float">العهدة النقدية عند الاستلام ({currency})</Label>
+        <Label htmlFor="opening_float">العهدة النقدية عند الاستلام بعملة {currency}</Label>
         <Input id="opening_float" inputMode="decimal" dir="ltr" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" />
       </div>
       <Button type="submit" loading={pending}><PlayCircle className="size-4" />فتح الوردية</Button>
@@ -66,7 +68,7 @@ export function CloseShiftForm({ shiftId, lines, errors, supervisor }: { shiftId
         return (
           <div key={l.payment_method_id} className="grid grid-cols-[1fr_140px] items-end gap-3">
             <div className="field-group space-y-1.5">
-              <Label htmlFor={`count_${l.payment_method_id}`}>{l.name} <span className="num text-slate-500">({l.currency_code})</span></Label>
+              <Label htmlFor={`count_${l.payment_method_id}`}>{l.name} <span className="num text-slate-500">{l.currency_code}</span></Label>
               <Input id={`count_${l.payment_method_id}`} inputMode="decimal" dir="ltr" value={v} placeholder={`المتوقع ${l.expected}`}
                 onChange={(e) => setCounts({ ...counts, [l.payment_method_id]: e.target.value })} />
             </div>

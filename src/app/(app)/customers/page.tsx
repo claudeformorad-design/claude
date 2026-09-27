@@ -1,10 +1,11 @@
+import { RouteDialog } from "@/components/ui/dialog";
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
@@ -55,7 +56,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
         <Stat icon={Hourglass} tone="clay" label="فواتير مفتوحة" value={<Money value={customers.reduce((a, x) => a.plus(toMoney(x.open_invoices)), ZERO)} locale={locale} />} />
         <Stat icon={Wallet} tone="neutral" label="أرصدة دائنة غير مخصصة" value={<Money value={customers.reduce((a, x) => a.plus(toMoney(x.unapplied_credit)), ZERO)} locale={locale} />} />
       </StatGrid>
-      <div className={`grid gap-6 ${initial ? "xl:grid-cols-[1fr_380px]" : ""}`}>
+      <div className="grid gap-6">
         <Card className="overflow-hidden">
           <Table>
             <TableHeader>
@@ -92,10 +93,9 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
           </Table>
         </Card>
         {initial && (
-          <Card className="h-fit">
-            <CardHeader><CardTitle>{initial.id ? t.common.edit : t.customers.newCustomer}</CardTitle></CardHeader>
-            <CardContent><CustomerForm key={initial.id ?? "new"} t={{ customers: t.customers, common: t.common, errors: t.errors }} initial={initial} /></CardContent>
-          </Card>
+          <RouteDialog key={initial.id ?? "new"} closeHref="/customers" title={initial.id ? `تعديل ${initial.name_ar}` : t.customers.newCustomer}>
+            <CustomerForm t={{ customers: t.customers, common: t.common, errors: t.errors }} initial={initial} />
+          </RouteDialog>
         )}
       </div>
     </>

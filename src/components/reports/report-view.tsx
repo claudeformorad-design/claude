@@ -1,26 +1,22 @@
-import { FileSpreadsheet } from "lucide-react";
 import { Money } from "@/components/money";
 import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { ExportButtons } from "@/components/reports/export-buttons";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MoneyDecimal } from "@/lib/accounting/money";
+import { plainText } from "@/lib/text";
 import { cn } from "@/lib/utils";
 import type { Cell, ReportTable } from "@/services/report-tables";
-import { PrintButton } from "@/app/(app)/invoices/[id]/print-button";
 
-export function ReportView({ report, locale, exportHref, labels }: {
-  report: ReportTable; locale: string; exportHref: string; labels: { excel: string; print: string };
+export function ReportView({ report, locale, reportKey, query, labels }: {
+  report: ReportTable; locale: string; reportKey: string; query: string; labels: { excel: string; pdf: string };
 }) {
-  const cell = (c: Cell) => (c instanceof MoneyDecimal ? <Money value={c} locale={locale} blankZero /> : c ?? "");
+  const cell = (c: Cell) => (c instanceof MoneyDecimal ? <Money value={c} locale={locale} blankZero /> : plainText(c));
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
         {report.note ? <Alert variant={report.note.ok ? "success" : "destructive"} className="py-2">{report.note.text}</Alert> : <span />}
-        <div className="flex gap-2">
-          <Button asChild variant="outline"><a href={exportHref}><FileSpreadsheet />{labels.excel}</a></Button>
-          <PrintButton label={labels.print} />
-        </div>
+        <ExportButtons report={reportKey} query={query} labels={labels} />
       </div>
       <div className="hidden print:block">
         <h1 className="text-xl font-bold">{report.title}</h1>

@@ -1,8 +1,8 @@
+import { RouteDialog } from "@/components/ui/dialog";
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildAccountTree, flattenAccountTree } from "@/lib/accounting/accounts";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
@@ -76,7 +76,7 @@ export default async function AccountsPage({
             label={t.accounts.types[ty]} value={<span className="num">{accounts.filter((x) => x.account_type === ty && x.is_postable).length}</span>} hint="حساب تفصيلي" />
         ))}
       </StatGrid>
-      <div className={`grid gap-6 ${formInitial ? "xl:grid-cols-[1fr_380px]" : ""}`}>
+      <div className="grid gap-6">
         <div className="min-w-0">
           <AccountsTree
             canManage={canManage}
@@ -94,23 +94,18 @@ export default async function AccountsPage({
         </div>
 
         {formInitial && (
-          <Card className="h-fit xl:sticky xl:top-0">
-            <CardHeader>
-              <CardTitle>{formInitial.id ? t.accounts.editAccount : t.accounts.newAccount}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AccountForm
-                key={formInitial.id ?? `new-${params.parent ?? ""}`}
-                t={{ accounts: t.accounts, common: t.common, errors: t.errors }}
-                initial={formInitial}
-                accounts={rows.map((a) => ({
-                  id: a.id, code: a.code, name: name(a), account_type: a.account_type,
-                  is_postable: a.is_postable, parent_id: a.parent_id, depth: a.depth,
-                }))}
-                departments={departments.map((d) => ({ id: d.id, label: `${d.code} ${(locale === "en" && d.name_en) || d.name_ar}` }))}
-              />
-            </CardContent>
-          </Card>
+          <RouteDialog closeHref="/accounts" title={formInitial.id ? t.accounts.editAccount : t.accounts.newAccount}>
+            <AccountForm
+              key={formInitial.id ?? `new-${params.parent ?? ""}`}
+              t={{ accounts: t.accounts, common: t.common, errors: t.errors }}
+              initial={formInitial}
+              accounts={rows.map((a) => ({
+                id: a.id, code: a.code, name: name(a), account_type: a.account_type,
+                is_postable: a.is_postable, parent_id: a.parent_id, depth: a.depth,
+              }))}
+              departments={departments.map((d) => ({ id: d.id, label: `${d.code} ${(locale === "en" && d.name_en) || d.name_ar}` }))}
+            />
+          </RouteDialog>
         )}
       </div>
     </>

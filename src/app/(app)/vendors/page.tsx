@@ -1,9 +1,10 @@
+import { RouteDialog } from "@/components/ui/dialog";
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
@@ -39,7 +40,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
         <Stat icon={BadgeCheck} tone="teal" label="فعّالون" value={<span className="num">{vendors.filter((v) => v.is_active).length}</span>} />
         <Stat icon={CalendarClock} tone="clay" label="متوسط مدة السداد" value={<span className="num">{vendors.length ? Math.round(vendors.reduce((a, v) => a + v.payment_terms_days, 0) / vendors.length) : 0} يومًا</span>} />
       </StatGrid>
-      <div className={`grid gap-6 ${initial ? "xl:grid-cols-[1fr_380px]" : ""}`}>
+      <div className="grid gap-6">
         <Card className="overflow-hidden">
           <Table>
             <TableHeader><TableRow>
@@ -75,8 +76,9 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
           </Table>
         </Card>
         {initial && (
-          <Card className="h-fit"><CardHeader><CardTitle>{initial.id ? t.common.edit : t.payables.newVendor}</CardTitle></CardHeader>
-            <CardContent><VendorForm key={initial.id ?? "new"} t={{ customers: t.customers, common: t.common, errors: t.errors }} initial={initial} /></CardContent></Card>
+          <RouteDialog key={initial.id ?? "new"} closeHref="/vendors" title={initial.id ? `تعديل ${initial.name_ar}` : t.payables.newVendor}>
+            <VendorForm t={{ customers: t.customers, common: t.common, errors: t.errors }} initial={initial} />
+          </RouteDialog>
         )}
       </div>
     </>

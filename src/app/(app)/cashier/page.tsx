@@ -1,10 +1,11 @@
+import { FormDialog } from "@/components/ui/dialog";
 import { forbidden } from "next/navigation";
 import Link from "@/components/link";
 import { Banknote, Clock, LockKeyhole, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Stat, StatGrid } from "@/components/ui/stat";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireAppContext } from "@/lib/auth/context";
@@ -36,6 +37,21 @@ export default async function CashierPage() {
       <PageHeader
         title="الصندوق"
         description={ctx.hotel.require_cashier_shift ? "قبض النقد وصرفه يتطلب وردية مفتوحة" : "ورديات الكاشير وتسليم الصندوق"}
+        actions={
+          <>
+            {mine && !open && (
+              <FormDialog label="فتح وردية" title="فتح وردية" description="استلم الصندوق وسجّل العهدة الموجودة فيه" width="sm">
+                <OpenShiftForm errors={t.errors} currency={ctx.hotel.base_currency} />
+              </FormDialog>
+            )}
+            {open && report && (
+              <FormDialog label="إغلاق الوردية" title="إغلاق الوردية" description="عُدّ النقد في كل صندوق بعملته" variant="dark" icon={false}>
+                <CloseShiftForm shiftId={open.id} errors={t.errors}
+                  lines={report.methods.map((m) => ({ payment_method_id: m.payment_method_id, name: m.name, kind: m.kind, currency_code: m.currency_code, expected: Number(m.expected) }))} />
+              </FormDialog>
+            )}
+          </>
+        }
       />
 
       {report && open && (
@@ -47,7 +63,7 @@ export default async function CashierPage() {
         </StatGrid>
       )}
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className={`grid items-start gap-6 ${supervisor && othersOpen.length > 0 ? "xl:grid-cols-[minmax(0,1fr)_380px]" : ""}`}>
         <div className="space-y-6">
           {report && <ShiftReportView report={report} locale={locale} timezone={ctx.hotel.timezone} canViewFolio={ctx.can(PERMISSIONS.folioView)} />}
 
@@ -75,21 +91,6 @@ export default async function CashierPage() {
         </div>
 
         <div className="space-y-6">
-          {mine && !open && (
-            <Card className="border-action/30">
-              <CardHeader><CardTitle>فتح وردية</CardTitle><CardDescription>استلم الصندوق وسجّل العهدة الموجودة فيه</CardDescription></CardHeader>
-              <CardContent><OpenShiftForm errors={t.errors} currency={ctx.hotel.base_currency} /></CardContent>
-            </Card>
-          )}
-          {open && report && (
-            <Card className="border-ink/20">
-              <CardHeader><CardTitle>إغلاق الوردية</CardTitle><CardDescription>عُدّ النقد في كل صندوق بعملته</CardDescription></CardHeader>
-              <CardContent>
-                <CloseShiftForm shiftId={open.id} errors={t.errors}
-                  lines={report.methods.map((m) => ({ payment_method_id: m.payment_method_id, name: m.name, kind: m.kind, currency_code: m.currency_code, expected: Number(m.expected) }))} />
-              </CardContent>
-            </Card>
-          )}
           {supervisor && othersOpen.length > 0 && (
             <Card>
               <CardHeader><CardTitle>ورديات مفتوحة لموظفين آخرين</CardTitle></CardHeader>

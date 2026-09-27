@@ -1,3 +1,4 @@
+import { FormDialog } from "@/components/ui/dialog";
 import { forbidden, notFound } from "next/navigation";
 import Link from "@/components/link";
 import { PageHeader } from "@/components/layout/page-header";
@@ -36,10 +37,16 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
             {s.status === "open" ? <Badge variant="success" className="text-[16px]">مفتوحة</Badge> : <Badge variant="secondary" className="text-[16px]">مغلقة</Badge>}
             <Button asChild variant="outline" size="sm" className="print:hidden"><Link href="/cashier">الصندوق</Link></Button>
             <PrintButton label="طباعة" />
+            {canClose && (
+              <FormDialog label="إغلاق الوردية" title="إغلاق الوردية" description="عُدّ النقد في كل صندوق بعملته" variant="dark" size="sm" icon={false} className="print:hidden">
+                <CloseShiftForm shiftId={s.id} errors={t.errors} supervisor={!s.is_mine}
+                  lines={report.methods.map((m) => ({ payment_method_id: m.payment_method_id, name: m.name, kind: m.kind, currency_code: m.currency_code, expected: Number(m.expected) }))} />
+              </FormDialog>
+            )}
           </div>
         }
       />
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className={`grid items-start gap-6 ${s.status === "closed" ? "xl:grid-cols-[minmax(0,1fr)_380px]" : ""}`}>
         <div className="space-y-6">
           <ShiftReportView report={report} locale={locale} timezone={ctx.hotel.timezone} canViewFolio={ctx.can(PERMISSIONS.folioView)} />
         </div>
@@ -56,15 +63,6 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
                   <Link href={`/journal/${s.over_short_entry_id}`} className="block text-action">عرض قيد الفروقات</Link>
                 )}
                 {s.closing_note && <p className="text-slate-600">{s.closing_note}</p>}
-              </CardContent>
-            </Card>
-          )}
-          {canClose && (
-            <Card className="border-ink/20">
-              <CardHeader><CardTitle>إغلاق الوردية</CardTitle></CardHeader>
-              <CardContent>
-                <CloseShiftForm shiftId={s.id} errors={t.errors} supervisor={!s.is_mine}
-                  lines={report.methods.map((m) => ({ payment_method_id: m.payment_method_id, name: m.name, kind: m.kind, currency_code: m.currency_code, expected: Number(m.expected) }))} />
               </CardContent>
             </Card>
           )}

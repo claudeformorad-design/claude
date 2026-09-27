@@ -1,7 +1,8 @@
+import { FormDialog } from "@/components/ui/dialog";
 import { CheckCircle2, Clock, Sparkles, Wrench } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader } from "@/components/ui/card";
 import { FilterTabs } from "@/components/ui/filter-tabs";
 import { Stat, StatGrid } from "@/components/ui/stat";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -35,7 +36,21 @@ export default async function HousekeepingPage({ searchParams }: { searchParams:
 
   return (
     <>
-      <PageHeader title="التدبير الفندقي" description="مهام تنظيف الغرف وفحصها وصيانتها لليوم" actions={<GenerateButton date={today} errors={t.errors} />} />
+      <PageHeader title="التدبير الفندقي" description="مهام تنظيف الغرف وفحصها وصيانتها لليوم" actions={<div className="flex gap-2">
+          <FormDialog label="مهمة جديدة" title="مهمة جديدة" variant="outline">
+                  <SimpleForm columns={2} submitLabel="إضافة المهمة" errors={t.errors} action={addHousekeepingTaskAction}
+              initial={{ room_id: rooms.find((r) => r.is_active)?.id ?? "", kind: "maintenance", date: today, notes: "", assignee: "", out_of_service: false }}
+              fields={[
+                { name: "room_id", label: "الغرفة", options: rooms.filter((r) => r.is_active).map((r) => ({ id: r.id, label: r.room_number })) },
+                { name: "kind", label: "النوع", options: Object.entries(HOUSEKEEPING_KIND).map(([id, label]) => ({ id, label })) },
+                { name: "notes", label: "الوصف، إلزامي للصيانة" },
+                { name: "assignee", label: "العامل" },
+                { name: "date", label: "التاريخ", type: "date" },
+          { name: "out_of_service", label: "إخراج الغرفة من الخدمة حتى الإنجاز", checkbox: true },
+        ]} />
+          </FormDialog>
+          <GenerateButton date={today} errors={t.errors} />
+        </div>} />
       <StatGrid>
         <Stat icon={Clock} tone="ink" label="مهام مفتوحة" value={<span className="num">{open.length}</span>} />
         <Stat icon={Sparkles} tone="clay" label="قيد التنفيذ" value={<span className="num">{tasks.filter((x) => x.status === "in_progress").length}</span>} />
@@ -43,7 +58,7 @@ export default async function HousekeepingPage({ searchParams }: { searchParams:
         <Stat icon={Wrench} tone="neutral" label="غرف تحتاج تنظيف" value={<span className="num">{rooms.filter((r) => r.is_active && r.housekeeping_status === "dirty").length}</span>} />
       </StatGrid>
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid gap-6">
         <Card className="overflow-hidden">
           <CardHeader>
             <FilterTabs active={tab} items={[
@@ -75,21 +90,6 @@ export default async function HousekeepingPage({ searchParams }: { searchParams:
           </Table>
         </Card>
 
-        <Card className="h-fit">
-          <CardHeader><CardTitle>مهمة جديدة</CardTitle></CardHeader>
-          <CardContent>
-            <SimpleForm columns={1} submitLabel="إضافة المهمة" errors={t.errors} action={addHousekeepingTaskAction}
-              initial={{ room_id: rooms.find((r) => r.is_active)?.id ?? "", kind: "maintenance", date: today, notes: "", assignee: "", out_of_service: false }}
-              fields={[
-                { name: "room_id", label: "الغرفة", options: rooms.filter((r) => r.is_active).map((r) => ({ id: r.id, label: r.room_number })) },
-                { name: "kind", label: "النوع", options: Object.entries(HOUSEKEEPING_KIND).map(([id, label]) => ({ id, label })) },
-                { name: "notes", label: "الوصف، إلزامي للصيانة" },
-                { name: "assignee", label: "العامل" },
-                { name: "date", label: "التاريخ", type: "date" },
-                { name: "out_of_service", label: "إخراج الغرفة من الخدمة حتى الإنجاز", checkbox: true },
-              ]} />
-          </CardContent>
-        </Card>
       </div>
     </>
   );

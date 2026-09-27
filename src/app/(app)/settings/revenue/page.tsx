@@ -1,9 +1,10 @@
+import { RouteDialog } from "@/components/ui/dialog";
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
@@ -75,7 +76,7 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
   return (
     <>
       <PageHeader title={rs.title} description={rs.subtitle} />
-      <div className={`grid gap-6 ${formKind && initial ? "xl:grid-cols-[1fr_380px]" : ""}`}>
+      <div className="grid gap-6">
         <div className="min-w-0 space-y-6">
           {section(rs.taxes, "tax", [t.customers.code, t.customers.name, rs.kind, rs.rate, rs.account, t.common.status],
             taxes.map((x) => (
@@ -107,21 +108,18 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
             )))}
         </div>
         {formKind && initial && (
-          <Card className="h-fit xl:sticky xl:top-0">
-            <CardHeader><CardTitle>{formKind === "tax" ? rs.taxes : formKind === "charge" ? rs.chargeCodes : rs.paymentMethods}</CardTitle></CardHeader>
-            <CardContent>
-              <RevenueSettingForm
-                key={sp.edit ?? sp.new}
-                t={{ revenueSettings: rs, common: t.common, errors: t.errors, customers: t.customers, folio: t.folio }}
-                kind={formKind}
-                initial={initial}
-                accounts={accountOptions(formKind === "tax" ? ["liability"] : formKind === "charge" ? ["revenue"] : ["asset"])}
-                departments={departments.map((d) => ({ id: d.id, label: `${d.code} ${name(d)}` }))}
-                taxes={taxes.filter((x) => x.is_active).map((x) => ({ id: x.id, label: `${x.code} ${toMoney(x.rate).toString()}%` }))}
-                currencies={currencies.filter((c) => c.code !== ctx.hotel.base_currency).map((c) => ({ id: c.code, label: `${c.code} ${c.name_ar}` }))}
-              />
-            </CardContent>
-          </Card>
+          <RouteDialog closeHref="/settings/revenue" title={formKind === "tax" ? rs.taxes : formKind === "charge" ? rs.chargeCodes : rs.paymentMethods}>
+            <RevenueSettingForm
+              key={sp.edit ?? sp.new}
+              t={{ revenueSettings: rs, common: t.common, errors: t.errors, customers: t.customers, folio: t.folio }}
+              kind={formKind}
+              initial={initial}
+              accounts={accountOptions(formKind === "tax" ? ["liability"] : formKind === "charge" ? ["revenue"] : ["asset"])}
+              departments={departments.map((d) => ({ id: d.id, label: `${d.code} ${name(d)}` }))}
+              taxes={taxes.filter((x) => x.is_active).map((x) => ({ id: x.id, label: `${x.code} ${toMoney(x.rate).toString()}%` }))}
+              currencies={currencies.filter((c) => c.code !== ctx.hotel.base_currency).map((c) => ({ id: c.code, label: `${c.code} ${c.name_ar}` }))}
+            />
+          </RouteDialog>
         )}
       </div>
     </>

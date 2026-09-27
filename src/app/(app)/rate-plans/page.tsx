@@ -1,8 +1,9 @@
+import { FormDialog, RouteDialog } from "@/components/ui/dialog";
 import Link from "@/components/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
@@ -28,10 +29,31 @@ export default async function RatePlansPage({ searchParams }: { searchParams: Pr
   const typeName = new Map(types.map((x) => [x.id, x.name_ar]));
   const companyName = new Map(companies.map((c) => [c.id, c.label]));
 
+  const planHint = "مثال: مع الإفطار = 0% و25 لكل شخص، وسعر الشركة = خصم 15% لشركة محددة";
+  const planForm = (e?: (typeof plans)[number]) => (
+    <SimpleForm key={e?.id ?? "new"} columns={2} submitLabel="حفظ الخطة" errors={t.errors} action={saveRatePlanAction} onDone="/rate-plans"
+      initial={{
+        id: e?.id ?? "", code: e?.code ?? "", name_ar: e?.name_ar ?? "", adjust_pct: e ? String(Number(e.adjust_pct)) : "0",
+        per_night: e ? String(Number(e.per_night)) : "0", per_person: e?.per_person ?? false, includes_breakfast: e?.includes_breakfast ?? false,
+        customer_id: e?.customer_id ?? "", room_type_id: e?.room_type_id ?? "", description: e?.description ?? "", is_active: e?.is_active ?? true,
+      }}
+      fields={[
+        { name: "code", label: "الرمز", ltr: true }, { name: "name_ar", label: "الاسم" },
+        { name: "adjust_pct", label: "نسبة التعديل %، والسالب خصم", type: "number" },
+        { name: "per_night", label: "إضافة لكل ليلة", type: "number" },
+        { name: "per_person", label: "الإضافة لكل شخص بالغ", checkbox: true },
+        { name: "includes_breakfast", label: "تشمل الإفطار", checkbox: true },
+        { name: "customer_id", label: "لشركة محددة", options: companies, optional: true },
+        { name: "room_type_id", label: "لنوع غرفة محدد", options: types.filter((x) => x.booking_mode === "nightly").map((x) => ({ id: x.id, label: x.name_ar })), optional: true },
+        ...(e ? [{ name: "is_active", label: "مفعّلة", checkbox: true as const }] : []),
+      ]} />
+  );
+
   return (
     <>
-      <PageHeader title="خطط الأسعار" description="إقامة فقط، مع الإفطار، أسعار الشركات والعروض، وتُطبَّق على الأسعار والمواسم القياسية" />
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <PageHeader title="خطط الأسعار" description="إقامة فقط، مع الإفطار، أسعار الشركات والعروض، وتُطبَّق على الأسعار والمواسم القياسية"
+        actions={canManage && <FormDialog label="خطة جديدة" title="خطة جديدة" description={planHint}>{planForm()}</FormDialog>} />
+      <div className="grid gap-6">
         <Card className="overflow-hidden">
           <Table>
             <TableHeader><TableRow><TableHead>الخطة</TableHead><TableHead className="text-end">التعديل</TableHead><TableHead className="text-end">إضافة لكل ليلة</TableHead><TableHead>النطاق</TableHead><TableHead /></TableRow></TableHeader>
@@ -53,28 +75,8 @@ export default async function RatePlansPage({ searchParams }: { searchParams: Pr
             </TableBody>
           </Table>
         </Card>
-        {canManage && (
-          <Card className="h-fit">
-            <CardHeader><CardTitle>{edit ? "تعديل الخطة" : "خطة جديدة"}</CardTitle><CardDescription>مثال: «مع الإفطار» = 0% + 25 لكل شخص؛ «سعر الشركة» = −15% لشركة محددة</CardDescription></CardHeader>
-            <CardContent>
-              <SimpleForm key={edit?.id ?? "new"} columns={1} submitLabel="حفظ الخطة" errors={t.errors} action={saveRatePlanAction} onDone="/rate-plans"
-                initial={{
-                  id: edit?.id ?? "", code: edit?.code ?? "", name_ar: edit?.name_ar ?? "", adjust_pct: edit ? String(Number(edit.adjust_pct)) : "0",
-                  per_night: edit ? String(Number(edit.per_night)) : "0", per_person: edit?.per_person ?? false, includes_breakfast: edit?.includes_breakfast ?? false,
-                  customer_id: edit?.customer_id ?? "", room_type_id: edit?.room_type_id ?? "", description: edit?.description ?? "", is_active: edit?.is_active ?? true,
-                }}
-                fields={[
-                  { name: "code", label: "الرمز", ltr: true }, { name: "name_ar", label: "الاسم" },
-                  { name: "adjust_pct", label: "نسبة التعديل %، والسالب خصم", type: "number" },
-                  { name: "per_night", label: "إضافة لكل ليلة", type: "number" },
-                  { name: "per_person", label: "الإضافة لكل شخص بالغ", checkbox: true },
-                  { name: "includes_breakfast", label: "تشمل الإفطار", checkbox: true },
-                  { name: "customer_id", label: "لشركة محددة", options: companies, optional: true },
-                  { name: "room_type_id", label: "لنوع غرفة محدد", options: types.filter((x) => x.booking_mode === "nightly").map((x) => ({ id: x.id, label: x.name_ar })), optional: true },
-                  ...(edit ? [{ name: "is_active", label: "مفعّلة", checkbox: true as const }] : []),
-                ]} />
-            </CardContent>
-          </Card>
+        {canManage && edit && (
+          <RouteDialog key={edit.id} closeHref="/rate-plans" title={`تعديل ${edit.name_ar}`} description={planHint}>{planForm(edit)}</RouteDialog>
         )}
       </div>
     </>

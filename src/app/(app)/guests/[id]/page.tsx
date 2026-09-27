@@ -1,3 +1,4 @@
+import { FormDialog } from "@/components/ui/dialog";
 import { notFound } from "next/navigation";
 import Link from "@/components/link";
 import { BedDouble, CalendarDays, Plus, Wallet } from "lucide-react";
@@ -5,7 +6,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Stat, StatGrid } from "@/components/ui/stat";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -44,6 +45,11 @@ export default async function GuestPage({ params }: { params: Promise<{ id: stri
         actions={
           <div className="flex items-center gap-2">
             {guest.is_blacklisted && <Badge variant="destructive">القائمة السوداء: {guest.blacklist_reason}</Badge>}
+            {canManage && (
+              <FormDialog label="تعديل البيانات" title={`تعديل ${guest.full_name}`} variant="outline" icon={false} width="lg">
+                <SimpleForm columns={2} submitLabel={t.common.save} errors={t.errors} action={saveGuestAction} initial={guestInitial(guest)} fields={guestFormFields(companies)} />
+              </FormDialog>
+            )}
             {canManage && !guest.is_blacklisted && <Button asChild><Link href={`/reservations/new?guest=${guest.id}`}><Plus />حجز لهذا النزيل</Link></Button>}
           </div>
         }
@@ -55,7 +61,7 @@ export default async function GuestPage({ params }: { params: Promise<{ id: stri
         <Stat icon={CalendarDays} tone="neutral" label="آخر وصول" value={<span className="num">{stays.at(-1)?.arrival_date ?? ""}</span>} />
       </StatGrid>
 
-      <div className={`grid gap-6 ${canManage ? "xl:grid-cols-[1fr_420px]" : ""}`}>
+      <div className="grid gap-6">
         <Card className="h-fit overflow-hidden">
           <CardHeader><CardTitle>سجل الحجوزات</CardTitle></CardHeader>
           <Table>
@@ -74,14 +80,6 @@ export default async function GuestPage({ params }: { params: Promise<{ id: stri
             </TableBody>
           </Table>
         </Card>
-        {canManage && (
-          <Card className="h-fit">
-            <CardHeader><CardTitle>بيانات النزيل</CardTitle></CardHeader>
-            <CardContent>
-              <SimpleForm columns={2} submitLabel={t.common.save} errors={t.errors} action={saveGuestAction} initial={guestInitial(guest)} fields={guestFormFields(companies)} />
-            </CardContent>
-          </Card>
-        )}
       </div>
     </>
   );

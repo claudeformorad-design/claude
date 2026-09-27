@@ -1,6 +1,6 @@
+import { ExportButtons } from "@/components/reports/export-buttons";
 import Link from "@/components/link";
 import { PageHeader } from "@/components/layout/page-header";
-import { FileSpreadsheet } from "lucide-react";
 import { Money } from "@/components/money";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -31,7 +31,7 @@ export default async function AgingPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <PageHeader title={t.nav.aging} description={t.payables.agingSubtitle}
-        actions={<Button asChild variant="outline"><a href={`/api/export/aging-${kind}?to=${asOf}`}><FileSpreadsheet />{t.reports.exportExcel}</a></Button>} />
+        actions={<ExportButtons report={`aging-${kind}`} query={`to=${asOf}`} labels={{ excel: t.reports.exportExcel, pdf: t.reports.printPdf }} />} />
       <StatGrid className="lg:grid-cols-5">
         {AGING_BUCKETS.map((b, i) => (
           <Stat key={b} icon={i === 0 ? CalendarCheck2 : Clock} tone={i === 0 ? "teal" : i >= 3 ? "clay" : "neutral"} label={t.payables.buckets[b]}

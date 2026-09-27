@@ -483,7 +483,7 @@ export const ar = {
   },
   reports: {
     exportExcel: "تصدير Excel",
-    printPdf: "طباعة / PDF",
+    printPdf: "تصدير PDF",
     period: "الفترة",
     asOf: "في تاريخ",
     account: "الحساب",

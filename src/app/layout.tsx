@@ -25,8 +25,11 @@ const thmanyah = localFont({
   preload: true,
 });
 
-/** أرقام بعرض ثابت للمبالغ والجداول (أرقام «ثمانية» متغيرة العرض فلا تصطف الفواصل العشرية) */
-const digits = Inter({ subsets: ["latin"], variable: "--font-digits", display: "swap" });
+/**
+ * أرقام بعرض ثابت للمبالغ والجداول (أرقام «ثمانية» متغيرة العرض فلا تصطف الفواصل العشرية).
+ * بلا خط احتياطي معدَّل، فالحروف العربية داخل الأرقام (ر.ي، أسماء القاعات) تأخذ «ثمانية» لا Arial.
+ */
+const digits = Inter({ subsets: ["latin"], variable: "--font-digits", display: "swap", adjustFontFallback: false });
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();

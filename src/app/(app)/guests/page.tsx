@@ -1,9 +1,10 @@
+import { RouteDialog } from "@/components/ui/dialog";
 import Link from "@/components/link";
 import { Ban, Plus, Search, UserRound, Users } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { EntityCell } from "@/components/ui/entity";
 import { Input } from "@/components/ui/input";
@@ -55,7 +56,7 @@ export default async function GuestsPage({ searchParams }: { searchParams: Promi
         <Button type="submit" variant="outline">بحث</Button>
       </form>
 
-      <div className={`grid gap-6 ${editing !== undefined ? "xl:grid-cols-[1fr_420px]" : ""}`}>
+      <div className="grid gap-6">
         <div>
           <Card className="overflow-hidden">
             <Table>
@@ -83,14 +84,11 @@ export default async function GuestsPage({ searchParams }: { searchParams: Promi
           <Pager page={shown.page} pages={shown.pages} total={guests.length} basePath="/guests" params={{ q: sp.q }} />
         </div>
         {editing !== undefined && (
-          <Card className="h-fit">
-            <CardHeader><CardTitle>{editing ? `تعديل ${editing.full_name}` : "نزيل جديد"}</CardTitle></CardHeader>
-            <CardContent>
-              {editing?.is_blacklisted && <Badge variant="destructive" className="mb-3">في القائمة السوداء</Badge>}
-              <SimpleForm key={editing?.id ?? "new"} columns={2} submitLabel={t.common.save} errors={t.errors} action={saveGuestAction} onDone="/guests"
-                initial={guestInitial(editing ?? null)} fields={guestFormFields(companies)} />
-            </CardContent>
-          </Card>
+          <RouteDialog closeHref={sp.q ? `/guests?q=${encodeURIComponent(sp.q)}` : "/guests"} width="lg" title={<>{editing ? `تعديل ${editing.full_name}` : "نزيل جديد"}</>}>
+            {editing?.is_blacklisted && <Badge variant="destructive" className="mb-3">في القائمة السوداء</Badge>}
+            <SimpleForm key={editing?.id ?? "new"} columns={2} submitLabel={t.common.save} errors={t.errors} action={saveGuestAction} onDone="/guests"
+              initial={guestInitial(editing ?? null)} fields={guestFormFields(companies)} />
+          </RouteDialog>
         )}
       </div>
     </>

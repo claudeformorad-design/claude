@@ -224,6 +224,13 @@
   .field[aria-invalid="true"] { border-color: var(--color-urgent); }
   .field[type="date"], .field[type="month"], .field[type="number"] { font-family: var(--font-digits), var(--font-sans); }
 
+  /* حقول التاريخ: عرض مريح، أيقونة تقويم هادئة، والضغط في أي مكان من الحقل يفتح التقويم */
+  .field[type="date"], .field[type="month"] { min-width: 11.5rem; font-size: 16.5px; cursor: pointer; }
+  .field[type="date"]::-webkit-calendar-picker-indicator, .field[type="month"]::-webkit-calendar-picker-indicator {
+    opacity: 0.45; cursor: pointer; margin-inline-start: 0.6rem; transition: opacity 0.18s ease;
+  }
+  .field[type="date"]:hover::-webkit-calendar-picker-indicator, .field[type="month"]:hover::-webkit-calendar-picker-indicator { opacity: 0.8; }
+
   /* سهم قائمة الاختيار في جهة النهاية (يسارًا في العربية) */
   .field-select {
     appearance: none;
@@ -440,4 +447,18 @@ tbody.rows-animate > tr:hover > td { background-color: #fbfaf8; }
   .surface, .tile { background: white !important; box-shadow: none !important; border-color: #ddd !important; }
   .stagger > *, .page-enter, tbody.rows-animate > tr { animation: none !important; }
   @page { size: A4; margin: 12mm; }
+}
+
+/* ---- مستند التقرير (PDF) ---- */
+.report-doc { width: 210mm; min-height: 297mm; padding: 16mm 14mm; border-radius: 14px; border: 1px solid var(--color-line); }
+.report-doc-landscape { width: 297mm; min-height: 210mm; }
+.report-doc-table thead { display: table-header-group; }
+.report-doc-sign { break-inside: avoid; }
+.report-doc-table tr { break-inside: avoid; }
+/* يغطي الشق الرفيع بين الخلايا الملونة المتجاورة في ملف PDF */
+.report-doc-table .cell-ink { box-shadow: 0 0 0 0.6px var(--color-ink); }
+.report-doc-table .cell-section { box-shadow: 0 0 0 0.6px var(--color-group-row); }
+@media print {
+  .report-doc, .report-doc-landscape { width: auto; min-height: 0; padding: 0; border: 0; border-radius: 0; }
+  .report-doc * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

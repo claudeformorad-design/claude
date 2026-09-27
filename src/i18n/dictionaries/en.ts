@@ -484,7 +484,7 @@ export const en: Dictionary = {
   },
   reports: {
     exportExcel: "Export Excel",
-    printPdf: "Print / PDF",
+    printPdf: "Export PDF",
     period: "Period",
     asOf: "As of",
     account: "Account",

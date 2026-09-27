@@ -11,6 +11,7 @@ import { NativeSelect } from "@/components/ui/select";
 import type { ActionResult } from "@/services/errors";
 import { actionErrorText } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
+import { useDialogClose } from "@/components/ui/dialog";
 
 export type Field =
   | { name: string; label: string; type?: "text" | "date" | "number" | "month"; ltr?: boolean }
@@ -33,6 +34,7 @@ export function SimpleForm({
   columns?: 1 | 2 | 4;
 }) {
   const router = useRouter();
+  const closeDialog = useDialogClose();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const { register, handleSubmit, reset } = useForm({ defaultValues: initial });
@@ -42,7 +44,7 @@ export function SimpleForm({
       onSubmit={handleSubmit((v) => start(async () => {
         setError(null);
         const r = await action(v);
-        if (r.ok) { toast("تم الحفظ بنجاح"); if (onDone) router.push(onDone); else { reset(initial); router.refresh(); } }
+        if (r.ok) { toast("تم الحفظ بنجاح"); closeDialog?.(); if (onDone) router.push(onDone); else { reset(initial); router.refresh(); } }
         else setError(actionErrorText(errors, r));
       }))}
     >

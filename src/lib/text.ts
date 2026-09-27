@@ -6,6 +6,7 @@ export function plainText(text: string | null | undefined): string {
   if (!text) return "";
   return text
     .replace(/\s*[—–]\s*/g, "، ")
+    .replace(/\s+-\s+/g, "، ")
     .replace(/\s*[·•]\s*/g, "، ")
     .replace(/\s*[←→]\s*/g, " إلى ")
     .replace(/\s*\(([^()]*)\)/g, " $1")

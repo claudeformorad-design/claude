@@ -75,7 +75,7 @@ export function OpeningForm({ accounts, customers, vendors, today, errors }: {
   );
 
   return (
-    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+    <div className="space-y-6">
       <div className="space-y-6">
         <Card>
           <CardHeader className="flex-row items-center justify-between">
@@ -100,19 +100,19 @@ export function OpeningForm({ accounts, customers, vendors, today, errors }: {
         {party("أرصدة الموردين الدائنة", "ما على الفندق للموردين، ويُسدَّد لاحقًا من صفحة الموردين", vend, setVend, vendors, "المورد")}
       </div>
 
-      <Card className="h-fit xl:sticky xl:top-0">
-        <CardHeader><CardTitle>الترحيل</CardTitle><CardDescription>يُرحَّل مرة واحدة؛ للتصحيح لاحقًا استخدم قيد تسوية.</CardDescription></CardHeader>
+      <Card>
+        <CardHeader><CardTitle>الترحيل</CardTitle><CardDescription>يُرحَّل مرة واحدة، وللتصحيح لاحقًا استخدم قيد تسوية</CardDescription></CardHeader>
         <CardContent className="space-y-4">
           {error && <Alert variant="destructive">{error}</Alert>}
-          <div className="field-group space-y-1.5"><Label htmlFor="opening_date">تاريخ الأرصدة</Label><Input id="opening_date" type="date" dir="ltr" value={date} onChange={(e) => setDate(e.target.value)} /></div>
-          <dl className="space-y-2 text-[15.5px]">
-            <div className="flex justify-between"><dt className="text-slate-500">إجمالي المدين</dt><dd className="num font-semibold">{money(dr)}</dd></div>
-            <div className="flex justify-between"><dt className="text-slate-500">إجمالي الدائن</dt><dd className="num font-semibold">{money(cr)}</dd></div>
-            <div className={cn("flex justify-between rounded-md px-3 py-2", diff === 0 ? "bg-success/10 text-success" : "bg-amber-tint text-amber")}>
-              <dt>{diff === 0 ? "متوازن" : "الفرق للأرباح المبقاة"}</dt><dd className="num font-bold">{money(Math.abs(diff))}{diff !== 0 ? (diff > 0 ? " دائن" : " مدين") : ""}</dd>
+          <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
+            <div className="field-group w-56 space-y-1.5"><Label htmlFor="opening_date">تاريخ الأرصدة</Label><Input id="opening_date" type="date" dir="ltr" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+            <div className="space-y-1"><p className="text-[15px] text-slate-500">إجمالي المدين</p><p className="num text-[20px] font-bold">{money(dr)}</p></div>
+            <div className="space-y-1"><p className="text-[15px] text-slate-500">إجمالي الدائن</p><p className="num text-[20px] font-bold">{money(cr)}</p></div>
+            <div className={cn("rounded-lg px-4 py-2.5 text-[16px] font-semibold", diff === 0 ? "bg-success/10 text-success" : "bg-amber-tint text-amber")}>
+              {diff === 0 ? "متوازن" : `الفرق للأرباح المبقاة ${money(Math.abs(diff))} ${diff > 0 ? "دائن" : "مدين"}`}
             </div>
-          </dl>
-          <Button type="button" className="w-full" loading={pending} disabled={dr === 0 && cr === 0} onClick={submit}>ترحيل الأرصدة الافتتاحية</Button>
+            <Button type="button" className="ms-auto" loading={pending} disabled={dr === 0 && cr === 0} onClick={submit}>ترحيل الأرصدة الافتتاحية</Button>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -1,5 +1,6 @@
+import { ExportButtons } from "@/components/reports/export-buttons";
 import { PageHeader } from "@/components/layout/page-header";
-import { FileSpreadsheet, Minus, Plus } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import { Money } from "@/components/money";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -41,7 +42,7 @@ export default async function TrialBalancePage({
   return (
     <>
       <PageHeader title={t.trialBalance.title} description={t.trialBalance.subtitle}
-        actions={<Button asChild variant="outline"><a href={`/api/export/trial-balance?from=${from}&to=${to}`}><FileSpreadsheet />{t.reports.exportExcel}</a></Button>} />
+        actions={<ExportButtons report={`trial-balance`} query={`from=${from}&to=${to}`} labels={{ excel: t.reports.exportExcel, pdf: t.reports.printPdf }} />} />
 
       <form className="toolbar">
         <label className="space-y-1 text-sm">
