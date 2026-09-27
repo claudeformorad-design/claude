@@ -19,6 +19,7 @@ const step = async (name, fn) => {
 const go = async (path) => { await page.goto(BASE + path); await page.waitForLoadState("networkidle"); };
 const pick = async (loc, re) => {
   const l = typeof loc === "string" ? page.locator(loc) : loc;
+  await l.first().waitFor({ state: "attached" });
   const texts = await l.locator("option").allTextContents();
   const i = texts.findIndex((t) => re.test(t));
   if (i < 0) throw new Error(`no option matching ${re} in ${texts.slice(0, 6)}`);

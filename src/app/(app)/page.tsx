@@ -327,36 +327,27 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
           {/* الأرصدة والمطابقة + الأقسام والغرف */}
           <div className="grid gap-5 xl:grid-cols-5">
-            <Card2 className="flex flex-col xl:col-span-3" title="الأرصدة ومطابقتها مع الأستاذ" note={unreconciled.length ? `${unreconciled.length} فرق` : "مطابقة"} noteTone={unreconciled.length ? "neg" : "pos"}>
-              <table className="mb-3 w-full text-[16.5px]" id="reconciliation">
-                <thead>
-                  <tr className="bg-thead text-[15.5px] font-bold text-thead-text">
-                    <th className="rounded-s-lg px-3 py-2.5 text-start">الحساب</th>
-                    <th className="px-3 py-2.5 text-end">الرصيد ({currency})</th>
-                    <th className="w-28 rounded-e-lg px-3 py-2.5 text-end">الأستاذ العام</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line">
-                  {BALANCE_ROWS.map((b) => {
-                    const row = reconRows.find((x) => x.control === b.control);
-                    const ok = !row || row.diff.isZero();
-                    return (
-                      <tr key={b.control}>
-                        <td className="px-3 py-2.5"><Link href={CONTROL_LABELS[b.control].href} className="text-ink">{b.label}</Link></td>
-                        <td className="num px-3 py-2.5 text-end font-semibold text-ink"><Money value={bal(b.control)} locale="ar" /></td>
-                        <td className="px-3 py-2.5 text-end">
-                          {ok ? <Badge variant="success">مطابق</Badge> : <Badge variant="destructive">فرق <Money value={row!.diff} locale="ar" /></Badge>}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  <tr>
-                    <td className="px-3 py-2.5"><Link href="/journal?status=draft" className="text-ink">قيود مسودة غير مرحّلة</Link></td>
-                    <td className="num px-3 py-2.5 text-end font-semibold text-ink">{draftCount}</td>
-                    <td className="px-3 py-2.5 text-end text-[15.5px] text-muted-foreground"></td>
-                  </tr>
-                </tbody>
-              </table>
+            <Card2 className="xl:col-span-3 xl:self-start" title="الأرصدة ومطابقتها مع الأستاذ" note={unreconciled.length ? `${unreconciled.length} فرق` : "مطابقة"} noteTone={unreconciled.length ? "neg" : "pos"}>
+              <ul className="mb-3 divide-y divide-line text-[16.5px]" id="reconciliation">
+                {BALANCE_ROWS.map((b) => {
+                  const row = reconRows.find((x) => x.control === b.control);
+                  const ok = !row || row.diff.isZero();
+                  return (
+                    <li key={b.control} className="flex items-center gap-4 py-3">
+                      <Link href={CONTROL_LABELS[b.control].href} className="min-w-0 flex-1 truncate text-ink hover:text-action">{b.label}</Link>
+                      <Money value={bal(b.control)} locale="ar" className="font-semibold text-ink" />
+                      <span className={cn("w-24 text-end", ok ? "text-success" : "text-urgent")}>
+                        {ok ? "مطابق" : <>فرق <Money value={row!.diff} locale="ar" /></>}
+                      </span>
+                    </li>
+                  );
+                })}
+                <li className="flex items-center gap-4 py-3">
+                  <Link href="/journal?status=draft" className="min-w-0 flex-1 truncate text-ink hover:text-action">قيود مسودة غير مرحّلة</Link>
+                  <span className="num font-semibold text-ink">{draftCount}</span>
+                  <span className="w-24" />
+                </li>
+              </ul>
               {(() => {
                 const tb = reconRows.find((x) => x.control === "trial_balance");
                 return tb ? (
@@ -419,23 +410,21 @@ function Card2({
   children: React.ReactNode;
 }) {
   return (
-    <section className={cn("surface min-w-0 p-6", className)}>
-      <header className="mb-5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h2 className="flex items-baseline gap-2 text-[18.5px] font-semibold text-ink">
-          {title}
-          {note && (
-            <span className={cn("text-[15.5px] font-normal", noteTone === "neg" ? "text-urgent" : noteTone === "pos" ? "text-success" : "text-muted-foreground")}>
-              {note}
-            </span>
-          )}
-        </h2>
-        {link && (
-          <Link href={link.href} className="shrink-0 text-[15.5px] text-slate-500 transition-colors hover:text-ink">
-            {link.label}
-          </Link>
+    <section className={cn("dash-card flex min-w-0 flex-col rounded-2xl border border-line bg-white p-6", className)}>
+      <header className="mb-5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[17px]">
+        <h2 className="font-semibold text-ink">{title}</h2>
+        {note && (
+          <span className={cn("rounded-md px-2 py-0.5 text-[15px]", noteTone === "neg" ? "bg-urgent-tint text-urgent" : noteTone === "pos" ? "bg-success/10 text-success" : "bg-subtle text-slate-600")}>
+            {note}
+          </span>
         )}
       </header>
-      {children}
+      <div className="min-w-0 flex-1">{children}</div>
+      {link && (
+        <Link href={link.href} className="mt-5 inline-flex w-fit items-center rounded-md text-[15.5px] text-slate-500 transition-colors hover:text-ink">
+          عرض {link.label}
+        </Link>
+      )}
     </section>
   );
 }
@@ -462,7 +451,7 @@ function Kpi({
       </div>
       <p className={cn("display-num truncate text-[22px] font-bold leading-tight text-ink sm:text-[30px]", tone === "neg" && "text-urgent")}>
         <AnimatedNumber value={value.toNumber()} text={formatAmount(value)} />
-        <span className="ms-2 text-slate-400">{currency}</span>
+        <span className="ms-2 font-sans text-slate-400">{currency}</span>
       </p>
       <p className="mt-1 truncate text-[16.5px] text-slate-600">{sub}</p>
       <div className="mt-3">

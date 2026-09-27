@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 import { Toaster } from "@/components/ui/toast";
 import { HoverPrefetch } from "@/components/layout/hover-prefetch";
+import { PageFrame } from "@/components/layout/page-frame";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -55,7 +56,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             signOut={signOut}
             demo={!isSupabaseConfigured() && isDemoDataActive()}
           />
-          <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-12 pt-1 md:px-10">{children}</main>
+          <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-12 pt-1 md:px-10"><PageFrame>{children}</PageFrame></main>
         </div>
       </div>
     </div>

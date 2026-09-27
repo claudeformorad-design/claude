@@ -388,12 +388,12 @@ export function StripedBars({
             <span className="text-slate-700">{r.label}</span>
             <span>
               <span className="num font-semibold text-ink">{r.amountText}</span>
-              <span className="ms-1 text-[14.5px] text-slate-500">{currency}</span>
+              <span className="ms-1.5 text-slate-400">{currency}</span>
             </span>
           </div>
-          <div className="h-2.5 overflow-hidden rounded-sm bg-subtle">
+          <div className="h-2 overflow-hidden rounded-full bg-subtle">
             <div
-              className="animate-grow-x h-full rounded-sm transition-opacity"
+              className="animate-grow-x h-full rounded-full transition-opacity"
               style={{
                 width: `${Math.max((r.amount / max) * 100, r.amount > 0 ? 2 : 0)}%`,
                 backgroundColor: r.color,

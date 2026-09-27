@@ -28,8 +28,8 @@ function splitDescription(text: string): [string, string | null] {
 }
 
 /**
- * آخر القيود المرحّلة: مجمّعة حسب اليوم (اليوم، أمس، ثم التاريخ)، لكل قيد أيقونة مصدره،
- * وعنوان قصير واضح، وسطر تفاصيل هادئ، والمبلغ في النهاية ورقم القيد تحته.
+ * آخر القيود المرحّلة: مجمّعة حسب اليوم (اليوم، أمس، ثم التاريخ)، وكل قيد سطر واحد هادئ:
+ * نقطة مصدره الملونة بأيقونة صغيرة، ووصف قصير، والمبلغ في النهاية.
  */
 export function RecentEntries({ entries, today, sources }: { entries: RecentEntry[]; today: string; sources: Record<string, string> }) {
   const days = [...new Set(entries.map((e) => e.entry_date))];
@@ -37,25 +37,18 @@ export function RecentEntries({ entries, today, sources }: { entries: RecentEntr
     <div className="-mx-2 space-y-4">
       {days.map((d) => (
         <section key={d}>
-          <h3 className="mb-1 px-2 text-[14px] font-semibold text-slate-500">{dayLabel(d, today)}</h3>
-          <ul className="space-y-0.5">
+          <h3 className="mb-1 px-2 text-[15px] text-slate-500">{dayLabel(d, today)}</h3>
+          <ul>
             {entries.filter((e) => e.entry_date === d).map((e) => {
               const Icon = SOURCE_ICON[e.source] ?? BookOpen;
-              const [title, detail] = splitDescription(e.description);
+              const [title] = splitDescription(e.description);
               return (
                 <li key={e.id}>
-                  <Link href={`/journal/${e.id}`} className="group flex items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-panel">
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-white text-slate-600 transition-colors group-hover:border-action/30 group-hover:text-action">
-                      <Icon className="size-[17px] stroke-[1.8]" />
-                    </span>
-                    <span className="min-w-0 flex-1 leading-snug">
-                      <span className="block truncate text-[16px] font-medium text-ink">{title}</span>
-                      <span className="block truncate text-[14px] text-slate-500">{detail ?? sources[e.source] ?? e.source}</span>
-                    </span>
-                    <span className="shrink-0 text-end leading-snug">
-                      <span className="block text-[16px] font-semibold text-ink"><Money value={e.total} locale="ar" /></span>
-                      <span className="num block text-[13px] text-slate-500">{e.entry_number}</span>
-                    </span>
+                  <Link href={`/journal/${e.id}`} title={`${e.entry_number ?? ""} ${sources[e.source] ?? ""}`.trim()}
+                    className="group flex items-center gap-3 rounded-lg px-2 py-2.5 text-[16px] transition-colors hover:bg-subtle">
+                    <Icon className="size-[18px] shrink-0 stroke-[1.7] text-slate-400 transition-colors group-hover:text-action" />
+                    <span className="min-w-0 flex-1 truncate text-ink">{title}</span>
+                    <Money value={e.total} locale="ar" className="shrink-0 font-semibold text-ink" />
                   </Link>
                 </li>
               );

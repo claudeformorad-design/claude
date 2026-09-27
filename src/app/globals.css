@@ -189,12 +189,12 @@
 .swash { font-feature-settings: "swsh" 1; }
 
 /* الأرقام الكبيرة (بطاقات الإحصاء) بنفس خط الأرقام في كل النظام */
-.display-num { font-family: var(--font-digits), var(--font-sans); font-variant-numeric: tabular-nums; }
+.display-num { font-family: Inter, var(--font-sans); font-variant-numeric: tabular-nums; }
 
 /* الأرقام: عرض متساوٍ واتجاه LTR داخل النص العربي */
 .num {
   white-space: nowrap;
-  font-family: var(--font-digits), var(--font-sans);
+  font-family: Inter, var(--font-sans);
   font-variant-numeric: tabular-nums;
   direction: ltr;
   unicode-bidi: isolate;
@@ -222,7 +222,7 @@
     background-color: #fff;
   }
   .field[aria-invalid="true"] { border-color: var(--color-urgent); }
-  .field[type="date"], .field[type="month"], .field[type="number"] { font-family: var(--font-digits), var(--font-sans); }
+  .field[type="date"], .field[type="month"], .field[type="number"] { font-family: Inter, var(--font-sans); }
 
   /* حقول التاريخ: عرض مريح، أيقونة تقويم هادئة، والضغط في أي مكان من الحقل يفتح التقويم */
   .field[type="date"], .field[type="month"] { min-width: 11.5rem; font-size: 16.5px; cursor: pointer; }
@@ -462,3 +462,6 @@ tbody.rows-animate > tr:hover > td { background-color: #fbfaf8; }
   .report-doc, .report-doc-landscape { width: auto; min-height: 0; padding: 0; border: 0; border-radius: 0; }
   .report-doc * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* لوحة قائمة الاختيار (نمط Notion): ظل ناعم منتشر بدل الحدود الثقيلة */
+.select-panel { box-shadow: 0 0 0 1px rgb(15 15 15 / 0.04), 0 3px 6px rgb(15 15 15 / 0.06), 0 9px 24px rgb(15 15 15 / 0.1); }
