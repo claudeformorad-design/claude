@@ -8,9 +8,9 @@
 \o /dev/null
 
 insert into auth.users (id, email) values
-  ('00000000-0000-0000-0000-0000000000a1', 'gm9@hotel.test'),
-  ('00000000-0000-0000-0000-0000000000a2', 'desk9@hotel.test'),
-  ('00000000-0000-0000-0000-0000000000a3', 'hk9@hotel.test');
+  ('00000000-0000-0000-0000-000000000901', 'gm9@hotel.test'),
+  ('00000000-0000-0000-0000-000000000902', 'desk9@hotel.test'),
+  ('00000000-0000-0000-0000-000000000903', 'hk9@hotel.test');
 
 create or replace function pg_temp.expect_error(p_sql text, p_contains text)
 returns void language plpgsql as $$
@@ -28,7 +28,7 @@ begin
   if p_user is null then reset role; else set role authenticated; end if;
 end $$;
 
-select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.act_as('00000000-0000-0000-0000-000000000901');
 create temp table h9 as select public.create_hotel('فندق الحجوزات', 'SA', 'SAR') as id;
 create temp table ids (k text primary key, v uuid);
 create temp table d (k text primary key, v date);
@@ -203,12 +203,12 @@ insert into r select 'ste1', public.create_reservation(p_hotel_id => (select id 
   p_room_type_id => (select v from ids where k = 'rt_ste'), p_arrival_date => (select v from d where k = 'today') + 5,
   p_departure_date => (select v from d where k = 'today') + 6);
 
-select pg_temp.act_as('00000000-0000-0000-0000-0000000000a2');
+select pg_temp.act_as('00000000-0000-0000-0000-000000000902');
 select pg_temp.expect_error($q$ select public.create_reservation(p_hotel_id => (select id from h9), p_guest_id => (select v from ids where k = 'g_mona'),
   p_room_type_id => (select v from ids where k = 'rt_ste'), p_arrival_date => (select v from d where k = 'today') + 5,
   p_departure_date => (select v from d where k = 'today') + 6) $q$, 'requires the overbooking permission');
 
-select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.act_as('00000000-0000-0000-0000-000000000901');
 insert into r select 'ste2', public.create_reservation(p_hotel_id => (select id from h9), p_guest_id => (select v from ids where k = 'g_mona'),
   p_room_type_id => (select v from ids where k = 'rt_ste'), p_arrival_date => (select v from d where k = 'today') + 5,
   p_departure_date => (select v from d where k = 'today') + 6);
@@ -221,7 +221,8 @@ select pg_temp.expect_error($q$ select public.create_reservation(p_hotel_id => (
 -- =============================================================================
 insert into r select 'b', id from public.reservations
  where hotel_id = (select id from h9) and room_type_id = (select v from ids where k = 'rt_dbl')
-   and id <> (select v from r where k = 'a') order by created_at limit 1;
+   and id <> (select v from r where k = 'a') and arrival_date = (select v from d where k = 'today') + 10
+ order by created_at limit 1;
 select public.assign_reservation_room((select v from r where k = 'a'), (select v from ids where k = 'room_101'));
 select pg_temp.expect_error($q$ select public.assign_reservation_room((select v from r where k = 'b'), (select v from ids where k = 'room_101')) $q$, 'already booked');
 select pg_temp.expect_error($q$ select public.assign_reservation_room((select v from r where k = 'b'), (select v from ids where k = 'room_201')) $q$, 'does not match');
@@ -229,7 +230,7 @@ select pg_temp.expect_error($q$ select public.assign_reservation_room((select v 
 select pg_temp.act_as(null);
 select pg_temp.expect_error($q$ update public.reservations set room_id = (select v from ids where k = 'room_101') where id = (select v from r where k = 'b') $q$,
   'reservation_room_no_overlap');
-select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.act_as('00000000-0000-0000-0000-000000000901');
 
 -- الإلغاء يحرر الغرفة
 select pg_temp.expect_error($q$ select public.cancel_reservation((select v from r where k = 'a'), '  ') $q$, 'reason is required');
@@ -367,11 +368,11 @@ do $$ begin
   assert (select total_amount from public.reservations where id = (select v from r where k = 'fixed')) = 450, 'fixed rate x3';
 end $$;
 -- موظف الاستقبال لا يحدد سعرًا يدويًا
-select pg_temp.act_as('00000000-0000-0000-0000-0000000000a2');
+select pg_temp.act_as('00000000-0000-0000-0000-000000000902');
 select pg_temp.expect_error($q$ select public.create_reservation(p_hotel_id => (select id from h9), p_guest_id => (select v from ids where k = 'g_salem'),
   p_room_type_id => (select v from ids where k = 'rt_dbl'), p_arrival_date => (select v from d where k = 'today') + 130,
   p_departure_date => (select v from d where k = 'today') + 131, p_pricing => 'fixed', p_fixed_rate => 1, p_rate_reason => 'x') $q$, 'pms.rates.override');
-select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.act_as('00000000-0000-0000-0000-000000000901');
 
 -- =============================================================================
 -- الوحدات بالساعة (القاعة)
@@ -540,7 +541,7 @@ end $$;
 -- =============================================================================
 -- حالة الغرف ومشرف التدبير
 -- =============================================================================
-select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select pg_temp.act_as('00000000-0000-0000-0000-000000000903');
 select public.set_room_status((select v from ids where k = 'room_102'), 'dirty');
 select pg_temp.expect_error($q$ select public.set_room_status((select v from ids where k = 'room_104'), null, 'out_of_service') $q$, 'reason is required');
 select public.set_room_status((select v from ids where k = 'room_104'), null, 'out_of_service', 'تسريب مياه');
@@ -554,7 +555,7 @@ do $$ begin
   assert (select housekeeping_status from public.rooms where id = (select v from ids where k = 'room_102')) = 'dirty', 'status updated';
 end $$;
 
-select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.act_as('00000000-0000-0000-0000-000000000901');
 do $$
 declare h uuid := (select id from h9);
 begin
@@ -575,7 +576,7 @@ select pg_temp.expect_error($q$ update public.room_types set booking_mode = 'hou
 -- =============================================================================
 -- الكتابة المباشرة ممنوعة، والتدقيق يسجّل
 -- =============================================================================
-select pg_temp.act_as('00000000-0000-0000-0000-0000000000a2');
+select pg_temp.act_as('00000000-0000-0000-0000-000000000902');
 select pg_temp.expect_error($q$ insert into public.reservations (hotel_id, confirmation_number, guest_id, room_type_id, booking_mode, arrival_date, departure_date)
   select id, 'X', (select v from ids where k = 'g_mona'), (select v from ids where k = 'rt_dbl'), 'nightly', current_date + 400, current_date + 401 from h9 $q$,
   'row-level security');
@@ -584,7 +585,7 @@ do $$ begin
   assert (select count(*) from public.room_type_availability((select id from h9), (select v from d where k = 'today'), (select v from d where k = 'today') + 7)) = 14,
     'availability rows: 2 nightly types x 7 days';
 end $$;
-select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.act_as('00000000-0000-0000-0000-000000000901');
 do $$ begin
   assert (select count(*) from public.audit_logs where hotel_id = (select id from h9) and table_name = 'reservations') > 10, 'reservations audited';
   assert (select count(*) from public.audit_logs where hotel_id = (select id from h9) and table_name = 'rooms') >= 6, 'rooms audited';
