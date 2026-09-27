@@ -36,10 +36,10 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     },
   });
 
-  // مهم: getUser يتحقق من الرمز لدى خادم Supabase (وليس فقط قراءة الكوكي)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims يجدد الجلسة عند انتهائها ويتحقق من توقيع الرمز: محليًا بمفاتيح التوقيع غير المتماثلة
+  // (بلا طلب شبكة)، أو لدى خادم Supabase إن كان المشروع على المفتاح القديم. لا يُكتفى بقراءة الكوكي.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
 
   const isPublic = PUBLIC_PATHS.some((p) => request.nextUrl.pathname.startsWith(p));
   if (!user && !isPublic) {

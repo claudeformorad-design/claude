@@ -2,16 +2,18 @@ import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { forbidden, redirect } from "next/navigation";
-import type { User } from "@supabase/supabase-js";
 import { createClient, type SupabaseServerClient } from "@/lib/supabase/server";
 import type { HotelRow, UserProfileRow } from "@/lib/supabase/database.types";
 import type { Permission } from "./permissions";
 
 const HOTEL_COOKIE = "hotel_id";
 
+/** هوية المستخدم من رمز الدخول الموثّق */
+export type SessionUser = { id: string; email: string | null };
+
 export interface AppContext {
   supabase: SupabaseServerClient;
-  user: User;
+  user: SessionUser;
   profile: UserProfileRow | null;
   hotel: HotelRow;
   hotels: Pick<HotelRow, "id" | "name_ar" | "name_en">[];
@@ -24,12 +26,13 @@ export interface AppContext {
  * مخزّن مؤقتًا لكل طلب (React cache) حتى لا تتكرر الاستعلامات بين المكونات.
  * ملاحظة: الصلاحيات هنا لتحسين تجربة الواجهة فقط؛ الحماية الفعلية في RLS والتريغرات.
  */
-export const getAppContext = cache(async (): Promise<AppContext | { user: User | null; hotel: null }> => {
+export const getAppContext = cache(async (): Promise<AppContext | { user: SessionUser | null; hotel: null }> => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { user: null, hotel: null };
+  // getClaims: تحقق من توقيع رمز الدخول (محليًا مع مفاتيح التوقيع غير المتماثلة، فلا طلب شبكة لكل صفحة)
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (!claims?.sub) return { user: null, hotel: null };
+  const user: SessionUser = { id: claims.sub, email: typeof claims.email === "string" ? claims.email : null };
 
   // صلاحيات الفندق المحفوظ في الكوكي تُجلب بالتوازي مع الملف والفنادق (الحالة المعتادة)، فلا تنتظر جولة إضافية
   const cookieHotel = (await cookies()).get(HOTEL_COOKIE)?.value;

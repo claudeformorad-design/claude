@@ -492,6 +492,10 @@ export function createLocalSupabaseClient() {
     rpc: (fn: string, args: Record<string, unknown> = {}) => new LocalQueryBuilder(fn, args),
     auth: {
       getUser: async () => ({ data: { user: await localUser() }, error: null }),
+      getClaims: async () => {
+        const u = await localUser();
+        return { data: { claims: { sub: u.id, email: u.email, role: u.role } }, error: null };
+      },
       getSession: async () => ({ data: { session: null }, error: null }),
       signInWithPassword: async () => ({ data: { user: await localUser(), session: null }, error: null }),
       signUp: async () => ({ data: { user: await localUser(), session: {} }, error: null }),
