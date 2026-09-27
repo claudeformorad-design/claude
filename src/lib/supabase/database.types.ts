@@ -50,7 +50,15 @@ export type HotelRow = Audit & {
   is_active: boolean;
   journal_approval_threshold: string | null;
   voucher_approval_threshold: string | null;
+  /** الأقسام المفعّلة بالترخيص */
+  enabled_modules: HotelModule[];
+  check_in_time: string;
+  check_out_time: string;
+  /** ليالي نهاية الأسبوع (0 = الأحد … 6 = السبت) */
+  weekend_nights: number[];
 };
+
+export type HotelModule = "accounting" | "pms";
 
 export type UserProfileRow = {
   id: string;
@@ -350,6 +358,78 @@ type FolioMoneyArgs = {
 
 type ReadOnlyTable<Row> = { Row: Row; Insert: never; Update: never; Relationships: [] };
 
+// =============================================================================
+// قسم إدارة الفندق
+// =============================================================================
+export type BookingMode = "nightly" | "hourly";
+export type HousekeepingStatus = "clean" | "dirty" | "inspected";
+export type RoomServiceStatus = "in_service" | "out_of_service";
+export type GuestIdType = "national_id" | "passport" | "residence" | "other";
+export type ReservationStatus = "tentative" | "confirmed" | "checked_in" | "checked_out" | "cancelled" | "no_show";
+export type ReservationSource = "direct" | "phone" | "walk_in" | "website" | "booking_com" | "expedia" | "agent" | "corporate" | "other";
+export type ReservationPricing = "standard" | "fixed" | "monthly";
+export type WaitlistStatus = "waiting" | "converted" | "cancelled";
+export type SeriesStatus = "active" | "cancelled";
+
+export type FloorRow = Audit & { id: string; hotel_id: string; name: string; sort_order: number };
+export type RoomTypeRow = Audit & {
+  id: string; hotel_id: string; code: string; name_ar: string; booking_mode: BookingMode;
+  max_adults: number; max_children: number; base_rate: string; weekend_rate: string | null; min_hours: string;
+  overbooking_limit: number; charge_code_id: string | null; description: string | null; is_active: boolean; sort_order: number;
+};
+export type RoomRow = Audit & {
+  id: string; hotel_id: string; room_number: string; floor_id: string | null; room_type_id: string;
+  housekeeping_status: HousekeepingStatus; service_status: RoomServiceStatus; service_note: string | null;
+  notes: string | null; is_active: boolean; sort_order: number;
+};
+export type GuestRow = Audit & {
+  id: string; hotel_id: string; full_name: string; phone: string | null; email: string | null; nationality: string | null;
+  id_type: GuestIdType | null; id_number: string | null; date_of_birth: string | null; customer_id: string | null;
+  notes: string | null; is_blacklisted: boolean; blacklist_reason: string | null;
+};
+export type RateSeasonRow = Audit & {
+  id: string; hotel_id: string; name: string; date_from: string; date_to: string; adjust_pct: string | null; is_active: boolean; notes: string | null;
+};
+export type RateSeasonPriceRow = { season_id: string; hotel_id: string; room_type_id: string; nightly_rate: string; weekend_rate: string | null };
+export type LastMinuteRuleRow = Audit & {
+  id: string; hotel_id: string; name: string; room_type_id: string | null; days_before: number; discount_pct: string; is_active: boolean;
+};
+export type ReservationRow = Audit & {
+  id: string; hotel_id: string; confirmation_number: string; guest_id: string; customer_id: string | null;
+  room_type_id: string; room_id: string | null; booking_mode: BookingMode; arrival_date: string; departure_date: string;
+  starts_at: string | null; ends_at: string | null; adults: number; children: number; status: ReservationStatus;
+  source: ReservationSource; pricing: ReservationPricing; fixed_rate: string | null; rate_reason: string | null;
+  last_minute_pct: string | null; total_amount: string; group_id: string | null; series_id: string | null;
+  tentative_until: string | null; special_requests: string | null; notes: string | null;
+  cancelled_at: string | null; cancelled_by: string | null; cancellation_reason: string | null; folio_id: string | null;
+};
+export type ReservationNightRow = {
+  reservation_id: string; hotel_id: string; stay_date: string; quantity: string; rate: string; discount: string; amount: string; season_id: string | null;
+};
+export type ReservationGroupRow = {
+  id: string; hotel_id: string; group_number: string; name: string; customer_id: string | null; leader_guest_id: string | null;
+  notes: string | null; created_at: string; created_by: string | null;
+};
+export type ReservationSeriesRow = {
+  id: string; hotel_id: string; guest_id: string; customer_id: string | null; room_type_id: string; room_id: string | null;
+  weekday: number; nights: number | null; start_time: string | null; end_time: string | null; start_date: string; end_date: string;
+  adults: number; children: number; status: SeriesStatus; notes: string | null; cancelled_at: string | null; created_at: string; created_by: string | null;
+};
+export type WaitlistEntryRow = Audit & {
+  id: string; hotel_id: string; guest_id: string | null; guest_name: string; phone: string | null; room_type_id: string;
+  arrival_date: string; departure_date: string; adults: number; children: number; notes: string | null;
+  status: WaitlistStatus; reservation_id: string | null; series_id: string | null;
+};
+export type QuoteLine = { date: string; quantity: number; rate: number; discount: number; amount: number; season: string | null };
+export type ReservationQuote = {
+  lines: QuoteLine[]; total: number; discount: number; nights: number | null; last_minute_pct: number | null;
+  booking_mode: BookingMode; capacity: number | null; min_available: number | null; overbooking_limit: number;
+};
+export type FrontDeskSummary = {
+  today: string; arrivals: number; departures: number; in_house: number; capacity: number; sold_tonight: number;
+  available_tonight: number; out_of_service: number; dirty: number; tentative: number; waitlist_ready: number;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -391,6 +471,18 @@ export type Database = {
       payroll_runs: ReadOnlyTable<PayrollRunRow>;
       credit_notes: ReadOnlyTable<{ id: string; hotel_id: string; credit_note_number: string; invoice_id: string; issue_date: string; net_amount: string; tax_amount: string; total: string; reason: string; created_at: string }>;
       bank_statement_lines: Table<BankStatementLineRow, "hotel_id" | "account_id" | "txn_date" | "description" | "amount">;
+      floors: Table<FloorRow, "hotel_id" | "name">;
+      room_types: Table<RoomTypeRow, "hotel_id" | "code" | "name_ar">;
+      rooms: Table<RoomRow, "hotel_id" | "room_number" | "room_type_id">;
+      guests: Table<GuestRow, "hotel_id" | "full_name">;
+      rate_seasons: Table<RateSeasonRow, "hotel_id" | "name" | "date_from" | "date_to">;
+      rate_season_prices: Table<RateSeasonPriceRow, "season_id" | "hotel_id" | "room_type_id" | "nightly_rate">;
+      last_minute_rules: Table<LastMinuteRuleRow, "hotel_id" | "name" | "days_before" | "discount_pct">;
+      reservations: ReadOnlyTable<ReservationRow>;
+      reservation_nights: ReadOnlyTable<ReservationNightRow>;
+      reservation_groups: ReadOnlyTable<ReservationGroupRow>;
+      reservation_series: ReadOnlyTable<ReservationSeriesRow>;
+      waitlist_entries: ReadOnlyTable<WaitlistEntryRow>;
     };
     Views: {
       folio_balances: {
@@ -416,6 +508,81 @@ export type Database = {
       };
     };
     Functions: {
+      set_hotel_modules: { Args: { p_hotel_id: string; p_modules: HotelModule[] }; Returns: undefined };
+      create_reservation: {
+        Args: {
+          p_hotel_id: string; p_guest_id: string; p_room_type_id: string; p_arrival_date?: string | null; p_departure_date?: string | null;
+          p_adults?: number; p_children?: number; p_room_id?: string | null; p_status?: ReservationStatus; p_source?: ReservationSource;
+          p_customer_id?: string | null; p_pricing?: ReservationPricing; p_fixed_rate?: string | null; p_rate_reason?: string | null;
+          p_starts_at?: string | null; p_ends_at?: string | null; p_special_requests?: string | null; p_notes?: string | null;
+          p_tentative_until?: string | null; p_group_id?: string | null; p_series_id?: string | null;
+        };
+        Returns: string;
+      };
+      update_reservation: {
+        Args: {
+          p_reservation_id: string; p_room_type_id: string; p_arrival_date?: string | null; p_departure_date?: string | null;
+          p_adults?: number; p_children?: number; p_source?: ReservationSource; p_customer_id?: string | null;
+          p_pricing?: ReservationPricing; p_fixed_rate?: string | null; p_rate_reason?: string | null;
+          p_starts_at?: string | null; p_ends_at?: string | null; p_special_requests?: string | null; p_notes?: string | null;
+          p_tentative_until?: string | null; p_reprice?: boolean;
+        };
+        Returns: undefined;
+      };
+      assign_reservation_room: { Args: { p_reservation_id: string; p_room_id: string | null }; Returns: undefined };
+      confirm_reservation: { Args: { p_reservation_id: string }; Returns: undefined };
+      cancel_reservation: { Args: { p_reservation_id: string; p_reason: string }; Returns: undefined };
+      mark_reservation_no_show: { Args: { p_reservation_id: string; p_reason?: string | null }; Returns: undefined };
+      quote_reservation: {
+        Args: {
+          p_hotel_id: string; p_room_type_id: string; p_arrival_date?: string | null; p_departure_date?: string | null;
+          p_pricing?: ReservationPricing; p_fixed_rate?: string | null; p_starts_at?: string | null; p_ends_at?: string | null;
+          p_exclude_reservation_id?: string | null;
+        };
+        Returns: ReservationQuote;
+      };
+      room_type_availability: {
+        Args: { p_hotel_id: string; p_from: string; p_to: string };
+        Returns: { room_type_id: string; stay_date: string; capacity: number; sold: number; available: number }[];
+      };
+      create_group_reservation: {
+        Args: {
+          p_hotel_id: string; p_name: string; p_guest_id: string; p_room_type_id: string; p_arrival_date: string; p_departure_date: string;
+          p_rooms: number; p_adults?: number; p_children?: number; p_customer_id?: string | null; p_status?: ReservationStatus;
+          p_source?: ReservationSource; p_notes?: string | null;
+        };
+        Returns: string;
+      };
+      create_reservation_series: {
+        Args: {
+          p_hotel_id: string; p_guest_id: string; p_room_type_id: string; p_weekday: number; p_start_date: string; p_end_date: string;
+          p_nights?: number | null; p_start_time?: string | null; p_end_time?: string | null; p_room_id?: string | null;
+          p_adults?: number; p_children?: number; p_customer_id?: string | null; p_source?: ReservationSource; p_notes?: string | null;
+          p_waitlist_conflicts?: boolean;
+        };
+        Returns: { series_id: string; created: number; skipped: string[]; waitlisted: number };
+      };
+      cancel_reservation_series: { Args: { p_series_id: string; p_reason: string; p_from_date?: string | null }; Returns: number };
+      add_waitlist_entry: {
+        Args: {
+          p_hotel_id: string; p_room_type_id: string; p_arrival_date: string; p_departure_date: string; p_guest_id?: string | null;
+          p_guest_name?: string | null; p_phone?: string | null; p_adults?: number; p_children?: number; p_notes?: string | null;
+        };
+        Returns: string;
+      };
+      waitlist_overview: { Args: { p_hotel_id: string }; Returns: (WaitlistEntryRow & { is_available: boolean; is_expired: boolean })[] };
+      waitlist_ready_count: { Args: { p_hotel_id: string }; Returns: number };
+      convert_waitlist_entry: { Args: { p_entry_id: string; p_room_id?: string | null }; Returns: string };
+      cancel_waitlist_entry: { Args: { p_entry_id: string }; Returns: undefined };
+      create_rooms_bulk: {
+        Args: { p_hotel_id: string; p_room_type_id: string; p_from_number: number; p_to_number: number; p_floor_id?: string | null; p_prefix?: string | null };
+        Returns: number;
+      };
+      set_room_status: {
+        Args: { p_room_id: string; p_housekeeping_status?: HousekeepingStatus | null; p_service_status?: RoomServiceStatus | null; p_service_note?: string | null };
+        Returns: undefined;
+      };
+      front_desk_summary: { Args: { p_hotel_id: string }; Returns: FrontDeskSummary };
       close_fiscal_year: { Args: { p_fiscal_year_id: string }; Returns: string | null };
       set_period_status: { Args: { p_period_id: string; p_status: PeriodStatus }; Returns: undefined };
       add_hotel_member: { Args: { p_hotel_id: string; p_email: string; p_role_ids: string[] }; Returns: string };
@@ -579,6 +746,15 @@ export type Database = {
       charge_category: ChargeCategory;
       customer_type: CustomerType;
       tax_kind: TaxKind;
+      pms_booking_mode: BookingMode;
+      room_housekeeping_status: HousekeepingStatus;
+      room_service_status: RoomServiceStatus;
+      guest_id_type: GuestIdType;
+      reservation_status: ReservationStatus;
+      reservation_source: ReservationSource;
+      reservation_pricing: ReservationPricing;
+      waitlist_status: WaitlistStatus;
+      series_status: SeriesStatus;
     };
     CompositeTypes: Record<string, never>;
   };

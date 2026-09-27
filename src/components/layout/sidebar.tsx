@@ -6,7 +6,7 @@ import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { Building2, ChevronDown, LogOut, PanelRightClose, PanelRightOpen } from "lucide-react";
 import Link from "@/components/link";
 import { cn } from "@/lib/utils";
-import { SIDEBAR_COOKIE, isActivePath, navGroups, type NavGroup, type NavLabels } from "./nav-config";
+import { SIDEBAR_COOKIE, isActivePath, navGroups, type NavAccess, type NavGroup, type NavLabels } from "./nav-config";
 
 const spring = { type: "spring", stiffness: 420, damping: 34 } as const;
 
@@ -18,16 +18,17 @@ const spring = { type: "spring", stiffness: 420, damping: 34 } as const;
  * كل رابط حقيقي (يعمل حتى بلا JavaScript)، وحالة التوسيع محفوظة في كوكي.
  */
 export function Sidebar({
-  labels, hotelName, signOut, initialExpanded = false,
+  labels, access, hotelName, signOut, initialExpanded = false,
 }: {
   labels: NavLabels;
+  access: NavAccess;
   hotelName: string;
   signOut?: () => Promise<void>;
   initialExpanded?: boolean;
 }) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(initialExpanded);
-  const groups = navGroups(labels);
+  const groups = navGroups(labels, access);
   const [open, setOpen] = useState<{ index: number; top: number; right: number } | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toggle = () => {

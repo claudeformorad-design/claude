@@ -24,6 +24,11 @@ const TIMEZONES: [string, string][] = [
   ["America/New_York", "نيويورك"], ["UTC", "التوقيت العالمي UTC"],
 ];
 
+const MODULES = [
+  { value: "accounting", title: "المحاسبة", description: "دليل الحسابات والقيود، الفوليو والفواتير، المشتريات والرواتب، الأصول والمخزون، والتقارير المالية." },
+  { value: "pms", title: "إدارة الفندق", description: "الحجوزات والنزلاء، الغرف وحالاتها، الأسعار والمواسم، قائمة الانتظار، والقاعات بالساعة." },
+] as const;
+
 export function OnboardingForm({
   t,
   currencies,
@@ -85,6 +90,21 @@ export function OnboardingForm({
           {TIMEZONES.map(([tz, name]) => <option key={tz} value={tz}>{name}</option>)}
         </NativeSelect>
       </div>
+      <fieldset className="space-y-2 sm:col-span-2">
+        <legend className="mb-2 text-[16.5px] font-medium text-ink">الأقسام المطلوبة</legend>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {MODULES.map((m) => (
+            <label key={m.value} className="flex cursor-pointer items-start gap-3 rounded-lg border border-line bg-white p-4 transition-colors hover:border-line-strong has-[:checked]:border-action has-[:checked]:bg-accent1-tint/40">
+              <input type="checkbox" name="modules" value={m.value} defaultChecked className="mt-1 size-4" />
+              <span className="min-w-0">
+                <span className="block text-[16.5px] font-semibold text-ink">{m.title}</span>
+                <span className="mt-0.5 block text-[15px] leading-relaxed text-slate-600">{m.description}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+        <p className="text-[14.5px] text-slate-500">يمكن تفعيل أي قسم أو إيقافه لاحقًا من إعدادات الفندق، والبيانات محفوظة في النظام نفسه.</p>
+      </fieldset>
       <Button type="submit" className="sm:col-span-2" loading={pending}>
         {t.onboarding.submit}
       </Button>

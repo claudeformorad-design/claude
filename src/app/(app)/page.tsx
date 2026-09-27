@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "@/components/link";
 import { CHART_COLORS } from "@/components/dashboard/chart-colors";
 import {
@@ -83,6 +84,8 @@ const addDays = (iso: string, n: number) => {
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
   const ctx = await requireAppContext();
+  // فندق بقسم إدارة الفندق فقط: لوحته هي لوحة الاستقبال
+  if (!ctx.hotel.enabled_modules?.includes("accounting")) redirect("/front-desk");
   const { t } = await getI18n();
   const { supabase, hotel } = ctx;
   const r = t.reports;

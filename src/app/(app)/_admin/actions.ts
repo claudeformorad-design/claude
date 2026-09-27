@@ -22,7 +22,8 @@ export async function saveHotelAction(input: unknown): Promise<ActionResult<unde
   const p = z.object({
     name_ar: z.string().trim().min(1), name_en: opt, legal_name: opt, tax_number: opt, commercial_registration: opt,
     address: opt, phone: opt, email: opt, timezone: z.string().trim().min(1),
-    total_rooms: z.string().trim().transform((v) => (v === "" ? null : Number(v))).pipe(z.number().int().nonnegative().nullable()),
+    // عند وجود غرف في قسم إدارة الفندق يُحسب العدد تلقائيًا ولا يُرسل من النموذج
+    total_rooms: z.string().trim().transform((v) => (v === "" ? null : Number(v))).pipe(z.number().int().nonnegative().nullable()).optional(),
     journal_approval_threshold: optAmount, voucher_approval_threshold: optAmount,
   }).safeParse(input);
   if (!p.success) return fail;
@@ -31,6 +32,32 @@ export async function saveHotelAction(input: unknown): Promise<ActionResult<unde
     raise(error);
     return undefined;
   }), "/settings/hotel");
+}
+
+/** الأقسام المفعّلة وإعدادات التشغيل الفندقي (أوقات الوصول والمغادرة، ليالي نهاية الأسبوع) */
+export async function saveHotelOperationsAction(input: unknown): Promise<ActionResult<undefined>> {
+  const ctx = await requireAppContext(PERMISSIONS.hotelManage);
+  const time = z.string().trim().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
+  const p = z.object({
+    modules: z.array(z.enum(["accounting", "pms"])).min(1),
+    check_in_time: time,
+    check_out_time: time,
+    weekend_nights: z.array(z.coerce.number().int().min(0).max(6)).max(7),
+  }).safeParse(input);
+  if (!p.success) return fail;
+  const r = await toActionResult(async () => {
+    const m = await ctx.supabase.rpc("set_hotel_modules", { p_hotel_id: ctx.hotel.id, p_modules: p.data.modules });
+    raise(m.error);
+    const { error } = await ctx.supabase.from("hotels").update({
+      check_in_time: p.data.check_in_time, check_out_time: p.data.check_out_time,
+      weekend_nights: [...new Set(p.data.weekend_nights)].sort(),
+    }).eq("id", ctx.hotel.id);
+    raise(error);
+    return undefined;
+  });
+  // تغيّر الأقسام يغيّر التنقل في كل الصفحات
+  if (r.ok) revalidatePath("/", "layout");
+  return r;
 }
 
 export async function saveDepartmentAction(input: unknown): Promise<ActionResult<undefined>> {

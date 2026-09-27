@@ -3,6 +3,7 @@
  * (فتح فوليو، رسوم، دفعات، مغادرة وفوترة، فواتير آجلة، سندات قبض وصرف، فواتير موردين، رواتب)
  * بصلاحيات المستخدم نفسه، فتبقى كل الأرصدة مطابقة لدفاترها الفرعية وميزان المراجعة متوازنًا.
  * القيم عشوائية لكن ثابتة (setseed) حتى تتكرر نفس الصورة في كل مرة.
+ * وإن كان قسم إدارة الفندق مفعّلًا: غرف ووحدات بالساعة وأسعار ومواسم وحجوزات الأسابيع القادمة.
  */
 export const DEMO_DATA_SQL = /* sql */ `
 do $demo$
@@ -215,4 +216,175 @@ begin
   end loop;
 end
 $demo$;
+
+-- =============================================================================
+-- قسم إدارة الفندق (إن كان مفعّلًا): غرف وأنواع ووحدات بالساعة، مواسم وعروض،
+-- وحجوزات الأسابيع القادمة عبر دوال الحجز الحقيقية (السعة والتداخل والأسعار تُفحص كالمعتاد)
+-- =============================================================================
+do $pms$
+declare
+  h        uuid := current_setting('demo.hotel_id')::uuid;
+  v_today  date := app.today_for_hotel(current_setting('demo.hotel_id')::uuid);
+  f1 uuid; f2 uuid; f3 uuid; f0 uuid;
+  t_sgl uuid; t_dbl uuid; t_ste uuid; t_fam uuid; t_hall uuid; t_pool uuid;
+  c_room uuid; c_events uuid; c_spa uuid; v_cust uuid;
+  g uuid[] := '{}'; v_g uuid; v_t uuid; v_r uuid; v_room uuid; v_arr date; v_n int; i int; v_types uuid[];
+  v_ts timestamp; v_name text;
+  names text[] := array['محمد العتيبي','سارة القحطاني','عبدالله الشمري','نورة الدوسري','خالد الحربي','ريم الزهراني','فهد المطيري',
+    'هيفاء الغامدي','سلطان العنزي','لمى السبيعي','ماجد الرشيدي','أمل الشهري','تركي البقمي','جود العمري','ناصر الجهني','دانة الخالدي',
+    'أحمد باوزير','مريم الحضرمي','يوسف العولقي','هدى المقطري'];
+begin
+  if not coalesce((select 'pms' = any (enabled_modules) from public.hotels where id = h), false)
+     or exists (select 1 from public.room_types where hotel_id = h) then
+    return;
+  end if;
+  perform setseed(0.24);
+  select id into c_room from public.charge_codes where hotel_id = h and code = 'ROOM';
+  select id into c_events from public.charge_codes where hotel_id = h and code = 'EVENTS';
+  select id into c_spa from public.charge_codes where hotel_id = h and code = 'SPA';
+
+  insert into public.floors (hotel_id, name, sort_order) values (h, 'الطابق الأرضي', 0) returning id into f0;
+  insert into public.floors (hotel_id, name, sort_order) values (h, 'الطابق الأول', 1) returning id into f1;
+  insert into public.floors (hotel_id, name, sort_order) values (h, 'الطابق الثاني', 2) returning id into f2;
+  insert into public.floors (hotel_id, name, sort_order) values (h, 'الطابق الثالث', 3) returning id into f3;
+
+  insert into public.room_types (hotel_id, code, name_ar, base_rate, weekend_rate, max_adults, max_children, charge_code_id, sort_order)
+    values (h, 'SGL', 'غرفة مفردة', 320, 360, 1, 0, c_room, 1) returning id into t_sgl;
+  insert into public.room_types (hotel_id, code, name_ar, base_rate, weekend_rate, max_adults, max_children, overbooking_limit, charge_code_id, sort_order)
+    values (h, 'DBL', 'غرفة مزدوجة', 420, 480, 2, 1, 1, c_room, 2) returning id into t_dbl;
+  insert into public.room_types (hotel_id, code, name_ar, base_rate, weekend_rate, max_adults, max_children, charge_code_id, sort_order)
+    values (h, 'FAM', 'غرفة عائلية', 560, 620, 4, 3, c_room, 3) returning id into t_fam;
+  insert into public.room_types (hotel_id, code, name_ar, base_rate, weekend_rate, max_adults, max_children, charge_code_id, sort_order)
+    values (h, 'STE', 'جناح تنفيذي', 850, 950, 3, 2, c_room, 4) returning id into t_ste;
+  insert into public.room_types (hotel_id, code, name_ar, booking_mode, base_rate, min_hours, max_adults, charge_code_id, sort_order)
+    values (h, 'HALL', 'قاعة مناسبات', 'hourly', 300, 3, 200, c_events, 5) returning id into t_hall;
+  insert into public.room_types (hotel_id, code, name_ar, booking_mode, base_rate, min_hours, max_adults, charge_code_id, sort_order)
+    values (h, 'POOL', 'المسبح الخاص', 'hourly', 150, 1, 20, c_spa, 6) returning id into t_pool;
+
+  perform public.create_rooms_bulk(h, t_sgl, 101, 110, f1);
+  perform public.create_rooms_bulk(h, t_dbl, 201, 218, f2);
+  perform public.create_rooms_bulk(h, t_fam, 301, 304, f3);
+  perform public.create_rooms_bulk(h, t_ste, 305, 312, f3);
+  insert into public.rooms (hotel_id, room_number, room_type_id, floor_id, sort_order) values
+    (h, 'قاعة الماسة', t_hall, f0, 1), (h, 'قاعة اللؤلؤة', t_hall, f0, 2), (h, 'المسبح', t_pool, f0, 3);
+
+  -- الأسعار: موسم قريب بأسعار محددة وموسم لاحق بنسبة، وعرض لحظة أخيرة للمزدوجة
+  insert into public.rate_seasons (hotel_id, name, date_from, date_to, adjust_pct)
+    values (h, 'موسم الإجازة', v_today + 12, v_today + 30, 15) returning id into v_r;
+  insert into public.rate_season_prices (season_id, hotel_id, room_type_id, nightly_rate, weekend_rate) values
+    (v_r, h, t_dbl, 520, 590), (v_r, h, t_ste, 1100, 1250);
+  insert into public.rate_seasons (hotel_id, name, date_from, date_to, adjust_pct)
+    values (h, 'الموسم الهادئ', v_today + 45, v_today + 75, -10);
+  insert into public.last_minute_rules (hotel_id, name, room_type_id, days_before, discount_pct)
+    values (h, 'عرض الليلة', t_dbl, 1, 15);
+
+  select id into v_cust from public.customers where hotel_id = h and is_active order by code limit 1;
+  for i in 1 .. array_length(names, 1) loop
+    insert into public.guests (hotel_id, full_name, phone, nationality, id_type, id_number)
+    values (h, names[i], '77' || (1000000 + floor(random() * 8999999)::int)::text, case when i > 16 then 'يمني' else 'سعودي' end,
+            'national_id', (1000000000 + floor(random() * 899999999)::bigint)::text)
+    returning id into v_g;
+    g := g || v_g;
+  end loop;
+
+  -- حجوزات الأسابيع الستة القادمة: إشغال أعلى قريبًا، وتخصيص غرف للوصول خلال أسبوع
+  v_types := array[t_sgl, t_dbl, t_dbl, t_dbl, t_fam, t_ste, t_sgl, t_dbl];
+  for i in 1 .. 150 loop
+    v_arr := v_today + floor(power(random(), 1.5) * 42)::int;
+    v_n := 1 + floor(random() * 4)::int;
+    v_t := v_types[1 + floor(random() * array_length(v_types, 1))::int];
+    begin
+      v_r := public.create_reservation(
+        p_hotel_id => h, p_guest_id => g[1 + floor(random() * array_length(g, 1))::int], p_room_type_id => v_t,
+        p_arrival_date => v_arr, p_departure_date => v_arr + v_n, p_adults => 1::smallint,
+        p_status => case when random() < 0.12 then 'tentative' else 'confirmed' end::public.reservation_status,
+        p_source => (array['direct','phone','booking_com','website','agent','walk_in'])[1 + floor(random() * 6)::int]::public.reservation_source,
+        p_tentative_until => v_today + floor(random() * 3)::int);
+      if v_arr <= v_today + 7 and random() < 0.85 then
+        select r.id into v_room from public.rooms r
+         where r.room_type_id = v_t and r.service_status = 'in_service'
+           and not exists (select 1 from public.reservations x where x.room_id = r.id and x.status in ('tentative', 'confirmed', 'checked_in')
+                             and x.period && tsrange(v_arr::timestamp, (v_arr + v_n)::timestamp))
+         order by random() limit 1;
+        if v_room is not null then perform public.assign_reservation_room(v_r, v_room); end if;
+      end if;
+    exception when exclusion_violation then null; -- اكتمل النوع في تلك الليالي
+    end;
+  end loop;
+
+  -- إقامة طويلة لشركة بسعر شهري (شهران) في غرفة محددة
+  begin
+    select r.id into v_room from public.rooms r where r.hotel_id = h and r.room_number = '218';
+    perform public.create_reservation(p_hotel_id => h, p_guest_id => g[19], p_room_type_id => t_dbl,
+      p_arrival_date => v_today + 1, p_departure_date => v_today + 61, p_room_id => v_room, p_customer_id => v_cust,
+      p_source => 'corporate', p_pricing => 'monthly', p_fixed_rate => 9500, p_rate_reason => 'عقد إقامة مهندسي الشركة',
+      p_special_requests => 'تنظيف يومي، فاتورة شهرية للشركة');
+  exception when exclusion_violation then null;
+  end;
+
+  -- حجز متكرر: كل خميس لليلتين لمدة شهرين
+  perform public.create_reservation_series(p_hotel_id => h, p_guest_id => g[11], p_room_type_id => t_sgl,
+    p_weekday => 4::smallint, p_start_date => v_today + 1, p_end_date => v_today + 60, p_nights => 2::smallint,
+    p_source => 'phone', p_notes => 'نزيل دائم نهاية كل أسبوع');
+
+  -- مجموعة: وفد مؤتمر لخمس غرف
+  begin
+    perform public.create_group_reservation(p_hotel_id => h, p_name => 'وفد مؤتمر الطاقة', p_guest_id => g[3],
+      p_room_type_id => t_dbl, p_arrival_date => v_today + 20, p_departure_date => v_today + 23, p_rooms => 5::smallint,
+      p_customer_id => v_cust, p_source => 'corporate');
+  exception when exclusion_violation then null;
+  end;
+
+  -- القاعات والمسبح بالساعة
+  for i in 0 .. 13 loop
+    if random() < 0.55 then
+      v_ts := (v_today + i) + time '18:00';
+      -- الاختيار العشوائي قبل الاستعلام (وإلا يُعاد random() لكل صف)
+      v_name := (array['قاعة الماسة', 'قاعة اللؤلؤة'])[1 + floor(random() * 2)::int];
+      select id into v_room from public.rooms where hotel_id = h and room_number = v_name;
+      begin
+        perform public.create_reservation(p_hotel_id => h, p_guest_id => g[1 + floor(random() * 20)::int], p_room_type_id => t_hall,
+          p_room_id => v_room,
+          p_starts_at => v_ts, p_ends_at => v_ts + interval '4 hours', p_adults => 120::smallint, p_source => 'phone',
+          p_notes => (array['حفل زفاف','حفل تخرج','اجتماع شركة','عشاء عمل'])[1 + floor(random() * 4)::int]);
+      exception when exclusion_violation then null;
+      end;
+    end if;
+    if random() < 0.4 then
+      v_ts := (v_today + i) + time '16:00';
+      begin
+        perform public.create_reservation(p_hotel_id => h, p_guest_id => g[1 + floor(random() * 20)::int], p_room_type_id => t_pool,
+          p_room_id => (select id from public.rooms where hotel_id = h and room_number = 'المسبح'),
+          p_starts_at => v_ts, p_ends_at => v_ts + interval '2 hours', p_adults => 6::smallint, p_source => 'walk_in');
+      exception when exclusion_violation then null;
+      end;
+    end if;
+  end loop;
+
+  -- عدم حضور وإلغاء لليوم
+  begin
+    v_r := public.create_reservation(p_hotel_id => h, p_guest_id => g[7], p_room_type_id => t_sgl,
+      p_arrival_date => v_today, p_departure_date => v_today + 2);
+    perform public.mark_reservation_no_show(v_r, 'لم يحضر ولم يرد على الاتصال');
+    v_r := public.create_reservation(p_hotel_id => h, p_guest_id => g[9], p_room_type_id => t_fam,
+      p_arrival_date => v_today + 5, p_departure_date => v_today + 8);
+    perform public.cancel_reservation(v_r, 'تغيّر موعد السفر');
+  exception when exclusion_violation then null;
+  end;
+
+  -- قائمة الانتظار: طلب على الجناح في أزحم ليلة
+  perform public.add_waitlist_entry(p_hotel_id => h, p_room_type_id => t_ste,
+    p_arrival_date => (select d::date from generate_series(v_today + 1, v_today + 14, interval '1 day') d
+                        order by (select count(*) from public.reservations x where x.room_type_id = t_ste and x.status in ('tentative','confirmed')
+                                   and d::date >= x.arrival_date and d::date < x.departure_date) desc limit 1),
+    p_departure_date => (select d::date + 2 from generate_series(v_today + 1, v_today + 14, interval '1 day') d
+                        order by (select count(*) from public.reservations x where x.room_type_id = t_ste and x.status in ('tentative','confirmed')
+                                   and d::date >= x.arrival_date and d::date < x.departure_date) desc limit 1),
+    p_guest_name => 'م. عادل السقاف', p_phone => '777123456', p_adults => 2::smallint, p_notes => 'يفضّل إطلالة على البحر');
+
+  -- حالة الغرف: بعضها يحتاج تنظيف وواحدة خارج الخدمة
+  update public.rooms set housekeeping_status = 'dirty' where hotel_id = h and room_number in ('103', '205', '207', '302', '309');
+  perform public.set_room_status((select id from public.rooms where hotel_id = h and room_number = '212'), null, 'out_of_service', 'صيانة التكييف');
+end
+$pms$;
 `;

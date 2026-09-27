@@ -1,20 +1,60 @@
 import {
-  BarChart3, Banknote, BedDouble, BookOpen, Boxes, Building2, CalendarCheck, Clock, FileSpreadsheet, FileText, History, Landmark,
-  LayoutDashboard, ListChecks, ListTree, Percent, PieChart, Receipt, Scale, Settings, ShieldCheck, ShoppingCart,
-  TrendingUp, Truck, UserCog, Users, Wallet, Waves,
+  BarChart3, Banknote, BedDouble, BookOpen, Boxes, Building2, CalendarCheck, CalendarDays, CalendarRange, Clock, ConciergeBell, DoorOpen,
+  FileSpreadsheet, FileText, History, Hourglass, Landmark, LayoutDashboard, ListChecks, ListTree, Percent, PieChart, Receipt, Scale,
+  Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
 } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
+import type { HotelModule } from "@/lib/supabase/database.types";
 
 export type NavLabels = Dictionary["nav"];
-export type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }> };
+/** module: القسم المرخّص الذي تتبعه الصفحة | permission: الصلاحية اللازمة لفتحها (تُخفى إن لم تتوفر) */
+export type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }>; module?: HotelModule; permission?: string };
 /** color: لون المجموعة (محايد في نظام التصميم الحالي؛ عنصر نشط واحد فقط يتميّز) */
-export type NavGroup = { title?: string; icon: NavItem["icon"]; color: string; items: NavItem[] };
+export type NavGroup = { title?: string; icon: NavItem["icon"]; color: string; items: NavItem[]; module?: HotelModule };
+/** ما يحق للمستخدم رؤيته: الأقسام المفعّلة للفندق وصلاحياته فيه */
+export type NavAccess = { modules: readonly string[]; permissions: readonly string[] };
 
-/** شجرة التنقل الوحيدة في النظام (الشريط الجانبي + البحث السريع) */
-export function navGroups(l: NavLabels): NavGroup[] {
+/** شجرة التنقل الوحيدة في النظام (الشريط الجانبي + البحث السريع)، مفلترة بالأقسام والصلاحيات */
+export function navGroups(l: NavLabels, access?: NavAccess): NavGroup[] {
+  const all = allGroups(l);
+  if (!access) return all;
+  const perms = new Set(access.permissions);
+  const on = (m?: HotelModule) => !m || access.modules.includes(m);
+  return all
+    .filter((g) => on(g.module))
+    .map((g) => ({ ...g, items: g.items.filter((i) => on(i.module) && (!i.permission || perms.has(i.permission))) }))
+    .filter((g) => g.items.length > 0);
+}
+
+function allGroups(l: NavLabels): NavGroup[] {
   return [
-    { title: l.dashboard, icon: LayoutDashboard, color: "#312f2e", items: [{ href: "/", label: l.dashboard, icon: LayoutDashboard }] },
+    { title: l.dashboard, icon: LayoutDashboard, color: "#312f2e", module: "accounting", items: [{ href: "/", label: l.dashboard, icon: LayoutDashboard }] },
     {
+      title: l.groupFrontOffice,
+      icon: ConciergeBell,
+      color: "#312f2e",
+      module: "pms",
+      items: [
+        { href: "/front-desk", label: l.frontDesk, icon: ConciergeBell, permission: "pms.reservations.view" },
+        { href: "/reservations", label: l.reservations, icon: CalendarDays, permission: "pms.reservations.view" },
+        { href: "/tape-chart", label: l.tapeChart, icon: CalendarRange, permission: "pms.reservations.view" },
+        { href: "/guests", label: l.guests, icon: UserRound, permission: "pms.reservations.view" },
+        { href: "/waitlist", label: l.waitlist, icon: Hourglass, permission: "pms.reservations.view" },
+      ],
+    },
+    {
+      title: l.groupRooms,
+      icon: DoorOpen,
+      color: "#312f2e",
+      module: "pms",
+      items: [
+        { href: "/rooms", label: l.rooms, icon: DoorOpen, permission: "pms.reservations.view" },
+        { href: "/rates", label: l.rates, icon: Tags, permission: "pms.reservations.view" },
+        { href: "/room-setup", label: l.roomSetup, icon: Building2, permission: "pms.setup.manage" },
+      ],
+    },
+    {
+      module: "accounting",
       title: l.groupGl,
       icon: BookOpen,
       color: "#312f2e",
@@ -24,6 +64,7 @@ export function navGroups(l: NavLabels): NavGroup[] {
       ],
     },
     {
+      module: "accounting",
       title: l.groupRevenue,
       icon: BedDouble,
       color: "#312f2e",
@@ -35,6 +76,7 @@ export function navGroups(l: NavLabels): NavGroup[] {
       ],
     },
     {
+      module: "accounting",
       title: l.groupPayables,
       icon: ShoppingCart,
       color: "#312f2e",
@@ -47,6 +89,7 @@ export function navGroups(l: NavLabels): NavGroup[] {
       ],
     },
     {
+      module: "accounting",
       title: l.groupAssets,
       icon: Boxes,
       color: "#312f2e",
@@ -56,6 +99,7 @@ export function navGroups(l: NavLabels): NavGroup[] {
       ],
     },
     {
+      module: "accounting",
       title: l.groupReports,
       icon: BarChart3,
       color: "#312f2e",
@@ -79,7 +123,7 @@ export function navGroups(l: NavLabels): NavGroup[] {
         { href: "/settings/hotel", label: l.hotelSettings, icon: Settings },
         { href: "/settings/revenue", label: l.revenueSettings, icon: Wallet },
         { href: "/settings/users", label: l.users, icon: ShieldCheck },
-        { href: "/periods", label: l.periods, icon: CalendarCheck },
+        { href: "/periods", label: l.periods, icon: CalendarCheck, module: "accounting" },
         { href: "/audit", label: l.audit, icon: History },
       ],
     },

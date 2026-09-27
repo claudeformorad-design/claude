@@ -24,6 +24,15 @@ describe("describeDatabaseError", () => {
     expect(describeDatabaseError("Invoice not found")).toBe("الفاتورة غير موجودة");
     expect(describeDatabaseError("Journal entry not found")).toBe("القيد غير موجود");
     expect(describeDatabaseError("Draft journal entry not found")).toBe("القيد المسودة غير موجود");
+    expect(describeDatabaseError("No availability for this room type on 2026-10-01 (rooms 4, booked 4)")).toBe(
+      "لا توجد غرف متاحة من هذا النوع ليلة 2026-10-01 (الغرف 4، المحجوز 4)",
+    );
+    expect(describeDatabaseError("Room 101 is already booked for an overlapping period")).toBe("الغرفة 101 محجوزة في فترة متداخلة");
+    expect(describeDatabaseError("Reservation not found")).toBe("الحجز غير موجود");
+    // رقم هوية مكرر: رسالة دقيقة لا «الرمز مستخدم»
+    const dup = 'duplicate key value violates unique constraint "guests_identity_uq"';
+    expect(mapDatabaseError(dup)).toBe("unknown");
+    expect(describeDatabaseError(dup)).toContain("رقم الهوية");
     expect(describeDatabaseError("something else")).toBeNull();
   });
 

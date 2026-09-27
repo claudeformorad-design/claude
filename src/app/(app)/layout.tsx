@@ -20,9 +20,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const hotelName = ctx.hotel.name_ar || ctx.hotel.name_en || "";
   // وصف الدور من الصلاحيات الفعلية (بدون افتراض)
   const sidebarExpanded = (await cookies()).get(SIDEBAR_COOKIE)?.value === "1";
-  const roleLabel = ctx.can(PERMISSIONS.hotelManage) ? "مدير الفندق" : ctx.can(PERMISSIONS.journalCreate) ? "محاسب" : "مستخدم";
+  const roleLabel = ctx.can(PERMISSIONS.hotelManage) ? "مدير الفندق" : ctx.can(PERMISSIONS.journalCreate) ? "محاسب"
+    : ctx.can(PERMISSIONS.pmsManage) ? "موظف استقبال" : "مستخدم";
 
   const signOut = isSupabaseConfigured() ? signOutAction : undefined;
+  // ما يظهر في التنقل: الأقسام المفعّلة للفندق وصلاحيات المستخدم فيه
+  const access = { modules: ctx.hotel.enabled_modules ?? ["accounting", "pms"], permissions: [...ctx.permissions].sort() };
 
   return (
     // ملء الشاشة بلا حدود في الأطراف
@@ -36,6 +39,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div className="flex min-w-0 flex-1 overflow-hidden">
         <Sidebar
           labels={t.nav}
+          access={access}
           hotelName={hotelName}
           signOut={signOut}
           initialExpanded={sidebarExpanded}
@@ -43,6 +47,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <div className="flex min-w-0 flex-1 flex-col">
           <TopBar
             labels={t.nav}
+            access={access}
             hotelName={hotelName}
             userName={ctx.profile?.full_name ?? ""}
             userEmail={ctx.user.email ?? ""}

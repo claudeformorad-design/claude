@@ -1,4 +1,4 @@
-/** رموز الصلاحيات — مطابقة لجدول public.permissions (الترحيل 1) */
+/** رموز الصلاحيات — مطابقة لجدول public.permissions (الترحيلات 1 و9 و10 و14 و20) */
 export const PERMISSIONS = {
   hotelManage: "settings.hotel.manage",
   usersManage: "settings.users.manage",
@@ -48,6 +48,15 @@ export const PERMISSIONS = {
   journalApprove: "gl.journal.approve",
   paymentsApproveLarge: "payments.approve_large",
   taxReportView: "reports.tax.view",
+  // قسم إدارة الفندق
+  pmsView: "pms.reservations.view",
+  pmsManage: "pms.reservations.manage",
+  pmsCancel: "pms.reservations.cancel",
+  pmsOverbook: "pms.reservations.overbook",
+  pmsRatesManage: "pms.rates.manage",
+  pmsRatesOverride: "pms.rates.override",
+  pmsRoomStatus: "pms.rooms.status",
+  pmsSetup: "pms.setup.manage",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

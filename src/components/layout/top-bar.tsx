@@ -6,12 +6,13 @@ import { AnimatePresence, motion } from "motion/react";
 import { CalendarCheck, ChevronLeft, LogOut, Menu, Search, Settings } from "lucide-react";
 import Link from "@/components/link";
 import { cn } from "@/lib/utils";
-import { isActivePath, navGroups, type NavLabels } from "./nav-config";
+import { isActivePath, navGroups, type NavAccess, type NavLabels } from "./nav-config";
 import { SearchBox } from "./search-box";
 
 
 export function TopBar({
   labels,
+  access,
   hotelName,
   userName,
   userEmail,
@@ -21,6 +22,7 @@ export function TopBar({
 }: {
   demo?: boolean;
   labels: NavLabels;
+  access: NavAccess;
   hotelName: string;
   userName: string;
   userEmail: string;
@@ -30,7 +32,7 @@ export function TopBar({
   const [searchOpen, setSearchOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const pathname = usePathname();
-  const groups = useMemo(() => navGroups(labels), [labels]);
+  const groups = useMemo(() => navGroups(labels, access), [labels, access]);
   const current = groups.flatMap((g) => g.items).filter((i) => isActivePath(pathname, i.href)).sort((a, b) => b.href.length - a.href.length)[0];
 
   const initials = (userName || userEmail || "؟").trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("");
