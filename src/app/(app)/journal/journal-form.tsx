@@ -84,7 +84,7 @@ export function JournalForm({
         </div>
         <div className="field-group space-y-1.5">
           <Label htmlFor="reference">
-            {t.common.reference} <span className="text-xs text-muted-foreground">({t.common.optional})</span>
+            {t.common.reference} <span className="font-normal text-muted-foreground">{t.common.optional}</span>
           </Label>
           <Input id="reference" {...register("reference")} />
         </div>

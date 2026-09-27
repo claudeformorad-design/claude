@@ -220,7 +220,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
           {r.group && (
             <Card>
               <CardHeader><CardTitle><Users className="size-5" />مجموعة {r.group.name}</CardTitle></CardHeader>
-              <CardContent><Button asChild variant="outline" size="sm"><Link href={`/reservations?group=${r.group_id}`}>كل حجوزات المجموعة ({r.group.group_number})</Link></Button></CardContent>
+              <CardContent><Button asChild variant="outline" size="sm"><Link href={`/reservations?group=${r.group_id}`}>كل حجوزات المجموعة <span className="num">{r.group.group_number}</span></Link></Button></CardContent>
             </Card>
           )}
           {r.series && (

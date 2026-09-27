@@ -33,7 +33,7 @@ export function DemoDataCard({ active, errors }: { active: boolean; errors: Reco
           <p className="max-w-xl text-[16.5px] leading-relaxed text-slate-600">
             {active
               ? "البيانات التجريبية محمّلة الآن. الحذف يعيد النظام كما كان قبل تحميلها تمامًا — وأي عملية أجريتها بعد التحميل ستُحذف معها."
-              : "تولّد ستة أشهر من النشاط (إقامات، مطعم، مناسبات، مشتريات، رواتب) عبر نفس القيود المحاسبية الحقيقية، لتعاين لوحة التحكم والتقارير. تُحذف بالكامل متى شئت."}
+              : "تولّد ستة أشهر من النشاط من إقامات ومطعم ومناسبات ومشتريات ورواتب عبر نفس القيود المحاسبية الحقيقية، لتعاين لوحة التحكم والتقارير. تُحذف بالكامل متى شئت."}
           </p>
           {error && <p className="text-[15.5px] text-urgent">{error}</p>}
         </div>
@@ -46,7 +46,7 @@ export function DemoDataCard({ active, errors }: { active: boolean; errors: Reco
       ) : (
         <Button loading={pending} onClick={() => run(loadDemoDataAction, "/")}>
           <Sparkles />
-          {pending ? "جارٍ التوليد… (قد يستغرق دقيقة)" : "إنشاء بيانات تجريبية"}
+          {pending ? "جارٍ التوليد، قد يستغرق دقيقة" : "إنشاء بيانات تجريبية"}
         </Button>
       )}
     </div>
