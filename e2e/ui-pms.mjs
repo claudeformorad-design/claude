@@ -275,8 +275,8 @@ await step("dollar deposit, check-out refunds the extra deposit in cash", async 
   await pick("#room_id", /102/);
   await submitReservation(); await page.waitForURL(/reservations\/[0-9a-f-]{36}$/);
 
-  await pick("#dep_method", /USD/); await page.fill("#dep_amount", "1");
-  await page.locator("text=≈ 530.00").first().waitFor();
+  await pick("#dep_method", /دولار/); await page.fill("#dep_amount", "1");
+  await page.locator("text=يعادل 530.00").first().waitFor();
   await page.getByRole("button", { name: "تسجيل", exact: true }).click();
   await bodyHas("530.00");
   await page.getByRole("button", { name: "تسكين" }).click();
