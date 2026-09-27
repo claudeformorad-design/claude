@@ -1,7 +1,7 @@
 import {
   BarChart3, Banknote, BedDouble, BookOpen, Boxes, Building2, CalendarCheck, CalendarDays, CalendarRange, Clock, ConciergeBell, DoorOpen,
   FileSpreadsheet, FileText, History, Hourglass, Landmark, LayoutDashboard, ListChecks, ListTree, Percent, PieChart, Receipt, Scale,
-  ClipboardList, Coins, MoonStar, BrushCleaning, Utensils, BadgePercent, Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
+  ClipboardList, Coins, Scale3d, MoonStar, BrushCleaning, Utensils, BadgePercent, Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
 } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import type { HotelModule } from "@/lib/supabase/database.types";
@@ -129,6 +129,7 @@ function allGroups(l: NavLabels): NavGroup[] {
         { href: "/settings/hotel", label: l.hotelSettings, icon: Settings },
         { href: "/settings/revenue", label: l.revenueSettings, icon: Wallet },
         { href: "/settings/currencies", label: l.currencies, icon: Coins, permission: "settings.currencies.manage" },
+        { href: "/opening-balances", label: l.openingBalances, icon: Scale3d, permission: "settings.hotel.manage", module: "accounting" },
         { href: "/settings/users", label: l.users, icon: ShieldCheck },
         { href: "/periods", label: l.periods, icon: CalendarCheck, module: "accounting" },
         { href: "/audit", label: l.audit, icon: History },

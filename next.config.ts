@@ -47,6 +47,8 @@ const nextConfig: NextConfig = {
     staleTimes: { dynamic: 30, static: 30 },
     serverActions: {
       allowedOrigins: trialMode ? previewOrigins : extraOrigins,
+      // استعادة النسخة الاحتياطية ترفع ملف القاعدة كاملًا
+      bodySizeLimit: "200mb",
     },
   },
 };

@@ -93,6 +93,7 @@ export const ar = {
     ratePlans: "خطط الأسعار",
     guestRegister: "كشف النزلاء",
     currencies: "العملات وأسعار الصرف",
+    openingBalances: "الأرصدة الافتتاحية",
     groupRooms: "الغرف والأسعار",
     rooms: "الغرف وحالتها",
     rates: "الأسعار والعروض",
@@ -320,7 +321,7 @@ export const ar = {
     items: "البنود",
     print: "طباعة",
     customer: "العميل",
-    types: { folio: "فوليو", direct: "مباشرة" },
+    types: { folio: "فوليو", direct: "مباشرة", opening: "رصيد افتتاحي" },
     statuses: { issued: "صادرة", partially_paid: "مسددة جزئيًا", paid: "مسددة" },
   },
   vouchers: {

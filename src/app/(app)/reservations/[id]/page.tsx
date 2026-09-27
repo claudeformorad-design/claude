@@ -99,6 +99,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant={status.variant} className="text-[16px]">{status.label}</Badge>
+            <Button asChild variant="outline" size="sm"><Link href={`/reservations/${r.id}/card`}>بطاقة التسجيل</Link></Button>
             {canManage && <Button asChild variant="outline" size="sm"><Link href={`/reservations/${r.id}/edit`}><Pencil className="size-4" />تعديل</Link></Button>}
             {canManage && r.status === "tentative" && (
               <ActionButton variant="default" label="تأكيد الحجز" done="تم تأكيد الحجز" errors={t.errors} run={confirmReservationAction.bind(null, r.id)} />

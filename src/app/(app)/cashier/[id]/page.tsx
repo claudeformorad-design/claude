@@ -1,6 +1,7 @@
 import { forbidden, notFound } from "next/navigation";
 import Link from "@/components/link";
 import { PageHeader } from "@/components/layout/page-header";
+import { PrintButton } from "../../invoices/[id]/print-button";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,8 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
         actions={
           <div className="flex items-center gap-2">
             {s.status === "open" ? <Badge variant="success" className="text-[16px]">مفتوحة</Badge> : <Badge variant="secondary" className="text-[16px]">مغلقة</Badge>}
-            <Button asChild variant="outline" size="sm"><Link href="/cashier">الصندوق</Link></Button>
+            <Button asChild variant="outline" size="sm" className="print:hidden"><Link href="/cashier">الصندوق</Link></Button>
+            <PrintButton label="طباعة" />
           </div>
         }
       />

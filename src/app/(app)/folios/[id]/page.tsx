@@ -1,6 +1,7 @@
 import Link from "@/components/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
+import { PrintButton } from "../../invoices/[id]/print-button";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,6 +54,7 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
           <div className="flex items-center gap-2">
             {detail.invoiceId && <Button asChild variant="outline"><Link href={`/invoices/${detail.invoiceId}`}>{t.folio.invoice}</Link></Button>}
             <Badge variant={isOpen ? "success" : "secondary"}>{t.folio.statuses[folio.status]}</Badge>
+            <PrintButton label="طباعة كشف الحساب" />
           </div>
         }
       />

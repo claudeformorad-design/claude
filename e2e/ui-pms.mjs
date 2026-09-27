@@ -1,6 +1,6 @@
 // جولة قسم إدارة الفندق عبر الواجهة: إعداد الغرف، الحجز والتخصيص ومنع الازدواج، السعة وقائمة الانتظار،
 // الوحدات بالساعة، الحجز المتكرر والجماعي، المواسم وتثبيت الأسعار، عروض اللحظة الأخيرة، حالة الغرف،
-// العربون والتسكين والتمديد ونقل الغرفة والمغادرة بالفاتورة (الفوليو في المحاسبة)، العملات وورديات الكاشير، تدقيق نهاية اليوم وكشف النزلاء، خطط الأسعار ونقاط البيع والتدبير الفندقي، فصل الأقسام
+// العربون والتسكين والتمديد ونقل الغرفة والمغادرة بالفاتورة (الفوليو في المحاسبة)، العملات وورديات الكاشير، تدقيق نهاية اليوم وكشف النزلاء، خطط الأسعار ونقاط البيع والتدبير الفندقي، الطباعة والأرصدة الافتتاحية والنسخ الاحتياطي، فصل الأقسام
 import { chromium } from "playwright";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3100";
@@ -353,12 +353,36 @@ await step("point of sale: room charge and paid order with invoice", async () =>
 await step("housekeeping: generate today's tasks and finish one", async () => {
   await go("/housekeeping");
   await page.getByRole("button", { name: "توليد مهام اليوم" }).click();
-  await bodyHas("تنظيف");
-  const before = await page.getByRole("button", { name: "تم", exact: true }).count();
-  if (!before) throw new Error("no open tasks");
+  await page.getByRole("button", { name: "تم", exact: true }).first().waitFor({ timeout: 20000 });
+  await bodyHas("تنظيف مغادرة");
   await page.getByRole("button", { name: "تم", exact: true }).first().click();
   await page.waitForTimeout(1500); await go("/housekeeping?tab=done");
   await bodyHas("أُنجزت");
+});
+await step("registration card prints the guest and stay details", async () => {
+  await go(`/reservations/${stayId}/card`);
+  await bodyHas("بطاقة تسجيل نزيل", "نزيل التسكين", "توقيع النزيل");
+});
+await step("opening balances post once and balance to retained earnings", async () => {
+  await go("/opening-balances");
+  await pick(page.locator("select[aria-label='الحساب 1']"), /الصندوق الرئيسي/); await page.fill("input[aria-label='مدين 1']", "5000");
+  await page.getByRole("button", { name: "سطر" }).click();
+  await pick(page.locator("select[aria-label='الحساب 2']"), /رأس المال/); await page.fill("input[aria-label='دائن 2']", "4000");
+  await bodyHas("الفرق للأرباح المبقاة");
+  await page.getByRole("button", { name: "ترحيل الأرصدة الافتتاحية" }).click();
+  await page.waitForURL(/journal\/[0-9a-f-]{36}$/, { timeout: 30000 });
+  await bodyHas("الأرصدة الافتتاحية", "فرق الأرصدة الافتتاحية");
+  await go("/opening-balances"); await bodyHas("رُحّلت الأرصدة الافتتاحية");
+});
+await step("backup downloads and restores the whole database", async () => {
+  const res = await page.request.get(BASE + "/api/backup");
+  if (res.status() !== 200) throw new Error(`backup status ${res.status()}`);
+  const buf = await res.body();
+  if (buf.length < 10000) throw new Error(`backup too small ${buf.length}`);
+  await go("/settings/hotel");
+  await page.locator("input[aria-label='ملف النسخة الاحتياطية']").setInputFiles({ name: "backup.tar.gz", mimeType: "application/gzip", buffer: buf });
+  await page.waitForURL((u) => u.pathname === "/", { timeout: 120000 });
+  await go("/guests"); await bodyHas("نزيل التسكين", "نزيل سريع");
 });
 await step("modules: disabling hotel management hides it and blocks its pages", async () => {
   await go("/settings/hotel");

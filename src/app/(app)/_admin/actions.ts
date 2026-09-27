@@ -8,7 +8,7 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isValidAmount, toMoney } from "@/lib/accounting/money";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { DEMO_DATA_SQL } from "@/lib/supabase/demo-data.sql";
-import { isDemoDataActive, loadDemoData, removeDemoData, wipeLocalDb } from "@/lib/supabase/local-db";
+import { isDemoDataActive, loadDemoData, removeDemoData, restoreLocalBackup, wipeLocalDb } from "@/lib/supabase/local-db";
 import { describeDatabaseError } from "@/lib/accounting/errors";
 import { raise, type ActionResult, toActionResult } from "@/services/errors";
 
@@ -171,6 +171,22 @@ export async function removeDemoDataAction(): Promise<ActionResult<undefined>> {
   await requireAppContext(PERMISSIONS.hotelManage);
   if (isSupabaseConfigured()) return { ok: false, error: "permission_denied" };
   await removeDemoData();
+  revalidatePath("/", "layout");
+  return { ok: true, data: undefined };
+}
+
+/** استعادة نسخة احتياطية (وضع التشغيل المحلي): تستبدل القاعدة كاملة؛ عند فشلها تبقى القاعدة الحالية كما هي */
+export async function restoreBackupAction(form: FormData): Promise<ActionResult<undefined>> {
+  await requireAppContext(PERMISSIONS.hotelManage);
+  if (isSupabaseConfigured()) return { ok: false, error: "permission_denied" };
+  const file = form.get("file");
+  if (!(file instanceof Blob) || file.size === 0) return { ok: false, error: "unknown", message: "اختر ملف النسخة الاحتياطية" };
+  try {
+    await restoreLocalBackup(file);
+  } catch (e) {
+    console.error(e);
+    return { ok: false, error: "unknown", message: "الملف ليس نسخة احتياطية صالحة من هذا النظام؛ لم يتغير شيء." };
+  }
   revalidatePath("/", "layout");
   return { ok: true, data: undefined };
 }

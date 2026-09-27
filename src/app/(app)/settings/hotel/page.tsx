@@ -12,6 +12,7 @@ import { saveDepartmentAction, saveHotelAction } from "../../_admin/actions";
 import { SimpleForm } from "../../_assets/simple-form";
 import { ResetHotelDataButton } from "./reset-data-button";
 import { DemoDataCard } from "./demo-data-card";
+import { BackupCard } from "./backup-card";
 import { OperationsCard } from "./operations-card";
 import { isDemoDataActive } from "@/lib/supabase/local-db";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -90,6 +91,7 @@ export default async function HotelSettingsPage() {
 
         {ctx.can(PERMISSIONS.hotelManage) && !isSupabaseConfigured() && (
           <div className="space-y-5">
+            <BackupCard errors={t.errors} />
             <DemoDataCard active={isDemoDataActive()} errors={t.errors} />
             <ResetHotelDataButton />
           </div>

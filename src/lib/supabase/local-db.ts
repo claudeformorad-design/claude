@@ -178,3 +178,48 @@ export function removeDemoData(): Promise<void> {
     renameSync(/*turbopackIgnore: true*/ DEMO_BACKUP_DIR, LOCAL_DATA_DIR);
   });
 }
+
+// =============================================================================
+// النسخ الاحتياطي والاستعادة (وضع التشغيل المحلي): ملف مضغوط لكامل القاعدة.
+// الاستعادة تحتفظ بالقاعدة الحالية جانبًا حتى تنجح، وإلا تُعاد كما كانت.
+// =============================================================================
+export async function exportLocalBackup(): Promise<Blob> {
+  const run = async () => {
+    const { db } = await getLocalDb();
+    return (await db.dumpDataDir("gzip")) as Blob;
+  };
+  const prev = g.__hotelLocalQueue ?? Promise.resolve();
+  const next = prev.then(run, run);
+  g.__hotelLocalQueue = next.catch(() => undefined);
+  return next;
+}
+
+export function restoreLocalBackup(file: Blob): Promise<void> {
+  const aside = `${LOCAL_DATA_DIR}-before-restore`;
+  const run = async () => {
+    const current = g.__hotelLocalDb;
+    g.__hotelLocalDb = undefined;
+    if (current) {
+      try { await (await current).db.close(); } catch { /* لم تكن تعمل */ }
+    }
+    rmDir(aside);
+    if (existsSync(/*turbopackIgnore: true*/ LOCAL_DATA_DIR)) renameSync(/*turbopackIgnore: true*/ LOCAL_DATA_DIR, aside);
+    try {
+      const db = new PGlite(LOCAL_DATA_DIR, { extensions: { btree_gist }, loadDataDir: file });
+      await db.waitReady;
+      // يجب أن تكون نسخة من هذا النظام
+      await db.query("select 1 from local_meta.applied_migrations limit 1");
+      await db.close();
+      rmDir(aside);
+      rmDir(DEMO_BACKUP_DIR);
+    } catch (e) {
+      rmDir(LOCAL_DATA_DIR);
+      if (existsSync(/*turbopackIgnore: true*/ aside)) renameSync(/*turbopackIgnore: true*/ aside, LOCAL_DATA_DIR);
+      throw e;
+    }
+  };
+  const prev = g.__hotelLocalQueue ?? Promise.resolve();
+  const next = prev.then(run, run);
+  g.__hotelLocalQueue = next.catch(() => undefined);
+  return next;
+}

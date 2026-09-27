@@ -94,6 +94,7 @@ export const en: Dictionary = {
     ratePlans: "Rate plans",
     guestRegister: "Guest register",
     currencies: "Currencies & rates",
+    openingBalances: "Opening balances",
     groupRooms: "Rooms & rates",
     rooms: "Rooms & status",
     rates: "Rates & deals",
@@ -321,7 +322,7 @@ export const en: Dictionary = {
     items: "Items",
     print: "Print",
     customer: "Customer",
-    types: { folio: "Folio", direct: "Direct" },
+    types: { folio: "Folio", direct: "Direct", opening: "Opening balance" },
     statuses: { issued: "Issued", partially_paid: "Partially paid", paid: "Paid" },
   },
   vouchers: {

@@ -150,6 +150,13 @@ const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
   [/Rate plans apply to standard nightly pricing only/i, "خطط الأسعار للتسعير الليلي القياسي فقط"],
   [/This rate plan is reserved for another company/i, "خطة السعر هذه مخصصة لشركة أخرى"],
   [/This rate plan is for another room type/i, "خطة السعر هذه لنوع غرفة آخر"],
+  // الأرصدة الافتتاحية
+  [/Opening balance date is required/i, "تاريخ الأرصدة الافتتاحية مطلوب"],
+  [/Opening balances were already posted/i, "رُحّلت الأرصدة الافتتاحية بالفعل"],
+  [/Account not found, inactive or not postable/i, "الحساب غير موجود أو موقوف أو ليس تفصيليًا"],
+  [/Account (\S+) is a control account; enter customer, vendor or inventory balances in their own lists/i, (m) => `الحساب ${m[1]} حساب مراقبة؛ أدخل أرصدة العملاء والموردين والمخزون في قوائمها`],
+  [/Each line is either a debit or a credit with at most (\d+) decimals/i, (m) => `كل سطر مدين أو دائن فقط، بحد أقصى ${m[1]} منازل عشرية`],
+  [/Enter at least one opening balance/i, "أدخل رصيدًا افتتاحيًا واحدًا على الأقل"],
   // تدقيق نهاية اليوم
   [/The night audit cannot run for a future date/i, "لا يُشغَّل التدقيق لتاريخ مستقبلي"],
   [/The night audit for (\S+) has already run/i, (m) => `تم تدقيق يوم ${m[1]} بالفعل`],

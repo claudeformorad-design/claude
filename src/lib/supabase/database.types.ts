@@ -217,7 +217,7 @@ export type PaymentMethodKind = "cash" | "card" | "bank_transfer" | "cheque" | "
 export type CustomerType = "individual" | "company" | "travel_agent" | "ota" | "government";
 export type FolioType = "guest" | "master" | "company" | "non_guest";
 export type FolioStatus = "open" | "closed" | "cancelled";
-export type InvoiceType = "folio" | "direct";
+export type InvoiceType = "folio" | "direct" | "opening";
 export type InvoiceStatus = "issued" | "partially_paid" | "paid";
 export type VoucherType = "receipt" | "disbursement";
 export type VoucherParty = "customer" | "account";
@@ -672,6 +672,11 @@ export type Database = {
       night_audit_status: { Args: { p_hotel_id: string; p_date?: string | null }; Returns: NightAuditStatus };
       run_night_audit: { Args: { p_hotel_id: string; p_date?: string | null }; Returns: AuditSummary };
       guest_register: { Args: { p_hotel_id: string; p_date?: string | null }; Returns: GuestRegisterRow[] };
+      post_opening_balances: {
+        Args: { p_hotel_id: string; p_date: string; p_accounts?: { account_id: string; debit?: string; credit?: string }[];
+          p_customers?: { customer_id: string; amount: string; reference?: string }[]; p_vendors?: { vendor_id: string; amount: string; reference?: string }[] };
+        Returns: string;
+      };
       pos_in_house: { Args: { p_hotel_id: string }; Returns: { reservation_id: string; room_number: string | null; guest_name: string; confirmation_number: string; folio_id: string }[] };
       pos_settle_order: {
         Args: { p_outlet_id: string; p_lines: { item_id: string; quantity: string }[]; p_mode: "room" | "paid"; p_reservation_id?: string | null; p_payment_method_id?: string | null; p_note?: string | null };

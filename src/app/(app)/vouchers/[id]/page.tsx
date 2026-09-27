@@ -1,6 +1,7 @@
 import Link from "@/components/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
+import { PrintButton } from "../../invoices/[id]/print-button";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,7 +40,7 @@ export default async function VoucherPage({ params }: { params: Promise<{ id: st
       <PageHeader
         title={`${t.vouchers.types[v.voucher_type]} ${v.voucher_number}`}
         description={v.description}
-        actions={<Badge variant={v.status === "voided" ? "destructive" : "success"}>{t.vouchers.statuses[v.status]}</Badge>}
+        actions={<div className="flex items-center gap-2"><Badge variant={v.status === "voided" ? "destructive" : "success"}>{t.vouchers.statuses[v.status]}</Badge><PrintButton label="طباعة السند" /></div>}
       />
       <Card className="mb-6">
         <CardContent className="grid gap-x-8 gap-y-5 p-6 text-sm sm:grid-cols-3">
