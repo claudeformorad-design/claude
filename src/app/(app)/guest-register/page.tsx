@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -28,8 +30,8 @@ export default async function GuestRegisterPage({ searchParams }: { searchParams
         actions={
           <div className="flex items-center gap-2">
             <form className="flex items-center gap-2 print:hidden">
-              <input type="date" name="date" defaultValue={date} dir="ltr" aria-label="التاريخ" className="h-10 rounded-md border border-line bg-white px-3 text-[15px]" />
-              <button type="submit" className="h-10 rounded-md border border-line px-3 text-[15px] font-medium hover:bg-panel">عرض</button>
+              <Input type="date" name="date" defaultValue={date} aria-label="التاريخ" className="w-52" />
+              <Button type="submit" variant="outline">عرض</Button>
             </form>
             <PrintButton label="طباعة الكشف" />
           </div>

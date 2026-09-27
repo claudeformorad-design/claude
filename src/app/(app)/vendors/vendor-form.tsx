@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { saveVendorAction } from "../_payables/actions";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
 
 type V = Record<string, string | boolean | undefined>;
@@ -26,7 +26,7 @@ export function VendorForm({ t, initial }: { t: Pick<Dictionary, "customers" | "
     <form
       className="space-y-3"
       onSubmit={handleSubmit((v) => start(async () => {
-        const r = await saveVendorAction(v);
+        const r = await callAction(saveVendorAction(v));
         if (r.ok) { toast("تم حفظ المورد"); router.push("/vendors"); }
         else setError(actionErrorText(t.errors, r));
       }))}

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 import { CheckCircle2, CircleAlert } from "lucide-react";
 
 type Toast = { id: number; text: string; tone: "success" | "error" };
@@ -29,7 +30,7 @@ export function Toaster() {
     <div className="pointer-events-none fixed inset-x-0 bottom-6 z-[60] flex flex-col items-center gap-2" aria-live="polite">
       <AnimatePresence>
         {items.map((t) => (
-          <motion.div
+          <m.div
             key={t.id}
             layout
             initial={{ opacity: 0, y: 18, scale: 0.94 }}
@@ -42,7 +43,7 @@ export function Toaster() {
               ? <CheckCircle2 className="size-[18px] text-accent1-soft" />
               : <CircleAlert className="size-[18px] text-accent2-soft" />}
             {t.text}
-          </motion.div>
+          </m.div>
         ))}
       </AnimatePresence>
     </div>

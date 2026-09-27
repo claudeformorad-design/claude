@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { AnimatePresence, LayoutGroup, motion } from "motion/react";
+import { AnimatePresence, LayoutGroup } from "motion/react";
+import * as m from "motion/react-m";
 import { Building2, ChevronDown, LogOut, PanelRightClose, PanelRightOpen } from "lucide-react";
 import Link from "@/components/link";
 import { cn } from "@/lib/utils";
@@ -63,7 +64,7 @@ export function Sidebar({
   }, []);
 
   return (
-    <motion.aside
+    <m.aside
       initial={false}
       animate={{ width: expanded ? 304 : 80 }}
       transition={{ type: "spring", stiffness: 300, damping: 32 }}
@@ -112,7 +113,7 @@ export function Sidebar({
                   )}
                 >
                   {active && (
-                    <motion.span layoutId="rail-active" transition={spring}
+                    <m.span layoutId="rail-active" transition={spring}
                       className="absolute inset-0 rounded-[10px] bg-ink" />
                   )}
                   <g.icon className="relative z-10 size-5 stroke-[1.9] transition-transform duration-200 group-hover:scale-110" />
@@ -161,7 +162,7 @@ export function Sidebar({
           {expanded && <span>طي القائمة</span>}
         </button>
       </div>
-    </motion.aside>
+    </m.aside>
   );
 }
 
@@ -178,7 +179,7 @@ function Flyout({
   // لا تتجاوز القائمة أسفل الشاشة
   const maxTop = typeof window === "undefined" ? top : Math.max(12, Math.min(top - 8, window.innerHeight - (group.items.length * 44 + 70)));
   return (
-    <motion.div
+    <m.div
       role="menu"
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
@@ -196,7 +197,7 @@ function Flyout({
       {group.items.map((item, i) => {
         const active = isActivePath(pathname, item.href);
         return (
-          <motion.div key={item.href} initial={{ opacity: 0, x: 6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.025 }}>
+          <m.div key={item.href} initial={{ opacity: 0, x: 6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.025 }}>
             <Link
               role="menuitem"
               href={item.href}
@@ -208,10 +209,10 @@ function Flyout({
               <item.icon className="size-[17px] shrink-0 stroke-[1.9]" />
               <span className="truncate">{item.label}</span>
             </Link>
-          </motion.div>
+          </m.div>
         );
       })}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -250,7 +251,7 @@ function ExpandedNav({ groups, pathname, activeGroup }: { groups: NavGroup[]; pa
               <Link key={g.title} href={item.href} aria-current={active ? "page" : undefined}
                 className={cn("group relative flex h-11 items-center gap-3 rounded-lg px-2 text-[17.5px] font-semibold transition-colors",
                   active ? "text-white" : "text-ink hover:bg-subtle")}>
-                {active && <motion.span layoutId="expanded-active" transition={spring} className="absolute inset-0 rounded-lg bg-ink" />}
+                {active && <m.span layoutId="expanded-active" transition={spring} className="absolute inset-0 rounded-lg bg-ink" />}
                 <span className={cn("relative z-10 flex size-8 items-center justify-center rounded-[10px] transition-colors",
                   active ? "bg-white/15" : "bg-subtle group-hover:bg-white")}>
                   <item.icon className="size-[17px] stroke-[1.9]" />
@@ -274,7 +275,7 @@ function ExpandedNav({ groups, pathname, activeGroup }: { groups: NavGroup[]; pa
               </button>
               <AnimatePresence initial={false}>
                 {isOpen && (
-                  <motion.div
+                  <m.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
@@ -295,7 +296,7 @@ function ExpandedNav({ groups, pathname, activeGroup }: { groups: NavGroup[]; pa
                             )}
                           >
                             {active && (
-                              <motion.span layoutId="expanded-active" transition={spring} className="absolute inset-0 rounded-[10px] bg-ink" />
+                              <m.span layoutId="expanded-active" transition={spring} className="absolute inset-0 rounded-[10px] bg-ink" />
                             )}
                             <item.icon className="relative z-10 size-[17px] shrink-0 stroke-[1.9] transition-transform duration-200 group-hover:scale-110" />
                             <span className="relative z-10 truncate">{item.label}</span>
@@ -303,7 +304,7 @@ function ExpandedNav({ groups, pathname, activeGroup }: { groups: NavGroup[]; pa
                         );
                       })}
                     </div>
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             </div>

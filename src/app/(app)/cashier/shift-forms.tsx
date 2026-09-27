@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/toast";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { formatMoney } from "@/lib/accounting/money";
 import { cn } from "@/lib/utils";
 import { closeShiftAction, openShiftAction } from "./actions";
@@ -25,7 +25,7 @@ export function OpenShiftForm({ errors, currency }: { errors: Record<string, str
       e.preventDefault();
       start(async () => {
         setError(null);
-        const r = await openShiftAction(amount);
+        const r = await callAction(openShiftAction(amount));
         if (r.ok) { toast("فُتحت الوردية"); closeDialog?.(); router.refresh(); } else setError(actionErrorText(errors, r));
       });
     }}>
@@ -54,9 +54,9 @@ export function CloseShiftForm({ shiftId, lines, errors, supervisor }: { shiftId
       e.preventDefault();
       start(async () => {
         setError(null);
-        const r = await closeShiftAction(shiftId, {
+        const r = await callAction(closeShiftAction(shiftId, {
           counts: cash.map((l) => ({ payment_method_id: l.payment_method_id, counted: counts[l.payment_method_id] ?? "" })), note,
-        });
+        }));
         if (r.ok) { toast("أُغلقت الوردية"); router.push(`/cashier/${shiftId}`); } else setError(actionErrorText(errors, r));
       });
     }}>

@@ -13,7 +13,7 @@ import { formatMoney, isValidAmount } from "@/lib/accounting/money";
 import type { VoucherInput } from "@/lib/validation/revenue";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { createVoucherAction } from "../actions";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
 
 interface OpenInvoiceOption { id: string; number: string; customer_id: string | null; amount_due: string; amount_paid: string; issue_date: string }
@@ -65,7 +65,7 @@ export function VoucherForm({
     start(async () => {
       setError(null);
       const v = getValues();
-      const r = await createVoucherAction({ ...v, allocations: (v.allocations ?? []).filter((a) => a.amount && a.amount.trim() !== "") });
+      const r = await callAction(createVoucherAction({ ...v, allocations: (v.allocations ?? []).filter((a) => a.amount && a.amount.trim() !== "") }));
       if (r.ok) { toast("تم ترحيل السند"); router.push(`/vouchers/${r.data}`); }
       else setError(actionErrorText(t.errors, r));
     });

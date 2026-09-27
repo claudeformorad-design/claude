@@ -16,7 +16,7 @@ function tintOf(name: string): string {
   return TINTS[h % TINTS.length]!;
 }
 
-export function initials(name: string): string {
+function initials(name: string): string {
   const words = name.replace(/[()«»"]/g, "").trim().split(/\s+/).filter(Boolean);
   const w = words.filter((x) => !["شركة", "مؤسسة", "مجموعة", "وفد", "فريق", "ال"].includes(x));
   const pick = (w.length ? w : words).slice(0, 2);

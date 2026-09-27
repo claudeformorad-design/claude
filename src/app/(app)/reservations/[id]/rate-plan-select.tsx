@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { setReservationRatePlanAction } from "../../_ops/actions";
 
 /** اختيار خطة سعر للحجز — تُعاد تسعير الليالي غير المرحّلة بالخطة */
@@ -23,7 +23,7 @@ export function RatePlanSelect({ reservationId, current, plans, errors }: {
       </NativeSelect>
       <Button type="button" size="sm" variant="outline" loading={pending} disabled={value === (current ?? "")}
         onClick={() => start(async () => {
-          const r = await setReservationRatePlanAction(reservationId, value);
+          const r = await callAction(setReservationRatePlanAction(reservationId, value));
           if (r.ok) { toast("أُعيد تسعير الليالي بالخطة"); router.refresh(); } else toast(actionErrorText(errors, r), "error");
         })}>
         تطبيق

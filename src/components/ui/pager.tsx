@@ -1,7 +1,7 @@
 import Link from "@/components/link";
 import { cn } from "@/lib/utils";
 
-export const PAGE_SIZE = 50;
+const PAGE_SIZE = 50;
 
 /** شريحة الصفحة الحالية من قائمة (الملخصات تُحسب من القائمة كاملة، والعرض 50 صفًا فقط) */
 export function pageSlice<T>(rows: T[], page: string | undefined): { rows: T[]; page: number; pages: number } {

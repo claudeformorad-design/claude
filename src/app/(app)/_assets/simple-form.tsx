@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/select";
 import type { ActionResult } from "@/services/errors";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
 import { useDialogClose } from "@/components/ui/dialog";
 
@@ -43,7 +43,7 @@ export function SimpleForm({
       className={`grid gap-3 ${columns === 4 ? "md:grid-cols-4" : columns === 2 ? "md:grid-cols-2" : ""}`}
       onSubmit={handleSubmit((v) => start(async () => {
         setError(null);
-        const r = await action(v);
+        const r = await callAction(action(v));
         if (r.ok) { toast("تم الحفظ بنجاح"); closeDialog?.(); if (onDone) router.push(onDone); else { reset(initial); router.refresh(); } }
         else setError(actionErrorText(errors, r));
       }))}

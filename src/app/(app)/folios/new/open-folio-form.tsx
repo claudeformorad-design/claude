@@ -11,7 +11,7 @@ import { NativeSelect } from "@/components/ui/select";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import type { OpenFolioInput } from "@/lib/validation/revenue";
 import { openFolioAction } from "../actions";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
 
 export function OpenFolioForm({
@@ -35,7 +35,7 @@ export function OpenFolioForm({
   const onSubmit = (v: OpenFolioInput) =>
     start(async () => {
       setError(null);
-      const r = await openFolioAction(v);
+      const r = await callAction(openFolioAction(v));
       if (r.ok) { toast("تم فتح الفوليو"); router.push(`/folios/${r.data}`); }
       else setError(actionErrorText(t.errors, r));
     });

@@ -1,3 +1,4 @@
+import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import Link from "@/components/link";
 import { CreditCard, HandCoins, Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -100,15 +101,15 @@ export default async function VouchersPage({ searchParams }: { searchParams: Pro
               </TableRow>
             )}
             {shown.rows.map((v) => (
-              <TableRow key={v.id} className={v.status === "voided" ? "opacity-60" : ""}>
-                <TableCell><Link href={`/vouchers/${v.id}`} className="num font-semibold text-ink">{v.voucher_number}</Link></TableCell>
+              <ExpandableRow kind="voucher" id={v.id} colSpan={7} key={v.id} className={v.status === "voided" ? "opacity-60" : ""}>
+                <TableCell><ExpandMark /><Link href={`/vouchers/${v.id}`} className="num font-semibold text-ink">{v.voucher_number}</Link></TableCell>
                 <TableCell className="num">{v.payment_date}</TableCell>
                 <TableCell><Badge variant={v.voucher_type === "receipt" ? "success" : "warning"}>{t.vouchers.types[v.voucher_type]}</Badge></TableCell>
                 <TableCell>{v.party_name ? <div className="max-w-52"><EntityCell name={v.party_name} /></div> : <span className="text-slate-400"></span>}</TableCell>
                 <TableCell className="cell-fluid">{plainText(v.description)}</TableCell>
                 <TableCell className={`text-end font-semibold ${v.voucher_type === "receipt" ? "text-success" : "text-ink"}`}><Money value={v.amount} locale={locale} /></TableCell>
                 <TableCell><Badge variant={v.status === "voided" ? "destructive" : "secondary"}>{t.vouchers.statuses[v.status]}</Badge></TableCell>
-              </TableRow>
+              </ExpandableRow>
             ))}
           </TableBody>
         </Table>

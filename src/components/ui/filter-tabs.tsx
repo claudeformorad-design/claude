@@ -1,7 +1,8 @@
 "use client";
 
 import { useId } from "react";
-import { LayoutGroup, motion } from "motion/react";
+import { LayoutGroup } from "motion/react";
+import * as m from "motion/react-m";
 import Link from "@/components/link";
 import { cn } from "@/lib/utils";
 
@@ -22,7 +23,7 @@ export function FilterTabs({ items, active, className }: {
               className={cn("relative flex items-center gap-2 whitespace-nowrap rounded-[10px] px-4 py-1.5 text-[16.5px] transition-colors duration-200",
                 on ? "font-bold text-ink" : "font-medium text-slate-600 hover:text-ink")}>
               {on && (
-                <motion.span layoutId="tab-pill" transition={{ type: "spring", stiffness: 520, damping: 38 }}
+                <m.span layoutId="tab-pill" transition={{ type: "spring", stiffness: 520, damping: 38 }}
                   className="absolute inset-0 rounded-[10px] border border-line bg-white" />
               )}
               <span className="relative z-10">{x.label}</span>

@@ -3,7 +3,8 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PrefetchKind } from "next/dist/client/components/router-reducer/router-reducer-types";
-import { AnimatePresence, LayoutGroup, motion } from "motion/react";
+import { AnimatePresence, LayoutGroup } from "motion/react";
+import * as m from "motion/react-m";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { OPEN_SEARCH_EVENT, type NavGroup, type NavItem } from "./nav-config";
@@ -130,7 +131,7 @@ export function SearchBox({ groups, className, autoFocus = false, onDone }: {
 
       <AnimatePresence>
         {open && (
-          <motion.div
+          <m.div
             id={listId}
             role="listbox"
             initial={{ opacity: 0, y: -6, clipPath: "inset(0 0 100% 0 round 10px)" }}
@@ -144,7 +145,7 @@ export function SearchBox({ groups, className, autoFocus = false, onDone }: {
             <LayoutGroup id="search-results">
               <ul className="max-h-[55vh] overflow-y-auto">
                 {results.map((item, i) => (
-                  <motion.li key={item.href} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 + Math.min(i, 8) * 0.018, duration: 0.2 }}>
+                  <m.li key={item.href} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 + Math.min(i, 8) * 0.018, duration: 0.2 }}>
                     <button
                       type="button"
                       onMouseEnter={() => setIndex(i)}
@@ -152,7 +153,7 @@ export function SearchBox({ groups, className, autoFocus = false, onDone }: {
                       className="relative flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-start text-[16px]"
                     >
                       {i === safeIndex && (
-                        <motion.span layoutId="search-active" transition={{ type: "spring", stiffness: 600, damping: 42 }}
+                        <m.span layoutId="search-active" transition={{ type: "spring", stiffness: 600, damping: 42 }}
                           className="absolute inset-0 rounded-md bg-subtle" />
                       )}
                       <span className={cn("relative flex size-7 shrink-0 items-center justify-center rounded-md border transition-colors",
@@ -164,11 +165,11 @@ export function SearchBox({ groups, className, autoFocus = false, onDone }: {
                       </span>
                       {item.group && <span className="relative shrink-0 text-slate-500">{item.group}</span>}
                     </button>
-                  </motion.li>
+                  </m.li>
                 ))}
               </ul>
             </LayoutGroup>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

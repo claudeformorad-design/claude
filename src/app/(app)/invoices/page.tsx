@@ -1,3 +1,4 @@
+import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -98,8 +99,8 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
               </TableRow>
             )}
             {shown.rows.map((i) => (
-              <TableRow key={i.id}>
-                <TableCell>
+              <ExpandableRow kind="invoice" id={i.id} colSpan={7} key={i.id}>
+                <TableCell><ExpandMark />
                   <Link href={`/invoices/${i.id}`} className="num block font-semibold text-ink">{i.invoice_number}</Link>
                   <span className="text-[15.5px] text-slate-500">{t.invoices.types[i.invoice_type]}</span>
                 </TableCell>
@@ -109,7 +110,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
                 <TableCell className="text-end font-semibold"><Money value={i.total} locale={locale} /></TableCell>
                 <TableCell className="text-end"><Money value={toMoney(i.amount_due).minus(toMoney(i.amount_paid))} locale={locale} blankZero /></TableCell>
                 <TableCell className={`num ${i.due_date && i.due_date < today && outstanding(i).gt(0) ? "font-semibold text-urgent" : ""}`}>{i.due_date ?? ""}</TableCell>
-              </TableRow>
+              </ExpandableRow>
             ))}
           </TableBody>
         </Table>

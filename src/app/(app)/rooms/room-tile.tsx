@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 import { Sparkles, Wrench } from "lucide-react";
 import Link from "@/components/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { cn } from "@/lib/utils";
 import type { HousekeepingStatus, RoomServiceStatus } from "@/lib/supabase/database.types";
 import { setRoomStatusAction } from "../_pms/actions";
@@ -48,7 +49,7 @@ export function RoomTile({
 
   const set = (v: { housekeeping_status?: HousekeepingStatus; service_status?: RoomServiceStatus; service_note?: string }) =>
     start(async () => {
-      const r = await setRoomStatusAction({ room_id: id, ...v });
+      const r = await callAction(setRoomStatusAction({ room_id: id, ...v }));
       if (r.ok) { toast(`تم تحديث الغرفة ${number}`); setOpen(false); setAskNote(false); setNote(""); router.refresh(); }
       else toast(actionErrorText(errors, r), "error");
     });
@@ -79,7 +80,7 @@ export function RoomTile({
 
       <AnimatePresence>
         {open && (
-          <motion.div initial={{ opacity: 0, y: -4, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4 }}
+          <m.div initial={{ opacity: 0, y: -4, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.16 }}
             className="absolute start-0 top-full z-30 mt-2 w-64 space-y-1 rounded-lg border border-line bg-white p-2 shadow-lift">
             <p className="px-2 pb-1 pt-0.5 text-[14px] font-medium text-slate-500">الغرفة {number}</p>
@@ -112,7 +113,7 @@ export function RoomTile({
                 فتح الحجز{occupancy.until ? `، حتى ${occupancy.until}` : ""}
               </Link>
             )}
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

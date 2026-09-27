@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 
 /**
  * شريط تقدّم علوي أثناء التنقل: يبدأ عند النقر على رابط داخلي وينتهي عند تغيّر المسار/المعاملات.
@@ -49,7 +50,7 @@ export function RouteProgress() {
   return (
     <AnimatePresence>
       {active && (
-        <motion.div
+        <m.div
           key="bar"
           className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[3px] origin-right"
           initial={{ scaleX: 0, opacity: 1 }}

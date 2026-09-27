@@ -1,3 +1,4 @@
+import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import Link from "@/components/link";
 import { CalendarCheck, CalendarDays, Hourglass, Plus, Repeat, Search, Users, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -109,8 +110,8 @@ export default async function ReservationsPage({ searchParams }: {
                 description="الحجوزات الجديدة تظهر هنا مع حالتها ومبلغها المثبّت." actionHref={canManage ? "/reservations/new" : undefined} actionLabel="حجز جديد" /></TableCell></TableRow>
             )}
             {shown.rows.map((r) => (
-              <TableRow key={r.id} className={r.status === "cancelled" || r.status === "no_show" ? "opacity-60" : ""}>
-                <TableCell className="whitespace-nowrap"><Link href={`/reservations/${r.id}`} className="num font-semibold text-ink">{r.confirmation_number}</Link></TableCell>
+              <ExpandableRow kind="reservation" id={r.id} colSpan={8} key={r.id} className={r.status === "cancelled" || r.status === "no_show" ? "opacity-60" : ""}>
+                <TableCell className="whitespace-nowrap"><ExpandMark /><Link href={`/reservations/${r.id}`} className="num font-semibold text-ink">{r.confirmation_number}</Link></TableCell>
                 <TableCell className="cell-fluid"><Link href={`/guests/${r.guest_id}`} className="block truncate font-medium text-ink transition-colors hover:text-action">{r.guest?.full_name}</Link></TableCell>
                 <TableCell className="whitespace-nowrap">{r.room ? <span className="num font-semibold">{r.room.room_number}</span> : <span className="text-slate-400">غير مخصصة</span>}</TableCell>
                 <TableCell className="whitespace-nowrap text-slate-600">{r.room_type?.name_ar}</TableCell>
@@ -120,7 +121,7 @@ export default async function ReservationsPage({ searchParams }: {
                 <TableCell className="whitespace-nowrap text-slate-600">{r.booking_mode === "hourly" ? timeRange(r.starts_at, r.ends_at) : nightsText(nightsBetween(r.arrival_date, r.departure_date))}</TableCell>
                 <TableCell><Badge variant={RESERVATION_STATUS[r.status].variant}>{RESERVATION_STATUS[r.status].label}</Badge></TableCell>
                 <TableCell className="text-end font-semibold"><Money value={r.total_amount} locale={locale} /></TableCell>
-              </TableRow>
+              </ExpandableRow>
             ))}
           </TableBody>
         </Table>

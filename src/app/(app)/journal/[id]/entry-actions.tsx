@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import type { ActionResult } from "@/services/errors";
 import { deleteDraftAction, postJournalEntryAction, reverseJournalEntryAction } from "../actions";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
 
 export function EntryActions({
@@ -37,7 +37,7 @@ export function EntryActions({
   const run = <T,>(fn: () => Promise<ActionResult<T>>, onOk: (data: T) => void, done = "تمت العملية بنجاح") => {
     setError(null);
     startTransition(async () => {
-      const result = await fn();
+      const result = await callAction(fn());
       if (result.ok) { toast(done); onOk(result.data); }
       else setError(actionErrorText(t.errors, result));
     });

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/select";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { addBankLineAction, bankMatchAction } from "../_payables/actions";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
 
 type T = Pick<Dictionary, "payables" | "common" | "errors" | "folio">;
@@ -21,13 +21,13 @@ export function AddBankLine({ t, accountId, today }: { t: T; accountId: string; 
   const { register, handleSubmit, reset } = useForm({ defaultValues: { txn_date: today, description: "", reference: "", amount: "" } });
   return (
     <form className="space-y-2" onSubmit={handleSubmit((v) => start(async () => {
-      const r = await addBankLineAction({ ...v, account_id: accountId });
+      const r = await callAction(addBankLineAction({ ...v, account_id: accountId }));
       if (r.ok) { toast("تمت إضافة سطر الكشف"); reset({ txn_date: v.txn_date, description: "", reference: "", amount: "" }); router.refresh(); }
       else setError(actionErrorText(t.errors, r));
     }))}>
       {error && <Alert variant="destructive">{error}</Alert>}
       <div className="flex flex-wrap gap-2">
-        <Input type="date" dir="ltr" className="w-40" {...register("txn_date")} />
+        <Input type="date" dir="ltr" className="w-52" {...register("txn_date")} />
         <Input className="w-64" placeholder={t.common.description} {...register("description")} />
         <Input className="w-36" dir="ltr" placeholder={t.common.reference} {...register("reference")} />
         <Input className="num w-36" dir="ltr" placeholder="المبلغ" {...register("amount")} />
@@ -40,7 +40,7 @@ export function AddBankLine({ t, accountId, today }: { t: T; accountId: string; 
 export function AutoMatch({ label, accountId }: { label: string; accountId: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
-  return <Button variant="outline" loading={pending} onClick={() => start(async () => { await bankMatchAction("auto", { accountId }); router.refresh(); })}>{label}</Button>;
+  return <Button variant="outline" loading={pending} onClick={() => start(async () => { await callAction(bankMatchAction("auto", { accountId })); router.refresh(); })}>{label}</Button>;
 }
 
 export function LineActions({ t, lineId, matched, candidates }: { t: T; lineId: string; matched: boolean; candidates: { id: string; label: string }[] }) {
@@ -48,7 +48,7 @@ export function LineActions({ t, lineId, matched, candidates }: { t: T; lineId: 
   const [pending, start] = useTransition();
   const [sel, setSel] = useState("");
   const run = (op: "match" | "unmatch" | "delete", ledgerLineId?: string) =>
-    start(async () => { const r = await bankMatchAction(op, { lineId, ledgerLineId }); if (!r.ok) alert(actionErrorText(t.errors, r)); router.refresh(); });
+    start(async () => { const r = await callAction(bankMatchAction(op, { lineId, ledgerLineId })); if (!r.ok) alert(actionErrorText(t.errors, r)); router.refresh(); });
   if (matched) return <Button size="sm" variant="ghost" loading={pending} onClick={() => run("unmatch")}>✕</Button>;
   return (
     <div className="flex gap-1">

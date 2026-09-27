@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { DatabaseBackup, Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { restoreBackupAction } from "../../_admin/actions";
 
 /** النسخ الاحتياطي: تنزيل ملف لكامل البيانات، واستعادته عند الحاجة (تستبدل البيانات الحالية) */
@@ -21,7 +21,7 @@ export function BackupCard({ errors }: { errors: Record<string, string> }) {
       setError(null);
       const form = new FormData();
       form.set("file", file);
-      const r = await restoreBackupAction(form);
+      const r = await callAction(restoreBackupAction(form));
       if (!r.ok) return setError(actionErrorText(errors, r));
       toast("تمت استعادة النسخة الاحتياطية");
       router.push("/");

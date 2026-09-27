@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
+import { ExportButtons } from "@/components/reports/export-buttons";
 import { ReportView } from "@/components/reports/report-view";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { requireAppContext } from "@/lib/auth/context";
 import { fiscalYearStart, isIsoDate, todayInTimeZone } from "@/lib/accounting/fiscal";
+import { toPlainReport } from "@/lib/export/plain-report";
 import { REPORTS, type ReportKey, buildReport } from "@/services/report-tables";
 import { getI18n } from "@/i18n/server";
 
@@ -31,12 +33,12 @@ export default async function ReportPage({ params, searchParams }: {
     <>
       <PageHeader title={table.title} description={table.subtitle} />
       <form className="toolbar print:hidden">
-        {!pointInTime && <Input type="date" name="from" defaultValue={from} dir="ltr" className="w-40" aria-label={t.common.from} />}
-        <Input type="date" name="to" defaultValue={to} dir="ltr" className="w-40" aria-label={t.common.to} />
+        {!pointInTime && <Input type="date" name="from" defaultValue={from} dir="ltr" className="w-52" aria-label={t.common.from} />}
+        <Input type="date" name="to" defaultValue={to} dir="ltr" className="w-52" aria-label={t.common.to} />
         <Button type="submit" variant="outline">{t.common.apply}</Button>
       </form>
-      <ReportView report={table} locale={locale} reportKey={key} query={`from=${from}&to=${to}`}
-        labels={{ excel: t.reports.exportExcel, pdf: t.reports.printPdf }} />
+      <ReportView report={toPlainReport(table, locale)} from={pointInTime ? undefined : from} to={to}
+        actions={<ExportButtons report={key} query={`from=${from}&to=${to}`} labels={{ excel: t.reports.exportExcel, pdf: t.reports.printPdf }} />} />
     </>
   );
 }

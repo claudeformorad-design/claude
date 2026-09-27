@@ -1,3 +1,4 @@
+import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -82,8 +83,8 @@ export default async function JournalPage({
       <form className="toolbar">
         {status && <input type="hidden" name="status" value={status} />}
         <Input name="q" defaultValue={sp.q} placeholder="ابحث بالوصف أو رقم القيد" className="w-64" />
-        <Input type="date" name="from" defaultValue={sp.from} dir="ltr" className="w-40" aria-label={t.common.from} />
-        <Input type="date" name="to" defaultValue={sp.to} dir="ltr" className="w-40" aria-label={t.common.to} />
+        <Input type="date" name="from" defaultValue={sp.from} dir="ltr" className="w-52" aria-label={t.common.from} />
+        <Input type="date" name="to" defaultValue={sp.to} dir="ltr" className="w-52" aria-label={t.common.to} />
         <Button type="submit" variant="outline">{t.common.apply}</Button>
       </form>
 
@@ -114,8 +115,8 @@ export default async function JournalPage({
               </TableRow>
             )}
             {shown.rows.map((e) => (
-              <TableRow key={e.id}>
-                <TableCell>
+              <ExpandableRow kind="journal" id={e.id} colSpan={6} key={e.id}>
+                <TableCell><ExpandMark />
                   <Link href={`/journal/${e.id}`} className="num font-semibold text-ink">
                     {e.entry_number ?? t.journal.draftNumber}
                   </Link>
@@ -131,7 +132,7 @@ export default async function JournalPage({
                 <TableCell>
                   <StatusBadge status={e.status} reversed={!!e.reversed_by_id} labels={t.journal.status} />
                 </TableCell>
-              </TableRow>
+              </ExpandableRow>
             ))}
           </TableBody>
         </Table>

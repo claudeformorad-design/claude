@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 import { CalendarCheck, LogOut, Menu, Search, Settings } from "lucide-react";
 import Link from "@/components/link";
 import { cn } from "@/lib/utils";
@@ -98,8 +99,8 @@ export function TopBar({
 
 function MobileDrawer({ groups, pathname, hotelName, signOut, onClose }: { groups: ReturnType<typeof navGroups>; pathname: string; hotelName: string; signOut?: () => Promise<void>; onClose: () => void }) {
   return (
-    <motion.div className="fixed inset-0 z-50 bg-ink/20 md:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
-      <motion.nav
+    <m.div className="fixed inset-0 z-50 bg-ink/20 md:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+      <m.nav
         onClick={(e) => e.stopPropagation()}
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
@@ -135,7 +136,7 @@ function MobileDrawer({ groups, pathname, hotelName, signOut, onClose }: { group
             </button>
           </form>
         )}
-      </motion.nav>
-    </motion.div>
+      </m.nav>
+    </m.div>
   );
 }

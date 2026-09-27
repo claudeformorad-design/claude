@@ -8,3 +8,18 @@ export function actionErrorText(errors: Record<string, string>, r: { error: stri
   if (r.error !== "unknown" && errors[r.error]) return plainText(errors[r.error]!);
   return plainText(r.message ?? errors.unknown ?? "");
 }
+
+const NETWORK_MESSAGE = "تعذّر الاتصال بالخادم، تحقق من الاتصال وحاول مرة أخرى";
+
+/**
+ * استدعاء Server Action من الواجهة: انقطاع الاتصال بالخادم (إعادة تشغيل، شبكة) يعود كنتيجة خطأ
+ * تُعرض للمستخدم بدل أن يُسقط الصفحة كاملة.
+ */
+export async function callAction<T>(pending: Promise<T>): Promise<T | { ok: false; error: "unknown"; message: string }> {
+  try {
+    return await pending;
+  } catch (e) {
+    if (e instanceof TypeError) return { ok: false, error: "unknown", message: NETWORK_MESSAGE };
+    throw e;
+  }
+}

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { voidVoucherAction } from "../actions";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
 
 export function VoidVoucher({ id, t }: { id: string; t: Pick<Dictionary, "vouchers" | "errors"> }) {
@@ -25,7 +25,7 @@ export function VoidVoucher({ id, t }: { id: string; t: Pick<Dictionary, "vouche
           loading={pending} disabled={pending || !reason.trim()}
           onClick={() =>
             start(async () => {
-              const r = await voidVoucherAction(id, reason);
+              const r = await callAction(voidVoucherAction(id, reason));
               if (r.ok) { toast("تم إلغاء السند"); router.refresh(); }
               else setError(actionErrorText(t.errors, r));
             })

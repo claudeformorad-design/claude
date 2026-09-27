@@ -3,7 +3,8 @@
 import { createContext, useContext, useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 import { Plus, X } from "lucide-react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,7 +22,7 @@ export function useDialogClose() {
  * نافذة منبثقة في منتصف الشاشة: خلفية مغبشة، حواف ناعمة، وحركة دخول هادئة.
  * كل نماذج الإدخال في النظام تُفتح بها بدل العمود الجانبي.
  */
-export function Dialog({
+function Dialog({
   open, onClose, title, description, width = "md", children,
 }: {
   open: boolean;
@@ -45,12 +46,12 @@ export function Dialog({
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-          <motion.div
+          <m.div
             className="absolute inset-0 bg-[#1f1d1b]/20 backdrop-blur-[6px]"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
             onClick={onClose}
           />
-          <motion.div
+          <m.div
             role="dialog" aria-modal="true"
             className={cn(
               "dialog-panel relative flex max-h-[88vh] w-full flex-col overflow-hidden rounded-2xl border border-line bg-white",
@@ -72,7 +73,7 @@ export function Dialog({
             <div className="overflow-y-auto px-7 pt-3 pb-7">
               <DialogContext.Provider value={{ close: onClose }}>{children}</DialogContext.Provider>
             </div>
-          </motion.div>
+          </m.div>
         </div>
       )}
     </AnimatePresence>,

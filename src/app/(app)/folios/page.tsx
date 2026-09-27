@@ -1,3 +1,4 @@
+import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -91,8 +92,8 @@ export default async function FoliosPage({ searchParams }: { searchParams: Promi
               </TableRow>
             )}
             {shown.rows.map((f) => (
-              <TableRow key={f.id}>
-                <TableCell><Link href={`/folios/${f.id}`} className="num font-medium text-primary">{f.folio_number}</Link></TableCell>
+              <ExpandableRow kind="folio" id={f.id} colSpan={8} key={f.id}>
+                <TableCell><ExpandMark /><Link href={`/folios/${f.id}`} className="num font-medium text-primary">{f.folio_number}</Link></TableCell>
                 <TableCell className="cell-fluid"><EntityCell name={f.guest_name} sub={f.departure_date ? `مغادرة ${f.departure_date}` : undefined} /></TableCell>
                 <TableCell>{f.room_number ? <span className="num inline-flex h-7 min-w-10 items-center justify-center rounded-lg bg-subtle px-2 text-[15.5px] font-semibold text-ink">{f.room_number}</span> : <span className="text-slate-400"></span>}</TableCell>
                 <TableCell>{t.folio.types[f.folio_type]}</TableCell>
@@ -102,7 +103,7 @@ export default async function FoliosPage({ searchParams }: { searchParams: Promi
                 <TableCell>
                   <Badge variant={f.status === "open" ? "success" : "secondary"}>{t.folio.statuses[f.status]}</Badge>
                 </TableCell>
-              </TableRow>
+              </ExpandableRow>
             ))}
           </TableBody>
         </Table>

@@ -15,7 +15,7 @@ import { ZERO, formatMoney, isValidAmount, toMoney } from "@/lib/accounting/mone
 import { type DirectInvoiceInput, directInvoiceSchema } from "@/lib/validation/revenue";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { createDirectInvoiceAction } from "../actions";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
 
 export function DirectInvoiceForm({
@@ -59,7 +59,7 @@ export function DirectInvoiceForm({
   const onSubmit = () =>
     start(async () => {
       setError(null);
-      const r = await createDirectInvoiceAction(getValues());
+      const r = await callAction(createDirectInvoiceAction(getValues()));
       if (r.ok) { toast("تم إصدار الفاتورة"); router.push(`/invoices/${r.data}`); }
       else setError(actionErrorText(t.errors, r));
     });

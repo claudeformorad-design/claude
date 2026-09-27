@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { BILL_TO } from "@/lib/pms/labels";
 import { setBillingAction } from "../../_pms/actions";
 
@@ -21,7 +21,7 @@ export function BillingSelect({ reservationId, current, errors }: { reservationI
       </NativeSelect>
       <Button type="button" size="sm" variant="outline" loading={pending} disabled={value === current}
         onClick={() => start(async () => {
-          const r = await setBillingAction(reservationId, value);
+          const r = await callAction(setBillingAction(reservationId, value));
           if (r.ok) { toast("تم تحديث جهة الفوترة"); router.refresh(); } else toast(actionErrorText(errors, r), "error");
         })}>
         حفظ

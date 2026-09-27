@@ -11,7 +11,7 @@ import { NativeSelect } from "@/components/ui/select";
 import { PurchaseLines, emptyPurchaseLine } from "@/components/forms/purchase-lines";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { createBillAction, createPurchaseOrderAction } from "../_payables/actions";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
 
 type Opt = { id: string; label: string };
@@ -38,8 +38,8 @@ export function PurchaseDocForm({
   const submit = handleSubmit((v) => start(async () => {
     setError(null);
     const r = kind === "po"
-      ? await createPurchaseOrderAction({ vendor_id: v.vendor_id, order_date: v.date, notes: v.notes, lines: v.lines })
-      : await createBillAction({ vendor_id: v.vendor_id, bill_date: v.date, vendor_invoice_no: v.vendor_invoice_no, notes: v.notes, po_id: "", lines: v.lines });
+      ? await callAction(createPurchaseOrderAction({ vendor_id: v.vendor_id, order_date: v.date, notes: v.notes, lines: v.lines }))
+      : await callAction(createBillAction({ vendor_id: v.vendor_id, bill_date: v.date, vendor_invoice_no: v.vendor_invoice_no, notes: v.notes, po_id: "", lines: v.lines }));
     if (r.ok) { toast(kind === "po" ? "تم حفظ أمر الشراء" : "تم تسجيل فاتورة المورد"); router.push(kind === "po" ? "/purchase-orders" : `/bills/${r.data}`); }
     else setError(actionErrorText(t.errors, r));
   }));

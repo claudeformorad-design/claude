@@ -55,10 +55,6 @@ export function roundMoney(value: MoneyInput, decimals = 2): Money {
   return toMoney(value).toDecimalPlaces(decimals, MoneyDecimal.ROUND_HALF_UP);
 }
 
-export function decimalPlaces(value: MoneyInput): number {
-  return toMoney(value).decimalPlaces();
-}
-
 /** تنسيق مبلغ للعرض حسب اللغة والعملة (الأرقام تبقى لاتينية لتسهيل القراءة المحاسبية) */
 export function formatMoney(
   value: MoneyInput,

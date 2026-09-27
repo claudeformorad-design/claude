@@ -10,7 +10,7 @@ const amount = z
   // «١٬٥٠٠٫٥» ⇒ «1500.5» قبل الإرسال لقاعدة البيانات
   .transform((v) => (v === "" ? "" : toMoney(v).toFixed()));
 
-export const journalLineSchema = z.object({
+const journalLineSchema = z.object({
   account_id: z.string(),
   department_id: z.string(),
   description: z.string().max(500),

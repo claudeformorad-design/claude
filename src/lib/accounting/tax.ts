@@ -90,14 +90,3 @@ export function computeTaxes(
   return { net, taxTotal, total: net.plus(taxTotal), taxes: lines };
 }
 
-/**
- * تقسيم تسوية/خصم (مبلغ إجمالي شامل) على نفس ضرائب البند الأصلي.
- * تُستخدم للخصومات على بنود الفوليو بحيث تُعكس الضريبة بنفس النسب.
- */
-export function splitGrossAmount(
-  gross: MoneyInput,
-  taxes: readonly TaxRateInput[],
-  decimals: number,
-): TaxBreakdown {
-  return computeTaxes(gross, taxes, { inclusive: true, decimals });
-}

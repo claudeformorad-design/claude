@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { formatMoney } from "@/lib/accounting/money";
 import { cn } from "@/lib/utils";
 import { settlePosOrderAction } from "../_ops/actions";
@@ -49,10 +49,10 @@ export function PosTerminal({ outletId, items, guests, methods, errors, canViewI
   });
 
   const settle = () => start(async () => {
-    const r = await settlePosOrderAction({
+    const r = await callAction(settlePosOrderAction({
       outlet_id: outletId, lines: lines.map((l) => ({ item_id: l.id, quantity: l.qty })), mode,
       reservation_id: mode === "room" ? guest : null, payment_method_id: mode === "paid" ? method : null, note,
-    });
+    }));
     if (r.ok) {
       toast(mode === "room" ? "رُحّل الطلب على الغرفة" : "تم الدفع وصدرت الفاتورة");
       setLast({ number: r.data.order_number, total: Number(r.data.total), invoice: r.data.invoice_id });

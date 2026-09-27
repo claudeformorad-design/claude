@@ -6,7 +6,7 @@ import { Check, Play, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { generateHousekeepingAction, updateHousekeepingTaskAction } from "../_ops/actions";
 
 /** إسناد المهمة لعامل وتغيير حالتها (بدء، إنجاز، إلغاء) */
@@ -15,7 +15,7 @@ export function TaskControls({ taskId, status, assignee, errors }: { taskId: str
   const [pending, start] = useTransition();
   const [name, setName] = useState(assignee ?? "");
   const act = (input: { status?: string; assignee?: string }, done: string) => start(async () => {
-    const r = await updateHousekeepingTaskAction(taskId, input);
+    const r = await callAction(updateHousekeepingTaskAction(taskId, input));
     if (r.ok) { toast(done); router.refresh(); } else toast(actionErrorText(errors, r), "error");
   });
   if (status === "done" || status === "cancelled") return null;
@@ -35,7 +35,7 @@ export function GenerateButton({ date, errors }: { date: string; errors: Record<
   const [pending, start] = useTransition();
   return (
     <Button type="button" loading={pending} onClick={() => start(async () => {
-      const r = await generateHousekeepingAction(date);
+      const r = await callAction(generateHousekeepingAction(date));
       if (r.ok) { toast(r.data ? `أُنشئت ${r.data} مهمة` : "لا مهام جديدة"); router.refresh(); } else toast(actionErrorText(errors, r), "error");
     })}>
       <Sparkles />توليد مهام اليوم

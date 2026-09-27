@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { ReportDocument } from "@/components/reports/report-document";
+import { docMeta, toPlainReport } from "@/lib/export/plain-report";
 import { requireAppContext } from "@/lib/auth/context";
 import { fiscalYearStart, formatDateTime, isIsoDate, todayInTimeZone } from "@/lib/accounting/fiscal";
 import { REPORTS, type ReportKey, buildReport } from "@/services/report-tables";
@@ -23,9 +24,9 @@ export default async function PrintReportPage({ params, searchParams }: {
   return (
     <div className="min-h-screen bg-[#f1f0ec] py-10 print:bg-white print:py-0">
       <title>{`${table.title}، ${ctx.hotel.name_ar}`}</title>
-      <PrintToolbar excelHref={`/api/export/${key}?from=${from}&to=${to}`} />
-      <ReportDocument report={table} hotel={ctx.hotel} locale={locale}
-        generatedAt={formatDateTime(new Date().toISOString(), ctx.hotel.timezone)} preparedBy={ctx.profile?.full_name} />
+      <PrintToolbar />
+      <ReportDocument report={toPlainReport(table, locale)}
+        meta={docMeta(ctx.hotel, formatDateTime(new Date().toISOString(), ctx.hotel.timezone), ctx.profile?.full_name)} />
     </div>
   );
 }

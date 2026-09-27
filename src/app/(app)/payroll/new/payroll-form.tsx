@@ -12,7 +12,7 @@ import { NativeSelect } from "@/components/ui/select";
 import { ZERO, formatMoney, isValidAmount, toMoney } from "@/lib/accounting/money";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { postPayrollAction } from "../../_payables/actions";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
 
 const empty = { employee_name: "", employee_code: "", department_id: "", basic: "", allowances: "", deductions: "", insurance_employee: "", insurance_employer: "" };
@@ -35,7 +35,7 @@ export function PayrollForm({ t, locale, month, departments }: {
   };
   return (
     <form className="space-y-5" onSubmit={handleSubmit((v) => start(async () => {
-      const r = await postPayrollAction(v);
+      const r = await callAction(postPayrollAction(v));
       if (r.ok) { toast("تم ترحيل مسيّر الرواتب"); router.push("/payroll"); } else setError(actionErrorText(t.errors, r));
     }))}>
       {error && <Alert variant="destructive">{error}</Alert>}

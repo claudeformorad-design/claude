@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/select";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { payVendorAction } from "../../_payables/actions";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
 
 export function PayBillForm({ t, billId, vendorId, outstanding, methods }: {
@@ -30,7 +30,7 @@ export function PayBillForm({ t, billId, vendorId, outstanding, methods }: {
         <Input className="num w-36" dir="ltr" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} aria-label={t.folio.amount} />
         <Input className="w-44" dir="ltr" placeholder={t.folio.reference} value={reference} onChange={(e) => setReference(e.target.value)} />
         <Button loading={pending} disabled={pending || !method} onClick={() => start(async () => {
-          const r = await payVendorAction({ vendor_id: vendorId, payment_method_id: method, payment_date: "", reference, allocations: [{ bill_id: billId, amount }] });
+          const r = await callAction(payVendorAction({ vendor_id: vendorId, payment_method_id: method, payment_date: "", reference, allocations: [{ bill_id: billId, amount }] }));
           if (r.ok) { toast("تم تسجيل السداد"); router.refresh(); } else setError(actionErrorText(t.errors, r));
         })}>{t.payables.payVendor}</Button>
       </div>

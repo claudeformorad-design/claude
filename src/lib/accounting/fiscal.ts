@@ -6,7 +6,7 @@ export type IsoDate = string; // YYYY-MM-DD
 
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-export function parseIsoDate(date: IsoDate): { year: number; month: number; day: number } {
+function parseIsoDate(date: IsoDate): { year: number; month: number; day: number } {
   const m = ISO_DATE.exec(date);
   if (!m) throw new RangeError(`Invalid ISO date: ${date}`);
   const [year, month, day] = [Number(m[1]), Number(m[2]), Number(m[3])];
@@ -26,7 +26,7 @@ export function isIsoDate(value: string): boolean {
   }
 }
 
-export function formatIsoDate(year: number, month: number, day: number): IsoDate {
+function formatIsoDate(year: number, month: number, day: number): IsoDate {
   return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, animate, motion, useInView } from "motion/react";
+import { AnimatePresence, animate, useInView } from "motion/react";
+import * as m from "motion/react-m";
 import { CHART_COLORS } from "./chart-colors";
 
 /**
@@ -84,7 +85,7 @@ function EmptyChart({ title, hint }: { title: string; hint: string }) {
 
 function Tooltip({ children, style }: { children: React.ReactNode; style: React.CSSProperties }) {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 4, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0 }}
@@ -93,7 +94,7 @@ function Tooltip({ children, style }: { children: React.ReactNode; style: React.
       style={style}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -236,12 +237,12 @@ export function IncomeExpenseChart({
             <g key={d.month}>
               {hover === i && <rect x={cx(i) - band / 2 + 4} y={padT - 6} width={band - 8} height={plotH + 12} rx={10} fill="#f1f0ec" />}
               {shown.revenue && (
-                <motion.path d={barPath(cx(i) + gap / 2, barW, y0, y(d.revenue))} fill={CHART_COLORS.revenue}
+                <m.path d={barPath(cx(i) + gap / 2, barW, y0, y(d.revenue))} fill={CHART_COLORS.revenue}
                   initial={{ scaleY: 0 }} animate={{ scaleY: 1 }} transition={{ duration: 0.7, delay: 0.1 + i * 0.06, ease: [0.16, 1, 0.3, 1] }}
                   style={{ transformOrigin: `0px ${y0}px`, transformBox: "view-box" }} opacity={hover === null || hover === i ? 1 : 0.45} />
               )}
               {shown.expenses && (
-                <motion.path d={barPath(cx(i) - gap / 2 - barW, barW, y0, y(d.expenses))} fill={CHART_COLORS.expenses}
+                <m.path d={barPath(cx(i) - gap / 2 - barW, barW, y0, y(d.expenses))} fill={CHART_COLORS.expenses}
                   initial={{ scaleY: 0 }} animate={{ scaleY: 1 }} transition={{ duration: 0.7, delay: 0.16 + i * 0.06, ease: [0.16, 1, 0.3, 1] }}
                   style={{ transformOrigin: `0px ${y0}px`, transformBox: "view-box" }} opacity={hover === null || hover === i ? 1 : 0.45} />
               )}

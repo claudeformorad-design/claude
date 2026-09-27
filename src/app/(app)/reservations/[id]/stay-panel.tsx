@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 import { BedDouble, CalendarPlus, DoorOpen, KeyRound, LogOut, ReceiptText, Wallet } from "lucide-react";
 import Link from "@/components/link";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { formatMoney } from "@/lib/accounting/money";
 import { cn } from "@/lib/utils";
 import type { ActionResult } from "@/services/errors";
@@ -61,7 +62,7 @@ export function StayPanel({
   const run = (key: string, fn: () => Promise<ActionResult<unknown>>, done: string, after?: (data: unknown) => void) =>
     start(async () => {
       setBusy(key);
-      const r = await fn();
+      const r = await callAction(fn());
       setBusy(null);
       if (r.ok) { toast(done); if (after) after(r.data); else router.refresh(); }
       else toast(actionErrorText(errors, r), "error");
@@ -118,7 +119,7 @@ export function StayPanel({
               </Button>
             ) : (
               <AnimatePresence>
-                <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                <m.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                   <dl className={cn("grid gap-3 rounded-lg border border-line bg-panel p-4 text-center", bill.company > 0 ? "grid-cols-4" : "grid-cols-3")}>
                     <div><dt className="text-[14px] text-slate-500">الرصيد</dt><dd className="num text-[20px] font-bold text-ink">{money(bill.balance)}</dd></div>
                     <div><dt className="text-[14px] text-slate-500">العربون</dt><dd className="num text-[20px] font-bold text-success">{money(bill.deposits)}</dd></div>
@@ -182,7 +183,7 @@ export function StayPanel({
                       {bill.due > 0 ? "تحصيل وتسجيل المغادرة" : "تسجيل المغادرة وإصدار الفاتورة"}
                     </Button>
                   )}
-                </motion.div>
+                </m.div>
               </AnimatePresence>
             )}
           </CardContent>

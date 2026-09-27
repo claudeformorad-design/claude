@@ -66,11 +66,11 @@ export interface FolioTxnInput {
   direction?: 1 | -1;
 }
 
-export function ledgerEffect(txn: FolioTxnInput): Money {
+function ledgerEffect(txn: FolioTxnInput): Money {
   return toMoney(txn.total_amount).times(LEDGER_SIGN[txn.txn_type] * (txn.direction ?? 1));
 }
 
-export function depositEffect(txn: FolioTxnInput): Money {
+function depositEffect(txn: FolioTxnInput): Money {
   return toMoney(txn.total_amount).times(DEPOSIT_SIGN[txn.txn_type] * (txn.direction ?? 1));
 }
 

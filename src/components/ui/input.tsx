@@ -1,10 +1,13 @@
 "use client";
 
 import * as React from "react";
+import { DateField } from "@/components/ui/date-field";
 import { cn } from "@/lib/utils";
 import { normalizeDigits } from "@/lib/accounting/money";
 
 export function Input({ className, type, onChange, onClick, ...props }: React.ComponentProps<"input">) {
+  // حقول التاريخ بتقويم النظام بدل تقويم المتصفح
+  if (type === "date") return <DateField className={className} onChange={onChange} onClick={onClick} {...props} />;
   const numeric = props.inputMode === "decimal" || props.inputMode === "numeric";
   return (
     <input
@@ -16,8 +19,8 @@ export function Input({ className, type, onChange, onClick, ...props }: React.Co
         if (v !== e.target.value) e.target.value = v;
         onChange?.(e);
       } : onChange}
-      // حقول التاريخ: الضغط في أي مكان يفتح التقويم
-      onClick={type === "date" || type === "month" ? (e) => { try { e.currentTarget.showPicker?.(); } catch {} onClick?.(e); } : onClick}
+      // حقل الشهر: الضغط في أي مكان يفتح منتقي المتصفح
+      onClick={type === "month" ? (e) => { try { e.currentTarget.showPicker?.(); } catch {} onClick?.(e); } : onClick}
       className={cn("h-11 py-2 flex w-full min-w-0 field disabled:cursor-not-allowed disabled:opacity-50", className)}
       {...props}
     />

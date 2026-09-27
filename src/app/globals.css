@@ -222,14 +222,11 @@
     background-color: #fff;
   }
   .field[aria-invalid="true"] { border-color: var(--color-urgent); }
-  .field[type="date"], .field[type="month"], .field[type="number"] { font-family: Inter, var(--font-sans); }
+  .field[type="month"], .field[type="number"] { font-family: Inter, var(--font-sans); }
 
-  /* حقول التاريخ: عرض مريح، أيقونة تقويم هادئة، والضغط في أي مكان من الحقل يفتح التقويم */
-  .field[type="date"], .field[type="month"] { min-width: 11.5rem; font-size: 16.5px; cursor: pointer; }
-  .field[type="date"]::-webkit-calendar-picker-indicator, .field[type="month"]::-webkit-calendar-picker-indicator {
-    opacity: 0.45; cursor: pointer; margin-inline-start: 0.6rem; transition: opacity 0.18s ease;
-  }
-  .field[type="date"]:hover::-webkit-calendar-picker-indicator, .field[type="month"]:hover::-webkit-calendar-picker-indicator { opacity: 0.8; }
+  /* حقل الشهر (حقول التاريخ تستخدم تقويم النظام) */
+  .field[type="month"] { min-width: 11.5rem; font-size: 16.5px; cursor: pointer; }
+  .field[type="month"]::-webkit-calendar-picker-indicator { opacity: 0.45; cursor: pointer; margin-inline-start: 0.6rem; }
 
   /* سهم قائمة الاختيار في جهة النهاية (يسارًا في العربية) */
   .field-select {
@@ -452,6 +449,9 @@ tbody.rows-animate > tr:hover > td { background-color: #fbfaf8; }
 /* ---- مستند التقرير (PDF) ---- */
 .report-doc { width: 210mm; min-height: 297mm; padding: 16mm 14mm; border-radius: 14px; border: 1px solid var(--color-line); }
 .report-doc-landscape { width: 297mm; min-height: 210mm; }
+/* نسخة التحويل إلى PDF: عرض صفحة A4 بالبكسل (96 نقطة في البوصة) وهوامشها، بلا إطار */
+.report-doc.report-doc-capture { width: 794px; min-height: 0; padding: 44px 46px 40px; border: 0; border-radius: 0; }
+.report-doc.report-doc-capture.report-doc-landscape { width: 1123px; }
 .report-doc-table thead { display: table-header-group; }
 .report-doc-sign { break-inside: avoid; }
 .report-doc-table tr { break-inside: avoid; }
@@ -463,5 +463,11 @@ tbody.rows-animate > tr:hover > td { background-color: #fbfaf8; }
   .report-doc * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 
-/* لوحة قائمة الاختيار (نمط Notion): ظل ناعم منتشر بدل الحدود الثقيلة */
-.select-panel { box-shadow: 0 0 0 1px rgb(15 15 15 / 0.04), 0 3px 6px rgb(15 15 15 / 0.06), 0 9px 24px rgb(15 15 15 / 0.1); }
+/* اللوحات العائمة: قائمة الاختيار والتقويم (نمط Notion): ظل ناعم منتشر بدل الحدود الثقيلة */
+.popover-panel { box-shadow: 0 0 0 1px rgb(15 15 15 / 0.04), 0 3px 6px rgb(15 15 15 / 0.06), 0 9px 24px rgb(15 15 15 / 0.1); }
+
+/* الصفوف القابلة للفتح: علامة الزائد تدور إلى علامة إغلاق */
+.expandable-row > td:first-child { white-space: nowrap; }
+.expandable-row[aria-expanded="true"] .expand-mark { transform: rotate(45deg); color: var(--color-ink); }
+/* أقسام التقارير مفتوحة افتراضيًا: العلامة تظهر فقط حين يُطوى القسم */
+.section-row[aria-expanded="true"] .expand-mark { display: none; }

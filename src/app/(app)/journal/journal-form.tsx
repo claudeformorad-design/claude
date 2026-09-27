@@ -20,7 +20,7 @@ import {
 } from "@/lib/validation/journal-entry";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { saveJournalEntryAction } from "./actions";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
 
 export interface JournalFormProps {
@@ -67,7 +67,7 @@ export function JournalForm({
     handleSubmit((values) => {
       setServerError(null);
       startTransition(async () => {
-        const result = await saveJournalEntryAction(values, { entryId, post });
+        const result = await callAction(saveJournalEntryAction(values, { entryId, post }));
         if (result.ok) { toast("تم حفظ القيد"); router.push(`/journal/${result.data}`); }
         else setServerError(actionErrorText(t.errors, result));
       });

@@ -14,7 +14,7 @@ import { btree_gist } from "@electric-sql/pglite/contrib/btree_gist";
  */
 
 const ROOT = process.cwd();
-export const LOCAL_DATA_DIR = path.resolve(/*turbopackIgnore: true*/ process.env.LOCAL_DB_DIR || path.join(ROOT, ".data", "pglite"));
+const LOCAL_DATA_DIR = path.resolve(/*turbopackIgnore: true*/ process.env.LOCAL_DB_DIR || path.join(ROOT, ".data", "pglite"));
 const MIGRATIONS_DIR = path.join(ROOT, "supabase", "migrations");
 const SHIM_FILE = path.join(ROOT, "supabase", "tests", "supabase_shim.sql");
 

@@ -1,3 +1,4 @@
+import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import { ExportButtons } from "@/components/reports/export-buttons";
 import { PageHeader } from "@/components/layout/page-header";
 import { Minus, Plus } from "lucide-react";
@@ -47,11 +48,11 @@ export default async function TrialBalancePage({
       <form className="toolbar">
         <label className="space-y-1 text-sm">
           <span className="text-muted-foreground">{t.common.from}</span>
-          <Input type="date" name="from" defaultValue={from} dir="ltr" className="w-40" />
+          <Input type="date" name="from" defaultValue={from} dir="ltr" className="w-52" />
         </label>
         <label className="space-y-1 text-sm">
           <span className="text-muted-foreground">{t.common.to}</span>
-          <Input type="date" name="to" defaultValue={to} dir="ltr" className="w-40" />
+          <Input type="date" name="to" defaultValue={to} dir="ltr" className="w-52" />
         </label>
         <label className="flex h-9 items-center gap-2 text-sm">
           <input type="checkbox" name="zero" value="1" defaultChecked={includeZero} className="size-4" />
@@ -94,9 +95,9 @@ export default async function TrialBalancePage({
             )}
             {tb.rows.map((row) => {
               const c = trialBalanceColumns(row);
-              return (
-                <TableRow key={row.account?.id ?? "unallocated"}>
-                  <TableCell className="num">{row.account?.code ?? ""}</TableCell>
+              const cells = (
+                <>
+                  <TableCell>{row.account && <ExpandMark />}<span className="num">{row.account?.code ?? ""}</span></TableCell>
                   <TableCell>{row.account ? name(row.account) : t.trialBalance.unallocatedEarnings}</TableCell>
                   <TableCell className="text-end">{m(c.openingDebit)}</TableCell>
                   <TableCell className="text-end">{m(c.openingCredit)}</TableCell>
@@ -104,8 +105,11 @@ export default async function TrialBalancePage({
                   <TableCell className="text-end">{m(c.periodCredit)}</TableCell>
                   <TableCell className="text-end">{m(c.closingDebit)}</TableCell>
                   <TableCell className="text-end">{m(c.closingCredit)}</TableCell>
-                </TableRow>
+                </>
               );
+              return row.account
+                ? <ExpandableRow key={row.account.id} kind="account" id={row.account.id} colSpan={8} from={from} to={to}>{cells}</ExpandableRow>
+                : <TableRow key="unallocated">{cells}</TableRow>;
             })}
           </TableBody>
           <TableFooter>

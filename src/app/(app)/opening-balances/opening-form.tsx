@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { formatMoney, normalizeDigits } from "@/lib/accounting/money";
 import { cn } from "@/lib/utils";
 import { postOpeningBalancesAction } from "./actions";
@@ -43,12 +43,12 @@ export function OpeningForm({ accounts, customers, vendors, today, errors }: {
 
   const submit = () => start(async () => {
     setError(null);
-    const r = await postOpeningBalancesAction({
+    const r = await callAction(postOpeningBalancesAction({
       date,
       accounts: rows.filter((x) => x.account_id).map((x) => ({ account_id: x.account_id, debit: x.debit, credit: x.credit })),
       customers: cust.filter((x) => x.id).map((x) => ({ customer_id: x.id, amount: x.amount, reference: x.reference })),
       vendors: vend.filter((x) => x.id).map((x) => ({ vendor_id: x.id, amount: x.amount, reference: x.reference })),
-    });
+    }));
     if (r.ok) { toast("رُحّلت الأرصدة الافتتاحية"); router.push(`/journal/${r.data}`); } else setError(actionErrorText(errors, r));
   });
 

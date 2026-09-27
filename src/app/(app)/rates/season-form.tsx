@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/toast";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import type { SeasonInput } from "@/lib/validation/pms";
 import { saveSeasonAction } from "../_pms/actions";
 
@@ -32,7 +32,7 @@ export function SeasonForm({ initial, types, errors }: {
     e.preventDefault();
     start(async () => {
       setError(null);
-      const r = await saveSeasonAction(v);
+      const r = await callAction(saveSeasonAction(v));
       if (r.ok) { toast("تم حفظ الموسم"); router.push("/rates"); }
       else setError(actionErrorText(errors, r));
     });

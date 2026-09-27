@@ -47,8 +47,8 @@ export default async function ProfitabilityPage({ searchParams }: { searchParams
       <PageHeader title={t.nav.profitability} description={p.subtitle}
         actions={<ExportButtons report={`profitability`} query={`from=${from}&to=${to}`} labels={{ excel: t.reports.exportExcel, pdf: t.reports.printPdf }} />} />
       <form className="toolbar">
-        <Input type="date" name="from" defaultValue={from} dir="ltr" className="w-40" aria-label={t.common.from} />
-        <Input type="date" name="to" defaultValue={to} dir="ltr" className="w-40" aria-label={t.common.to} />
+        <Input type="date" name="from" defaultValue={from} dir="ltr" className="w-52" aria-label={t.common.from} />
+        <Input type="date" name="to" defaultValue={to} dir="ltr" className="w-52" aria-label={t.common.to} />
         <Button type="submit" variant="outline">{t.common.apply}</Button>
       </form>
       <StatGrid>

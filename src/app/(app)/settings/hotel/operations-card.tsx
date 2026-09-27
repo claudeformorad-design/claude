@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/toast";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { cn } from "@/lib/utils";
 import type { HotelModule } from "@/lib/supabase/database.types";
 import { saveHotelOperationsAction } from "../../_admin/actions";
@@ -42,7 +42,7 @@ export function OperationsCard({ initial, errors }: {
     start(async () => {
       setError(null);
       if (modules.length === 0) { setError("فعّل قسمًا واحدًا على الأقل"); return; }
-      const r = await saveHotelOperationsAction({ modules, check_in_time: checkIn, check_out_time: checkOut, weekend_nights: weekend, require_cashier_shift: requireShift });
+      const r = await callAction(saveHotelOperationsAction({ modules, check_in_time: checkIn, check_out_time: checkOut, weekend_nights: weekend, require_cashier_shift: requireShift }));
       if (r.ok) { toast("تم حفظ إعدادات التشغيل"); router.refresh(); }
       else setError(actionErrorText(errors, r));
     });

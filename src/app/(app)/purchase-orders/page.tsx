@@ -1,3 +1,4 @@
+import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -38,8 +39,8 @@ export default async function PurchaseOrdersPage() {
           <TableBody>
             {pos.length === 0 && <TableRow><TableCell colSpan={5} className="py-8"><EmptyState title="لا توجد أوامر شراء" description="أنشئ أمر شراء للمورد ثم حوّله إلى فاتورة عند الاستلام." actionHref="/purchase-orders/new" actionLabel="أمر شراء جديد" icon={ShoppingCart} /></TableCell></TableRow>}
             {pos.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell className="num font-semibold">{p.po_number}</TableCell><TableCell className="num">{p.order_date}</TableCell>
+              <ExpandableRow kind="purchase-order" id={p.id} colSpan={5} key={p.id}>
+                <TableCell className="font-semibold"><ExpandMark /><span className="num">{p.po_number}</span></TableCell><TableCell className="num">{p.order_date}</TableCell>
                 <TableCell><EntityCell name={vName.get(p.vendor_id) ?? ""} /></TableCell>
                 <TableCell><Badge variant={p.status === "open" ? "warning" : "success"}>{t.payables.statuses[p.status]}</Badge></TableCell>
                 <TableCell className="text-end">
@@ -47,7 +48,7 @@ export default async function PurchaseOrdersPage() {
                     <ConvertToBill poId={p.id} vendorId={p.vendor_id} label={t.payables.toBill} errors={t.errors} />
                   )}
                 </TableCell>
-              </TableRow>
+              </ExpandableRow>
             ))}
           </TableBody>
         </Table>

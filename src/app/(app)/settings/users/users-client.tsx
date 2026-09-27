@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { saveRoleAction, setMemberRolesAction } from "../../_admin/actions";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { Avatar } from "@/components/ui/entity";
 import { toast } from "@/components/ui/toast";
 
@@ -45,7 +45,7 @@ export function MemberRow({ t, userId, email, name, active, roleIds, roles, isSe
       {error && <Alert variant="destructive">{error}</Alert>}
       <div className="flex gap-2">
         <Button size="sm" loading={pending} onClick={() => start(async () => {
-          const r = await setMemberRolesAction(userId, [...sel], isActive);
+          const r = await callAction(setMemberRolesAction(userId, [...sel], isActive));
           if (r.ok) { toast("تم حفظ الأدوار"); router.refresh(); } else setError(actionErrorText(t.errors, r));
         })}>{t.admin.saveRoles}</Button>
         {!isSelf && <Button size="sm" variant="ghost" onClick={() => setActive(!isActive)}>{isActive ? t.admin.deactivate : t.admin.activate}</Button>}
@@ -86,7 +86,7 @@ export function RoleEditor({ t, role, permissions }: {
         ))}
       </div>
       <Button loading={pending} onClick={() => start(async () => {
-        const r = await saveRoleAction({ ...v, permissions: [...sel] });
+        const r = await callAction(saveRoleAction({ ...v, permissions: [...sel] }));
         if (r.ok) { toast("تم الحفظ"); router.push("/settings/users"); } else setError(actionErrorText(t.errors, r));
       })}>{t.common.save}</Button>
     </div>

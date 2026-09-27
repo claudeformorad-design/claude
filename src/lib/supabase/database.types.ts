@@ -315,6 +315,10 @@ export type VendorBillRow = {
   bill_date: string; due_date: string; subtotal: string; tax_total: string; total: string; amount_paid: string;
   status: BillStatus; journal_entry_id: string | null; notes: string | null; created_at: string; created_by: string | null;
 };
+export type PurchaseOrderItemRow = {
+  id: string; po_id: string; hotel_id: string; line_no: number; description: string; account_id: string;
+  department_id: string | null; quantity: string; unit_price: string; tax_rate_id: string | null;
+};
 export type VendorBillLineRow = {
   id: string; bill_id: string; hotel_id: string; line_no: number; description: string; account_id: string;
   department_id: string | null; quantity: string; unit_price: string; net_amount: string; tax_rate_id: string | null; tax_amount: string;
@@ -541,6 +545,7 @@ export type Database = {
       inventory_items: Table<InventoryItemRow, "hotel_id" | "sku" | "name_ar" | "inventory_account_id" | "expense_account_id">;
       inventory_transactions: ReadOnlyTable<InventoryTxnRow>;
       purchase_orders: ReadOnlyTable<PurchaseOrderRow>;
+      purchase_order_items: ReadOnlyTable<PurchaseOrderItemRow>;
       vendor_bills: ReadOnlyTable<VendorBillRow>;
       vendor_bill_lines: ReadOnlyTable<VendorBillLineRow>;
       payroll_runs: ReadOnlyTable<PayrollRunRow>;

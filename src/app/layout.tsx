@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import localFont from "next/font/local";
 import { Inter } from "next/font/google";
+import { MotionProvider } from "@/components/motion-provider";
 import { directionOf } from "@/i18n/config";
 import { getI18n } from "@/i18n/server";
 import "./globals.css";
@@ -42,7 +43,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale} dir={directionOf(locale)} data-density={density} className={`${thmanyah.variable} ${digits.variable}`}>
       <body className="min-h-screen font-sans">
-        {children}
+        <MotionProvider>{children}</MotionProvider>
       </body>
     </html>
   );

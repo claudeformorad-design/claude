@@ -45,7 +45,7 @@ export default async function AgingPage({ searchParams }: { searchParams: Promis
       ]} />
       <form className="toolbar">
         <input type="hidden" name="kind" value={kind} />
-        <Input type="date" name="asOf" defaultValue={asOf} dir="ltr" className="w-40" aria-label={t.payables.asOf} />
+        <Input type="date" name="asOf" defaultValue={asOf} dir="ltr" className="w-52" aria-label={t.payables.asOf} />
         <Button type="submit" variant="outline">{t.common.apply}</Button>
       </form>
       <Card className="overflow-hidden">

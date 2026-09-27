@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { assignRoomAction } from "../../_pms/actions";
 
 /** تخصيص غرفة للحجز أو تغييرها أو إلغاء التخصيص — قاعدة البيانات ترفض الغرفة المحجوزة لفترة متداخلة */
@@ -21,7 +21,7 @@ export function AssignRoom({ reservationId, current, rooms, allowNone, errors }:
   const [pending, start] = useTransition();
   const save = () =>
     start(async () => {
-      const r = await assignRoomAction(reservationId, room || null);
+      const r = await callAction(assignRoomAction(reservationId, room || null));
       if (r.ok) { toast(room ? "تم تخصيص الغرفة" : "أُلغي تخصيص الغرفة"); router.refresh(); }
       else toast(actionErrorText(errors, r), "error");
     });

@@ -13,7 +13,7 @@ import { formatMoney, isValidAmount, toMoney } from "@/lib/accounting/money";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { cn } from "@/lib/utils";
 import { cancelFolioAction, checkoutAction, folioAction } from "../actions";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
 
 type Kind = "charge" | "payment" | "deposit" | "allowance" | "refund" | "depositRefund" | "transfer" | "void";
@@ -69,7 +69,7 @@ export function FolioActions(p: FolioActionsProps) {
   const submit = (v: FormValues) =>
     start(async () => {
       setError(null);
-      const r = await folioAction(p.folioId, { ...v, kind });
+      const r = await callAction(folioAction(p.folioId, { ...v, kind }));
       if (r.ok) {
         toast("تم التسجيل على الفوليو");
         reset({ quantity: "1", customer_id: p.defaultCustomerId ?? "" });
@@ -81,7 +81,7 @@ export function FolioActions(p: FolioActionsProps) {
     if (!confirm(t.folio.checkoutConfirm)) return;
     start(async () => {
       setError(null);
-      const r = await checkoutAction(p.folioId);
+      const r = await callAction(checkoutAction(p.folioId));
       if (r.ok) { toast("تمت المغادرة وإصدار الفاتورة"); router.push(`/invoices/${r.data}`); }
       else fail(r);
     });
@@ -89,7 +89,7 @@ export function FolioActions(p: FolioActionsProps) {
 
   const cancel = () =>
     start(async () => {
-      const r = await cancelFolioAction(p.folioId);
+      const r = await callAction(cancelFolioAction(p.folioId));
       if (r.ok) { toast("تم إلغاء الفوليو"); router.push("/folios"); }
       else fail(r);
     });

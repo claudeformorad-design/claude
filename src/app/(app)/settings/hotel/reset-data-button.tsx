@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { RotateCcw, AlertOctagon, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { resetHotelDataAction } from "../../_admin/actions";
+import { callAction } from "@/lib/action-error";
 
 export function ResetHotelDataButton() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export function ResetHotelDataButton() {
   const handleReset = () => {
     startTransition(async () => {
       setFailed(false);
-      const res = await resetHotelDataAction();
+      const res = await callAction(resetHotelDataAction());
       if (!res.ok) setFailed(true);
       if (res.ok) {
         setSuccess(true);

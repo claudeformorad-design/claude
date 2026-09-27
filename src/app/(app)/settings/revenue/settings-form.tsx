@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/select";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { type RevenueSettingKind, saveRevenueSettingAction } from "./actions";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
 
 type Option = { id: string; label: string };
@@ -37,7 +37,7 @@ export function RevenueSettingForm({
     start(async () => {
       setError(null);
       const payload = { ...v, tax_rate_ids: kind === "charge" ? ((v.tax_rate_ids as string[] | false) || []) : undefined };
-      const r = await saveRevenueSettingAction(kind, payload);
+      const r = await callAction(saveRevenueSettingAction(kind, payload));
       if (r.ok) { toast("تم الحفظ"); router.push("/settings/revenue"); }
       else setError(actionErrorText(t.errors, r));
     });

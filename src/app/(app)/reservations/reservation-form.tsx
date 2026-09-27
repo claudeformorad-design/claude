@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, LayoutGroup, motion } from "motion/react";
+import { AnimatePresence, LayoutGroup } from "motion/react";
+import * as m from "motion/react-m";
 import { AlertTriangle, BadgePercent, CalendarRange, CheckCircle2, Hourglass, Repeat, Search, UserPlus, Users, X, XCircle } from "lucide-react";
 import Link from "@/components/link";
 import { Alert } from "@/components/ui/alert";
@@ -13,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { formatMoney } from "@/lib/accounting/money";
 import { addDays, dayLabel, nightsBetween, weekdayOf } from "@/lib/pms/dates";
 import { ID_TYPES, PRICING_LABEL, RESERVATION_SOURCE, WEEKDAYS } from "@/lib/pms/labels";
@@ -104,7 +105,7 @@ export function ReservationForm({
     latestKey.current = quoteKey;
     if (!quoteInput) return;
     const timer = setTimeout(async () => {
-      const r = await quoteAction(quoteInput);
+      const r = await callAction(quoteAction(quoteInput));
       if (latestKey.current !== quoteKey) return;
       setResult(r.ok ? { key: quoteKey, quote: r.data, error: null } : { key: quoteKey, quote: null, error: actionErrorText(errors, r) });
     }, 300);
@@ -124,12 +125,12 @@ export function ReservationForm({
       : { ...v, session_date: "", start_time: "", end_time: "" };
     start(async () => {
       if (mode === "edit" && reservationId) {
-        const r = await updateReservationAction({ id: reservationId, ...payload });
+        const r = await callAction(updateReservationAction({ id: reservationId, ...payload }));
         if (r.ok) { toast("تم تحديث الحجز"); router.push(`/reservations/${reservationId}`); }
         else setError(actionErrorText(errors, r));
         return;
       }
-      const r = await createReservationAction({ ...payload, weekday: v.kind === "series" ? v.weekday : "" });
+      const r = await callAction(createReservationAction({ ...payload, weekday: v.kind === "series" ? v.weekday : "" }));
       if (r.ok) { toast(r.data.message); router.push(r.data.href); }
       else setError(actionErrorText(errors, r));
     });
@@ -150,7 +151,7 @@ export function ReservationForm({
                   <button key={k.key} type="button" onClick={() => set("kind", k.key)}
                     className={cn("relative flex items-start gap-3 rounded-lg border p-4 text-start transition-colors",
                       on ? "border-ink" : "border-line bg-white hover:border-line-strong")}>
-                    {on && <motion.span layoutId="kind-bg" transition={{ type: "spring", stiffness: 500, damping: 40 }} className="absolute inset-0 rounded-lg bg-panel" />}
+                    {on && <m.span layoutId="kind-bg" transition={{ type: "spring", stiffness: 500, damping: 40 }} className="absolute inset-0 rounded-lg bg-panel" />}
                     <span className={cn("relative flex size-9 shrink-0 items-center justify-center rounded-[10px]", on ? "bg-ink text-white" : "bg-subtle text-slate-600")}>
                       <k.icon className="size-[18px] stroke-[1.9]" />
                     </span>
@@ -406,7 +407,7 @@ function GuestPicker({ guests, value, onChange }: {
         <Input value={q} onChange={(e) => { setQ(e.target.value); setCreating(false); }} placeholder="ابحث عن نزيل سابق بالاسم أو الجوال أو الهوية" className="ps-10" />
         <AnimatePresence>
           {matches.length > 0 && (
-            <motion.ul initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
+            <m.ul initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
               className="absolute inset-x-0 top-full z-20 mt-2 overflow-hidden rounded-lg border border-line bg-white p-1 shadow-lift">
               {matches.map((g) => (
                 <li key={g.id}>
@@ -417,7 +418,7 @@ function GuestPicker({ guests, value, onChange }: {
                   </button>
                 </li>
               ))}
-            </motion.ul>
+            </m.ul>
           )}
         </AnimatePresence>
       </div>
@@ -473,7 +474,7 @@ function QuoteCard({ quote, error, loading, kind, groupRooms, canOverbook, waitl
         {!quote && !error && <p className="text-[15.5px] leading-relaxed text-slate-500">اختر النوع والتواريخ لعرض سعر كل ليلة وحالة التوفر.</p>}
         {error && <p className="text-[15.5px] text-urgent">{error}</p>}
         {quote && (
-          <motion.div key={quote.total} initial={{ opacity: 0.4 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="space-y-4">
+          <m.div key={quote.total} initial={{ opacity: 0.4 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="space-y-4">
             {availability && (
               <div className={cn("flex items-start gap-2 rounded-md p-3 text-[15px] leading-relaxed",
                 availability.tone === "ok" ? "bg-success-tint text-success" : availability.tone === "warn" ? "bg-amber-tint text-amber" : "bg-urgent-tint text-urgent")}>
@@ -520,7 +521,7 @@ function QuoteCard({ quote, error, loading, kind, groupRooms, canOverbook, waitl
               )}
               <p className="text-[13.5px] text-slate-500">الضرائب تُطبَّق حسب إعداد كود الإيراد عند الترحيل على الفوليو.</p>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </CardContent>
     </Card>

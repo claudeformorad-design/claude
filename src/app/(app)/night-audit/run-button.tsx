@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { MoonStar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { runNightAuditAction } from "../_pms/actions";
 
 /** تشغيل التدقيق بعد التأكيد، ثم فتح تقرير المدير لليوم */
@@ -17,7 +17,7 @@ export function RunAuditButton({ date, confirmText, errors }: { date: string; co
       onClick={() => {
         if (!window.confirm(confirmText)) return;
         start(async () => {
-          const r = await runNightAuditAction(date);
+          const r = await callAction(runNightAuditAction(date));
           if (r.ok) { toast("اكتمل تدقيق نهاية اليوم"); router.push(`/night-audit/${r.data}`); }
           else toast(actionErrorText(errors, r), "error");
         });

@@ -1,3 +1,4 @@
+import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -47,14 +48,14 @@ export default async function BillsPage({ searchParams }: { searchParams: Promis
           <TableBody>
             {bills.length === 0 && <TableRow><TableCell colSpan={7} className="py-8"><EmptyState title="لا توجد فواتير موردين" description="سجّل فواتير المشتريات والخدمات لتظهر هنا مع مستحقاتها ومواعيد سدادها." actionHref="/bills/new" actionLabel="فاتورة مورد جديدة" icon={FileSpreadsheet} /></TableCell></TableRow>}
             {shown.rows.map((b) => (
-              <TableRow key={b.id}>
-                <TableCell><Link href={`/bills/${b.id}`} className="num font-semibold text-ink">{b.bill_number}</Link></TableCell>
+              <ExpandableRow kind="bill" id={b.id} colSpan={7} key={b.id}>
+                <TableCell><ExpandMark /><Link href={`/bills/${b.id}`} className="num font-semibold text-ink">{b.bill_number}</Link></TableCell>
                 <TableCell className="cell-fluid"><EntityCell name={vName.get(b.vendor_id) ?? ""} sub={b.vendor_invoice_no ? <>مرجع <span className="num">{b.vendor_invoice_no}</span></> : undefined} /></TableCell>
                 <TableCell className="num">{b.bill_date}</TableCell><TableCell className={`num ${b.due_date < today && toMoney(b.total).gt(toMoney(b.amount_paid)) ? "font-semibold text-urgent" : ""}`}>{b.due_date}</TableCell>
                 <TableCell className="text-end font-semibold"><Money value={b.total} locale={locale} /></TableCell>
                 <TableCell className="text-end"><Money value={toMoney(b.total).minus(toMoney(b.amount_paid))} locale={locale} blankZero /></TableCell>
                 <TableCell><Badge variant={b.status === "paid" ? "success" : b.status === "partially_paid" ? "info" : "warning"}>{t.payables.statuses[b.status]}</Badge></TableCell>
-              </TableRow>
+              </ExpandableRow>
             ))}
           </TableBody>
         </Table>

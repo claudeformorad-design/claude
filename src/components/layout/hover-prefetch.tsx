@@ -8,6 +8,7 @@ import { PrefetchKind } from "next/dist/client/components/router-reducer/router-
  * جلب مسبق «عند النية» لكل روابط النظام بمستمع واحد: عند الوقوف على رابط داخلي 60ms
  * (أو لمسه أو التركيز عليه) تُجلب الصفحة كاملة ببياناتها، فتفتح فور النقر.
  * كل رابط يُجلب مرة كل 20 ثانية كحد أقصى؛ والبيانات المجلوبة صالحة 30 ثانية وتُبطل عند أي حفظ.
+ * روابط الصفحة نفسها (معاملات البحث فقط) مستثناة.
  */
 export function HoverPrefetch() {
   const router = useRouter();
@@ -18,6 +19,9 @@ export function HoverPrefetch() {
       const a = t instanceof Element ? t.closest("a[href]") : null;
       const href = a?.getAttribute("href");
       if (!href || !href.startsWith("/") || href.startsWith("/api/") || a?.getAttribute("target") === "_blank") return null;
+      // روابط نفس الصفحة (نوافذ ?new و?edit والتبويبات والفلاتر) لا تُجلب مسبقًا: الجلب المسبق الكامل
+      // لتغيير معاملات البحث فقط يُنتج صفحة فارغة في Next 16، وهي تفتح فورًا دونه
+      if (href.split("?")[0] === window.location.pathname) return null;
       return href;
     };
     const warm = (href: string) => {

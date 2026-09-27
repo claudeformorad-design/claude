@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { loadDemoDataAction, removeDemoDataAction } from "../../_admin/actions";
 
 /** بيانات تجريبية مؤقتة لمعاينة لوحة التحكم، مع حذفها بالكامل بضغطة */
@@ -16,7 +16,7 @@ export function DemoDataCard({ active, errors }: { active: boolean; errors: Reco
   const run = (fn: typeof loadDemoDataAction, to: string) =>
     start(async () => {
       setError(null);
-      const r = await fn();
+      const r = await callAction(fn());
       if (!r.ok) return setError(actionErrorText(errors, r));
       router.push(to);
       router.refresh();

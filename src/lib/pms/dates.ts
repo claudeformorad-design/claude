@@ -33,5 +33,3 @@ export function nightsText(n: number): string {
 /** «من 16:00 إلى 20:00» */
 export const timeRange = (from: string | null, to: string | null): string => `من ${timeOf(from)} إلى ${timeOf(to)}`;
 
-/** «من 27/09 إلى 29/09» */
-export const dateRange = (from: string, to: string): string => `من ${shortDate(from)} إلى ${shortDate(to)}`;

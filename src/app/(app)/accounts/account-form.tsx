@@ -13,7 +13,7 @@ import { ACCOUNT_SUBTYPES, ACCOUNT_TYPES, validateAccountPlacement, type Account
 import { accountFormSchema, type AccountFormInput, type AccountFormValues } from "@/lib/validation/account";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { saveAccountAction } from "./actions";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
 
 export interface AccountOption {
@@ -70,7 +70,7 @@ export function AccountForm({
   const onSubmit = () => {
     setServerError(null);
     startTransition(async () => {
-      const result = await saveAccountAction(form.getValues());
+      const result = await callAction(saveAccountAction(form.getValues()));
       if (result.ok) { toast("تم حفظ الحساب"); router.push("/accounts"); }
       else setServerError(actionErrorText(t.errors, result));
     });

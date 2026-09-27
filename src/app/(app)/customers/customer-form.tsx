@@ -11,7 +11,7 @@ import { NativeSelect } from "@/components/ui/select";
 import type { CustomerFormInput } from "@/lib/validation/revenue";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { saveCustomerAction } from "./actions";
-import { actionErrorText } from "@/lib/action-error";
+import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
 
 export function CustomerForm({ t, initial }: { t: Pick<Dictionary, "customers" | "common" | "errors">; initial: CustomerFormInput }) {
@@ -23,7 +23,7 @@ export function CustomerForm({ t, initial }: { t: Pick<Dictionary, "customers" |
   const onSubmit = (v: CustomerFormInput) =>
     start(async () => {
       setError(null);
-      const r = await saveCustomerAction(v);
+      const r = await callAction(saveCustomerAction(v));
       if (r.ok) { toast("تم حفظ العميل"); router.push("/customers"); }
       else setError(actionErrorText(t.errors, r));
     });

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
-export const DENSITY_COOKIE = "table_density";
+const DENSITY_COOKIE = "table_density";
 
 /** مريح / مضغوط — يغيّر مسافات كل الجداول فورًا ويُحفظ للزيارات التالية */
 export function DensityToggle({ initial }: { initial: "comfortable" | "compact" }) {

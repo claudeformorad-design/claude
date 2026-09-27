@@ -2,10 +2,14 @@ import { NextResponse } from "next/server";
 import { getAppContext, type AppContext } from "@/lib/auth/context";
 import { fiscalYearStart, formatDateTime, isIsoDate, todayInTimeZone } from "@/lib/accounting/fiscal";
 import { reportWorkbook } from "@/lib/export/excel";
+import { docMeta, toPlainReport } from "@/lib/export/plain-report";
 import { REPORTS, type ReportKey, buildReport } from "@/services/report-tables";
 import { getI18n } from "@/i18n/server";
 
-/** تصدير أي تقرير إلى Excel بهوية النظام وبنفس بنية الصفحة (اتجاه RTL للعربية، أرقام كقيم رقمية قابلة للجمع) */
+/**
+ * تصدير أي تقرير: Excel بهوية النظام (افتراضيًا)، أو ?format=json لبيانات مستند PDF الذي يُبنى في المتصفح.
+ * التقرير نفسه يُبنى مرة واحدة بنفس بنية الصفحة.
+ */
 export async function GET(request: Request, { params }: { params: Promise<{ report: string }> }) {
   const { report } = await params;
   if (!(report in REPORTS)) return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -22,15 +26,18 @@ export async function GET(request: Request, { params }: { params: Promise<{ repo
   const fromParam = url.searchParams.get("from") ?? "";
   const from = isIsoDate(fromParam) && fromParam <= to ? fromParam : fiscalYearStart(to, app.hotel.fiscal_year_start_month);
   const table = await buildReport(key, app, t, locale, { from, to });
+  const generatedAt = formatDateTime(new Date().toISOString(), app.hotel.timezone);
+  const fileName = `${table.title} ${to}`;
 
-  const buffer = await reportWorkbook(table, {
-    hotel: app.hotel, rtl: locale === "ar", appName: t.app.name,
-    generatedAt: formatDateTime(new Date().toISOString(), app.hotel.timezone), preparedBy: app.profile?.full_name,
-  });
+  if (url.searchParams.get("format") === "json") {
+    return NextResponse.json({ report: toPlainReport(table, locale), meta: docMeta(app.hotel, generatedAt, app.profile?.full_name), fileName });
+  }
+
+  const buffer = await reportWorkbook(table, { hotel: app.hotel, rtl: locale === "ar", appName: t.app.name, generatedAt, preparedBy: app.profile?.full_name });
   return new NextResponse(buffer as ArrayBuffer, {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="${key}-${to}.xlsx"; filename*=UTF-8''${encodeURIComponent(`${table.title} ${to}.xlsx`)}`,
+      "Content-Disposition": `attachment; filename="${key}-${to}.xlsx"; filename*=UTF-8''${encodeURIComponent(`${fileName}.xlsx`)}`,
     },
   });
 }

@@ -17,7 +17,8 @@ import { raise } from "./errors";
  * القيم المالية تبقى Money حتى لحظة العرض/التصدير.
  */
 export type Cell = string | Money | null;
-export interface ReportRow { kind: "section" | "line" | "subtotal" | "total"; cells: Cell[] }
+/** account: معرّف الحساب لصفوف الحسابات، فيُفتح الصف على حركاته في الفترة */
+export interface ReportRow { kind: "section" | "line" | "subtotal" | "total"; cells: Cell[]; account?: string }
 export interface ReportTable { title: string; subtitle: string; columns: string[]; rows: ReportRow[]; note?: { ok: boolean; text: string } }
 
 export const REPORTS = {
@@ -37,6 +38,7 @@ export type ReportKey = keyof typeof REPORTS;
 export interface ReportParams { from: string; to: string }
 
 const line = (...cells: Cell[]): ReportRow => ({ kind: "line", cells });
+const acc = (a: { id: string; code: string }, label: string, ...cells: Cell[]): ReportRow => ({ kind: "line", cells: [`${a.code} ${label}`, ...cells], account: a.id });
 const sub = (...cells: Cell[]): ReportRow => ({ kind: "subtotal", cells });
 const total = (...cells: Cell[]): ReportRow => ({ kind: "total", cells });
 const head = (text: string, width: number): ReportRow => ({ kind: "section", cells: [text, ...Array(width - 1).fill(null)] });
@@ -51,7 +53,7 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
       const block = (k: keyof typeof is.sections) => {
         const s = is.sections[k];
         if (!s.lines.length) return;
-        rows.push(head(r.sections[k], 2), ...s.lines.map((l) => line(`${l.account.code} ${l.account.name}`, l.amount)), sub(r.sections[k], s.total));
+        rows.push(head(r.sections[k], 2), ...s.lines.map((l) => acc(l.account, l.account.name, l.amount)), sub(r.sections[k], s.total));
       };
       block("operating_revenue"); rows.push(total(r.totalRevenue, is.revenue));
       block("cost_of_sales"); rows.push(total(r.grossProfit, is.grossProfit));
@@ -65,7 +67,7 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
       const block = (k: keyof typeof bs.sections) => {
         const s = bs.sections[k];
         if (!s.lines.length) return;
-        rows.push(head(r.sections[k], 2), ...s.lines.map((l) => line(`${l.account.code} ${l.account.name}`, l.amount)), sub(r.sections[k], s.total));
+        rows.push(head(r.sections[k], 2), ...s.lines.map((l) => acc(l.account, l.account.name, l.amount)), sub(r.sections[k], s.total));
       };
       block("current_asset"); block("fixed_asset"); block("other_asset"); rows.push(total(r.totalAssets, bs.totalAssets));
       block("current_liability"); block("long_term_liability"); rows.push(total(r.totalLiabilities, bs.totalLiabilities));
@@ -90,8 +92,8 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
       const name = (a: { name_ar: string; name_en: string | null }) => (locale === "en" && a.name_en) || a.name_ar;
       const rows = tb.rows.map((row) => {
         const c = trialBalanceColumns(row);
-        return line(row.account ? `${row.account.code} ${name(row.account)}` : t.trialBalance.unallocatedEarnings,
-          c.openingDebit, c.openingCredit, c.periodDebit, c.periodCredit, c.closingDebit, c.closingCredit);
+        const cells = [c.openingDebit, c.openingCredit, c.periodDebit, c.periodCredit, c.closingDebit, c.closingCredit];
+        return row.account ? acc(row.account, name(row.account), ...cells) : line(t.trialBalance.unallocatedEarnings, ...cells);
       });
       const x = tb.totals;
       rows.push(total(t.common.total, x.openingDebit, x.openingCredit, x.periodDebit, x.periodCredit, x.closingDebit, x.closingCredit));

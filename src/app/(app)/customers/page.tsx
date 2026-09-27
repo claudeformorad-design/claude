@@ -1,3 +1,4 @@
+import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import { RouteDialog } from "@/components/ui/dialog";
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
@@ -76,8 +77,8 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
                 <TableRow><TableCell colSpan={8} className="py-8"><EmptyState title="لا يوجد عملاء بعد" description="أضف الشركات والجهات التي تتعامل معها بالآجل لإصدار الفواتير ومتابعة ذممها." actionHref="/customers?new=1" actionLabel="إضافة عميل" icon={Users} /></TableCell></TableRow>
               )}
               {customers.map((x) => (
-                <TableRow key={x.id} className={x.is_active ? "" : "opacity-50"}>
-                  <TableCell className="num text-slate-600">{x.code}</TableCell>
+                <ExpandableRow kind="customer" id={x.id} colSpan={canManage ? 8 : 7} key={x.id} className={x.is_active ? "" : "opacity-50"}>
+                  <TableCell className="text-slate-600"><ExpandMark /><span className="num">{x.code}</span></TableCell>
                   <TableCell className="cell-fluid"><EntityCell name={name(x)} sub={t.customers.types[x.customer_type]} href={`/invoices?customer=${x.id}`} /></TableCell>
                   <TableCell>{t.customers.types[x.customer_type]}</TableCell>
                   <TableCell>{x.allow_credit ? <Badge variant="success">{t.common.yes}</Badge> : <Badge variant="secondary">{t.common.no}</Badge>}</TableCell>
@@ -87,7 +88,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
                   {canManage && (
                     <TableCell className="text-end"><Button asChild variant="ghost" size="sm"><Link href={`/customers?edit=${x.id}`}>{t.common.edit}</Link></Button></TableCell>
                   )}
-                </TableRow>
+                </ExpandableRow>
               ))}
             </TableBody>
           </Table>

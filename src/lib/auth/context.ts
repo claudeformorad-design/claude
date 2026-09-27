@@ -7,7 +7,7 @@ import { createClient, type SupabaseServerClient } from "@/lib/supabase/server";
 import type { HotelRow, UserProfileRow } from "@/lib/supabase/database.types";
 import type { Permission } from "./permissions";
 
-export const HOTEL_COOKIE = "hotel_id";
+const HOTEL_COOKIE = "hotel_id";
 
 export interface AppContext {
   supabase: SupabaseServerClient;
@@ -31,16 +31,20 @@ export const getAppContext = cache(async (): Promise<AppContext | { user: User |
   } = await supabase.auth.getUser();
   if (!user) return { user: null, hotel: null };
 
-  const [{ data: profile }, { data: hotels }] = await Promise.all([
+  // صلاحيات الفندق المحفوظ في الكوكي تُجلب بالتوازي مع الملف والفنادق (الحالة المعتادة)، فلا تنتظر جولة إضافية
+  const cookieHotel = (await cookies()).get(HOTEL_COOKIE)?.value;
+  const permsFor = (hotelId: string) => supabase.rpc("my_permissions", { p_hotel_id: hotelId });
+  const [{ data: profile }, { data: hotels }, early] = await Promise.all([
     supabase.from("users_profiles").select("*").eq("id", user.id).maybeSingle(),
     supabase.from("hotels").select("*").eq("is_active", true).order("name_ar"),
+    cookieHotel ? permsFor(cookieHotel) : null,
   ]);
   if (!hotels || hotels.length === 0) return { user, hotel: null };
 
-  const preferred = (await cookies()).get(HOTEL_COOKIE)?.value ?? profile?.default_hotel_id;
+  const preferred = cookieHotel ?? profile?.default_hotel_id;
   const hotel = hotels.find((h) => h.id === preferred) ?? hotels[0]!;
 
-  const { data: perms } = await supabase.rpc("my_permissions", { p_hotel_id: hotel.id });
+  const { data: perms } = early && hotel.id === cookieHotel ? early : await permsFor(hotel.id);
   const permissions = new Set<string>(perms ?? []);
 
   return {
