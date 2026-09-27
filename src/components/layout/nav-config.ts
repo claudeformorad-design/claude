@@ -1,7 +1,7 @@
 import {
   BarChart3, Banknote, BedDouble, BookOpen, Boxes, Building2, CalendarCheck, CalendarDays, CalendarRange, Clock, ConciergeBell, DoorOpen,
   FileSpreadsheet, FileText, History, Hourglass, Landmark, LayoutDashboard, ListChecks, ListTree, Percent, PieChart, Receipt, Scale,
-  ClipboardList, Coins, MoonStar, Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
+  ClipboardList, Coins, MoonStar, BrushCleaning, Utensils, BadgePercent, Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
 } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import type { HotelModule } from "@/lib/supabase/database.types";
@@ -40,6 +40,7 @@ function allGroups(l: NavLabels): NavGroup[] {
         { href: "/tape-chart", label: l.tapeChart, icon: CalendarRange, permission: "pms.reservations.view" },
         { href: "/guests", label: l.guests, icon: UserRound, permission: "pms.reservations.view" },
         { href: "/waitlist", label: l.waitlist, icon: Hourglass, permission: "pms.reservations.view" },
+        { href: "/pos", label: l.pos, icon: Utensils, permission: "pos.sell" },
         { href: "/cashier", label: l.cashier, icon: Banknote, permission: "cashier.shifts" },
         { href: "/night-audit", label: l.nightAudit, icon: MoonStar, permission: "pms.reports.view" },
         { href: "/guest-register", label: l.guestRegister, icon: ClipboardList, permission: "pms.reports.view" },
@@ -53,6 +54,8 @@ function allGroups(l: NavLabels): NavGroup[] {
       items: [
         { href: "/rooms", label: l.rooms, icon: DoorOpen, permission: "pms.reservations.view" },
         { href: "/rates", label: l.rates, icon: Tags, permission: "pms.reservations.view" },
+        { href: "/rate-plans", label: l.ratePlans, icon: BadgePercent, permission: "pms.reservations.view" },
+        { href: "/housekeeping", label: l.housekeeping, icon: BrushCleaning, permission: "pms.housekeeping" },
         { href: "/room-setup", label: l.roomSetup, icon: Building2, permission: "pms.setup.manage" },
       ],
     },

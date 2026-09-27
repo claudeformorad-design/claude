@@ -23,6 +23,8 @@ import { cancelReservationAction, cancelSeriesAction, confirmReservationAction, 
 import { AssignRoom } from "./assign-room";
 import { StayPanel } from "./stay-panel";
 import { BillingSelect } from "./billing-select";
+import { RatePlanSelect } from "./rate-plan-select";
+import { listRatePlans } from "@/services/operations.service";
 
 export default async function ReservationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -81,6 +83,13 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
     : [null, [], []];
   const fx = latestRates(rates, today);
   const posted = r.nights.filter((n) => n.folio_transaction_id).length;
+  // خطط الأسعار المتاحة لهذا الحجز (الليلي القياسي فقط)
+  const planable = !hourly && r.pricing === "standard";
+  const plans = planable ? await listRatePlans(ctx.supabase, ctx.hotel.id) : [];
+  const planOptions = plans.filter((p) => (p.is_active || p.id === r.rate_plan_id)
+    && (!p.customer_id || p.customer_id === r.customer_id) && (!p.room_type_id || p.room_type_id === r.room_type_id))
+    .map((p) => ({ id: p.id, label: `${p.name_ar}${p.includes_breakfast ? " (مع الإفطار)" : ""}` }));
+  const planName = plans.find((p) => p.id === r.rate_plan_id)?.name_ar;
 
   return (
     <>
@@ -189,6 +198,13 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
                   </Row>
                 )}
                 {r.status === "tentative" && r.tentative_until && <Row label="مبدئي حتى"><span className="num">{r.tentative_until}</span></Row>}
+                {planable && (planOptions.length > 0 || r.rate_plan_id) && (
+                  <Row label="خطة السعر">
+                    {ctx.can(PERMISSIONS.pmsManage) && stayOpen
+                      ? <RatePlanSelect reservationId={r.id} current={r.rate_plan_id} plans={planOptions} errors={t.errors} />
+                      : (planName ?? "السعر القياسي")}
+                  </Row>
+                )}
                 {r.rate_reason && <Row label="سبب السعر">{r.rate_reason}</Row>}
                 {r.special_requests && <Row label="طلبات النزيل">{r.special_requests}</Row>}
                 {r.notes && <Row label="ملاحظات">{r.notes}</Row>}

@@ -56,7 +56,7 @@ export type ReservationListItem = ReservationRow & {
 };
 
 const RES_COLS =
-  "id, hotel_id, confirmation_number, guest_id, customer_id, room_type_id, room_id, booking_mode, arrival_date, departure_date, starts_at, ends_at, adults, children, status, source, pricing, fixed_rate::text, rate_reason, last_minute_pct::text, total_amount::text, group_id, series_id, tentative_until, special_requests, notes, cancelled_at, cancelled_by, cancellation_reason, folio_id, checked_in_at, checked_out_at, created_at, created_by, updated_at, updated_by";
+  "id, hotel_id, confirmation_number, guest_id, customer_id, room_type_id, room_id, booking_mode, arrival_date, departure_date, starts_at, ends_at, adults, children, status, source, pricing, fixed_rate::text, rate_reason, last_minute_pct::text, total_amount::text, group_id, series_id, tentative_until, special_requests, notes, cancelled_at, cancelled_by, cancellation_reason, folio_id, checked_in_at, checked_out_at, bill_to, rate_plan_id, created_at, created_by, updated_at, updated_by";
 const RES_EMBED = `${RES_COLS}, guest:guests(full_name, phone), room:rooms(room_number), room_type:room_types(code, name_ar)`;
 
 export async function listReservations(

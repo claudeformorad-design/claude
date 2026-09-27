@@ -404,7 +404,7 @@ export type ReservationRow = Audit & {
   last_minute_pct: string | null; total_amount: string; group_id: string | null; series_id: string | null;
   tentative_until: string | null; special_requests: string | null; notes: string | null;
   cancelled_at: string | null; cancelled_by: string | null; cancellation_reason: string | null; folio_id: string | null;
-  checked_in_at: string | null; checked_out_at: string | null; bill_to: BillTo;
+  checked_in_at: string | null; checked_out_at: string | null; bill_to: BillTo; rate_plan_id: string | null;
 };
 export type ReservationNightRow = {
   reservation_id: string; hotel_id: string; stay_date: string; quantity: string; rate: string; discount: string; amount: string; season_id: string | null;
@@ -439,6 +439,27 @@ export type GuestRegisterRow = {
   reservation_id: string; confirmation_number: string; room_number: string | null; full_name: string; nationality: string | null;
   id_type: GuestIdType | null; id_number: string | null; date_of_birth: string | null; phone: string | null; adults: number; children: number;
   arrival_date: string; departure_date: string; checked_in_at: string | null; company: string | null;
+};
+
+export type PosOutletRow = { id: string; hotel_id: string; code: string; name_ar: string; is_active: boolean; sort_order: number; created_at: string; created_by: string | null };
+export type PosItemRow = {
+  id: string; hotel_id: string; outlet_id: string; name_ar: string; category: string | null; price: string; charge_code_id: string;
+  is_active: boolean; sort_order: number; created_at: string; created_by: string | null;
+};
+export type PosOrderRow = {
+  id: string; hotel_id: string; outlet_id: string; order_number: string; settle_mode: "room" | "paid"; reservation_id: string | null;
+  folio_id: string; invoice_id: string | null; payment_method_id: string | null; total: string; note: string | null; created_at: string; created_by: string | null;
+};
+export type HousekeepingKind = "departure" | "stayover" | "inspection" | "maintenance" | "turndown";
+export type HousekeepingTaskStatus = "pending" | "in_progress" | "done" | "cancelled";
+export type HousekeepingTaskRow = {
+  id: string; hotel_id: string; room_id: string; task_date: string; kind: HousekeepingKind; status: HousekeepingTaskStatus;
+  assignee: string | null; priority: number; notes: string | null; created_at: string; started_at: string | null; completed_at: string | null;
+};
+export type RatePlanRow = {
+  id: string; hotel_id: string; code: string; name_ar: string; adjust_pct: string; per_night: string; per_person: boolean;
+  includes_breakfast: boolean; customer_id: string | null; room_type_id: string | null; description: string | null; is_active: boolean;
+  created_at: string; created_by: string | null;
 };
 
 export type CashierShiftRow = {
@@ -535,6 +556,11 @@ export type Database = {
       reservations: ReadOnlyTable<ReservationRow>;
       cashier_shifts: ReadOnlyTable<CashierShiftRow>;
       night_audits: ReadOnlyTable<NightAuditRow>;
+      pos_outlets: Table<PosOutletRow, "hotel_id" | "code" | "name_ar">;
+      pos_items: Table<PosItemRow, "hotel_id" | "outlet_id" | "name_ar" | "price" | "charge_code_id">;
+      pos_orders: ReadOnlyTable<PosOrderRow>;
+      housekeeping_tasks: ReadOnlyTable<HousekeepingTaskRow>;
+      rate_plans: Table<RatePlanRow, "hotel_id" | "code" | "name_ar">;
       reservation_nights: ReadOnlyTable<ReservationNightRow>;
       reservation_groups: ReadOnlyTable<ReservationGroupRow>;
       reservation_series: ReadOnlyTable<ReservationSeriesRow>;
@@ -646,6 +672,15 @@ export type Database = {
       night_audit_status: { Args: { p_hotel_id: string; p_date?: string | null }; Returns: NightAuditStatus };
       run_night_audit: { Args: { p_hotel_id: string; p_date?: string | null }; Returns: AuditSummary };
       guest_register: { Args: { p_hotel_id: string; p_date?: string | null }; Returns: GuestRegisterRow[] };
+      pos_in_house: { Args: { p_hotel_id: string }; Returns: { reservation_id: string; room_number: string | null; guest_name: string; confirmation_number: string; folio_id: string }[] };
+      pos_settle_order: {
+        Args: { p_outlet_id: string; p_lines: { item_id: string; quantity: string }[]; p_mode: "room" | "paid"; p_reservation_id?: string | null; p_payment_method_id?: string | null; p_note?: string | null };
+        Returns: { order_id: string; order_number: string; total: number; invoice_id: string | null; folio_id: string };
+      };
+      generate_housekeeping_tasks: { Args: { p_hotel_id: string; p_date?: string | null }; Returns: number };
+      add_housekeeping_task: { Args: { p_room_id: string; p_kind: HousekeepingKind; p_date?: string | null; p_notes?: string | null; p_assignee?: string | null; p_out_of_service?: boolean }; Returns: string };
+      update_housekeeping_task: { Args: { p_task_id: string; p_status?: HousekeepingTaskStatus | null; p_assignee?: string | null; p_notes?: string | null }; Returns: undefined };
+      set_reservation_rate_plan: { Args: { p_reservation_id: string; p_rate_plan_id: string | null }; Returns: undefined };
       set_reservation_billing: { Args: { p_reservation_id: string; p_bill_to: BillTo }; Returns: undefined };
       set_exchange_rate: { Args: { p_hotel_id: string; p_currency_code: string; p_rate: string; p_rate_date?: string | null }; Returns: undefined };
       post_folio_foreign_money: { Args: { p_folio_id: string; p_txn_type: "payment" | "deposit" | "refund" | "deposit_refund"; p_payment_method_id: string; p_foreign_amount: string; p_reference?: string | null }; Returns: string };

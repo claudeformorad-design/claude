@@ -1,6 +1,6 @@
 // جولة قسم إدارة الفندق عبر الواجهة: إعداد الغرف، الحجز والتخصيص ومنع الازدواج، السعة وقائمة الانتظار،
 // الوحدات بالساعة، الحجز المتكرر والجماعي، المواسم وتثبيت الأسعار، عروض اللحظة الأخيرة، حالة الغرف،
-// العربون والتسكين والتمديد ونقل الغرفة والمغادرة بالفاتورة (الفوليو في المحاسبة)، العملات وورديات الكاشير، تدقيق نهاية اليوم وكشف النزلاء، فصل الأقسام
+// العربون والتسكين والتمديد ونقل الغرفة والمغادرة بالفاتورة (الفوليو في المحاسبة)، العملات وورديات الكاشير، تدقيق نهاية اليوم وكشف النزلاء، خطط الأسعار ونقاط البيع والتدبير الفندقي، فصل الأقسام
 import { chromium } from "playwright";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3100";
@@ -315,6 +315,50 @@ await step("night audit posts tonight, marks no-shows and saves the manager repo
 await step("guest register lists tonight's in-house guests", async () => {
   await go(`/guest-register?date=${today}`);
   await bodyHas("كشف النزلاء", "نزيل سريع", "103");
+});
+await step("rate plan with breakfast reprices a booking", async () => {
+  await go("/rate-plans");
+  await page.fill("#code", "BB"); await page.fill("#name_ar", "مع الإفطار"); await page.fill("#per_night", "25");
+  await page.locator("label", { hasText: "الإضافة لكل شخص بالغ" }).locator("input").check();
+  await page.locator("label", { hasText: "تشمل الإفطار" }).locator("input").check();
+  await page.getByRole("button", { name: "حفظ الخطة" }).click();
+  await bodyHas("BB", "يشمل الإفطار");
+  await go("/reservations/new"); await newGuest("نزيل الإفطار");
+  await pick("#room_type_id", /DBL/); await page.fill("#arrival_date", plus(20)); await page.fill("#nights", "1");
+  await submitReservation(); await page.waitForURL(/reservations\/[0-9a-f-]{36}$/);
+  await pick(page.locator("select[aria-label='خطة السعر']"), /مع الإفطار/);
+  await page.getByRole("button", { name: "تطبيق", exact: true }).click();
+  await bodyHas(fmt((weekend(plus(20)) ? 350 : 300) + 25));
+});
+await step("point of sale: room charge and paid order with invoice", async () => {
+  await go("/pos/setup");
+  await page.fill("#code", "REST"); await page.fill("#name_ar", "المطعم");
+  await page.getByRole("button", { name: "حفظ النقطة" }).click();
+  await bodyHas("المطعم");
+  await page.fill("#item_name", "مندي"); await page.fill("#price", "60");
+  await page.getByRole("button", { name: "حفظ الصنف" }).click();
+  await bodyHas("مندي", "60.00");
+  await go("/pos");
+  await page.getByRole("button", { name: /مندي/ }).click(); await page.getByRole("button", { name: /مندي/ }).click();
+  await bodyHas("120.00");
+  await pick("#pos_guest", /نزيل سريع/);
+  await page.getByRole("button", { name: "ترحيل على الغرفة" }).click();
+  await bodyHas("POS-", "على الغرفة");
+  await page.getByRole("button", { name: /مندي/ }).click();
+  await page.getByRole("button", { name: /دفع فوري/ }).click();
+  await page.getByRole("button", { name: "دفع وإصدار الفاتورة" }).click();
+  await page.getByRole("link", { name: /الفاتورة/ }).waitFor();
+  await bodyHas("مدفوع");
+});
+await step("housekeeping: generate today's tasks and finish one", async () => {
+  await go("/housekeeping");
+  await page.getByRole("button", { name: "توليد مهام اليوم" }).click();
+  await bodyHas("تنظيف");
+  const before = await page.getByRole("button", { name: "تم", exact: true }).count();
+  if (!before) throw new Error("no open tasks");
+  await page.getByRole("button", { name: "تم", exact: true }).first().click();
+  await page.waitForTimeout(1500); await go("/housekeeping?tab=done");
+  await bodyHas("أُنجزت");
 });
 await step("modules: disabling hotel management hides it and blocks its pages", async () => {
   await go("/settings/hotel");
