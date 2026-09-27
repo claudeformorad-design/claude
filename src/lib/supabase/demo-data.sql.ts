@@ -229,7 +229,7 @@ declare
   t_sgl uuid; t_dbl uuid; t_ste uuid; t_fam uuid; t_hall uuid; t_pool uuid;
   c_room uuid; c_events uuid; c_spa uuid; v_cust uuid;
   g uuid[] := '{}'; v_g uuid; v_t uuid; v_r uuid; v_room uuid; v_arr date; v_n int; i int; v_types uuid[];
-  v_ts timestamp; v_name text;
+  v_ts timestamp; v_name text; v_pm uuid;
   names text[] := array['محمد العتيبي','سارة القحطاني','عبدالله الشمري','نورة الدوسري','خالد الحربي','ريم الزهراني','فهد المطيري',
     'هيفاء الغامدي','سلطان العنزي','لمى السبيعي','ماجد الرشيدي','أمل الشهري','تركي البقمي','جود العمري','ناصر الجهني','دانة الخالدي',
     'أحمد باوزير','مريم الحضرمي','يوسف العولقي','هدى المقطري'];
@@ -381,6 +381,21 @@ begin
                         order by (select count(*) from public.reservations x where x.room_type_id = t_ste and x.status in ('tentative','confirmed')
                                    and d::date >= x.arrival_date and d::date < x.departure_date) desc limit 1),
     p_guest_name => 'م. عادل السقاف', p_phone => '777123456', p_adults => 2::smallint, p_notes => 'يفضّل إطلالة على البحر');
+
+  -- التسكين: وصول اليوم ممن خُصصت لهم غرف — يُفتح فوليو الحجز في المحاسبة وتُرحَّل ليلة اليوم
+  select id into v_pm from public.payment_methods where hotel_id = h and code = 'CARD';
+  for v_r in select id from public.reservations where hotel_id = h and booking_mode = 'nightly' and arrival_date = v_today
+               and status in ('tentative', 'confirmed') and room_id is not null order by created_at limit 6 loop
+    perform public.check_in_reservation(v_r);
+    perform public.post_reservation_charges(v_r);
+  end loop;
+  -- عربون مقدم على بعض الحجوزات القادمة
+  if v_pm is not null then
+    for v_r in select id from public.reservations where hotel_id = h and status = 'confirmed' and arrival_date > v_today
+                 order by arrival_date, created_at limit 5 loop
+      perform public.record_reservation_deposit(v_r, v_pm, 200, 'حوالة مسبقة');
+    end loop;
+  end if;
 
   -- حالة الغرف: بعضها يحتاج تنظيف وواحدة خارج الخدمة
   update public.rooms set housekeeping_status = 'dirty' where hotel_id = h and room_number in ('103', '205', '207', '302', '309');

@@ -14,11 +14,13 @@ import { formatDateTime, todayInTimeZone } from "@/lib/accounting/fiscal";
 import { ZERO, toMoney } from "@/lib/accounting/money";
 import { ACTIVE_STATUSES, PRICING_LABEL, RESERVATION_SOURCE, RESERVATION_STATUS, WEEKDAYS } from "@/lib/pms/labels";
 import { dayLabel, nightsBetween, timeOf } from "@/lib/pms/dates";
-import { getReservation, listReservations, listRooms } from "@/services/pms.service";
+import { folioSnapshot, getReservation, listReservations, listRoomTypes, listRooms } from "@/services/pms.service";
+import { listPaymentMethods } from "@/services/revenue-settings.service";
 import { getI18n } from "@/i18n/server";
 import { ActionButton } from "../../_pms/action-button";
 import { cancelReservationAction, cancelSeriesAction, confirmReservationAction, noShowAction } from "../../_pms/actions";
 import { AssignRoom } from "./assign-room";
+import { StayPanel } from "./stay-panel";
 
 export default async function ReservationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -35,19 +37,46 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
   const status = RESERVATION_STATUS[r.status];
   const discount = r.nights.reduce((a, n) => a.plus(toMoney(n.discount)), ZERO);
 
+  const stayOpen = r.status === "tentative" || r.status === "confirmed" || r.status === "checked_in";
+  const canStay = ctx.can(PERMISSIONS.pmsManage) && (stayOpen || !!r.folio_id);
+
   // الغرف المرشحة للتخصيص: من نفس النوع، مع تمييز المحجوزة في نفس الفترة
   let roomChoices: { id: string; label: string; busy: boolean }[] = [];
-  if (canManage) {
-    const [rooms, overlapping] = await Promise.all([
+  let checkInRooms: { id: string; label: string; note?: string }[] = [];
+  let moveRooms: { id: string; label: string }[] = [];
+  if (canManage || (canStay && stayOpen)) {
+    const [rooms, overlapping, types] = await Promise.all([
       listRooms(ctx.supabase, ctx.hotel.id),
       listReservations(ctx.supabase, ctx.hotel.id, { statuses: ACTIVE_STATUSES, from: r.arrival_date, to: r.departure_date }),
+      listRoomTypes(ctx.supabase, ctx.hotel.id),
     ]);
-    const busy = new Set(overlapping.filter((x) => x.id !== r.id && x.room_id && (hourly
+    const nightlyTypes = new Set(types.filter((x) => x.booking_mode === "nightly" && x.is_active).map((x) => x.id));
+    const others = overlapping.filter((x) => x.id !== r.id && x.room_id);
+    const busyIn = (from: string, to: string) => new Set(others.filter((x) => (hourly
       ? x.starts_at! < r.ends_at! && r.starts_at! < x.ends_at!
-      : x.arrival_date < r.departure_date && r.arrival_date < x.departure_date)).map((x) => x.room_id!));
-    roomChoices = rooms.filter((x) => x.is_active && x.service_status === "in_service" && x.room_type_id === r.room_type_id)
-      .map((x) => ({ id: x.id, label: `الغرفة ${x.room_number}`, busy: busy.has(x.id) }));
+      : x.arrival_date < to && from < x.departure_date)).map((x) => x.room_id!));
+    const busy = busyIn(r.arrival_date, r.departure_date);
+    const usable = rooms.filter((x) => x.is_active && x.service_status === "in_service");
+    const sameType = usable.filter((x) => x.room_type_id === r.room_type_id);
+    roomChoices = sameType.map((x) => ({ id: x.id, label: `الغرفة ${x.room_number}`, busy: busy.has(x.id) }));
+    checkInRooms = sameType.filter((x) => !busy.has(x.id))
+      .map((x) => ({ id: x.id, label: `الغرفة ${x.room_number}`, note: x.housekeeping_status === "dirty" ? "تحتاج تنظيف" : undefined }))
+      .sort((a, b) => Number(!!a.note) - Number(!!b.note));
+    if (r.status === "checked_in" && !hourly) {
+      const rest = busyIn(today > r.arrival_date ? today : r.arrival_date, r.departure_date);
+      moveRooms = usable.filter((x) => x.id !== r.room_id && !rest.has(x.id) && x.housekeeping_status !== "dirty" && nightlyTypes.has(x.room_type_id))
+        .map((x) => ({ id: x.id, label: `الغرفة ${x.room_number}${x.room_type_id !== r.room_type_id ? " (نوع آخر)" : ""}` }));
+    }
   }
+
+  // الفوليو وطرق الدفع للوحة الإقامة (المال كله في المحاسبة)
+  const [folio, methods] = canStay
+    ? await Promise.all([
+        r.folio_id ? folioSnapshot(ctx.supabase, r.folio_id) : Promise.resolve(null),
+        listPaymentMethods(ctx.supabase, ctx.hotel.id),
+      ])
+    : [null, []];
+  const posted = r.nights.filter((n) => n.folio_transaction_id).length;
 
   return (
     <>
@@ -96,7 +125,10 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
             <CardHeader>
               <CardTitle className="justify-between">
                 <span>{hourly ? "تفصيل السعر" : "أسعار الليالي (مثبّتة وقت الحجز)"}</span>
-                {r.last_minute_pct && <Badge variant="info"><BadgePercent className="size-3.5" />خصم اللحظة الأخيرة {Number(r.last_minute_pct)}%</Badge>}
+                <span className="flex flex-wrap gap-2">
+                  {posted > 0 && <Badge variant="success">مُرحَّل على الفوليو: {posted} من {r.nights.length}</Badge>}
+                  {r.last_minute_pct && <Badge variant="info"><BadgePercent className="size-3.5" />خصم اللحظة الأخيرة {Number(r.last_minute_pct)}%</Badge>}
+                </span>
               </CardTitle>
             </CardHeader>
             <Table>
@@ -106,7 +138,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
               <TableBody>
                 {r.nights.map((n) => (
                   <TableRow key={n.stay_date}>
-                    <TableCell>{dayLabel(n.stay_date, { weekday: "long", day: "numeric", month: "long" })}</TableCell>
+                    <TableCell>{dayLabel(n.stay_date, { weekday: "long", day: "numeric", month: "long" })}{n.folio_transaction_id && <Badge variant="success" className="ms-2">مُرحّلة</Badge>}</TableCell>
                     <TableCell>{hourly ? <span className="num">{Number(n.quantity)}</span> : n.season_name ? <Badge variant="outline">{n.season_name}</Badge> : <span className="text-slate-400">—</span>}</TableCell>
                     <TableCell className="text-end"><Money value={n.rate} locale={locale} /></TableCell>
                     <TableCell className="text-end"><Money value={n.discount} locale={locale} blankZero /></TableCell>
@@ -126,6 +158,17 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
         </div>
 
         <div className="space-y-6">
+          {canStay && (
+            <StayPanel
+              reservationId={r.id} status={r.status} hourly={hourly} canCheckIn={r.arrival_date <= today && (hourly || r.departure_date > today)}
+              today={today} arrival={r.arrival_date} departure={r.departure_date}
+              folio={folio && folio.status === "open" ? { id: folio.id, number: folio.number, balance: folio.balance, deposits: folio.deposits } : null}
+              methods={methods.filter((m) => m.is_active).map((m) => ({ id: m.id, label: m.name_ar, kind: m.kind }))}
+              customer={r.customer && r.customer_id ? { id: r.customer_id, label: r.customer.name_ar } : null}
+              checkInRooms={checkInRooms} moveRooms={moveRooms} currentRoomId={r.room_id}
+              canViewFolio={ctx.can(PERMISSIONS.folioView)} canViewInvoices={ctx.can(PERMISSIONS.invoicesView)} errors={t.errors}
+            />
+          )}
           <Card>
             <CardHeader><CardTitle>التفاصيل</CardTitle></CardHeader>
             <CardContent>
@@ -136,6 +179,9 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
                 {r.rate_reason && <Row label="سبب السعر">{r.rate_reason}</Row>}
                 {r.special_requests && <Row label="طلبات النزيل">{r.special_requests}</Row>}
                 {r.notes && <Row label="ملاحظات">{r.notes}</Row>}
+                {r.checked_in_at && <Row label="الوصول"><span className="num">{formatDateTime(r.checked_in_at, ctx.hotel.timezone)}</span></Row>}
+                {r.checked_out_at && <Row label="المغادرة"><span className="num">{formatDateTime(r.checked_out_at, ctx.hotel.timezone)}</span></Row>}
+                {folio && folio.status !== "open" && ctx.can(PERMISSIONS.folioView) && <Row label="الفوليو"><Link href={`/folios/${folio.id}`} className="num font-semibold text-action hover:underline">{folio.number}</Link></Row>}
                 {r.cancellation_reason && <Row label={r.status === "no_show" ? "عدم الحضور" : "سبب الإلغاء"}>{r.cancellation_reason}</Row>}
                 <Row label="أُنشئ"><span className="num">{formatDateTime(r.created_at, ctx.hotel.timezone)}</span></Row>
               </dl>

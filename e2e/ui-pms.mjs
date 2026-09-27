@@ -1,5 +1,6 @@
 // جولة قسم إدارة الفندق عبر الواجهة: إعداد الغرف، الحجز والتخصيص ومنع الازدواج، السعة وقائمة الانتظار،
-// الوحدات بالساعة، الحجز المتكرر والجماعي، المواسم وتثبيت الأسعار، عروض اللحظة الأخيرة، حالة الغرف، فصل الأقسام
+// الوحدات بالساعة، الحجز المتكرر والجماعي، المواسم وتثبيت الأسعار، عروض اللحظة الأخيرة، حالة الغرف،
+// العربون والتسكين والتمديد ونقل الغرفة والمغادرة بالفاتورة (الفوليو في المحاسبة)، فصل الأقسام
 import { chromium } from "playwright";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3100";
@@ -191,6 +192,61 @@ await step("tape chart and guest profile", async () => {
   await go("/tape-chart"); await bodyHas("جدول الإشغال", "101");
   await go("/guests?q=" + encodeURIComponent("سالم")); await page.getByRole("link", { name: /سالم أحمد/ }).first().click();
   await page.waitForURL(/guests\/[0-9a-f-]{36}$/); await bodyHas("سجل الحجوزات", "ملغى");
+});
+let stayId = "";
+await step("deposit before arrival opens the folio in accounting", async () => {
+  await go("/reservations/new"); await newGuest("نزيل التسكين", "777222333");
+  await pick("#room_type_id", /DBL/); await page.fill("#arrival_date", today); await page.fill("#nights", "2");
+  await pick("#room_id", /103/);
+  await submitReservation(); await page.waitForURL(/reservations\/[0-9a-f-]{36}$/);
+  stayId = page.url().split("/").pop();
+  await page.fill("#dep_amount", "100"); await page.fill("#dep_ref", "TRX-1");
+  await page.getByRole("button", { name: "تسجيل", exact: true }).click();
+  await bodyHas("فتح الفوليو", "100.00");
+});
+await step("dirty room blocks check-in; clean room checks in", async () => {
+  await pick("#checkin_room", /102/);
+  await page.getByRole("button", { name: "تسكين" }).click();
+  await page.locator("text=لم تُنظَّف بعد").first().waitFor();
+  await pick("#checkin_room", /103/);
+  await page.getByRole("button", { name: "تسكين" }).click();
+  await bodyHas("مقيم", "تسجيل المغادرة", "أثناء الإقامة");
+});
+await step("post tonight, extend the stay and move rooms", async () => {
+  await page.getByRole("button", { name: "ترحيل الليالي" }).click();
+  await bodyHas("مُرحَّل على الفوليو: 1 من 2");
+  await page.fill("#new_departure", plus(3));
+  await page.getByRole("button", { name: "تمديد" }).click();
+  await bodyHas("3 ليلة");
+  await pick("#move_room", /101/); await page.fill("#move_reason", "ترقية");
+  await page.getByRole("button", { name: "نقل", exact: true }).click();
+  await page.waitForTimeout(1500); await go(`/reservations/${stayId}`);
+  await bodyHas("نُقل", "101");
+});
+await step("early check-out: pay the balance and issue the tax invoice", async () => {
+  await page.getByRole("button", { name: "تجهيز الفاتورة" }).click();
+  await bodyHas("المستحق");
+  await page.getByRole("button", { name: /تسجيل المغادرة/ }).last().click();
+  await page.waitForURL(/invoices\/[0-9a-f-]{36}$/, { timeout: 30000 });
+  await bodyHas("نزيل التسكين");
+  await go(`/reservations/${stayId}`); await bodyHas("غادر", "1 ليلة");
+  await go("/rooms?filter=dirty"); await bodyHas("101");
+});
+await step("front desk quick check-in and in-house list", async () => {
+  // 103 أصبحت تحتاج تنظيف بعد نقل النزيل منها
+  await go("/rooms");
+  await page.getByRole("button", { name: /^103/ }).click();
+  await page.getByRole("button", { name: "نظيفة", exact: true }).click();
+  await page.waitForTimeout(1200);
+  await go("/reservations/new"); await newGuest("نزيل سريع");
+  await pick("#room_type_id", /DBL/); await page.fill("#arrival_date", today); await page.fill("#nights", "1");
+  await pick("#room_id", /103/);
+  await submitReservation(); await page.waitForURL(/reservations\/[0-9a-f-]{36}$/);
+  await go("/front-desk");
+  await page.getByRole("row", { name: /نزيل سريع/ }).getByRole("button", { name: "تسكين" }).click();
+  await page.waitForTimeout(1500); await go("/front-desk");
+  await bodyHas("المقيمون الآن", "نزيل سريع");
+  if (!/المقيمون الآن[\s\S]*نزيل سريع/.test(await page.locator("main").innerText())) throw new Error("guest not in the in-house list");
 });
 await step("modules: disabling hotel management hides it and blocks its pages", async () => {
   await go("/settings/hotel");

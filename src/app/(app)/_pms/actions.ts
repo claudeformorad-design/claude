@@ -9,6 +9,7 @@ import {
   roomSchema, roomStatusSchema, roomTypeSchema, seasonSchema, waitlistSchema,
 } from "@/lib/validation/pms";
 import type { ReservationQuote } from "@/lib/supabase/database.types";
+import { isValidAmount, toMoney } from "@/lib/accounting/money";
 import { quoteReservation } from "@/services/pms.service";
 import { raise, type ActionResult, toActionResult } from "@/services/errors";
 
@@ -288,6 +289,74 @@ export async function cancelSeriesAction(seriesId: string, reason: string, fromD
     return Number(data ?? 0);
   });
   if (r.ok) refreshPms();
+  return r;
+}
+
+// ----------------------------------------------------------------------------- التسكين والمغادرة
+const moneyInput = z.string().trim().refine((v) => isValidAmount(v) && toMoney(v).gt(0), "invalid_amount").transform((v) => toMoney(v).toFixed());
+
+export async function recordDepositAction(reservationId: string, input: unknown): Promise<ActionResult<undefined>> {
+  const p = z.object({ method: z.uuid(), amount: moneyInput, reference: z.string().trim().max(100).optional() }).safeParse(input);
+  if (!p.success) return fail;
+  return reservationOp(PERMISSIONS.pmsManage, reservationId, (ctx) => ctx.supabase.rpc("record_reservation_deposit", {
+    p_reservation_id: reservationId, p_payment_method_id: p.data.method, p_amount: p.data.amount, p_reference: p.data.reference || null,
+  }));
+}
+
+export async function checkInAction(reservationId: string, roomId?: string | null) {
+  return reservationOp(PERMISSIONS.pmsManage, reservationId, (ctx) =>
+    ctx.supabase.rpc("check_in_reservation", { p_reservation_id: reservationId, p_room_id: roomId || null }));
+}
+
+export async function postChargesAction(reservationId: string) {
+  return reservationOp(PERMISSIONS.pmsManage, reservationId, (ctx) => ctx.supabase.rpc("post_reservation_charges", { p_reservation_id: reservationId }));
+}
+
+export async function moveRoomAction(reservationId: string, roomId: string, reason: string) {
+  return reservationOp(PERMISSIONS.pmsManage, reservationId, (ctx) =>
+    ctx.supabase.rpc("move_reservation_room", { p_reservation_id: reservationId, p_room_id: roomId, p_reason: reason }));
+}
+
+export async function changeDepartureAction(reservationId: string, departure: string) {
+  return reservationOp(PERMISSIONS.pmsManage, reservationId, (ctx) =>
+    ctx.supabase.rpc("change_stay_departure", { p_reservation_id: reservationId, p_departure_date: departure }));
+}
+
+/** تجهيز المغادرة: تقصير الإقامة إن كانت مبكرة وترحيل كل الليالي، ثم الرصيد المستحق */
+export async function prepareCheckOutAction(reservationId: string): Promise<ActionResult<{ folio_id: string; balance: number; deposits: number; due: number }>> {
+  const ctx = await requireAppContext(PERMISSIONS.pmsManage);
+  if (!id.safeParse(reservationId).success) return fail;
+  const r = await toActionResult(async () => {
+    const { data, error } = await ctx.supabase.rpc("prepare_check_out", { p_reservation_id: reservationId });
+    raise(error);
+    return data!;
+  });
+  if (r.ok) refreshPms(`/reservations/${reservationId}`);
+  return r;
+}
+
+/** تحصيل المتبقي (إن وُجد) ثم المغادرة وإصدار الفاتورة الضريبية — الناتج رقم الفاتورة */
+export async function settleAndCheckOutAction(reservationId: string, input: unknown): Promise<ActionResult<string | null>> {
+  const ctx = await requireAppContext(PERMISSIONS.pmsManage);
+  const p = z.object({ method: z.string().optional(), amount: z.string().trim().optional(), customer_id: z.string().optional() }).safeParse(input);
+  if (!p.success || !id.safeParse(reservationId).success) return fail;
+  const r = await toActionResult(async () => {
+    const prep = await ctx.supabase.rpc("prepare_check_out", { p_reservation_id: reservationId });
+    raise(prep.error);
+    const amount = p.data.amount && isValidAmount(p.data.amount) ? toMoney(p.data.amount) : null;
+    if (amount && amount.gt(0)) {
+      if (!p.data.method) raise({ message: "Select a payment method" });
+      const pay = await ctx.supabase.rpc("post_folio_payment", {
+        p_folio_id: prep.data!.folio_id, p_payment_method_id: p.data.method!, p_amount: amount.toFixed(),
+        p_description: "تحصيل عند المغادرة", p_customer_id: p.data.customer_id || null,
+      });
+      raise(pay.error);
+    }
+    const { data, error } = await ctx.supabase.rpc("check_out_reservation", { p_reservation_id: reservationId });
+    raise(error);
+    return (data as string | null) ?? null;
+  });
+  if (r.ok) refreshPms(`/reservations/${reservationId}`, "/folios", "/invoices");
   return r;
 }
 

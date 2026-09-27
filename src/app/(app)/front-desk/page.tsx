@@ -1,5 +1,5 @@
 import Link from "@/components/link";
-import { ArrowLeft, BedDouble, BellRing, CalendarCheck, CalendarRange, DoorOpen, Hourglass, LogOut, Plus, Sparkles, Users, Wrench } from "lucide-react";
+import { ArrowLeft, BedDouble, BellRing, CalendarCheck, CalendarRange, DoorOpen, Hourglass, KeyRound, LogOut, Plus, Sparkles, Users, Wrench } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,10 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import { addDays, dayLabel, nightsBetween, timeOf } from "@/lib/pms/dates";
 import { RESERVATION_STATUS } from "@/lib/pms/labels";
 import { cn } from "@/lib/utils";
-import { frontDeskSummary, listReservations, roomTypeAvailability, type ReservationListItem } from "@/services/pms.service";
+import { frontDeskSummary, listReservations, listRooms, roomTypeAvailability, type ReservationListItem } from "@/services/pms.service";
 import { getI18n } from "@/i18n/server";
+import { ActionButton } from "../_pms/action-button";
+import { checkInAction } from "../_pms/actions";
 
 /**
  * لوحة الاستقبال: ما يحتاجه موظف الاستقبال اليوم في شاشة واحدة — الوصول والمغادرة، الإشغال الليلة،
@@ -24,12 +26,15 @@ export default async function FrontDeskPage() {
   const { t } = await getI18n();
   const s = await frontDeskSummary(ctx.supabase, ctx.hotel.id);
   const today = s.today;
-  const [arrivals, departures, holds, week] = await Promise.all([
+  const [arrivals, departures, holds, week, inHouse, rooms] = await Promise.all([
     listReservations(ctx.supabase, ctx.hotel.id, { statuses: ["tentative", "confirmed"], arrivalOn: today }),
     listReservations(ctx.supabase, ctx.hotel.id, { statuses: ["confirmed", "checked_in"], departureOn: today }),
     listReservations(ctx.supabase, ctx.hotel.id, { statuses: ["tentative"], from: today }),
     roomTypeAvailability(ctx.supabase, ctx.hotel.id, today, addDays(today, 7)),
+    listReservations(ctx.supabase, ctx.hotel.id, { statuses: ["checked_in"] }),
+    listRooms(ctx.supabase, ctx.hotel.id),
   ]);
+  const dirtyRooms = new Set(rooms.filter((x) => x.housekeeping_status === "dirty").map((x) => x.id));
   const expiring = holds.filter((r) => r.tentative_until && r.tentative_until <= today);
   const occupancy = s.capacity ? Math.round((s.sold_tonight / s.capacity) * 100) : 0;
   const days = Array.from({ length: 7 }, (_, i) => addDays(today, i)).map((d) => {
@@ -72,24 +77,57 @@ export default async function FrontDeskPage() {
       )}
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <Card className="overflow-hidden">
-          <CardHeader><CardTitle className="justify-between"><span>الوصول اليوم</span><Link href="/reservations?tab=arrivals" className="text-[15px] font-medium text-action hover:underline">الكل</Link></CardTitle></CardHeader>
-          <Table>
-            <TableHeader><TableRow><TableHead>النزيل</TableHead><TableHead>الغرفة</TableHead><TableHead>الإقامة</TableHead><TableHead>الحالة</TableHead></TableRow></TableHeader>
-            <TableBody>
-              {arrivals.length === 0 && <TableRow><TableCell colSpan={4} className="py-10 text-center text-slate-500">لا يوجد وصول متوقع اليوم</TableCell></TableRow>}
-              {arrivals.map((r) => (
-                <TableRow key={r.id}>
-                  <TableCell className="cell-fluid"><EntityCell name={r.guest?.full_name ?? "—"} sub={r.confirmation_number} href={`/reservations/${r.id}`} /></TableCell>
-                  <TableCell className="whitespace-nowrap">{r.room ? <span className="num text-[17px] font-bold">{r.room.room_number}</span> : <Link href={`/reservations/${r.id}`}><Badge variant="warning">خصّص غرفة</Badge></Link>}
-                    <span className="block text-[13.5px] text-slate-500">{r.room_type?.name_ar}</span></TableCell>
-                  <TableCell className="num whitespace-nowrap">{stayText(r)}</TableCell>
-                  <TableCell><Badge variant={RESERVATION_STATUS[r.status].variant}>{RESERVATION_STATUS[r.status].label}</Badge></TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+        <div className="space-y-6">
+          <Card className="overflow-hidden">
+            <CardHeader><CardTitle className="justify-between"><span>الوصول اليوم</span><Link href="/reservations?tab=arrivals" className="text-[15px] font-medium text-action hover:underline">الكل</Link></CardTitle></CardHeader>
+            <Table>
+              <TableHeader><TableRow><TableHead>النزيل</TableHead><TableHead>الغرفة</TableHead><TableHead>الإقامة</TableHead><TableHead>الحالة</TableHead>{canManage && <TableHead />}</TableRow></TableHeader>
+              <TableBody>
+                {arrivals.length === 0 && <TableRow><TableCell colSpan={5} className="py-10 text-center text-slate-500">لا يوجد وصول متوقع اليوم</TableCell></TableRow>}
+                {arrivals.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell className="cell-fluid"><EntityCell name={r.guest?.full_name ?? "—"} sub={r.confirmation_number} href={`/reservations/${r.id}`} /></TableCell>
+                    <TableCell className="whitespace-nowrap">{r.room ? <span className="num text-[17px] font-bold">{r.room.room_number}</span> : <Link href={`/reservations/${r.id}`}><Badge variant="warning">خصّص غرفة</Badge></Link>}
+                      <span className="block text-[13.5px] text-slate-500">{r.room_type?.name_ar}</span></TableCell>
+                    <TableCell className="num whitespace-nowrap">{stayText(r)}</TableCell>
+                    <TableCell><Badge variant={RESERVATION_STATUS[r.status].variant}>{RESERVATION_STATUS[r.status].label}</Badge></TableCell>
+                    {canManage && (
+                      <TableCell className="text-end">
+                        {r.room_id && r.booking_mode === "nightly" && dirtyRooms.has(r.room_id)
+                          ? <Badge variant="warning">الغرفة تحتاج تنظيف</Badge>
+                          : (r.room_id || r.booking_mode === "hourly") && (
+                            <ActionButton variant="default" label="تسكين" done="تم تسجيل الوصول" errors={t.errors} icon={<KeyRound className="size-4" />}
+                              run={checkInAction.bind(null, r.id, r.room_id)} />
+                          )}
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+
+          <Card className="overflow-hidden">
+            <CardHeader><CardTitle className="justify-between"><span>المقيمون الآن</span><span className="num text-[15px] font-medium text-slate-500">{inHouse.length}</span></CardTitle></CardHeader>
+            <Table>
+              <TableHeader><TableRow><TableHead>النزيل</TableHead><TableHead>الغرفة</TableHead><TableHead>المغادرة</TableHead><TableHead /></TableRow></TableHeader>
+              <TableBody>
+                {inHouse.length === 0 && <TableRow><TableCell colSpan={4} className="py-10 text-center text-slate-500">لا يوجد نزلاء مقيمون</TableCell></TableRow>}
+                {inHouse.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell className="cell-fluid"><EntityCell name={r.guest?.full_name ?? "—"} sub={r.confirmation_number} href={`/reservations/${r.id}`} /></TableCell>
+                    <TableCell className="num whitespace-nowrap text-[17px] font-bold">{r.room?.room_number ?? "—"}</TableCell>
+                    <TableCell className="whitespace-nowrap">{r.booking_mode === "hourly" ? <span className="num">{timeOf(r.ends_at)}</span> : dayLabel(r.departure_date)}
+                      {r.departure_date < today && <Badge variant="destructive" className="ms-2">متأخر</Badge>}</TableCell>
+                    <TableCell className="text-end">
+                      {(r.departure_date <= today || r.booking_mode === "hourly") && <Button asChild size="sm" variant="outline"><Link href={`/reservations/${r.id}`}><LogOut className="size-4" />مغادرة</Link></Button>}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </div>
 
         <div className="space-y-6">
           <Card>
@@ -118,7 +156,9 @@ export default async function FrontDeskPage() {
                   <TableRow key={r.id}>
                     <TableCell className="cell-fluid"><EntityCell name={r.guest?.full_name ?? "—"} sub={r.confirmation_number} href={`/reservations/${r.id}`} /></TableCell>
                     <TableCell className="num font-bold">{r.room?.room_number ?? "—"}</TableCell>
-                    <TableCell><Badge variant={RESERVATION_STATUS[r.status].variant}>{RESERVATION_STATUS[r.status].label}</Badge></TableCell>
+                    <TableCell className="text-end">{r.status === "checked_in" && canManage
+                      ? <Button asChild size="sm" variant="dark"><Link href={`/reservations/${r.id}`}>مغادرة</Link></Button>
+                      : <Badge variant={RESERVATION_STATUS[r.status].variant}>{RESERVATION_STATUS[r.status].label}</Badge>}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

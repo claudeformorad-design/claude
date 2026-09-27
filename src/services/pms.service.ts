@@ -56,7 +56,7 @@ export type ReservationListItem = ReservationRow & {
 };
 
 const RES_COLS =
-  "id, hotel_id, confirmation_number, guest_id, customer_id, room_type_id, room_id, booking_mode, arrival_date, departure_date, starts_at, ends_at, adults, children, status, source, pricing, fixed_rate::text, rate_reason, last_minute_pct::text, total_amount::text, group_id, series_id, tentative_until, special_requests, notes, cancelled_at, cancelled_by, cancellation_reason, folio_id, created_at, created_by, updated_at, updated_by";
+  "id, hotel_id, confirmation_number, guest_id, customer_id, room_type_id, room_id, booking_mode, arrival_date, departure_date, starts_at, ends_at, adults, children, status, source, pricing, fixed_rate::text, rate_reason, last_minute_pct::text, total_amount::text, group_id, series_id, tentative_until, special_requests, notes, cancelled_at, cancelled_by, cancellation_reason, folio_id, checked_in_at, checked_out_at, created_at, created_by, updated_at, updated_by";
 const RES_EMBED = `${RES_COLS}, guest:guests(full_name, phone), room:rooms(room_number), room_type:room_types(code, name_ar)`;
 
 export async function listReservations(
@@ -93,7 +93,7 @@ export async function getReservation(supabase: SupabaseServerClient, hotelId: st
   if (!data) return null;
   const r = data as unknown as ReservationDetail;
   const [nights, seasons, series] = await Promise.all([
-    supabase.from("reservation_nights").select("reservation_id, hotel_id, stay_date, quantity::text, rate::text, discount::text, amount::text, season_id").eq("reservation_id", id).order("stay_date"),
+    supabase.from("reservation_nights").select("reservation_id, hotel_id, stay_date, quantity::text, rate::text, discount::text, amount::text, season_id, folio_transaction_id").eq("reservation_id", id).order("stay_date"),
     supabase.from("rate_seasons").select("id, name").eq("hotel_id", hotelId),
     r.series_id ? supabase.from("reservation_series").select("id, weekday, nights, start_time, end_time, start_date, end_date, status").eq("id", r.series_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
   ]);
@@ -161,6 +161,17 @@ export async function listLastMinuteRules(supabase: SupabaseServerClient, hotelI
     .eq("hotel_id", hotelId).order("days_before");
   raise(error);
   return (data ?? []) as unknown as LastMinuteRuleRow[];
+}
+
+/** رصيد فوليو الحجز وعربونه (الفوليو في المحاسبة) */
+export async function folioSnapshot(supabase: SupabaseServerClient, folioId: string) {
+  const [bal, folio] = await Promise.all([
+    supabase.from("folio_balances").select("balance::text, deposit_balance::text, transaction_count").eq("folio_id", folioId).maybeSingle(),
+    supabase.from("guest_folios").select("id, folio_number, status").eq("id", folioId).maybeSingle(),
+  ]);
+  if (!folio.data) return null;
+  const b = bal.data as { balance: string; deposit_balance: string; transaction_count: number } | null;
+  return { id: folio.data.id, number: folio.data.folio_number, status: folio.data.status, balance: b?.balance ?? "0", deposits: b?.deposit_balance ?? "0", count: b?.transaction_count ?? 0 };
 }
 
 /** العملاء (الشركات) لربط الحجز بجهة فوترة — يتطلب صلاحية عرض العملاء */

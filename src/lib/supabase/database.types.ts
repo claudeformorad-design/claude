@@ -402,10 +402,13 @@ export type ReservationRow = Audit & {
   last_minute_pct: string | null; total_amount: string; group_id: string | null; series_id: string | null;
   tentative_until: string | null; special_requests: string | null; notes: string | null;
   cancelled_at: string | null; cancelled_by: string | null; cancellation_reason: string | null; folio_id: string | null;
+  checked_in_at: string | null; checked_out_at: string | null;
 };
 export type ReservationNightRow = {
   reservation_id: string; hotel_id: string; stay_date: string; quantity: string; rate: string; discount: string; amount: string; season_id: string | null;
+  folio_transaction_id: string | null;
 };
+export type CheckOutSummary = { folio_id: string; balance: number; deposits: number; due: number };
 export type ReservationGroupRow = {
   id: string; hotel_id: string; group_number: string; name: string; customer_id: string | null; leader_guest_id: string | null;
   notes: string | null; created_at: string; created_by: string | null;
@@ -583,6 +586,13 @@ export type Database = {
         Returns: undefined;
       };
       front_desk_summary: { Args: { p_hotel_id: string }; Returns: FrontDeskSummary };
+      record_reservation_deposit: { Args: { p_reservation_id: string; p_payment_method_id: string; p_amount: string; p_reference?: string | null }; Returns: string };
+      check_in_reservation: { Args: { p_reservation_id: string; p_room_id?: string | null }; Returns: string };
+      post_reservation_charges: { Args: { p_reservation_id: string; p_through?: string | null }; Returns: number };
+      prepare_check_out: { Args: { p_reservation_id: string }; Returns: CheckOutSummary };
+      check_out_reservation: { Args: { p_reservation_id: string }; Returns: string | null };
+      move_reservation_room: { Args: { p_reservation_id: string; p_room_id: string; p_reason: string }; Returns: undefined };
+      change_stay_departure: { Args: { p_reservation_id: string; p_departure_date: string }; Returns: undefined };
       close_fiscal_year: { Args: { p_fiscal_year_id: string }; Returns: string | null };
       set_period_status: { Args: { p_period_id: string; p_status: PeriodStatus }; Returns: undefined };
       add_hotel_member: { Args: { p_hotel_id: string; p_email: string; p_role_ids: string[] }; Returns: string };
