@@ -30,7 +30,7 @@ export default async function ProfitabilityPage({ searchParams }: { searchParams
   ]);
   raise(res.error);
   const { departments: rows, total } = summarizeProfitability((res.data ?? []) as never);
-  const deptName = new Map(departments.map((d) => [d.id, `${d.code} — ${(locale === "en" && d.name_en) || d.name_ar}`]));
+  const deptName = new Map(departments.map((d) => [d.id, `${d.code} ${(locale === "en" && d.name_en) || d.name_ar}`]));
   const p = t.profitability;
   const cells = (r: DepartmentResult) => (
     <>
@@ -39,7 +39,7 @@ export default async function ProfitabilityPage({ searchParams }: { searchParams
       <TableCell className="text-end"><Money value={r.grossProfit} locale={locale} /></TableCell>
       <TableCell className="text-end"><Money value={r.operatingExpenses} locale={locale} blankZero /></TableCell>
       <TableCell className={cn("text-end font-semibold", r.netProfit.isNegative() ? "text-destructive" : "text-success")}><Money value={r.netProfit} locale={locale} /></TableCell>
-      <TableCell className="num text-end">{r.margin ? `${r.margin.toFixed(1)}%` : "—"}</TableCell>
+      <TableCell className="num text-end">{r.margin ? `${r.margin.toFixed(1)}%` : ""}</TableCell>
     </>
   );
   return (

@@ -43,7 +43,7 @@ const head = (text: string, width: number): ReportRow => ({ kind: "section", cel
 
 export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary, locale: string, p: ReportParams): Promise<ReportTable> {
   const r = t.reports;
-  const period = `${p.from} → ${p.to}`;
+  const period = `من ${p.from} إلى ${p.to}`;
   switch (key) {
     case "income-statement": {
       const is = await getIncomeStatement(ctx.supabase, ctx.hotel, p.from, p.to, locale);
@@ -51,7 +51,7 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
       const block = (k: keyof typeof is.sections) => {
         const s = is.sections[k];
         if (!s.lines.length) return;
-        rows.push(head(r.sections[k], 2), ...s.lines.map((l) => line(`${l.account.code} — ${l.account.name}`, l.amount)), sub(r.sections[k], s.total));
+        rows.push(head(r.sections[k], 2), ...s.lines.map((l) => line(`${l.account.code} ${l.account.name}`, l.amount)), sub(r.sections[k], s.total));
       };
       block("operating_revenue"); rows.push(total(r.totalRevenue, is.revenue));
       block("cost_of_sales"); rows.push(total(r.grossProfit, is.grossProfit));
@@ -65,7 +65,7 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
       const block = (k: keyof typeof bs.sections) => {
         const s = bs.sections[k];
         if (!s.lines.length) return;
-        rows.push(head(r.sections[k], 2), ...s.lines.map((l) => line(`${l.account.code} — ${l.account.name}`, l.amount)), sub(r.sections[k], s.total));
+        rows.push(head(r.sections[k], 2), ...s.lines.map((l) => line(`${l.account.code} ${l.account.name}`, l.amount)), sub(r.sections[k], s.total));
       };
       block("current_asset"); block("fixed_asset"); block("other_asset"); rows.push(total(r.totalAssets, bs.totalAssets));
       block("current_liability"); block("long_term_liability"); rows.push(total(r.totalLiabilities, bs.totalLiabilities));
@@ -90,7 +90,7 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
       const name = (a: { name_ar: string; name_en: string | null }) => (locale === "en" && a.name_en) || a.name_ar;
       const rows = tb.rows.map((row) => {
         const c = trialBalanceColumns(row);
-        return line(row.account ? `${row.account.code} — ${name(row.account)}` : t.trialBalance.unallocatedEarnings,
+        return line(row.account ? `${row.account.code} ${name(row.account)}` : t.trialBalance.unallocatedEarnings,
           c.openingDebit, c.openingCredit, c.periodDebit, c.periodCredit, c.closingDebit, c.closingCredit);
       });
       const x = tb.totals;
@@ -102,7 +102,7 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
     }
     case "rooms": {
       const { days, kpis } = await getRoomStats(ctx.supabase, ctx.hotel.id, p.from, p.to);
-      const pct = (m: Money | null) => (m ? `${m.toFixed(1)}%` : "—");
+      const pct = (m: Money | null) => (m ? `${m.toFixed(1)}%` : "");
       const rows = days.map((d) => {
         const occ = d.rooms_available ? toMoney(d.room_nights).div(d.rooms_available).times(100) : null;
         const adr = toMoney(d.room_nights).isZero() ? null : toMoney(d.room_revenue).div(toMoney(d.room_nights));
@@ -127,7 +127,7 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
       const { parties, totals } = summarizeAging(await agingReport(ctx.supabase, ctx.hotel.id, kind, p.to));
       const rows = parties.map((x) => line(x.partyName, ...AGING_BUCKETS.map((b) => x.buckets[b]), x.total));
       rows.push(total(t.common.total, ...AGING_BUCKETS.map((b) => totals.buckets[b]), totals.total));
-      return { title: `${t.nav.aging} — ${kind === "receivable" ? t.payables.receivable : t.payables.payable}`, subtitle: `${r.asOf} ${p.to}`,
+      return { title: `${t.nav.aging}، ${kind === "receivable" ? t.payables.receivable : t.payables.payable}`, subtitle: `${r.asOf} ${p.to}`,
         columns: [t.vouchers.party, ...AGING_BUCKETS.map((b) => t.payables.buckets[b]), t.common.total], rows };
     }
     case "tax-return": {
@@ -137,11 +137,11 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
       const a = t.admin;
       const rows = (data ?? []).map((x) => {
         const out = toMoney(x.sales_tax), inp = toMoney(x.purchases_tax);
-        return line(`${x.code} — ${x.name} (${toMoney(x.rate).toString()}%)`, toMoney(x.sales_base), out, toMoney(x.purchases_base), inp, out.minus(inp));
+        return line(`${x.code} ${x.name} ${toMoney(x.rate).toString()}%`, toMoney(x.sales_base), out, toMoney(x.purchases_base), inp, out.minus(inp));
       });
       const sum = (k: "sales_base" | "sales_tax" | "purchases_base" | "purchases_tax") => sumMoney((data ?? []).map((x) => x[k]));
       rows.push(total(t.common.total, sum("sales_base"), sum("sales_tax"), sum("purchases_base"), sum("purchases_tax"), sum("sales_tax").minus(sum("purchases_tax"))));
-      return { title: t.nav.taxReturn, subtitle: `${period} · ${a.taxSubtitle}`,
+      return { title: t.nav.taxReturn, subtitle: `${period}، ${a.taxSubtitle}`,
         columns: [t.revenueSettings.taxes, a.salesBase, a.salesTax, a.purchasesBase, a.purchasesTax, a.netPayable], rows };
     }
     case "profitability": {
@@ -151,9 +151,9 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
       ]);
       raise(res.error);
       const { departments: ds, total: tt } = summarizeProfitability((res.data ?? []) as never);
-      const dn = new Map(departments.map((d) => [d.id, `${d.code} — ${(locale === "en" && d.name_en) || d.name_ar}`]));
+      const dn = new Map(departments.map((d) => [d.id, `${d.code} ${(locale === "en" && d.name_en) || d.name_ar}`]));
       const pr = t.profitability;
-      const cells = (x: typeof tt): Cell[] => [x.revenue, x.costOfSales, x.grossProfit, x.operatingExpenses, x.netProfit, x.margin ? `${x.margin.toFixed(1)}%` : "—"];
+      const cells = (x: typeof tt): Cell[] => [x.revenue, x.costOfSales, x.grossProfit, x.operatingExpenses, x.netProfit, x.margin ? `${x.margin.toFixed(1)}%` : ""];
       const rows = ds.map((x) => line(x.departmentId ? dn.get(x.departmentId) ?? "" : pr.unassigned, ...cells(x)));
       rows.push(total(t.common.total, ...cells(tt)));
       return { title: t.nav.profitability, subtitle: period, columns: [t.folio.department, pr.revenue, pr.cos, pr.gross, pr.opex, pr.net, pr.margin], rows };

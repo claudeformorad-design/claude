@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 /**
- * وسم: مستطيل بحواف ناعمة (نمط Notion). الحالات: خلفية Tint فاتحة + نقطة ونص Shade من نفس اللون.
+ * وسم: مستطيل بحواف ناعمة (نمط Notion). الحالات: خلفية فاتحة ونص أغمق من نفس اللون، بلا نقاط.
  * solid/outline للتصنيفات (مثل تجميعي/تفصيلي في شجرة الحسابات).
  */
 const badgeVariants = cva(
@@ -15,12 +15,12 @@ const badgeVariants = cva(
         secondary: "bg-neutral-tint text-neutral",
         outline: "border border-line-strong bg-white text-ink",
         solid: "bg-ink text-white",
-        success: "bg-success-tint text-success before:size-1.5 before:rounded-full before:bg-success-dot before:content-['']",
-        warning: "bg-amber-tint text-amber before:size-1.5 before:rounded-full before:bg-amber-dot before:content-['']",
-        destructive: "bg-urgent-tint text-urgent before:size-1.5 before:rounded-full before:bg-urgent-dot before:content-['']",
-        info: "bg-sky-tint text-sky before:size-1.5 before:rounded-full before:bg-sky-dot before:content-['']",
-        review: "bg-sky-tint text-sky before:size-1.5 before:rounded-full before:bg-sky-dot before:content-['']",
-        pending: "bg-urgent-tint text-urgent before:size-1.5 before:rounded-full before:bg-urgent-dot before:content-['']",
+        success: "bg-success-tint text-success",
+        warning: "bg-amber-tint text-amber",
+        destructive: "bg-urgent-tint text-urgent",
+        info: "bg-sky-tint text-sky",
+        review: "bg-sky-tint text-sky",
+        pending: "bg-urgent-tint text-urgent",
       },
     },
     defaultVariants: { variant: "default" },

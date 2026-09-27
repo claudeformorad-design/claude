@@ -81,7 +81,7 @@ export function OperationsCard({ initial, errors }: {
           </div>
         </div>
         <div className="space-y-2">
-          <p className="text-[16px] font-medium text-ink">ليالي نهاية الأسبوع <span className="font-normal text-slate-500">(يُطبَّق عليها سعر نهاية الأسبوع)</span></p>
+          <p className="text-[16px] font-medium text-ink">ليالي نهاية الأسبوع <span className="font-normal text-slate-500">ويُطبَّق عليها سعر نهاية الأسبوع</span></p>
           <div className="flex flex-wrap gap-2">
             {NIGHTS.map(([v, label]) => {
               const on = weekend.includes(v);

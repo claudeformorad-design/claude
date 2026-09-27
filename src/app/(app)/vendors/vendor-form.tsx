@@ -34,7 +34,7 @@ export function VendorForm({ t, initial }: { t: Pick<Dictionary, "customers" | "
       {error && <Alert variant="destructive">{error}</Alert>}
       {f("code", t.customers.code)}
       {f("name_ar", t.customers.name, "rtl")}
-      {f("name_en", `${t.customers.name} (EN)`)}
+      {f("name_en", `${t.customers.name} بالإنجليزية`)}
       <div className="grid grid-cols-2 gap-3">
         {f("tax_number", t.customers.taxNumber)}
         {f("payment_terms_days", t.customers.paymentTerms)}

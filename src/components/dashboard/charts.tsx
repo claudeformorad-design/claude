@@ -101,7 +101,7 @@ function TipRow({ color, label, value, suffix, strong }: { color?: string; label
   return (
     <div className="flex items-center justify-between gap-4 py-0.5">
       <span className="flex items-center gap-1.5 text-slate-600">
-        {color && <span className="size-2 rounded-full" style={{ background: color }} />}
+        {color && <span className="size-2.5 rounded-[3px]" style={{ background: color }} />}
         {label}
       </span>
       <span className={`num ${strong ? "font-semibold" : ""}`}>

@@ -52,7 +52,7 @@ export async function getCashFlow(supabase: SupabaseServerClient, hotelId: strin
   ]);
   raise(lines.error); raise(opening.error); raise(closing.error);
   const rows = (lines.data ?? []) as unknown as CashFlowLine[];
-  const name = new Map(accounts.map((a) => [a.id, `${a.code} — ${a.name}`]));
+  const name = new Map(accounts.map((a) => [a.id, `${a.code} ${a.name}`]));
   return { ...buildCashFlow(rows, String(opening.data ?? 0), String(closing.data ?? 0)), lines: rows.map((r) => ({ ...r, name: name.get(r.account_id) ?? "" })) };
 }
 

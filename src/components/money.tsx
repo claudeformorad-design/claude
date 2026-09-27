@@ -18,7 +18,7 @@ export function Money({
   const zero = toMoney(value).isZero();
   return (
     <span className={cn("num", zero && blankZero && "text-muted-foreground", className)}>
-      {zero && blankZero ? "—" : formatMoney(value, { locale, decimals })}
+      {zero && blankZero ? "" : formatMoney(value, { locale, decimals })}
     </span>
   );
 }

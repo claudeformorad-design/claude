@@ -61,7 +61,7 @@ export default async function AgingPage({ searchParams }: { searchParams: Promis
               <TableRow key={p.partyId}>
                 <TableCell className="cell-fluid">
                   <EntityCell name={p.partyName} sub={
-                    <>{p.documents.map((d) => <Link key={d.document_id} href={`${docBase}/${d.document_id}`} className="num me-2 hover:underline">{d.document_number}</Link>)}</>
+                    <>{p.documents.map((d) => <Link key={d.document_id} href={`${docBase}/${d.document_id}`} className="num me-2">{d.document_number}</Link>)}</>
                   } />
                 </TableCell>
                 {AGING_BUCKETS.map((b, i) => <TableCell key={b} className={`text-end ${i >= 3 && p.buckets[b].gt(0) ? "font-semibold text-urgent" : ""}`}><Money value={p.buckets[b]} locale={locale} blankZero /></TableCell>)}

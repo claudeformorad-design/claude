@@ -71,8 +71,8 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
         <Stat icon={Tags} tone="ink" label="أنواع ليلية بأسعار" value={<span className="num">{nightly.length}</span>} />
         <Stat icon={CalendarRange} tone="teal" label="المواسم الفعّالة" value={<span className="num">{seasons.filter((s) => s.is_active).length}</span>} hint={activeSeason ? `الآن: ${activeSeason.name}` : "لا موسم اليوم"} />
         <Stat icon={BadgePercent} tone="clay" label="عروض اللحظة الأخيرة" value={<span className="num">{rules.filter((r) => r.is_active).length}</span>} />
-        <Stat icon={Sun} tone="neutral" label="ليالي نهاية الأسبوع" value={<span className="text-[20px]">{ctx.hotel.weekend_nights.map((d) => WEEKDAYS[d]).join(" و") || "—"}</span>}
-          hint={ctx.can(PERMISSIONS.hotelManage) ? <Link href="/settings/hotel" className="text-action hover:underline">تعديل من الإعدادات</Link> : undefined} />
+        <Stat icon={Sun} tone="neutral" label="ليالي نهاية الأسبوع" value={ctx.hotel.weekend_nights.map((d) => WEEKDAYS[d]).join(" و")}
+          hint={ctx.can(PERMISSIONS.hotelManage) ? <Link href="/settings/hotel" className="text-action">تعديل من الإعدادات</Link> : undefined} />
       </StatGrid>
 
       {(editingSeason !== undefined || editingRule !== undefined) && (
@@ -97,7 +97,7 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
           {editingRule !== undefined && (
             <Card className="h-fit">
               <CardHeader><CardTitle>{editingRule ? `تعديل ${editingRule.name}` : "عرض لحظة أخيرة"}</CardTitle>
-                <CardDescription>خصم تلقائي على الحجز الذي يصل خلال عدد أيام من تاريخ الحجز (0 = نفس اليوم)، للأسعار العادية فقط.</CardDescription></CardHeader>
+                <CardDescription>خصم تلقائي على الحجز الذي يصل خلال عدد أيام من تاريخ الحجز، والصفر يعني نفس اليوم، للأسعار العادية فقط.</CardDescription></CardHeader>
               <CardContent>
                 <SimpleForm key={editingRule?.id ?? "new"} columns={2} submitLabel={t.common.save} errors={t.errors} action={saveLastMinuteAction} onDone="/rates"
                   initial={{
@@ -108,8 +108,8 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
                   }}
                   fields={[
                     { name: "name", label: "اسم العرض" },
-                    { name: "room_type_id", label: "النوع (فارغ = كل الأنواع)", optional: true, options: nightly.map((x) => ({ id: x.id, label: x.name_ar })) },
-                    { name: "days_before", label: "الوصول خلال (أيام)", type: "number" },
+                    { name: "room_type_id", label: "النوع، اتركه فارغًا لكل الأنواع", optional: true, options: nightly.map((x) => ({ id: x.id, label: x.name_ar })) },
+                    { name: "days_before", label: "الوصول خلال أيام", type: "number" },
                     { name: "discount_pct", label: "نسبة الخصم %", type: "number" },
                     { name: "is_active", label: "فعّال", checkbox: true },
                   ]} />
@@ -150,7 +150,7 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
                       const l = lines.find((x) => x.date === d);
                       return (
                         <td key={d} title={l?.season ?? undefined} className={cn("px-1 py-3 text-center", l?.season ? "bg-accent1-tint/60 font-semibold text-ink" : "text-slate-700")}>
-                          <span className="num">{l ? formatMoney(l.rate, { locale, decimals: 0 }) : "—"}</span>
+                          <span className="num">{l ? formatMoney(l.rate, { locale, decimals: 0 }) : ""}</span>
                         </td>
                       );
                     })}
@@ -175,7 +175,7 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
               {seasons.map((s) => (
                 <TableRow key={s.id} className={s.is_active ? "" : "opacity-50"}>
                   <TableCell className="cell-fluid font-medium">{s.name}{!s.is_active && <Badge variant="secondary" className="ms-2">موقوف</Badge>}</TableCell>
-                  <TableCell className="num whitespace-nowrap">{s.date_from} ← {s.date_to}</TableCell>
+                  <TableCell className="whitespace-nowrap">من <span className="num">{s.date_from}</span> إلى <span className="num">{s.date_to}</span></TableCell>
                   <TableCell className="text-[14.5px] text-slate-600">
                     {s.prices.map((p) => <span key={p.room_type_id} className="block">{typeName.get(p.room_type_id)}: <span className="num font-semibold text-ink">{formatMoney(p.nightly_rate, { locale })}</span></span>)}
                     {s.adjust_pct && <span className="block">البقية: <span className="num">{Number(s.adjust_pct) > 0 ? "+" : ""}{Number(s.adjust_pct)}%</span></span>}
@@ -228,13 +228,13 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
                   <TableRow key={x.id}>
                     <TableCell className="cell-fluid font-medium">{x.name_ar}{x.booking_mode === "hourly" && <Badge variant="info" className="ms-2">بالساعة</Badge>}</TableCell>
                     <TableCell className="text-end font-semibold"><Money value={x.base_rate} locale={locale} /></TableCell>
-                    <TableCell className="text-end">{x.weekend_rate ? <Money value={x.weekend_rate} locale={locale} /> : "—"}</TableCell>
-                    <TableCell className="num">{x.booking_mode === "nightly" && x.overbooking_limit ? `حتى ${x.overbooking_limit}` : "—"}</TableCell>
+                    <TableCell className="text-end">{x.weekend_rate ? <Money value={x.weekend_rate} locale={locale} /> : ""}</TableCell>
+                    <TableCell className="num">{x.booking_mode === "nightly" && x.overbooking_limit ? `حتى ${x.overbooking_limit}` : ""}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-            {ctx.can(PERMISSIONS.pmsSetup) && <CardContent className="border-t border-line pt-4"><Link href="/room-setup" className="text-[15.5px] text-action hover:underline">تعديل الأسعار الأساسية من إعداد الغرف</Link></CardContent>}
+            {ctx.can(PERMISSIONS.pmsSetup) && <CardContent className="border-t border-line pt-4"><Link href="/room-setup" className="text-[15.5px] text-action">تعديل الأسعار الأساسية من إعداد الغرف</Link></CardContent>}
           </Card>
         </div>
       </div>

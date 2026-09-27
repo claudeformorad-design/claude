@@ -182,12 +182,12 @@ export function ReservationForm({
                 <Label htmlFor="room_type_id">نوع الغرفة / الوحدة</Label>
                 <NativeSelect id="room_type_id" value={v.room_type_id} onChange={(e) => setV((x) => ({ ...x, room_type_id: e.target.value, room_id: "" }))}>
                   <option value="" disabled>اختر النوع</option>
-                  {roomTypes.map((x) => <option key={x.id} value={x.id}>{x.name} ({x.code}){x.mode === "hourly" ? " — بالساعة" : ""}</option>)}
+                  {roomTypes.map((x) => <option key={x.id} value={x.id}>{x.name}{x.mode === "hourly" ? " بالساعة" : ""}</option>)}
                 </NativeSelect>
               </div>
               {v.kind !== "group" && (
                 <div className={field}>
-                  <Label htmlFor="room_id">{hourly ? "الوحدة" : "الغرفة (اختياري)"}</Label>
+                  <Label htmlFor="room_id">{hourly ? "الوحدة" : "الغرفة"}</Label>
                   <NativeSelect id="room_id" value={v.room_id} onChange={(e) => set("room_id", e.target.value)} disabled={mode === "edit"}>
                     <option value="">{hourly ? "اختر الوحدة" : "بدون تخصيص الآن"}</option>
                     {typeRooms.map((r) => <option key={r.id} value={r.id}>{r.number}</option>)}
@@ -246,7 +246,7 @@ export function ReservationForm({
                 </div>
                 <div className={field}>
                   <Label htmlFor="nights">عدد الليالي</Label>
-                  <Input id="nights" inputMode="numeric" dir="ltr" value={nights ? String(nights) : ""} placeholder="—"
+                  <Input id="nights" inputMode="numeric" dir="ltr" value={nights ? String(nights) : ""} placeholder=""
                     onChange={(e) => { const n = Number(e.target.value); if (v.arrival_date && n >= 1 && n <= 366) set("departure_date", addDays(v.arrival_date, n)); }} />
                 </div>
               </div>
@@ -260,8 +260,8 @@ export function ReservationForm({
             )}
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className={field}><Label htmlFor="adults">بالغون{type ? ` (حتى ${type.maxAdults})` : ""}</Label><Input id="adults" inputMode="numeric" dir="ltr" value={v.adults} onChange={(e) => set("adults", e.target.value)} /></div>
-              <div className={field}><Label htmlFor="children">أطفال{type ? ` (حتى ${type.maxChildren})` : ""}</Label><Input id="children" inputMode="numeric" dir="ltr" value={v.children} onChange={(e) => set("children", e.target.value)} /></div>
+              <div className={field}><Label htmlFor="adults">بالغون{type ? `، حتى ${type.maxAdults}` : ""}</Label><Input id="adults" inputMode="numeric" dir="ltr" value={v.adults} onChange={(e) => set("adults", e.target.value)} /></div>
+              <div className={field}><Label htmlFor="children">أطفال{type ? `، حتى ${type.maxChildren}` : ""}</Label><Input id="children" inputMode="numeric" dir="ltr" value={v.children} onChange={(e) => set("children", e.target.value)} /></div>
               <div className={field}>
                 <Label htmlFor="source">مصدر الحجز</Label>
                 <NativeSelect id="source" value={v.source} onChange={(e) => set("source", e.target.value as ReservationSource)}>
@@ -270,9 +270,9 @@ export function ReservationForm({
               </div>
               {companies.length > 0 && (
                 <div className={field}>
-                  <Label htmlFor="customer_id">الشركة (جهة الفوترة)</Label>
+                  <Label htmlFor="customer_id">الشركة أو جهة الفوترة</Label>
                   <NativeSelect id="customer_id" value={v.customer_id} onChange={(e) => set("customer_id", e.target.value)}>
-                    <option value="">—</option>
+                    <option value="">اختر</option>
                     {companies.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
                   </NativeSelect>
                 </div>
@@ -282,7 +282,7 @@ export function ReservationForm({
             {v.kind === "series" && !hourly && (
               <label className="flex items-center gap-2 text-[15.5px] text-slate-700">
                 <input type="checkbox" className="size-4" checked={v.waitlist_conflicts} onChange={(e) => set("waitlist_conflicts", e.target.checked)} />
-                المواعيد المتعارضة (لا غرف متاحة) تُضاف لقائمة الانتظار تلقائيًا
+                المواعيد التي لا تتوفر فيها غرف تُضاف لقائمة الانتظار تلقائيًا
               </label>
             )}
           </CardContent>
@@ -311,7 +311,7 @@ export function ReservationForm({
                     <Input id="fixed_rate" inputMode="decimal" dir="ltr" value={v.fixed_rate} onChange={(e) => set("fixed_rate", e.target.value)} />
                   </div>
                   <div className={field}>
-                    <Label htmlFor="rate_reason">السبب{v.pricing === "fixed" ? "" : " (اختياري)"}</Label>
+                    <Label htmlFor="rate_reason">السبب</Label>
                     <Input id="rate_reason" value={v.rate_reason} onChange={(e) => set("rate_reason", e.target.value)} placeholder="مثل: عقد شركة، عرض خاص" />
                   </div>
                 </div>
@@ -320,7 +320,7 @@ export function ReservationForm({
               {mode === "edit" && (
                 <label className="flex items-center gap-2 text-[15.5px] text-slate-700">
                   <input type="checkbox" className="size-4" checked={v.reprice} onChange={(e) => set("reprice", e.target.checked)} />
-                  إعادة تسعير كل الليالي بالأسعار الحالية (وإلا تبقى الليالي القائمة بسعرها وتُسعَّر المضافة فقط)
+                  إعادة تسعير كل الليالي بالأسعار الحالية، وإلا تبقى الليالي القائمة بسعرها وتُسعَّر المضافة فقط
                 </label>
               )}
             </CardContent>
@@ -336,7 +336,7 @@ export function ReservationForm({
                   <Label htmlFor="status">حالة الحجز</Label>
                   <NativeSelect id="status" value={v.status} onChange={(e) => set("status", e.target.value as "tentative" | "confirmed")}>
                     <option value="confirmed">مؤكد</option>
-                    <option value="tentative">مبدئي (بانتظار التأكيد)</option>
+                    <option value="tentative">مبدئي بانتظار التأكيد</option>
                   </NativeSelect>
                 </div>
                 {v.status === "tentative" && v.kind === "single" && (
@@ -391,7 +391,7 @@ function GuestPicker({ guests, value, onChange }: {
       <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-panel p-3">
         <div className="min-w-0">
           <p className="truncate text-[17px] font-semibold text-ink">{selected.name}</p>
-          <p className="num truncate text-[14.5px] text-slate-500">{[selected.phone, selected.idNumber].filter(Boolean).join(" · ") || "—"}</p>
+          <p className="num truncate text-[14.5px] text-slate-500">{[selected.phone, selected.idNumber].filter(Boolean).join("، ") || ""}</p>
           {selected.blacklisted && <p className="mt-1 text-[14.5px] font-medium text-urgent">هذا النزيل في القائمة السوداء؛ لن يُقبل الحجز.</p>}
         </div>
         <Button type="button" variant="ghost" size="sm" onClick={() => { onChange({ guest_id: "" }); setCreating(false); }}><X className="size-4" />تغيير</Button>
@@ -423,7 +423,7 @@ function GuestPicker({ guests, value, onChange }: {
       </div>
       {!creating ? (
         <button type="button" onClick={() => { setCreating(true); onChange({ new_guest_name: q.trim() || value.new_guest_name }); }}
-          className="flex items-center gap-2 text-[15.5px] font-medium text-action hover:underline">
+          className="flex items-center gap-2 text-[15.5px] font-medium text-action">
           <UserPlus className="size-4" />نزيل جديد{q.trim() ? `: ${q.trim()}` : ""}
         </button>
       ) : (
@@ -433,7 +433,7 @@ function GuestPicker({ guests, value, onChange }: {
           <div className={field}>
             <Label htmlFor="new_guest_id_type">نوع الهوية</Label>
             <NativeSelect id="new_guest_id_type" value={value.new_guest_id_type} onChange={(e) => onChange({ new_guest_id_type: e.target.value })}>
-              <option value="">—</option>
+              <option value="">اختر</option>
               {Object.entries(ID_TYPES).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
             </NativeSelect>
           </div>
@@ -454,8 +454,8 @@ function QuoteCard({ quote, error, loading, kind, groupRooms, canOverbook, waitl
   const need = kind === "group" ? Math.max(1, groupRooms) : 1;
   const avail = quote?.min_available;
   const availability = quote && quote.booking_mode === "nightly" && avail !== null && avail !== undefined
-    ? avail >= need ? { tone: "ok" as const, text: `متاح — ${avail} ${avail === 1 ? "غرفة شاغرة" : "غرف شاغرة"} في كل الليالي` }
-    : avail + quote.overbooking_limit >= need ? { tone: "warn" as const, text: canOverbook ? `حجز زائد: لا غرف شاغرة في بعض الليالي (مسموح حتى ${quote.overbooking_limit})` : "لا غرف شاغرة في بعض الليالي — الحجز الزائد يتطلب صلاحية" }
+    ? avail >= need ? { tone: "ok" as const, text: `متاح، ${avail === 1 ? "غرفة شاغرة واحدة" : `${avail} غرف شاغرة`} في كل الليالي` }
+    : avail + quote.overbooking_limit >= need ? { tone: "warn" as const, text: canOverbook ? `حجز زائد: لا غرف شاغرة في بعض الليالي، والمسموح حتى ${quote.overbooking_limit}` : "لا غرف شاغرة في بعض الليالي، والحجز الزائد يتطلب صلاحية" }
     : { tone: "bad" as const, text: kind === "group" ? `المتاح ${Math.max(0, avail)} فقط من ${need} غرف` : "لا توجد غرف متاحة من هذا النوع في بعض الليالي" }
     : null;
   const lines = quote?.lines ?? [];
@@ -480,7 +480,7 @@ function QuoteCard({ quote, error, loading, kind, groupRooms, canOverbook, waitl
                 {availability.tone === "ok" ? <CheckCircle2 className="mt-0.5 size-4 shrink-0" /> : availability.tone === "warn" ? <AlertTriangle className="mt-0.5 size-4 shrink-0" /> : <XCircle className="mt-0.5 size-4 shrink-0" />}
                 <span>{availability.text}
                   {availability.tone === "bad" && waitlistHref && kind !== "group" && (
-                    <Link href={waitlistHref} className="mt-1 flex items-center gap-1 font-semibold underline"><Hourglass className="size-3.5" />أضفه لقائمة الانتظار</Link>
+                    <Link href={waitlistHref} className="mt-1 flex items-center gap-1 font-semibold"><Hourglass className="size-3.5" />أضفه لقائمة الانتظار</Link>
                   )}
                 </span>
               </div>
@@ -503,8 +503,8 @@ function QuoteCard({ quote, error, loading, kind, groupRooms, canOverbook, waitl
               ))}
             </ul>
             {lines.length > 7 && (
-              <button type="button" onClick={() => setAll((x) => !x)} className="text-[14.5px] font-medium text-action hover:underline">
-                {all ? "عرض أقل" : `عرض كل الليالي (${lines.length})`}
+              <button type="button" onClick={() => setAll((x) => !x)} className="text-[14.5px] font-medium text-action">
+                {all ? "عرض أقل" : `عرض كل الليالي، ${lines.length}`}
               </button>
             )}
             <div className="space-y-1 border-t border-line pt-3">
@@ -516,7 +516,7 @@ function QuoteCard({ quote, error, loading, kind, groupRooms, canOverbook, waitl
                 <span className="display-num text-[28px] font-bold text-ink">{money(Number(quote.total))}</span>
               </div>
               {kind === "group" && groupRooms > 1 && (
-                <div className="flex justify-between text-[15px] text-slate-600"><span>للمجموعة ({groupRooms} غرف)</span><span className="num font-semibold text-ink">{money(Number(quote.total) * groupRooms)}</span></div>
+                <div className="flex justify-between text-[15px] text-slate-600"><span>للمجموعة، {groupRooms} غرف</span><span className="num font-semibold text-ink">{money(Number(quote.total) * groupRooms)}</span></div>
               )}
               <p className="text-[13.5px] text-slate-500">الضرائب تُطبَّق حسب إعداد كود الإيراد عند الترحيل على الفوليو.</p>
             </div>

@@ -23,11 +23,11 @@ export function FilterTabs({ items, active, className }: {
                 on ? "font-bold text-ink" : "font-medium text-slate-600 hover:text-ink")}>
               {on && (
                 <motion.span layoutId="tab-pill" transition={{ type: "spring", stiffness: 520, damping: 38 }}
-                  className="absolute inset-0 rounded-[10px] bg-white shadow-soft" />
+                  className="absolute inset-0 rounded-[10px] border border-line bg-white" />
               )}
               <span className="relative z-10">{x.label}</span>
               {x.count !== undefined && (
-                <span className={cn("num relative z-10 rounded px-1.5 text-[14.5px]", on ? "bg-ink text-white" : "bg-white text-slate-600")}>{x.count}</span>
+                <span className={cn("num relative z-10 rounded px-1.5", on ? "bg-ink text-white" : "bg-white text-slate-600")}>{x.count}</span>
               )}
             </Link>
           );

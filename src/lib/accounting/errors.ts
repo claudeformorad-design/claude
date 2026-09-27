@@ -1,3 +1,5 @@
+import { plainText } from "@/lib/text";
+
 /**
  * تحويل رسائل أخطاء قاعدة البيانات (التريغرات والقيود) إلى مفاتيح ترجمة مفهومة للمستخدم.
  * الرسائل في قاعدة البيانات بالإنجليزية عمدًا (ثابتة وقابلة للمطابقة)،
@@ -325,7 +327,7 @@ export function describeDatabaseError(message: string | null | undefined): strin
   if (!message) return null;
   for (const [pattern, text] of MESSAGES) {
     const m = message.match(pattern);
-    if (m) return typeof text === "string" ? text : text(m);
+    if (m) return plainText(typeof text === "string" ? text : text(m));
   }
   return null;
 }

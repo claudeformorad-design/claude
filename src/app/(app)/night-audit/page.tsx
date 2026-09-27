@@ -28,7 +28,7 @@ export default async function NightAuditPage() {
 
   return (
     <>
-      <PageHeader title="تدقيق نهاية اليوم" description={`يوم العمل ${dayLabel(s.date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}${s.last_audit ? ` — آخر تدقيق ${s.last_audit}` : ""}`} />
+      <PageHeader title="تدقيق نهاية اليوم" description={`يوم العمل ${dayLabel(s.date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}${s.last_audit ? `، آخر تدقيق ${s.last_audit}` : ""}`} />
 
       <StatGrid>
         <Stat icon={BedDouble} tone="ink" label="الإشغال الليلة" value={<span className="num">{s.stats.occupancy_pct}%</span>} hint={`${s.stats.occupied} من ${s.stats.capacity} غرفة`} />
@@ -48,7 +48,7 @@ export default async function NightAuditPage() {
                   {s.pending_no_shows.map((r) => (
                     <TableRow key={r.id}>
                       <TableCell className="cell-fluid font-medium">{r.guest}</TableCell>
-                      <TableCell><Link href={`/reservations/${r.id}`} className="num text-action hover:underline">{r.confirmation_number}</Link></TableCell>
+                      <TableCell><Link href={`/reservations/${r.id}`} className="num text-action">{r.confirmation_number}</Link></TableCell>
                       <TableCell className="num">{r.arrival_date}{r.arrival_date < s.date && <Badge variant="destructive" className="ms-2">متأخر</Badge>}</TableCell>
                     </TableRow>
                   ))}
@@ -64,7 +64,7 @@ export default async function NightAuditPage() {
                   {s.overstays.map((r) => (
                     <TableRow key={r.id}>
                       <TableCell className="cell-fluid font-medium">{r.guest}</TableCell>
-                      <TableCell><Link href={`/reservations/${r.id}`} className="num text-action hover:underline">{r.confirmation_number}</Link></TableCell>
+                      <TableCell><Link href={`/reservations/${r.id}`} className="num text-action">{r.confirmation_number}</Link></TableCell>
                       <TableCell className="num">{r.departure_date}</TableCell>
                     </TableRow>
                   ))}
@@ -80,7 +80,7 @@ export default async function NightAuditPage() {
                 {history.length === 0 && <TableRow><TableCell colSpan={5} className="py-8 text-center text-slate-500">لم يُشغَّل التدقيق بعد</TableCell></TableRow>}
                 {history.map((a) => (
                   <TableRow key={a.id}>
-                    <TableCell><Link href={`/night-audit/${a.business_date}`} className="num font-semibold text-action hover:underline">{a.business_date}</Link></TableCell>
+                    <TableCell><Link href={`/night-audit/${a.business_date}`} className="num font-semibold text-action">{a.business_date}</Link></TableCell>
                     <TableCell className="num text-end">{a.summary.occupancy_pct}%</TableCell>
                     <TableCell className="text-end"><Money value={a.summary.room_revenue} locale={locale} /></TableCell>
                     <TableCell className="text-end"><Money value={a.summary.adr} locale={locale} /></TableCell>
@@ -101,11 +101,11 @@ export default async function NightAuditPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <ul className="space-y-2 text-[15.5px] text-slate-700">
-              <li>• ترحيل {s.unposted_nights} ليلة على فوليوهات المقيمين</li>
-              <li>• تسجيل {pending} حجز «لم يحضر»</li>
-              <li>• حفظ تقرير المدير (الإشغال، متوسط السعر، العائد لكل غرفة، الإيرادات والمقبوضات)</li>
+              <li>ترحيل {s.unposted_nights} ليلة على فوليوهات المقيمين</li>
+              <li>تسجيل {pending} حجز لم يحضر أصحابه</li>
+              <li>حفظ تقرير المدير بالإشغال ومتوسط السعر والعائد لكل غرفة والإيرادات والمقبوضات</li>
             </ul>
-            {s.open_shifts > 0 && !s.done && <p className="rounded-md bg-amber-tint px-3 py-2 text-[14.5px] text-amber">توجد {s.open_shifts} وردية كاشير مفتوحة — يُفضَّل إغلاقها قبل التدقيق.</p>}
+            {s.open_shifts > 0 && !s.done && <p className="rounded-md bg-amber-tint px-3 py-2 text-[14.5px] text-amber">توجد {s.open_shifts} وردية كاشير مفتوحة، ويُفضَّل إغلاقها قبل التدقيق.</p>}
             {canRun && <RunAuditButton date={s.date} errors={t.errors} confirmText={`تشغيل تدقيق يوم ${s.date}؟ سيُرحّل ${s.unposted_nights} ليلة ويُسجّل ${pending} عدم حضور.`} />}
             <div className="grid grid-cols-2 gap-2">
               <Link href={`/night-audit/${s.date}`} className="rounded-md border border-line px-3 py-2 text-center text-[15px] font-medium text-ink hover:bg-panel">تقرير المدير</Link>

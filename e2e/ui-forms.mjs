@@ -71,7 +71,7 @@ await step("direct credit invoice 2,000 (events)", async () => {
   await page.waitForURL(/invoices\/[0-9a-f-]{36}$/, { timeout: 15000 }); await bodyHas("2,000.00", "INV-");
 });
 await step("credit note 500 on the invoice", async () => {
-  await page.fill("input[placeholder='مبلغ الإشعار (شامل الضريبة)']", "500");
+  await page.fill("input[placeholder='مبلغ الإشعار شامل الضريبة']", "500");
   await page.fill("input[placeholder='السبب']", "خصم تجاري");
   await page.getByRole("button", { name: "إشعار دائن" }).click();
   await page.getByText(/CN-\d{4}-\d{6}/).waitFor({ timeout: 10000 }); await noFormError();
@@ -81,7 +81,7 @@ await step("receipt voucher with auto-allocation", async () => {
   await pick("#customer_id", /ACME/);
   await pick("#payment_method_id", /تحويل بنكي/);
   await page.fill("#amount", "1500"); await page.fill("#description", "دفعة من أكمي");
-  await page.getByRole("button", { name: "تخصيص تلقائي (الأقدم أولًا)" }).click();
+  await page.getByRole("button", { name: "تخصيص تلقائي للأقدم أولًا" }).click();
   await page.getByRole("button", { name: "حفظ" }).click();
   await page.waitForURL(/vouchers\/[0-9a-f-]{36}$/, { timeout: 15000 }); await bodyHas("RV-", "INV-");
 });
@@ -95,7 +95,7 @@ await step("purchase order → bill", async () => {
   await go("/purchase-orders/new");
   await pick("#vendor_id", /FOOD/);
   await page.locator("input[placeholder='الوصف']").first().fill("أرز");
-  await pick(page.locator("select[aria-label='الحساب (مصروف/أصل/مخزون)']").first(), /1120/);
+  await pick(page.locator("select[aria-label='حساب المصروف أو الأصل أو المخزون']").first(), /1120/);
   await page.locator("input[placeholder='الكمية']").first().fill("10");
   await page.locator("input[placeholder='سعر الوحدة']").first().fill("50");
   await page.getByRole("button", { name: "حفظ" }).click();
@@ -153,7 +153,7 @@ await step("disbursement voucher: pay salaries", async () => {
 await step("bank reconciliation: statement line + auto match", async () => {
   await go("/bank");
   await page.locator("input[placeholder='الوصف']").fill("Salary transfer");
-  await page.locator("input[placeholder='± 0.00']").fill("-5550");
+  await page.locator("input[placeholder='المبلغ']").fill("-5550");
   await page.getByRole("button", { name: "إضافة حركة من الكشف" }).click(); await page.waitForTimeout(1500);
   await page.getByRole("button", { name: "مطابقة تلقائية" }).click(); await page.waitForTimeout(1500);
   await page.getByText("مطابقة", { exact: true }).first().waitFor();

@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PrefetchKind } from "next/dist/client/components/router-reducer/router-reducer-types";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
-import { CornerDownLeft, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { OPEN_SEARCH_EVENT, type NavGroup, type NavItem } from "./nav-config";
 
@@ -103,8 +103,8 @@ export function SearchBox({ groups, className, autoFocus = false, onDone }: {
   return (
     <div ref={boxRef} className={cn("relative", className)}>
       <label className={cn(
-        "flex h-10 items-center gap-2.5 rounded-lg border bg-white px-3 transition-[border-color,box-shadow] duration-200",
-        open ? "border-action shadow-[0_0_0_3px_rgba(36,131,225,0.15)]" : "border-line hover:border-line-strong",
+        "flex h-10 items-center gap-2.5 rounded-lg border bg-white px-3 transition-[border-color] duration-200",
+        open ? "border-action" : "border-line hover:border-line-strong",
       )}>
         <Search className={cn("size-[18px] shrink-0 stroke-[1.9] transition-colors", open ? "text-action" : "text-slate-500")} />
         <input
@@ -162,8 +162,7 @@ export function SearchBox({ groups, className, autoFocus = false, onDone }: {
                       <span className={cn("relative flex-1 truncate", i === safeIndex ? "font-semibold text-ink" : "text-slate-700")}>
                         <Highlight text={item.label} q={q.trim()} />
                       </span>
-                      {item.group && <span className="relative shrink-0 text-[13.5px] text-slate-500">{item.group}</span>}
-                      <CornerDownLeft className={cn("relative size-3.5 shrink-0 transition-opacity", i === safeIndex ? "text-slate-500 opacity-100" : "opacity-0")} />
+                      {item.group && <span className="relative shrink-0 text-slate-500">{item.group}</span>}
                     </button>
                   </motion.li>
                 ))}

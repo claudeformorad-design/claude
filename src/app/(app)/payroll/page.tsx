@@ -23,8 +23,8 @@ export default async function PayrollPage() {
         actions={<Button asChild><Link href="/payroll/new"><Plus />{t.payables.newPayroll}</Link></Button>} />
       <StatGrid className="lg:grid-cols-3">
         <Stat icon={UserCog} tone="ink" label="مسيّرات مرحّلة" value={<span className="num">{runs.length}</span>} hint={runs[0] ? `آخرها ${runs[0].period_month.slice(0, 7)}` : undefined} />
-        <Stat icon={Banknote} tone="teal" label="إجمالي آخر مسيّر" value={runs[0] ? <Money value={runs[0].total_gross} locale={locale} /> : "—"} />
-        <Stat icon={Wallet} tone="clay" label="صافي آخر مسيّر" value={runs[0] ? <Money value={runs[0].total_net} locale={locale} /> : "—"} />
+        <Stat icon={Banknote} tone="teal" label="إجمالي آخر مسيّر" value={runs[0] ? <Money value={runs[0].total_gross} locale={locale} /> : ""} />
+        <Stat icon={Wallet} tone="clay" label="صافي آخر مسيّر" value={runs[0] ? <Money value={runs[0].total_net} locale={locale} /> : ""} />
       </StatGrid>
       <Card className="overflow-hidden">
         <Table>
@@ -40,7 +40,7 @@ export default async function PayrollPage() {
                 <TableCell className="num">{r.posting_date}</TableCell>
                 <TableCell className="text-end"><Money value={r.total_gross} locale={locale} /></TableCell>
                 <TableCell className="text-end font-semibold"><Money value={r.total_net} locale={locale} /></TableCell>
-                <TableCell className="text-end">{r.journal_entry_id && <Link className="text-[15.5px] font-medium text-accent1 hover:underline" href={`/journal/${r.journal_entry_id}`}>{t.journal.entry} ←</Link>}</TableCell>
+                <TableCell className="text-end">{r.journal_entry_id && <Link className="text-[15.5px] font-medium text-accent1" href={`/journal/${r.journal_entry_id}`}>{t.journal.entry}</Link>}</TableCell>
               </TableRow>
             ))}
           </TableBody>

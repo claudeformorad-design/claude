@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { todayInTimeZone } from "@/lib/accounting/fiscal";
-import { addDays, dayLabel, nightsBetween } from "@/lib/pms/dates";
+import { addDays, dayLabel, nightsBetween, nightsText } from "@/lib/pms/dates";
 import { WAITLIST_STATUS } from "@/lib/pms/labels";
 import { listRoomTypes, waitlistOverview } from "@/services/pms.service";
 import { getI18n } from "@/i18n/server";
@@ -70,19 +70,20 @@ export default async function WaitlistPage({ searchParams }: {
           <Card className="overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow><TableHead>الطلب</TableHead><TableHead>النوع</TableHead><TableHead>الفترة</TableHead><TableHead>التوفر</TableHead><TableHead /></TableRow>
+                <TableRow><TableHead>الطلب</TableHead><TableHead>النوع</TableHead><TableHead>الأشخاص</TableHead><TableHead>الفترة</TableHead><TableHead>المدة</TableHead><TableHead>التوفر</TableHead><TableHead /></TableRow>
               </TableHeader>
               <TableBody>
                 {list.length === 0 && (
-                  <TableRow><TableCell colSpan={5}><EmptyState icon={Hourglass} title={tab === "ready" ? "لا توجد طلبات متاحة الآن" : "لا توجد طلبات"}
+                  <TableRow><TableCell colSpan={7}><EmptyState icon={Hourglass} title={tab === "ready" ? "لا توجد طلبات متاحة الآن" : "لا توجد طلبات"}
                     description="عند امتلاء نوع غرف في فترة ما، أضف الطلب هنا ليُنبَّه عليه عند تحرر غرفة." /></TableCell></TableRow>
                 )}
                 {list.map((e) => (
                   <TableRow key={e.id}>
                     <TableCell className="cell-fluid"><EntityCell name={e.guest_name} sub={e.phone ?? e.notes ?? undefined} href={e.guest_id ? `/guests/${e.guest_id}` : undefined} /></TableCell>
-                    <TableCell className="whitespace-nowrap">{typeName.get(e.room_type_id) ?? "—"}<span className="num block text-[13.5px] text-slate-500">{e.adults}{e.children ? ` + ${e.children}` : ""} نزيل</span></TableCell>
-                    <TableCell className="whitespace-nowrap">{dayLabel(e.arrival_date)} ← {dayLabel(e.departure_date)}
-                      <span className="num block text-[13.5px] text-slate-500">{nightsBetween(e.arrival_date, e.departure_date)} ليلة</span></TableCell>
+                    <TableCell className="whitespace-nowrap">{typeName.get(e.room_type_id) ?? ""}</TableCell>
+                    <TableCell className="whitespace-nowrap text-slate-600">{e.adults}{e.children ? ` بالغ و${e.children} طفل` : " نزيل"}</TableCell>
+                    <TableCell className="whitespace-nowrap">من {dayLabel(e.arrival_date)} إلى {dayLabel(e.departure_date)}</TableCell>
+                    <TableCell className="whitespace-nowrap text-slate-600">{nightsText(nightsBetween(e.arrival_date, e.departure_date))}</TableCell>
                     <TableCell>
                       {e.status !== "waiting" ? <Badge variant={e.status === "converted" ? "success" : "secondary"}>{WAITLIST_STATUS[e.status]}</Badge>
                         : e.is_expired ? <Badge variant="secondary">انتهى موعده</Badge>

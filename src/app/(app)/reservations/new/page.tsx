@@ -49,7 +49,7 @@ export default async function NewReservationPage({ searchParams }: {
           companies={data.companies} today={today} canOverride={ctx.can(PERMISSIONS.pmsRatesOverride)} canOverbook={ctx.can(PERMISSIONS.pmsOverbook)}
           errors={t.errors} />
       )}
-      <p className="mt-6 text-[14.5px] text-slate-500">تبحث عن غرفة لتاريخ محدد؟ <Link href="/tape-chart" className="text-action hover:underline">افتح جدول الإشغال</Link></p>
+      <p className="mt-6 text-[14.5px] text-slate-500">تبحث عن غرفة لتاريخ محدد؟ <Link href="/tape-chart" className="text-action">افتح جدول الإشغال</Link></p>
     </>
   );
 }

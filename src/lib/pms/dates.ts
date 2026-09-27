@@ -21,3 +21,17 @@ export const shortDate = (iso: string): string => `${iso.slice(8, 10)}/${iso.sli
 
 /** وقت من طابع زمني محلي «2026-10-02T16:00:00» ⇒ «16:00» */
 export const timeOf = (ts: string | null): string => (ts ? ts.slice(11, 16) : "");
+
+/** عدد الليالي بصيغة عربية طبيعية: ليلة واحدة، ليلتان، 3 ليالٍ، 11 ليلة */
+export function nightsText(n: number): string {
+  if (n === 1) return "ليلة واحدة";
+  if (n === 2) return "ليلتان";
+  if (n >= 3 && n <= 10) return `${n} ليالٍ`;
+  return `${n} ليلة`;
+}
+
+/** «من 16:00 إلى 20:00» */
+export const timeRange = (from: string | null, to: string | null): string => `من ${timeOf(from)} إلى ${timeOf(to)}`;
+
+/** «من 27/09 إلى 29/09» */
+export const dateRange = (from: string, to: string): string => `من ${shortDate(from)} إلى ${shortDate(to)}`;

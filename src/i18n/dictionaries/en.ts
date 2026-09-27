@@ -17,7 +17,7 @@ export const en: Dictionary = {
     actions: "Actions",
     search: "Search",
     loading: "Loading…",
-    none: "—",
+    none: "",
     yes: "Yes",
     no: "No",
     active: "Active",

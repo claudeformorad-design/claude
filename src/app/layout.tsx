@@ -30,7 +30,7 @@ const digits = Inter({ subsets: ["latin"], variable: "--font-digits", display: "
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
-  return { title: { default: t.app.name, template: `%s · ${t.app.shortName}` } };
+  return { title: { default: t.app.name, template: `%s، ${t.app.shortName}` } };
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

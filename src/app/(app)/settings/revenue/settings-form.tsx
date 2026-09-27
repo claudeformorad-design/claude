@@ -49,7 +49,7 @@ export function RevenueSettingForm({
     <div className="field-group space-y-1.5">
       <Label htmlFor={name}>{label}</Label>
       <NativeSelect id={name} {...register(name)}>
-        <option value="">—</option>
+        <option value="">اختر</option>
         {options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
       </NativeSelect>
     </div>
@@ -61,7 +61,7 @@ export function RevenueSettingForm({
       {error && <Alert variant="destructive">{error}</Alert>}
       {text("code", t.customers.code, { dir: "ltr" })}
       {text("name_ar", t.customers.name, { dir: "rtl" })}
-      {text("name_en", `${t.customers.name} (EN)`, { dir: "ltr" })}
+      {text("name_en", `${t.customers.name} بالإنجليزية`, { dir: "ltr" })}
       {kind === "tax" && (
         <>
           {select("kind", rs.kind, enumOptions(rs.taxKinds))}
@@ -74,7 +74,7 @@ export function RevenueSettingForm({
         <>
           {select("kind", rs.kind, enumOptions(rs.methodKinds))}
           {select("account_id", rs.account, accounts)}
-          {currencies.length > 0 && select("currency_code", "العملة (فارغ = العملة الأساسية)", currencies)}
+          {currencies.length > 0 && select("currency_code", "العملة، واتركها فارغة للعملة الأساسية", currencies)}
         </>
       )}
       {kind === "charge" && (

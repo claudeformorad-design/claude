@@ -19,7 +19,7 @@ export const RESERVATION_SOURCE: Record<ReservationSource, string> = {
 };
 
 export const PRICING_LABEL: Record<ReservationPricing, string> = {
-  standard: "حسب الأسعار والمواسم", fixed: "سعر يدوي لليلة", monthly: "سعر شهري (إقامة طويلة)",
+  standard: "حسب الأسعار والمواسم", fixed: "سعر يدوي لليلة", monthly: "سعر شهري للإقامة الطويلة",
 };
 
 export const HOUSEKEEPING_KIND = {

@@ -82,9 +82,9 @@ await step("hourly hall type", async () => {
 });
 await step("bulk rooms 101-103 and hall H1", async () => {
   await go("/room-setup?tab=rooms");
-  await pick("#room_type_id", /DBL/); await page.fill("#from_number", "101"); await page.fill("#to_number", "103");
+  await pick("#room_type_id", /مزدوجة/); await page.fill("#from_number", "101"); await page.fill("#to_number", "103");
   await page.getByRole("button", { name: "إضافة الغرف" }).click(); await bodyHas("101", "102", "103");
-  await pick("#room_type_id", /HALL/); await page.fill("#from_number", "1"); await page.fill("#to_number", "1"); await page.fill("#prefix", "H");
+  await pick("#room_type_id", /قاعة/); await page.fill("#from_number", "1"); await page.fill("#to_number", "1"); await page.fill("#prefix", "H");
   await page.getByRole("button", { name: "إضافة الغرف" }).click(); await bodyHas("H1");
 });
 
@@ -92,7 +92,7 @@ let firstId = "";
 await step("reservation with a new guest (3 nights, weekend pricing)", async () => {
   await go("/reservations/new");
   await newGuest("سالم أحمد", "777000111");
-  await pick("#room_type_id", /DBL/);
+  await pick("#room_type_id", /مزدوجة/);
   await page.fill("#arrival_date", plus(10)); await page.fill("#nights", "3");
   const expected = [10, 11, 12].reduce((a, n) => a + (weekend(plus(n)) ? 350 : 300), 0);
   await page.locator(`text=${fmt(expected)}`).first().waitFor({ timeout: 20000 });
@@ -109,7 +109,7 @@ await step("assign room 101", async () => {
 await step("double booking of room 101 is blocked", async () => {
   await go("/reservations/new");
   await newGuest("منى علي");
-  await pick("#room_type_id", /DBL/); await page.fill("#arrival_date", plus(11)); await page.fill("#nights", "1");
+  await pick("#room_type_id", /مزدوجة/); await page.fill("#arrival_date", plus(11)); await page.fill("#nights", "1");
   await pick("#room_id", /101/);
   await submitReservation();
   await page.locator("[role=alert]").filter({ hasText: "محجوزة في فترة متداخلة" }).waitFor();
@@ -117,11 +117,11 @@ await step("double booking of room 101 is blocked", async () => {
 await step("fill the type, then quote shows no availability and waitlist link", async () => {
   for (const name of ["نزيل 2", "نزيل 3"]) {
     await go("/reservations/new"); await newGuest(name);
-    await pick("#room_type_id", /DBL/); await page.fill("#arrival_date", plus(10)); await page.fill("#nights", "3");
+    await pick("#room_type_id", /مزدوجة/); await page.fill("#arrival_date", plus(10)); await page.fill("#nights", "3");
     await submitReservation(); await page.waitForURL(/reservations\/[0-9a-f-]{36}$/);
   }
   await go("/reservations/new"); await newGuest("نزيل 4");
-  await pick("#room_type_id", /DBL/); await page.fill("#arrival_date", plus(10)); await page.fill("#nights", "2");
+  await pick("#room_type_id", /مزدوجة/); await page.fill("#arrival_date", plus(10)); await page.fill("#nights", "2");
   await page.locator("text=لا توجد غرف متاحة").first().waitFor();
   await page.getByRole("link", { name: "أضفه لقائمة الانتظار" }).click();
   await page.waitForURL(/waitlist\?new=1/);
@@ -142,23 +142,23 @@ await step("cancelling frees a room; waitlist converts to a reservation", async 
 });
 await step("hourly hall booking 4h = 400", async () => {
   await go("/reservations/new"); await newGuest("شركة الحفلات");
-  await pick("#room_type_id", /HALL/); await pick("#room_id", /H1/);
+  await pick("#room_type_id", /قاعة/); await pick("#room_id", /H1/);
   await page.fill("#session_date", plus(3)); await page.fill("#start_time", "16:00"); await page.fill("#end_time", "20:00");
   await page.fill("#adults", "80");
   await page.locator(`text=${fmt(400)}`).first().waitFor();
   await submitReservation(); await page.waitForURL(/reservations\/[0-9a-f-]{36}$/);
-  await bodyHas("16:00–20:00", "400.00");
+  await bodyHas("من 16:00 إلى 20:00", "400.00");
 });
 await step("weekly recurring stay (4 weeks)", async () => {
   await go("/reservations/new?kind=series"); await newGuest("نزيل الخميس");
-  await pick("#room_type_id", /DBL/);
+  await pick("#room_type_id", /مزدوجة/);
   await page.fill("#series_start", plus(30)); await page.fill("#series_end", plus(30 + 27)); await page.fill("#series_nights", "1");
   await submitReservation();
   await page.waitForURL(/reservations\?series=/); await bodyHas("الحجز المتكرر", "4 حجز مرتبط");
 });
 await step("group of 2 rooms", async () => {
   await go("/reservations/new?kind=group"); await newGuest("قائد الوفد");
-  await pick("#room_type_id", /DBL/); await page.fill("#arrival_date", plus(40)); await page.fill("#nights", "2");
+  await pick("#room_type_id", /مزدوجة/); await page.fill("#arrival_date", plus(40)); await page.fill("#nights", "2");
   await page.fill("#group_name", "وفد الاختبار"); await page.fill("#group_rooms", "2");
   await submitReservation();
   await page.waitForURL(/reservations\?group=/); await bodyHas("حجوزات المجموعة", "2 حجز مرتبط");
@@ -166,7 +166,7 @@ await step("group of 2 rooms", async () => {
 await step("new season prices future nights; existing bookings keep their rates", async () => {
   await go("/rates?season=new");
   await page.fill("#name", "موسم الاختبار"); await page.fill("#date_from", plus(30)); await page.fill("#date_to", plus(60));
-  await page.locator("input[placeholder='—']").first().fill("500");
+  await page.locator("input[inputmode='decimal'].h-9").first().fill("500");
   await page.getByRole("button", { name: "حفظ الموسم" }).click();
   await page.waitForURL(/rates$/); await bodyHas("موسم الاختبار");
   await go(`/rates?start=${plus(30)}`); await bodyHas("500");
@@ -179,7 +179,7 @@ await step("last-minute deal applies to arrivals within a day", async () => {
   await page.getByRole("button", { name: "حفظ" }).click();
   await page.waitForURL(/rates$/); await bodyHas("عرض الليلة");
   await go("/reservations/new"); await newGuest("نزيل الليلة");
-  await pick("#room_type_id", /DBL/); await page.fill("#arrival_date", plus(1)); await page.fill("#nights", "1");
+  await pick("#room_type_id", /مزدوجة/); await page.fill("#arrival_date", plus(1)); await page.fill("#nights", "1");
   await page.locator("text=خصم اللحظة الأخيرة 15%").first().waitFor();
 });
 await step("room status: mark 102 dirty", async () => {
@@ -196,7 +196,7 @@ await step("tape chart and guest profile", async () => {
 let stayId = "";
 await step("deposit before arrival opens the folio in accounting", async () => {
   await go("/reservations/new"); await newGuest("نزيل التسكين", "777222333");
-  await pick("#room_type_id", /DBL/); await page.fill("#arrival_date", today); await page.fill("#nights", "2");
+  await pick("#room_type_id", /مزدوجة/); await page.fill("#arrival_date", today); await page.fill("#nights", "2");
   await pick("#room_id", /103/);
   await submitReservation(); await page.waitForURL(/reservations\/[0-9a-f-]{36}$/);
   stayId = page.url().split("/").pop();
@@ -217,7 +217,7 @@ await step("post tonight, extend the stay and move rooms", async () => {
   await bodyHas("مُرحَّل على الفوليو: 1 من 2");
   await page.fill("#new_departure", plus(3));
   await page.getByRole("button", { name: "تمديد" }).click();
-  await bodyHas("3 ليلة");
+  await bodyHas("3 ليالٍ");
   await pick("#move_room", /101/); await page.fill("#move_reason", "ترقية");
   await page.getByRole("button", { name: "نقل", exact: true }).click();
   await page.waitForTimeout(1500); await go(`/reservations/${stayId}`);
@@ -229,7 +229,7 @@ await step("early check-out: pay the balance and issue the tax invoice", async (
   await page.getByRole("button", { name: /تسجيل المغادرة/ }).last().click();
   await page.waitForURL(/invoices\/[0-9a-f-]{36}$/, { timeout: 30000 });
   await bodyHas("نزيل التسكين");
-  await go(`/reservations/${stayId}`); await bodyHas("غادر", "1 ليلة");
+  await go(`/reservations/${stayId}`); await bodyHas("غادر", "ليلة واحدة");
   await go("/rooms?filter=dirty"); await bodyHas("101");
 });
 await step("front desk quick check-in and in-house list", async () => {
@@ -239,7 +239,7 @@ await step("front desk quick check-in and in-house list", async () => {
   await page.getByRole("button", { name: "نظيفة", exact: true }).click();
   await page.waitForTimeout(1200);
   await go("/reservations/new"); await newGuest("نزيل سريع");
-  await pick("#room_type_id", /DBL/); await page.fill("#arrival_date", today); await page.fill("#nights", "1");
+  await pick("#room_type_id", /مزدوجة/); await page.fill("#arrival_date", today); await page.fill("#nights", "1");
   await pick("#room_id", /103/);
   await submitReservation(); await page.waitForURL(/reservations\/[0-9a-f-]{36}$/);
   await go("/front-desk");
@@ -271,7 +271,7 @@ await step("dollar deposit, check-out refunds the extra deposit in cash", async 
   await page.getByRole("button", { name: "نظيفة", exact: true }).click();
   await page.waitForTimeout(1200);
   await go("/reservations/new"); await newGuest("نزيل الدولار");
-  await pick("#room_type_id", /DBL/); await page.fill("#arrival_date", today); await page.fill("#nights", "1");
+  await pick("#room_type_id", /مزدوجة/); await page.fill("#arrival_date", today); await page.fill("#nights", "1");
   await pick("#room_id", /102/);
   await submitReservation(); await page.waitForURL(/reservations\/[0-9a-f-]{36}$/);
 
@@ -324,7 +324,7 @@ await step("rate plan with breakfast reprices a booking", async () => {
   await page.getByRole("button", { name: "حفظ الخطة" }).click();
   await bodyHas("BB", "يشمل الإفطار");
   await go("/reservations/new"); await newGuest("نزيل الإفطار");
-  await pick("#room_type_id", /DBL/); await page.fill("#arrival_date", plus(20)); await page.fill("#nights", "1");
+  await pick("#room_type_id", /مزدوجة/); await page.fill("#arrival_date", plus(20)); await page.fill("#nights", "1");
   await submitReservation(); await page.waitForURL(/reservations\/[0-9a-f-]{36}$/);
   await pick(page.locator("select[aria-label='خطة السعر']"), /مع الإفطار/);
   await page.getByRole("button", { name: "تطبيق", exact: true }).click();

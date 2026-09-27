@@ -31,7 +31,7 @@ export function Stat({
         </span>
         <p className="truncate text-[16.5px] font-medium text-slate-600">{label}</p>
       </div>
-      <p className={cn("display-num mt-3 truncate text-[25px] font-bold leading-tight text-ink sm:text-[28px]", valueClassName)}>{value}</p>
+      <p className={cn("display-num mt-3 truncate text-[24px] font-bold leading-tight text-ink", valueClassName)}>{value}</p>
       {hint && <p className="mt-1 truncate text-[15.5px] text-slate-500">{hint}</p>}
     </div>
   );

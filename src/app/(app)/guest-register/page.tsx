@@ -24,7 +24,7 @@ export default async function GuestRegisterPage({ searchParams }: { searchParams
     <>
       <PageHeader
         title="كشف النزلاء"
-        description={`${ctx.hotel.name_ar} — ليلة ${dayLabel(date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })} — ${rows.length} حجز، ${persons} شخص`}
+        description={`${ctx.hotel.name_ar}، ليلة ${dayLabel(date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}، ${rows.length} حجز و${persons} شخص`}
         actions={
           <div className="flex items-center gap-2">
             <form className="flex items-center gap-2 print:hidden">
@@ -49,16 +49,16 @@ export default async function GuestRegisterPage({ searchParams }: { searchParams
             {rows.map((r, i) => (
               <TableRow key={r.reservation_id}>
                 <TableCell className="num">{i + 1}</TableCell>
-                <TableCell className="num font-bold">{r.room_number ?? "—"}</TableCell>
+                <TableCell className="num font-bold">{r.room_number ?? ""}</TableCell>
                 <TableCell className="font-medium text-ink">{r.full_name}</TableCell>
-                <TableCell>{r.nationality ?? "—"}</TableCell>
+                <TableCell>{r.nationality ?? ""}</TableCell>
                 <TableCell>{r.id_type ? ID_TYPES[r.id_type] : <span className="text-urgent">غير مسجلة</span>}</TableCell>
-                <TableCell className="num" dir="ltr">{r.id_number ?? "—"}</TableCell>
-                <TableCell className="num" dir="ltr">{r.phone ?? "—"}</TableCell>
-                <TableCell className="num">{r.adults}{r.children ? ` + ${r.children}` : ""}</TableCell>
+                <TableCell className="num" dir="ltr">{r.id_number ?? ""}</TableCell>
+                <TableCell className="num" dir="ltr">{r.phone ?? ""}</TableCell>
+                <TableCell className="num">{r.adults}{r.children ? ` بالغ و${r.children} طفل` : ""}</TableCell>
                 <TableCell className="num whitespace-nowrap">{r.arrival_date}</TableCell>
                 <TableCell className="num whitespace-nowrap">{r.departure_date}</TableCell>
-                <TableCell>{r.company ?? "—"}</TableCell>
+                <TableCell>{r.company ?? ""}</TableCell>
               </TableRow>
             ))}
           </TableBody>

@@ -1,6 +1,7 @@
 import Link from "@/components/link";
-import { Plus } from "lucide-react";
+import { CreditCard, HandCoins, Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { plainText } from "@/lib/text";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import { listVouchers } from "@/services/vouchers.service";
 import { getI18n } from "@/i18n/server";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Receipt } from "lucide-react";
-import { ArrowDownLeft, ArrowUpRight, Scale } from "lucide-react";
+import { Scale } from "lucide-react";
 import { ZERO, toMoney } from "@/lib/accounting/money";
 import { Stat, StatGrid } from "@/components/ui/stat";
 import { EntityCell } from "@/components/ui/entity";
@@ -53,8 +54,8 @@ export default async function VouchersPage({ searchParams }: { searchParams: Pro
       />
       <StatGrid>
         <Stat icon={Receipt} tone="ink" label="سندات في القائمة" value={<span className="num">{vouchers.length}</span>} />
-        <Stat icon={ArrowDownLeft} tone="teal" label="مقبوضات" value={<Money value={receipts} locale={locale} />} />
-        <Stat icon={ArrowUpRight} tone="clay" label="مدفوعات" value={<Money value={disbursements} locale={locale} />} />
+        <Stat icon={HandCoins} tone="teal" label="مقبوضات" value={<Money value={receipts} locale={locale} />} />
+        <Stat icon={CreditCard} tone="clay" label="مدفوعات" value={<Money value={disbursements} locale={locale} />} />
         <Stat icon={Scale} tone="neutral" label="صافي الحركة" value={<Money value={receipts.minus(disbursements)} locale={locale} />}
           valueClassName={receipts.minus(disbursements).isNegative() ? "text-urgent" : undefined} hint="بدون السندات الملغاة" />
       </StatGrid>
@@ -100,11 +101,11 @@ export default async function VouchersPage({ searchParams }: { searchParams: Pro
             )}
             {shown.rows.map((v) => (
               <TableRow key={v.id} className={v.status === "voided" ? "opacity-60" : ""}>
-                <TableCell><Link href={`/vouchers/${v.id}`} className="num font-semibold text-ink hover:underline">{v.voucher_number}</Link></TableCell>
+                <TableCell><Link href={`/vouchers/${v.id}`} className="num font-semibold text-ink">{v.voucher_number}</Link></TableCell>
                 <TableCell className="num">{v.payment_date}</TableCell>
                 <TableCell><Badge variant={v.voucher_type === "receipt" ? "success" : "warning"}>{t.vouchers.types[v.voucher_type]}</Badge></TableCell>
-                <TableCell>{v.party_name ? <div className="max-w-52"><EntityCell name={v.party_name} /></div> : <span className="text-slate-400">—</span>}</TableCell>
-                <TableCell className="cell-fluid">{v.description}</TableCell>
+                <TableCell>{v.party_name ? <div className="max-w-52"><EntityCell name={v.party_name} /></div> : <span className="text-slate-400"></span>}</TableCell>
+                <TableCell className="cell-fluid">{plainText(v.description)}</TableCell>
                 <TableCell className={`text-end font-semibold ${v.voucher_type === "receipt" ? "text-success" : "text-ink"}`}><Money value={v.amount} locale={locale} /></TableCell>
                 <TableCell><Badge variant={v.status === "voided" ? "destructive" : "secondary"}>{t.vouchers.statuses[v.status]}</Badge></TableCell>
               </TableRow>

@@ -30,13 +30,13 @@ export default async function RatePlansPage({ searchParams }: { searchParams: Pr
 
   return (
     <>
-      <PageHeader title="خطط الأسعار" description="إقامة فقط، مع الإفطار، أسعار الشركات والعروض — تُطبَّق على الأسعار والمواسم القياسية" />
+      <PageHeader title="خطط الأسعار" description="إقامة فقط، مع الإفطار، أسعار الشركات والعروض، وتُطبَّق على الأسعار والمواسم القياسية" />
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Card className="overflow-hidden">
           <Table>
             <TableHeader><TableRow><TableHead>الخطة</TableHead><TableHead className="text-end">التعديل</TableHead><TableHead className="text-end">إضافة لكل ليلة</TableHead><TableHead>النطاق</TableHead><TableHead /></TableRow></TableHeader>
             <TableBody>
-              {plans.length === 0 && <TableRow><TableCell colSpan={5} className="py-10 text-center text-slate-500">لا خطط بعد — الحجوزات تُسعَّر بالسعر القياسي</TableCell></TableRow>}
+              {plans.length === 0 && <TableRow><TableCell colSpan={5} className="py-10 text-center text-slate-500">لا خطط بعد، والحجوزات تُسعَّر بالسعر القياسي</TableCell></TableRow>}
               {plans.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="cell-fluid">
@@ -44,10 +44,10 @@ export default async function RatePlansPage({ searchParams }: { searchParams: Pr
                     {p.includes_breakfast && <Badge variant="info" className="ms-2">يشمل الإفطار</Badge>}
                     {!p.is_active && <Badge variant="secondary" className="ms-2">موقوفة</Badge>}
                   </TableCell>
-                  <TableCell className="num text-end">{Number(p.adjust_pct) === 0 ? "—" : `${Number(p.adjust_pct) > 0 ? "+" : ""}${Number(p.adjust_pct)}%`}</TableCell>
-                  <TableCell className="text-end"><Money value={p.per_night} locale={locale} blankZero />{Number(p.per_night) > 0 && <span className="block text-[13px] text-slate-500">{p.per_person ? "لكل شخص" : "لكل غرفة"}</span>}</TableCell>
-                  <TableCell className="text-[14.5px]">{[p.customer_id && companyName.get(p.customer_id), p.room_type_id && typeName.get(p.room_type_id)].filter(Boolean).join(" · ") || "الكل"}</TableCell>
-                  <TableCell className="text-end">{canManage && <Link href={`/rate-plans?edit=${p.id}`} className="text-action hover:underline">تعديل</Link>}</TableCell>
+                  <TableCell className="num text-end">{Number(p.adjust_pct) === 0 ? "" : `${Number(p.adjust_pct) > 0 ? "+" : ""}${Number(p.adjust_pct)}%`}</TableCell>
+                  <TableCell className="whitespace-nowrap text-end"><Money value={p.per_night} locale={locale} blankZero />{Number(p.per_night) > 0 && <span className="ms-1.5 text-slate-500">{p.per_person ? "لكل شخص" : "لكل غرفة"}</span>}</TableCell>
+                  <TableCell>{[p.customer_id && companyName.get(p.customer_id), p.room_type_id && typeName.get(p.room_type_id)].filter(Boolean).join("، ") || "الكل"}</TableCell>
+                  <TableCell className="text-end">{canManage && <Link href={`/rate-plans?edit=${p.id}`} className="text-action">تعديل</Link>}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -65,12 +65,12 @@ export default async function RatePlansPage({ searchParams }: { searchParams: Pr
                 }}
                 fields={[
                   { name: "code", label: "الرمز", ltr: true }, { name: "name_ar", label: "الاسم" },
-                  { name: "adjust_pct", label: "نسبة التعديل % (سالب = خصم)", type: "number" },
+                  { name: "adjust_pct", label: "نسبة التعديل %، والسالب خصم", type: "number" },
                   { name: "per_night", label: "إضافة لكل ليلة", type: "number" },
                   { name: "per_person", label: "الإضافة لكل شخص بالغ", checkbox: true },
                   { name: "includes_breakfast", label: "تشمل الإفطار", checkbox: true },
-                  { name: "customer_id", label: "لشركة محددة (اختياري)", options: companies, optional: true },
-                  { name: "room_type_id", label: "لنوع غرفة (اختياري)", options: types.filter((x) => x.booking_mode === "nightly").map((x) => ({ id: x.id, label: x.name_ar })), optional: true },
+                  { name: "customer_id", label: "لشركة محددة", options: companies, optional: true },
+                  { name: "room_type_id", label: "لنوع غرفة محدد", options: types.filter((x) => x.booking_mode === "nightly").map((x) => ({ id: x.id, label: x.name_ar })), optional: true },
                   ...(edit ? [{ name: "is_active", label: "مفعّلة", checkbox: true as const }] : []),
                 ]} />
             </CardContent>

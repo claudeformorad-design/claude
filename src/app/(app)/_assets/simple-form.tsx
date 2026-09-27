@@ -52,7 +52,7 @@ export function SimpleForm({
           <label key={f.name} className="flex items-center gap-2 self-end text-sm"><input type="checkbox" className="size-4" {...register(f.name)} />{f.label}</label>
         ) : "options" in f ? (
           <div key={f.name} className="field-group space-y-1.5"><Label htmlFor={f.name}>{f.label}</Label>
-            <NativeSelect id={f.name} {...register(f.name)}><option value="">{f.optional ? "—" : ""}</option>{f.options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}</NativeSelect></div>
+            <NativeSelect id={f.name} {...register(f.name)}><option value="">{f.optional ? "بدون" : "اختر"}</option>{f.options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}</NativeSelect></div>
         ) : (
           <div key={f.name} className="field-group space-y-1.5"><Label htmlFor={f.name}>{f.label}</Label>
             <Input id={f.name} type={f.type === "number" ? "text" : (f.type ?? "text")} inputMode={f.type === "number" ? "decimal" : undefined}

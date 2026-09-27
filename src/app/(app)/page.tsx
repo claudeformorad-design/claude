@@ -59,9 +59,9 @@ const CONTROL_LABELS: Record<LedgerControl, { title: string; sub: string; href: 
 
 const BUCKET_META: Record<AgingBucket, { label: string; color: string }> = {
   current: { label: "غير مستحقة بعد", color: CHART_COLORS.paid },
-  "1_30": { label: "متأخرة 1–30 يومًا", color: CHART_COLORS.overdue[0] },
-  "31_60": { label: "متأخرة 31–60 يومًا", color: CHART_COLORS.overdue[1] },
-  "61_90": { label: "متأخرة 61–90 يومًا", color: CHART_COLORS.overdue[2] },
+  "1_30": { label: "متأخرة من 1 إلى 30 يومًا", color: CHART_COLORS.overdue[0] },
+  "31_60": { label: "متأخرة من 31 إلى 60 يومًا", color: CHART_COLORS.overdue[1] },
+  "61_90": { label: "متأخرة من 61 إلى 90 يومًا", color: CHART_COLORS.overdue[2] },
   over_90: { label: "متأخرة أكثر من 90 يومًا", color: CHART_COLORS.overdue[3] },
 };
 
@@ -186,7 +186,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // ---- الأقسام ----
   const deptName = new Map(departments.map((d) => [d.id, d.name_ar || d.name_en]));
   const deptSummary = deptRows?.data ? summarizeProfitability(deptRows.data as never).departments : [];
-  const deptLabel = (id: string | null) => (id ? deptName.get(id) ?? "—" : t.profitability.unassigned);
+  const deptLabel = (id: string | null) => (id ? deptName.get(id) ?? "" : t.profitability.unassigned);
   const deptSegments = deptSummary
     .filter((d) => d.revenue.gt(0))
     .sort((a, b) => b.revenue.comparedTo(a.revenue))
@@ -212,7 +212,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const draftCount = drafts?.count ?? 0;
   const alerts: { title: string; text: string; href: string; tone: "red" | "amber" | "blue" }[] = [];
   if (period && !period.data) alerts.push({ title: "لا توجد فترة محاسبية لليوم", text: "لن يُقبل ترحيل أي قيد بتاريخ اليوم.", href: "/periods", tone: "red" });
-  else if (period?.data?.status === "closed") alerts.push({ title: "الفترة الحالية مقفلة", text: `${period.data.name} — الترحيل يتطلب صلاحية خاصة.`, href: "/periods", tone: "amber" });
+  else if (period?.data?.status === "closed") alerts.push({ title: "الفترة الحالية مقفلة", text: `${period.data.name}، الترحيل يتطلب صلاحية خاصة.`, href: "/periods", tone: "amber" });
   if (unreconciled.length > 0) alerts.push({ title: "فرق في المطابقة", text: `${unreconciled.length} من حسابات المراقبة لا تطابق دفاترها.`, href: "#reconciliation", tone: "red" });
   if (canFin && cashBalance.isNegative()) alerts.push({ title: "رصيد النقدية سالب", text: "راجع السندات والمدفوعات أو سجّل التمويل.", href: "/reports/daily-cash", tone: "red" });
   if (canFin && totalRooms <= 0) alerts.push({ title: "عدد الغرف غير محدد", text: "مطلوب لحساب الإشغال وRevPAR.", href: "/settings/hotel", tone: "amber" });
@@ -234,7 +234,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const businessDate = new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", {
     weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "UTC",
   }).format(new Date(`${today}T00:00:00Z`));
-  const pct = (v: MoneyValue | null) => (v === null ? "—" : `${v.toFixed(1)}%`);
+  const pct = (v: MoneyValue | null) => (v === null ? "" : `${v.toFixed(1)}%`);
 
   const deptTotal = deptSummary.filter((d) => d.revenue.gt(0)).reduce((a2, d) => a2.plus(d.revenue), ZERO);
   const BALANCE_ROWS: { control: LedgerControl; label: string }[] = [
@@ -271,9 +271,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           {alerts.map((a) => (
             <Link key={a.title} href={a.href} className="group flex items-center gap-3 py-2.5">
               <Badge variant={a.tone === "red" ? "destructive" : a.tone === "amber" ? "warning" : "info"}>{a.tone === "red" ? "عاجل" : a.tone === "amber" ? "تنبيه" : "للعلم"}</Badge>
-              <span className="text-[16.5px] font-medium text-ink group-hover:underline">{a.title}</span>
+              <span className="text-[16.5px] font-medium text-ink transition-colors group-hover:text-action">{a.title}</span>
               <span className="hidden text-[16.5px] text-muted-foreground sm:inline">{a.text}</span>
-              <span className="ms-auto text-[15.5px] text-slate-500">←</span>
             </Link>
           ))}
         </section>
@@ -343,7 +342,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                     const ok = !row || row.diff.isZero();
                     return (
                       <tr key={b.control}>
-                        <td className="px-3 py-2.5"><Link href={CONTROL_LABELS[b.control].href} className="text-ink hover:underline">{b.label}</Link></td>
+                        <td className="px-3 py-2.5"><Link href={CONTROL_LABELS[b.control].href} className="text-ink">{b.label}</Link></td>
                         <td className="num px-3 py-2.5 text-end font-semibold text-ink"><Money value={bal(b.control)} locale="ar" /></td>
                         <td className="px-3 py-2.5 text-end">
                           {ok ? <Badge variant="success">مطابق</Badge> : <Badge variant="destructive">فرق <Money value={row!.diff} locale="ar" /></Badge>}
@@ -352,9 +351,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                     );
                   })}
                   <tr>
-                    <td className="px-3 py-2.5"><Link href="/journal?status=draft" className="text-ink hover:underline">قيود مسودة غير مرحّلة</Link></td>
+                    <td className="px-3 py-2.5"><Link href="/journal?status=draft" className="text-ink">قيود مسودة غير مرحّلة</Link></td>
                     <td className="num px-3 py-2.5 text-end font-semibold text-ink">{draftCount}</td>
-                    <td className="px-3 py-2.5 text-end text-[15.5px] text-muted-foreground">—</td>
+                    <td className="px-3 py-2.5 text-end text-[15.5px] text-muted-foreground"></td>
                   </tr>
                 </tbody>
               </table>
@@ -362,8 +361,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 const tb = reconRows.find((x) => x.control === "trial_balance");
                 return tb ? (
                   <p className="mt-auto border-t border-line pt-3 text-[15.5px] text-muted-foreground">
-                    ميزان المراجعة: مدين <span className="num text-ink"><Money value={tb.gl_balance} locale="ar" /></span> · دائن <span className="num text-ink"><Money value={tb.subledger_balance} locale="ar" /></span>
-                    <span className={tb.diff.isZero() ? "text-success" : "text-urgent"}> — {tb.diff.isZero() ? "متوازن" : "غير متوازن"}</span>
+                    ميزان المراجعة: مدين <span className="num text-ink"><Money value={tb.gl_balance} locale="ar" /></span>، دائن <span className="num text-ink"><Money value={tb.subledger_balance} locale="ar" /></span>
+                    <span className={tb.diff.isZero() ? "text-success" : "text-urgent"}>، {tb.diff.isZero() ? "متوازن" : "غير متوازن"}</span>
                   </p>
                 ) : null;
               })()}
@@ -380,7 +379,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                       المجموع <span className="num text-ink">{formatAmount(deptTotal)}</span> من إيراد الفترة <span className="num text-ink">{formatAmount(revenue)}</span> {currency}
                       {negativeDepts.length > 0 && (
                         <span className="block text-amber">
-                          تسويات صافية سالبة: {negativeDepts.map((d) => `${deptLabel(d.departmentId)} (${formatAmount(d.revenue)})`).join("، ")}
+                          تسويات صافية سالبة: {negativeDepts.map((d) => `${deptLabel(d.departmentId)} ${formatAmount(d.revenue)}`).join("، ")}
                         </span>
                       )}
                     </p>
@@ -390,12 +389,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               <Card2 className="flex flex-1 flex-col" title="الغرف" note={rangeLabel} link={{ href: "/reports/rooms", label: t.nav.roomStats }}>
                 <dl className="mb-5 grid grid-cols-2 gap-x-6 gap-y-5">
                   <Figure label="نسبة الإشغال" value={pct(rangeRooms.occupancy)} />
-                  <Figure label="متوسط سعر الغرفة" value={rangeRooms.adr ? formatAmount(rangeRooms.adr) : "—"} unit={rangeRooms.adr ? currency : undefined} />
-                  <Figure label="RevPAR" value={rangeRooms.revpar ? formatAmount(rangeRooms.revpar) : "—"} unit={rangeRooms.revpar ? currency : undefined} />
+                  <Figure label="متوسط سعر الغرفة" value={rangeRooms.adr ? formatAmount(rangeRooms.adr) : ""} unit={rangeRooms.adr ? currency : undefined} />
+                  <Figure label="RevPAR" value={rangeRooms.revpar ? formatAmount(rangeRooms.revpar) : ""} unit={rangeRooms.revpar ? currency : undefined} />
                   <Figure label="الليالي المباعة" value={`${rangeRooms.roomNightsSold.toString()} / ${rangeRooms.roomNightsAvailable.toString()}`} />
                 </dl>
                 <p className="mt-auto border-t border-line pt-3 text-[15.5px] text-muted-foreground">
-                  {totalRooms > 0 ? `${totalRooms} غرفة متاحة للبيع · ${openFolios?.count ?? 0} فوليو مفتوح` : "حدّد عدد الغرف في إعدادات الفندق لحساب الإشغال."}
+                  {totalRooms > 0 ? `${totalRooms} غرفة متاحة للبيع، و${openFolios?.count ?? 0} فوليو مفتوح` : "حدّد عدد الغرف في إعدادات الفندق لحساب الإشغال."}
                 </p>
               </Card2>
             </div>
@@ -432,7 +431,7 @@ function Card2({
         </h2>
         {link && (
           <Link href={link.href} className="shrink-0 text-[15.5px] text-slate-500 transition-colors hover:text-ink">
-            {link.label} ←
+            {link.label}
           </Link>
         )}
       </header>
@@ -454,22 +453,22 @@ function Kpi({
   tone?: "neg";
 }) {
   return (
-    <div className="surface lift min-w-0 p-4 sm:p-5">
-      <div className="mb-4 flex items-center justify-between sm:mb-5">
+    <Link href={href} aria-label={label} className="surface lift block min-w-0 p-4 sm:p-5">
+      <div className="mb-4 flex items-center gap-3 sm:mb-5">
         <span className="lift-icon flex size-9 items-center justify-center rounded-[10px] bg-ink text-white">
           <Icon className="size-[17px] stroke-[1.75]" />
         </span>
-        <Link href={href} aria-label={`تفاصيل ${label}`} className="text-[15.5px] text-slate-500 transition-colors hover:text-ink"><span className="hidden sm:inline">التفاصيل </span>←</Link>
+        <p className="truncate text-[16.5px] font-medium text-slate-600">{label}</p>
       </div>
       <p className={cn("display-num truncate text-[22px] font-bold leading-tight text-ink sm:text-[30px]", tone === "neg" && "text-urgent")}>
         <AnimatedNumber value={value.toNumber()} text={formatAmount(value)} />
-        <span className="ms-1.5 text-[15.5px] font-normal text-slate-500">{currency}</span>
+        <span className="ms-2 text-slate-400">{currency}</span>
       </p>
-      <p className="mt-1 truncate text-[16.5px] text-slate-600">{label} · {sub}</p>
+      <p className="mt-1 truncate text-[16.5px] text-slate-600">{sub}</p>
       <div className="mt-3">
         {spark ? <Sparkline values={spark.values} months={spark.months} color={spark.color} currency={currency} /> : <p className="flex h-10 items-end text-[15px] text-slate-500">رصيد الصندوق والبنوك في الأستاذ</p>}
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -484,7 +483,7 @@ function Figure({ label, value, unit }: { label: string; value: string; unit?: s
       <dt className="text-[15.5px] text-muted-foreground">{label}</dt>
       <dd className="mt-1.5 text-[22px] font-bold leading-none text-ink">
         <span className="num">{value}</span>
-        {unit && <span className="ms-1 text-[14.5px] text-slate-500">{unit}</span>}
+        {unit && <span className="ms-1.5 text-slate-400">{unit}</span>}
       </dd>
     </div>
   );

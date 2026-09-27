@@ -40,7 +40,7 @@ export default async function PurchaseOrdersPage() {
             {pos.map((p) => (
               <TableRow key={p.id}>
                 <TableCell className="num font-semibold">{p.po_number}</TableCell><TableCell className="num">{p.order_date}</TableCell>
-                <TableCell><EntityCell name={vName.get(p.vendor_id) ?? "—"} /></TableCell>
+                <TableCell><EntityCell name={vName.get(p.vendor_id) ?? ""} /></TableCell>
                 <TableCell><Badge variant={p.status === "open" ? "warning" : "success"}>{t.payables.statuses[p.status]}</Badge></TableCell>
                 <TableCell className="text-end">
                   {p.status === "open" && ctx.can(PERMISSIONS.billsCreate) && (

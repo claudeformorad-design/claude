@@ -16,7 +16,7 @@ const INTERNAL = [
 
 describe("describeDatabaseError", () => {
   it("يعرض قواعد العمل بنص عربي مع القيم الواردة في الرسالة", () => {
-    expect(describeDatabaseError("Insufficient stock for RICE-1 (on hand 3.500)")).toBe("الكمية غير كافية للصنف RICE-1 (المتوفر 3.500)");
+    expect(describeDatabaseError("Insufficient stock for RICE-1 (on hand 3.500)")).toBe("الكمية غير كافية للصنف RICE-1 المتوفر 3.500");
     expect(describeDatabaseError("Entry total 60000.00 requires approval (threshold 50000.00)")).toContain("50000.00");
     expect(describeDatabaseError("Account 4100 has type revenue but {expense,asset} is required")).toBe(
       "الحساب 4100 من نوع «إيرادات» والمطلوب «مصروفات أو أصول»",
@@ -25,7 +25,7 @@ describe("describeDatabaseError", () => {
     expect(describeDatabaseError("Journal entry not found")).toBe("القيد غير موجود");
     expect(describeDatabaseError("Draft journal entry not found")).toBe("القيد المسودة غير موجود");
     expect(describeDatabaseError("No availability for this room type on 2026-10-01 (rooms 4, booked 4)")).toBe(
-      "لا توجد غرف متاحة من هذا النوع ليلة 2026-10-01 (الغرف 4، المحجوز 4)",
+      "لا توجد غرف متاحة من هذا النوع ليلة 2026-10-01 الغرف 4، المحجوز 4",
     );
     expect(describeDatabaseError("Room 101 is already booked for an overlapping period")).toBe("الغرفة 101 محجوزة في فترة متداخلة");
     expect(describeDatabaseError("Reservation not found")).toBe("الحجز غير موجود");

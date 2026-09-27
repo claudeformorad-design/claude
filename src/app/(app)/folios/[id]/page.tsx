@@ -1,6 +1,7 @@
 import Link from "@/components/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
+import { plainText } from "@/lib/text";
 import { PrintButton } from "../../invoices/[id]/print-button";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
@@ -43,13 +44,13 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
 
   const effective = transactions.filter((x) => x.direction === 1 && !x.voided_by_id);
   const summary = (x: (typeof transactions)[number]) =>
-    `${t.folio.txnTypes[x.txn_type]} — ${x.description} (${formatMoney(x.total_amount, { locale })})`;
+    `${t.folio.txnTypes[x.txn_type]}، ${plainText(x.description)}، ${formatMoney(x.total_amount, { locale })}`;
 
   return (
     <>
       <PageHeader
         title={`${t.folio.folioNumber} ${folio.folio_number}`}
-        description={`${folio.guest_name}${folio.room_number ? ` — ${t.folio.room} ${folio.room_number}` : ""}`}
+        description={`${folio.guest_name}${folio.room_number ? `، ${t.folio.room} ${folio.room_number}` : ""}`}
         actions={
           <div className="flex items-center gap-2">
             {detail.invoiceId && <Button asChild variant="outline"><Link href={`/invoices/${detail.invoiceId}`}>{t.folio.invoice}</Link></Button>}
@@ -62,7 +63,7 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
       <StatGrid>
         <Stat icon={Wallet} tone="ink" label={t.folio.balance} value={<><Money value={detail.balance} locale={locale} /> <span className="text-[15.5px] font-normal text-slate-500">{ctx.hotel.base_currency}</span></>} />
         <Stat icon={HandCoins} tone="teal" label={t.folio.deposits} value={<Money value={detail.deposits} locale={locale} />} />
-        <Stat icon={CalendarRange} tone="clay" label="الإقامة" value={<span className="num text-[20px]">{folio.arrival_date ?? "—"} ← {folio.departure_date ?? "—"}</span>} hint={t.folio.types[folio.folio_type]} />
+        <Stat icon={CalendarRange} tone="clay" label="الإقامة" value={folio.arrival_date ? <span>من <span className="num">{folio.arrival_date}</span> إلى <span className="num">{folio.departure_date ?? ""}</span></span> : ""} hint={t.folio.types[folio.folio_type]} />
         <Stat icon={ListOrdered} tone="neutral" label={t.folio.transactions} value={<span className="num">{transactions.length}</span>} hint={folio.room_number ? `${t.folio.room} ${folio.room_number}` : undefined} />
       </StatGrid>
 
@@ -75,15 +76,15 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
             folioId={folio.id}
             hasTransactions={transactions.length > 0}
             chargeCodes={codes.filter((c) => c.is_active).map((c) => ({
-              id: c.id, label: `${c.code} — ${name(c)}`, price: c.default_price, inclusive: c.price_includes_tax,
+              id: c.id, label: `${c.code} ${name(c)}`, price: c.default_price, inclusive: c.price_includes_tax,
               taxes: c.tax_rate_ids.map((tid) => taxById.get(tid)).filter((x) => !!x).map((x) => ({ id: x!.id, rate: x!.rate, is_compound: x!.is_compound })),
             }))}
-            methods={methods.filter((m) => m.is_active).map((m) => ({ id: m.id, label: m.currency_code ? `${name(m)} (${m.currency_code})` : name(m), kind: m.kind }))}
-            customers={(customers?.data ?? []).map((c) => ({ id: c.id, label: `${c.code} — ${name(c)}` }))}
+            methods={methods.filter((m) => m.is_active).map((m) => ({ id: m.id, label: m.currency_code ? `${name(m)} ${m.currency_code}` : name(m), kind: m.kind }))}
+            customers={(customers?.data ?? []).map((c) => ({ id: c.id, label: `${c.code} ${name(c)}` }))}
             defaultCustomerId={folio.customer_id}
             charges={effective.filter((x) => x.txn_type === "charge").map((x) => ({ id: x.id, label: summary(x) }))}
             voidable={effective.filter((x) => !x.txn_type.startsWith("transfer")).map((x) => ({ id: x.id, label: summary(x) }))}
-            openFolios={(openFolios?.data ?? []).map((f) => ({ id: f.id, label: `${f.folio_number} — ${f.guest_name}` }))}
+            openFolios={(openFolios?.data ?? []).map((f) => ({ id: f.id, label: `${f.folio_number} ${f.guest_name}` }))}
             can={{
               manage: ctx.can(PERMISSIONS.folioManage), allowance: ctx.can(PERMISSIONS.folioAllowance),
               void: ctx.can(PERMISSIONS.folioVoid), checkout: ctx.can(PERMISSIONS.folioCheckout),
@@ -114,7 +115,7 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
               <TableRow key={x.id} className={cn((x.voided_by_id || x.direction === -1) && "text-muted-foreground line-through decoration-muted-foreground/40")}>
                 <TableCell className="num">{x.business_date}</TableCell>
                 <TableCell><Badge variant="outline">{t.folio.txnTypes[x.txn_type]}</Badge></TableCell>
-                <TableCell>{x.description}{x.reference ? ` · ${x.reference}` : ""}</TableCell>
+                <TableCell>{plainText(x.description)}{x.reference ? `، ${x.reference}` : ""}</TableCell>
                 <TableCell className="text-end"><Money value={x.net_amount} locale={locale} blankZero /></TableCell>
                 <TableCell className="text-end"><Money value={x.tax_amount} locale={locale} blankZero /></TableCell>
                 <TableCell className={cn("text-end", toMoney(x.ledger_effect).isNegative() && "text-success")}><Money value={x.ledger_effect} locale={locale} blankZero /></TableCell>

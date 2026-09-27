@@ -45,7 +45,7 @@ export function CustomerForm({ t, initial }: { t: Pick<Dictionary, "customers" |
         </div>
       </div>
       {f("name_ar", t.customers.name, { dir: "rtl" })}
-      {f("name_en", `${t.customers.name} (EN)`, { dir: "ltr" })}
+      {f("name_en", `${t.customers.name} بالإنجليزية`, { dir: "ltr" })}
       <div className="grid grid-cols-2 gap-3">
         {f("tax_number", t.customers.taxNumber, { dir: "ltr" })}
         {f("commercial_registration", t.customers.cr, { dir: "ltr" })}

@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeftRight, BedDouble, CalendarPlus, KeyRound, LogOut, ReceiptText, Wallet } from "lucide-react";
+import { BedDouble, CalendarPlus, DoorOpen, KeyRound, LogOut, ReceiptText, Wallet } from "lucide-react";
 import Link from "@/components/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -85,7 +85,7 @@ export function StayPanel({
   const approx = (methodId: string, amount: string) => {
     const m = methodOf(methodId);
     if (!m?.currency || !m.rate || !amount || Number.isNaN(Number(amount))) return null;
-    return `≈ ${money(Number(amount) * m.rate)} ${baseCurrency} (سعر ${m.rate})`;
+    return `يعادل ${money(Number(amount) * m.rate)} ${baseCurrency} بسعر ${m.rate}`;
   };
   const payMethod = methodOf(pay.method);
   const payForeign = !!payMethod?.currency;
@@ -150,12 +150,12 @@ export function StayPanel({
                           const m = methodOf(e.target.value);
                           setPay({ method: e.target.value, amount: m?.currency && m.rate ? (Math.ceil((bill.due / m.rate) * 100) / 100).toString() : String(bill.due) });
                         }}>
-                          {cashMethods.map((m) => <option key={m.id} value={m.id}>{m.label}{m.currency ? ` (${m.currency})` : ""}</option>)}
-                          {customer && methods.filter((m) => m.kind === "city_ledger").map((m) => <option key={m.id} value={m.id}>{m.label} — {customer.label}</option>)}
+                          {cashMethods.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+                          {customer && methods.filter((m) => m.kind === "city_ledger").map((m) => <option key={m.id} value={m.id}>{m.label} على {customer.label}</option>)}
                         </NativeSelect>
                       </div>
                       <div className={field}>
-                        <Label htmlFor="pay_amount">المبلغ{payForeign ? ` (${payMethod!.currency})` : ""}</Label>
+                        <Label htmlFor="pay_amount">المبلغ{payForeign ? ` بعملة ${payMethod!.currency}` : ""}</Label>
                         <Input id="pay_amount" inputMode="decimal" dir="ltr" value={pay.amount} onChange={(e) => setPay({ ...pay, amount: e.target.value })} />
                         {approx(pay.method, pay.amount) && <p className="num text-[13.5px] text-slate-500">{approx(pay.method, pay.amount)}</p>}
                       </div>
@@ -193,7 +193,7 @@ export function StayPanel({
         <Card className="border-action/30">
           <CardHeader>
             <CardTitle><KeyRound className="size-5" />تسجيل الوصول</CardTitle>
-            <CardDescription>{hourly ? "بدء الجلسة وفتح فوليو الحجز." : "غرفة نظيفة في الخدمة؛ يُفتح فوليو الحجز (أو يُستخدم فوليو العربون)."}</CardDescription>
+            <CardDescription>{hourly ? "بدء الجلسة وفتح فوليو الحجز." : "غرفة نظيفة في الخدمة، ويُفتح فوليو الحجز أو يُستخدم فوليو العربون."}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap items-end gap-3">
             {!hourly && (
@@ -201,7 +201,7 @@ export function StayPanel({
                 <Label htmlFor="checkin_room">الغرفة</Label>
                 <NativeSelect id="checkin_room" value={room} onChange={(e) => setRoom(e.target.value)}>
                   {!room && <option value="">اختر غرفة</option>}
-                  {checkInRooms.map((r) => <option key={r.id} value={r.id}>{r.label}{r.note ? ` — ${r.note}` : ""}</option>)}
+                  {checkInRooms.map((r) => <option key={r.id} value={r.id}>{r.label}{r.note ? `، ${r.note}` : ""}</option>)}
                 </NativeSelect>
               </div>
             )}
@@ -218,7 +218,7 @@ export function StayPanel({
           <CardHeader><CardTitle><BedDouble className="size-5" />أثناء الإقامة</CardTitle></CardHeader>
           <CardContent className="space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-panel p-3">
-              <p className="text-[15.5px] text-slate-600">ترحيل الليالي المستحقة حتى اليوم على الفوليو (يتم تلقائيًا عند المغادرة).</p>
+              <p className="text-[15.5px] text-slate-600">ترحيل الليالي المستحقة حتى اليوم على الفوليو، ويتم تلقائيًا عند المغادرة.</p>
               <Button type="button" variant="outline" size="sm" loading={busy === "post"} disabled={pending}
                 onClick={() => run("post", () => postChargesAction(reservationId), "تم ترحيل الليالي")}>ترحيل الليالي</Button>
             </div>
@@ -249,7 +249,7 @@ export function StayPanel({
                 </div>
                 <Button type="button" variant="outline" loading={busy === "move"} disabled={pending || !move.room || !move.reason.trim()}
                   onClick={() => run("move", () => moveRoomAction(reservationId, move.room, move.reason.trim()), "تم نقل النزيل")}>
-                  <ArrowLeftRight className="size-4" />نقل
+                  <DoorOpen className="size-4" />نقل
                 </Button>
               </div>
             )}
@@ -262,7 +262,7 @@ export function StayPanel({
           <CardHeader>
             <CardTitle className="justify-between">
               <span className="flex items-center gap-2"><Wallet className="size-5" />الفوليو والعربون</span>
-              {folio && canViewFolio && <Link href={`/folios/${folio.id}`} className="text-[15px] font-medium text-action hover:underline">فتح الفوليو {folio.number}</Link>}
+              {folio && canViewFolio && <Link href={`/folios/${folio.id}`} className="text-[15px] font-medium text-action">فتح الفوليو {folio.number}</Link>}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -277,15 +277,15 @@ export function StayPanel({
                 <div className={field}>
                   <Label htmlFor="dep_method">عربون جديد</Label>
                   <NativeSelect id="dep_method" value={dep.method} onChange={(e) => setDep({ ...dep, method: e.target.value })}>
-                    {cashMethods.map((m) => <option key={m.id} value={m.id}>{m.label}{m.currency ? ` (${m.currency})` : ""}</option>)}
+                    {cashMethods.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
                   </NativeSelect>
                 </div>
                 <div className={field}>
-                  <Label htmlFor="dep_amount">المبلغ{methodOf(dep.method)?.currency ? ` (${methodOf(dep.method)!.currency})` : ""}</Label>
+                  <Label htmlFor="dep_amount">المبلغ{methodOf(dep.method)?.currency ? ` بعملة ${methodOf(dep.method)!.currency}` : ""}</Label>
                   <Input id="dep_amount" inputMode="decimal" dir="ltr" value={dep.amount} onChange={(e) => setDep({ ...dep, amount: e.target.value })} />
                   {approx(dep.method, dep.amount) && <p className="num text-[13px] text-slate-500">{approx(dep.method, dep.amount)}</p>}
                 </div>
-                <div className={field}><Label htmlFor="dep_ref">مرجع (اختياري)</Label><Input id="dep_ref" value={dep.reference} onChange={(e) => setDep({ ...dep, reference: e.target.value })} placeholder="رقم الإيصال أو الحوالة" /></div>
+                <div className={field}><Label htmlFor="dep_ref">المرجع</Label><Input id="dep_ref" value={dep.reference} onChange={(e) => setDep({ ...dep, reference: e.target.value })} placeholder="رقم الإيصال أو الحوالة" /></div>
                 <Button type="button" variant="outline" loading={busy === "dep_add"} disabled={pending || !dep.amount}
                   onClick={() => run("dep_add", () => recordDepositAction(reservationId, dep), "تم تسجيل العربون", () => { setDep({ ...dep, amount: "", reference: "" }); router.refresh(); })}>
                   تسجيل

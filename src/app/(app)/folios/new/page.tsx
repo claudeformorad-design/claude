@@ -20,8 +20,8 @@ export default async function NewFolioPage() {
         <OpenFolioForm
           t={{ folio: t.folio, common: t.common, errors: t.errors }}
           today={todayInTimeZone(ctx.hotel.timezone)}
-          customers={(customers.data ?? []).map((c) => ({ id: c.id, label: `${c.code} — ${(locale === "en" && c.name_en) || c.name_ar}` }))}
-          masters={(masters.data ?? []).map((m) => ({ id: m.id, label: `${m.folio_number} — ${m.guest_name}` }))}
+          customers={(customers.data ?? []).map((c) => ({ id: c.id, label: `${c.code} ${(locale === "en" && c.name_en) || c.name_ar}` }))}
+          masters={(masters.data ?? []).map((m) => ({ id: m.id, label: `${m.folio_number} ${m.guest_name}` }))}
         />
       </CardContent></Card>
     </>

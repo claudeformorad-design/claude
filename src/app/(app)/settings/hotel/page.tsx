@@ -59,7 +59,7 @@ export default async function HotelSettingsPage() {
                 ]} />
             ) : <p className="text-muted-foreground">{t.errors.permission_denied}</p>}
             <p className="mt-4 text-sm text-muted-foreground">{a.baseCurrency}: <strong className="num">{h.base_currency}</strong>
-              {autoRooms && <> · {a.totalRooms}: <strong className="num">{h.total_rooms ?? 0}</strong> (من الغرف المسجّلة)</>}</p>
+              {autoRooms && <>، {a.totalRooms}: <strong className="num">{h.total_rooms ?? 0}</strong> من الغرف المسجّلة</>}</p>
           </CardContent></Card>
           <Card className="overflow-hidden"><CardHeader><CardTitle>{a.departments}</CardTitle></CardHeader>
             <Table>
@@ -76,7 +76,7 @@ export default async function HotelSettingsPage() {
                 <SimpleForm columns={2} submitLabel={a.addDepartment} errors={t.errors} action={saveDepartmentAction}
                   initial={{ code: "", name_ar: "", name_en: "", kind: "revenue_center" }}
                   fields={[{ name: "code", label: t.customers.code, ltr: true }, { name: "name_ar", label: t.customers.name },
-                    { name: "name_en", label: `${t.customers.name} (EN)`, ltr: true },
+                    { name: "name_en", label: `${t.customers.name} بالإنجليزية`, ltr: true },
                     { name: "kind", label: t.vouchers.type, options: (["revenue_center", "cost_center", "service_center"] as const).map((k) => ({ id: k, label: a.kinds[k] })) }]} />
               </CardContent>
             )}

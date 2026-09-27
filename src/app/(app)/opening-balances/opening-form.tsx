@@ -59,14 +59,14 @@ export function OpeningForm({ accounts, customers, vendors, today, errors }: {
         <Button type="button" size="sm" variant="outline" disabled={!options.length} onClick={() => set([...list, { id: "", amount: "", reference: "" }])}><Plus className="size-4" />إضافة</Button>
       </CardHeader>
       <CardContent className="space-y-2">
-        {!options.length && <p className="text-[15px] text-slate-500">لا توجد سجلات بعد — أضفها أولًا من صفحتها.</p>}
+        {!options.length && <p className="text-[15px] text-slate-500">لا توجد سجلات بعد، أضفها أولًا من صفحتها.</p>}
         {list.map((x, i) => (
           <div key={i} className="grid grid-cols-[1fr_140px_1fr_auto] items-center gap-2">
             <NativeSelect aria-label={`${prefix} ${i + 1}`} value={x.id} onChange={(e) => set(list.map((y, j) => j === i ? { ...y, id: e.target.value } : y))}>
               <option value="">اختر</option>{options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
             </NativeSelect>
             <Input aria-label="المبلغ" inputMode="decimal" dir="ltr" value={x.amount} onChange={(e) => set(list.map((y, j) => j === i ? { ...y, amount: e.target.value } : y))} placeholder="المبلغ" />
-            <Input aria-label="المرجع" value={x.reference} onChange={(e) => set(list.map((y, j) => j === i ? { ...y, reference: e.target.value } : y))} placeholder="مرجع (رقم الكشف أو الفاتورة)" />
+            <Input aria-label="المرجع" value={x.reference} onChange={(e) => set(list.map((y, j) => j === i ? { ...y, reference: e.target.value } : y))} placeholder="رقم الكشف أو الفاتورة" />
             <Button type="button" size="sm" variant="ghost" aria-label="حذف" onClick={() => set(list.filter((_, j) => j !== i))}><Trash2 className="size-4" /></Button>
           </div>
         ))}
@@ -96,8 +96,8 @@ export function OpeningForm({ accounts, customers, vendors, today, errors }: {
             ))}
           </CardContent>
         </Card>
-        {party("أرصدة العملاء (مدينة)", "ما على الشركات والعملاء للفندق — تُحصَّل لاحقًا بسندات القبض", cust, setCust, customers, "العميل")}
-        {party("أرصدة الموردين (دائنة)", "ما على الفندق للموردين — تُسدَّد لاحقًا من صفحة الموردين", vend, setVend, vendors, "المورد")}
+        {party("أرصدة العملاء المدينة", "ما على الشركات والعملاء للفندق، ويُحصَّل لاحقًا بسندات القبض", cust, setCust, customers, "العميل")}
+        {party("أرصدة الموردين الدائنة", "ما على الفندق للموردين، ويُسدَّد لاحقًا من صفحة الموردين", vend, setVend, vendors, "المورد")}
       </div>
 
       <Card className="h-fit xl:sticky xl:top-0">

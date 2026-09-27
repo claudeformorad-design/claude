@@ -53,7 +53,7 @@ export function PayrollForm({ t, locale, month, departments }: {
             {fields.map((f, i) => (
               <tr key={f.id}>
                 <td className="p-1"><Input {...register(`lines.${i}.employee_name`)} /></td>
-                <td className="p-1"><NativeSelect {...register(`lines.${i}.department_id`)}><option value="">—</option>{departments.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}</NativeSelect></td>
+                <td className="p-1"><NativeSelect {...register(`lines.${i}.department_id`)}><option value="">اختر</option>{departments.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}</NativeSelect></td>
                 {nums.map((n) => <td key={n} className="p-1"><Input dir="ltr" inputMode="decimal" className="num w-28" {...register(`lines.${i}.${n}`)} /></td>)}
                 <td><Button type="button" variant="ghost" size="icon" disabled={fields.length <= 1} onClick={() => remove(i)}><Trash2 /></Button></td>
               </tr>

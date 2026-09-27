@@ -3,6 +3,7 @@ import {
 } from "lucide-react";
 import Link from "@/components/link";
 import { Money } from "@/components/money";
+import { plainText } from "@/lib/text";
 
 const SOURCE_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
   manual: FilePen, opening: Flag, reversal: Undo2, closing: Lock, adjustment: Scale, folio: BedDouble, invoice: FileText,
@@ -20,10 +21,10 @@ const dayLabel = (d: string, today: string) => {
     .format(new Date(`${d}T00:00:00Z`));
 };
 
-/** الوصف الآلي «نوع — مرجع (اسم)» يُقسم إلى عنوان قصير وسطر تفاصيل */
+/** الوصف الآلي «نوع، مرجع واسم» يُقسم إلى عنوان قصير وسطر تفاصيل بلا رموز فاصلة */
 function splitDescription(text: string): [string, string | null] {
-  const i = text.indexOf(" — ");
-  return i < 0 ? [text, null] : [text.slice(0, i), text.slice(i + 3)];
+  const i = text.search(/\s[—–]\s/);
+  return i < 0 ? [plainText(text), null] : [plainText(text.slice(0, i)), plainText(text.slice(i + 3))];
 }
 
 /**

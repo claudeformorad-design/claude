@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/layout/page-header";
+import { plainText } from "@/lib/text";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,7 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
       <PageHeader title={t.nav.bank} description={t.payables.bankSubtitle} />
       <form className="toolbar">
         <NativeSelect name="account" defaultValue={accountId} className="w-72">
-          {banks.map((a) => <option key={a.id} value={a.id}>{a.code} — {name(a)}</option>)}
+          {banks.map((a) => <option key={a.id} value={a.id}>{a.code} {name(a)}</option>)}
         </NativeSelect>
         <Button type="submit" variant="outline">{t.common.apply}</Button>
         {accountId && <AutoMatch label={t.payables.autoMatch} accountId={accountId} />}
@@ -63,7 +64,7 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
                 {lines.length === 0 && <TableRow><TableCell colSpan={6} className="py-8"><EmptyState title="كشف الحساب فارغ" description="أضف أسطر كشف البنك من النموذج أعلاه، ثم طابقها مع حركات الأستاذ يدويًا أو تلقائيًا." icon={Landmark} /></TableCell></TableRow>}
                 {lines.map((l) => (
                   <TableRow key={l.id}>
-                    <TableCell className="num">{l.txn_date}</TableCell><TableCell>{l.description}</TableCell><TableCell className="num">{l.reference ?? ""}</TableCell>
+                    <TableCell className="num">{l.txn_date}</TableCell><TableCell>{plainText(l.description)}</TableCell><TableCell className="num">{l.reference ?? ""}</TableCell>
                     <TableCell className={`text-end font-semibold ${toMoney(l.amount).isNegative() ? "text-ink" : "text-success"}`}><Money value={l.amount} locale={locale} /></TableCell>
                     <TableCell><Badge variant={l.matched_line_id ? "success" : "warning"}>{l.matched_line_id ? t.payables.matched : t.payables.unmatched}</Badge></TableCell>
                     <TableCell>

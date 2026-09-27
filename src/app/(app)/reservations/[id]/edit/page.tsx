@@ -22,7 +22,7 @@ export default async function EditReservationPage({ params }: { params: Promise<
 
   return (
     <>
-      <PageHeader title={`تعديل الحجز ${r.confirmation_number}`} description={`${r.guest?.full_name ?? ""} — الليالي القائمة تحتفظ بسعرها المثبّت، والمضافة تُسعَّر بالأسعار الحالية.`} />
+      <PageHeader title={`تعديل الحجز ${r.confirmation_number}`} description={`${r.guest?.full_name ?? ""}، الليالي القائمة تحتفظ بسعرها المثبّت، والمضافة تُسعَّر بالأسعار الحالية.`} />
       <ReservationForm mode="edit" reservationId={r.id} roomTypes={data.roomTypes.filter((x) => x.mode === r.booking_mode)} rooms={data.roomOptions}
         guests={data.guestOptions} companies={data.companies} today={todayInTimeZone(ctx.hotel.timezone)}
         canOverride={ctx.can(PERMISSIONS.pmsRatesOverride)} canOverbook={ctx.can(PERMISSIONS.pmsOverbook)} errors={t.errors}

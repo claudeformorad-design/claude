@@ -44,10 +44,10 @@ export function SeasonForm({ initial, types, errors }: {
       <div className={field}><Label htmlFor="name">اسم الموسم</Label><Input id="name" value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} placeholder="مثل: موسم الصيف، رمضان، العيد" /></div>
       <div className="grid grid-cols-2 gap-3">
         <div className={field}><Label htmlFor="date_from">من</Label><Input id="date_from" type="date" dir="ltr" value={v.date_from} onChange={(e) => setV({ ...v, date_from: e.target.value })} /></div>
-        <div className={field}><Label htmlFor="date_to">إلى (شامل)</Label><Input id="date_to" type="date" dir="ltr" value={v.date_to} onChange={(e) => setV({ ...v, date_to: e.target.value })} /></div>
+        <div className={field}><Label htmlFor="date_to">إلى وشاملًا</Label><Input id="date_to" type="date" dir="ltr" value={v.date_to} onChange={(e) => setV({ ...v, date_to: e.target.value })} /></div>
       </div>
       <div className={field}>
-        <Label htmlFor="adjust_pct">نسبة تعديل للأنواع الأخرى % (اختياري)</Label>
+        <Label htmlFor="adjust_pct">نسبة تعديل للأنواع الأخرى %</Label>
         <Input id="adjust_pct" inputMode="decimal" dir="ltr" value={v.adjust_pct ?? ""} onChange={(e) => setV({ ...v, adjust_pct: e.target.value })} placeholder="مثل 20 أو -15" />
       </div>
       <div className="space-y-2">
@@ -58,9 +58,9 @@ export function SeasonForm({ initial, types, errors }: {
           </div>
           {types.map((t) => (
             <div key={t.id} className="grid grid-cols-[1fr_110px_110px] items-center gap-2 border-t border-line px-3 py-2">
-              <span className="min-w-0 truncate text-[15.5px]">{t.label}<span className="num block text-[13px] text-slate-500">الأساسي {t.base}</span></span>
-              <Input inputMode="decimal" dir="ltr" className="h-9" value={price(t.id).nightly_rate ?? ""} onChange={(e) => setPrice(t.id, "nightly_rate", e.target.value)} placeholder="—" />
-              <Input inputMode="decimal" dir="ltr" className="h-9" value={price(t.id).weekend_rate ?? ""} onChange={(e) => setPrice(t.id, "weekend_rate", e.target.value)} placeholder="—" />
+              <span className="min-w-0 truncate text-[15.5px]">{t.label}</span>
+              <Input inputMode="decimal" dir="ltr" className="h-9" value={price(t.id).nightly_rate ?? ""} onChange={(e) => setPrice(t.id, "nightly_rate", e.target.value)} placeholder={String(t.base)} />
+              <Input inputMode="decimal" dir="ltr" className="h-9" value={price(t.id).weekend_rate ?? ""} onChange={(e) => setPrice(t.id, "weekend_rate", e.target.value)} placeholder="" />
             </div>
           ))}
         </div>

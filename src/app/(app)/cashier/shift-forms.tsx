@@ -72,17 +72,17 @@ export function CloseShiftForm({ shiftId, lines, errors, supervisor }: { shiftId
             </div>
             <div className={cn("rounded-md px-3 py-2 text-center text-[15px] font-semibold",
               diff == null ? "bg-subtle text-slate-500" : diff === 0 ? "bg-success/10 text-success" : diff < 0 ? "bg-urgent-tint text-urgent" : "bg-amber-tint text-amber")}>
-              {diff == null ? "—" : diff === 0 ? "مطابق" : `${diff < 0 ? "عجز" : "زيادة"} ${formatMoney(Math.abs(diff), { locale: "ar" })}`}
+              {diff == null ? "" : diff === 0 ? "مطابق" : `${diff < 0 ? "عجز" : "زيادة"} ${formatMoney(Math.abs(diff), { locale: "ar" })}`}
             </div>
           </div>
         );
       })}
       <div className="field-group space-y-1.5">
-        <Label htmlFor="close_note">ملاحظة الإغلاق (اختيارية)</Label>
+        <Label htmlFor="close_note">ملاحظة الإغلاق</Label>
         <Input id="close_note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="مثل: سُلّم الصندوق للوردية المسائية" />
       </div>
       <Button type="submit" variant="dark" className="w-full" loading={pending}>
-        <LockKeyhole className="size-4" />{supervisor ? "إغلاق الوردية (مشرف)" : "إغلاق الوردية وتسليم الصندوق"}
+        <LockKeyhole className="size-4" />{supervisor ? "إغلاق الوردية بصفتك مشرفًا" : "إغلاق الوردية وتسليم الصندوق"}
       </Button>
       <p className="text-[14px] text-slate-500">أي عجز أو زيادة يُقيَّد تلقائيًا على حساب «عجز وزيادة الصندوق».</p>
     </form>

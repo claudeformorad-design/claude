@@ -3,7 +3,7 @@ import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { formatMoney } from "@/lib/accounting/money";
 import { ID_TYPES } from "@/lib/pms/labels";
-import { nightsBetween, timeOf } from "@/lib/pms/dates";
+import { nightsBetween, nightsText, timeOf, timeRange } from "@/lib/pms/dates";
 import { getGuest, getReservation } from "@/services/pms.service";
 import { PrintButton } from "../../../invoices/[id]/print-button";
 
@@ -52,12 +52,12 @@ export default async function RegistrationCardPage({ params }: { params: Promise
         <section>
           <h2 className="mb-2 text-[16px] font-bold text-ink">الإقامة</h2>
           <div className="grid grid-cols-2 gap-x-8">
-            <Field label={hourly ? "الوحدة" : "الغرفة"} value={`${r.room?.room_number ?? "—"} — ${r.room_type?.name_ar ?? ""}`} />
+            <Field label={hourly ? "الوحدة" : "الغرفة"} value={`${r.room?.room_number ?? ""} ${r.room_type?.name_ar ?? ""}`} />
             <Field label="عدد الأشخاص" value={`${r.adults}${r.children ? ` بالغ + ${r.children} طفل` : " بالغ"}`} />
-            <Field label="الوصول" value={hourly ? `${r.arrival_date} ${timeOf(r.starts_at)}` : `${r.arrival_date} (بعد ${h.check_in_time.slice(0, 5)})`} ltr />
-            <Field label="المغادرة" value={hourly ? `${r.arrival_date} ${timeOf(r.ends_at)}` : `${r.departure_date} (قبل ${h.check_out_time.slice(0, 5)})`} ltr />
-            <Field label={hourly ? "المدة" : "عدد الليالي"} value={hourly ? `${timeOf(r.starts_at)}–${timeOf(r.ends_at)}` : String(nights)} />
-            <Field label="إجمالي الإقامة (قبل الضريبة)" value={`${money(r.total_amount)} ${h.base_currency}`} />
+            <Field label="الوصول" value={hourly ? `${r.arrival_date} ${timeOf(r.starts_at)}` : `${r.arrival_date} بعد ${h.check_in_time.slice(0, 5)}`} ltr />
+            <Field label="المغادرة" value={hourly ? `${r.arrival_date} ${timeOf(r.ends_at)}` : `${r.departure_date} قبل ${h.check_out_time.slice(0, 5)}`} ltr />
+            <Field label={hourly ? "المدة" : "عدد الليالي"} value={hourly ? timeRange(r.starts_at, r.ends_at) : nightsText(nights)} />
+            <Field label="إجمالي الإقامة قبل الضريبة" value={`${money(r.total_amount)} ${h.base_currency}`} />
           </div>
           {r.special_requests && <p className="mt-3 text-[14.5px] text-slate-700">طلبات خاصة: {r.special_requests}</p>}
         </section>

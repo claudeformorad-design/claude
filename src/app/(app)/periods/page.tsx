@@ -24,7 +24,7 @@ export default async function PeriodsPage() {
   return (
     <>
       <PageHeader title={t.nav.periods} description={a.periodsSubtitle}
-        actions={can && latest && nextStart && <PeriodButton op="newYear" id={latest.id} startDate={nextStart} label={`${a.newYear} (${nextStart})`} errorLabels={errs} />} />
+        actions={can && latest && nextStart && <PeriodButton op="newYear" id={latest.id} startDate={nextStart} label={`${a.newYear} من ${nextStart}`} errorLabels={errs} />} />
       <StatGrid className="lg:grid-cols-3">
         <Stat icon={CalendarCheck} tone="ink" label="سنوات مالية" value={<span className="num">{(years.data ?? []).length}</span>} hint={`${(years.data ?? []).filter((y) => y.status === "open").length} مفتوحة`} />
         <Stat icon={LockOpen} tone="teal" label="فترات مفتوحة للترحيل" value={<span className="num">{(periods.data ?? []).filter((p) => p.status === "open").length}</span>} />
@@ -34,7 +34,7 @@ export default async function PeriodsPage() {
         {(years.data ?? []).map((y) => (
           <Card key={y.id} className="overflow-hidden">
             <CardHeader className="flex-row items-center justify-between">
-              <CardTitle>{a.fiscalYear} {y.name} <span className="num text-[16.5px] font-normal text-slate-500">{y.start_date} → {y.end_date}</span></CardTitle>
+              <CardTitle>{a.fiscalYear} {y.name} <span className="font-normal text-slate-500">من <span className="num">{y.start_date}</span> إلى <span className="num">{y.end_date}</span></span></CardTitle>
               <div className="flex items-center gap-2">
                 <Badge variant={y.status === "open" ? "success" : "secondary"}>{y.status === "open" ? t.folio.statuses.open : t.folio.statuses.closed}</Badge>
                 {can && y.status === "open" && <PeriodButton op="closeYear" id={y.id} label={a.closeYear} confirmText={a.closeYearConfirm} variant="destructive" errorLabels={errs} />}

@@ -80,7 +80,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
                   <TableCell className="cell-fluid"><EntityCell name={name(x)} sub={t.customers.types[x.customer_type]} href={`/invoices?customer=${x.id}`} /></TableCell>
                   <TableCell>{t.customers.types[x.customer_type]}</TableCell>
                   <TableCell>{x.allow_credit ? <Badge variant="success">{t.common.yes}</Badge> : <Badge variant="secondary">{t.common.no}</Badge>}</TableCell>
-                  <TableCell className="text-end">{x.credit_limit ? <Money value={x.credit_limit} locale={locale} /> : "—"}</TableCell>
+                  <TableCell className="text-end">{x.credit_limit ? <Money value={x.credit_limit} locale={locale} /> : ""}</TableCell>
                   <TableCell className="text-end font-semibold"><Money value={x.open_invoices} locale={locale} blankZero /></TableCell>
                   <TableCell className="text-end"><Money value={x.unapplied_credit} locale={locale} blankZero /></TableCell>
                   {canManage && (

@@ -10,7 +10,7 @@ import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { todayInTimeZone } from "@/lib/accounting/fiscal";
 import { ACTIVE_STATUSES } from "@/lib/pms/labels";
-import { timeOf } from "@/lib/pms/dates";
+import { timeRange } from "@/lib/pms/dates";
 import { listFloors, listReservations, listRooms, listRoomTypes } from "@/services/pms.service";
 import { getI18n } from "@/i18n/server";
 import { RoomTile, type TileOccupancy } from "./room-tile";
@@ -28,13 +28,12 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
   const filter: Filter = (["vacant", "dirty", "oos"] as const).find((x) => x === sp.filter) ?? "all";
   const today = todayInTimeZone(ctx.hotel.timezone);
 
-  const [rooms, types, floors, tonight] = await Promise.all([
+  const [rooms, , floors, tonight] = await Promise.all([
     listRooms(ctx.supabase, ctx.hotel.id),
     listRoomTypes(ctx.supabase, ctx.hotel.id),
     listFloors(ctx.supabase, ctx.hotel.id),
     listReservations(ctx.supabase, ctx.hotel.id, { statuses: ACTIVE_STATUSES, from: today, to: today }),
   ]);
-  const typeById = new Map(types.map((x) => [x.id, x]));
   const active = rooms.filter((r) => r.is_active);
 
   // شاغل كل غرفة الليلة (أو حجوزات اليوم للوحدات بالساعة)
@@ -48,7 +47,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
     if (prev?.kind === "occupied") continue;
     occupancy.set(r.room_id, {
       kind, reservationId: r.id, guest: r.guest?.full_name,
-      until: r.booking_mode === "hourly" ? `${timeOf(r.starts_at)}–${timeOf(r.ends_at)}` : r.departure_date,
+      until: r.booking_mode === "hourly" ? timeRange(r.starts_at, r.ends_at) : r.departure_date,
     });
   }
   const occ = (id: string): TileOccupancy => occupancy.get(id) ?? { kind: "free" };
@@ -108,10 +107,10 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
           {groups.map((g) => (
             <section key={g.key}>
               <h2 className="mb-3 flex items-center gap-2 text-[17px] font-semibold text-ink">{g.title}
-                <span className="num rounded bg-subtle px-1.5 text-[14px] font-medium text-slate-600">{g.rooms.length}</span></h2>
+                <span className="num font-normal text-slate-500">{g.rooms.length}</span></h2>
               <div className="stagger grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 2xl:grid-cols-8">
                 {g.rooms.map((r) => (
-                  <RoomTile key={r.id} id={r.id} number={r.room_number} typeCode={typeById.get(r.room_type_id)?.code ?? ""}
+                  <RoomTile key={r.id} id={r.id} number={r.room_number}
                     housekeeping={r.housekeeping_status} service={r.service_status} serviceNote={r.service_note}
                     occupancy={occ(r.id)} canEdit={canEdit} errors={t.errors} />
                 ))}

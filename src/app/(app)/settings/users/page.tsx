@@ -59,7 +59,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
         </Card>
       </div>
       {editing && (
-        <Card className="mt-6"><CardHeader><CardTitle>{editing.id ? t.common.edit : a.newRole} — {a.permissions}</CardTitle></CardHeader><CardContent>
+        <Card className="mt-6"><CardHeader><CardTitle>{editing.id ? t.common.edit : a.newRole}، {a.permissions}</CardTitle></CardHeader><CardContent>
           <RoleEditor key={sp.role} t={{ admin: a, common: t.common, errors: t.errors }} role={editing}
             permissions={(perms.data ?? []).map((p) => ({ code: p.code, module: p.module, label: locale === "en" ? p.name_en : p.name_ar }))} />
         </CardContent></Card>

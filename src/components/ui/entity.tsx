@@ -37,7 +37,7 @@ export function EntityCell({ name, sub, href }: { name: string; sub?: React.Reac
     <span className="flex min-w-0 items-center gap-3">
       <Avatar name={name} />
       <span className="min-w-0 leading-tight">
-        <span className="block truncate font-medium text-ink group-hover:underline">{name}</span>
+        <span className="block truncate font-medium text-ink transition-colors group-hover:text-action">{name}</span>
         {sub && <span className="block truncate text-[15.5px] text-slate-500">{sub}</span>}
       </span>
     </span>

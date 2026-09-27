@@ -30,7 +30,7 @@ export function AddBankLine({ t, accountId, today }: { t: T; accountId: string; 
         <Input type="date" dir="ltr" className="w-40" {...register("txn_date")} />
         <Input className="w-64" placeholder={t.common.description} {...register("description")} />
         <Input className="w-36" dir="ltr" placeholder={t.common.reference} {...register("reference")} />
-        <Input className="num w-36" dir="ltr" placeholder="± 0.00" {...register("amount")} />
+        <Input className="num w-36" dir="ltr" placeholder="المبلغ" {...register("amount")} />
         <Button type="submit" loading={pending}>{t.payables.addLine}</Button>
       </div>
     </form>
@@ -54,7 +54,7 @@ export function LineActions({ t, lineId, matched, candidates }: { t: T; lineId: 
     <div className="flex gap-1">
       {candidates.length > 0 && (
         <>
-          <NativeSelect className="h-8 w-56" value={sel} onChange={(e) => setSel(e.target.value)}><option value="">—</option>{candidates.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</NativeSelect>
+          <NativeSelect className="h-8 w-56" value={sel} onChange={(e) => setSel(e.target.value)}><option value="">اختر</option>{candidates.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</NativeSelect>
           <Button size="sm" loading={pending} disabled={pending || !sel} onClick={() => run("match", sel)}>{t.payables.matched}</Button>
         </>
       )}

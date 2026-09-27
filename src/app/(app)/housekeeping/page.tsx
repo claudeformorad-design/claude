@@ -55,7 +55,7 @@ export default async function HousekeepingPage({ searchParams }: { searchParams:
           <Table>
             <TableHeader><TableRow><TableHead>الغرفة</TableHead><TableHead>المهمة</TableHead><TableHead>الحالة</TableHead><TableHead /></TableRow></TableHeader>
             <TableBody>
-              {shown.length === 0 && <TableRow><TableCell colSpan={4} className="py-10 text-center text-slate-500">{tab === "open" ? "لا مهام مفتوحة — اضغط «توليد مهام اليوم»" : "لا مهام"}</TableCell></TableRow>}
+              {shown.length === 0 && <TableRow><TableCell colSpan={4} className="py-10 text-center text-slate-500">{tab === "open" ? "لا مهام مفتوحة، اضغط توليد مهام اليوم" : "لا مهام"}</TableCell></TableRow>}
               {shown.map((x) => {
                 const r = room.get(x.room_id);
                 const hk = r ? HOUSEKEEPING[r.housekeeping_status] : null;
@@ -64,7 +64,7 @@ export default async function HousekeepingPage({ searchParams }: { searchParams:
                     <TableCell className="whitespace-nowrap"><span className="num text-[18px] font-bold">{r?.room_number}</span>{hk && <Badge variant={hk.variant} className="ms-2">{hk.label}</Badge>}</TableCell>
                     <TableCell className="cell-fluid">
                       <span className="font-medium text-ink">{HOUSEKEEPING_KIND[x.kind]}</span>{x.priority === 1 && <Badge variant="destructive" className="ms-2">عاجل</Badge>}
-                      {(x.notes || x.assignee) && <span className="block text-[14px] text-slate-500">{[x.assignee, x.notes].filter(Boolean).join(" · ")}</span>}
+                      {(x.notes || x.assignee) && <span className="block text-[14px] text-slate-500">{[x.assignee, x.notes].filter(Boolean).join("، ")}</span>}
                     </TableCell>
                     <TableCell><Badge variant={HOUSEKEEPING_TASK_STATUS[x.status].variant}>{HOUSEKEEPING_TASK_STATUS[x.status].label}</Badge></TableCell>
                     <TableCell className="text-end"><TaskControls taskId={x.id} status={x.status} assignee={x.assignee} errors={t.errors} /></TableCell>
@@ -83,8 +83,8 @@ export default async function HousekeepingPage({ searchParams }: { searchParams:
               fields={[
                 { name: "room_id", label: "الغرفة", options: rooms.filter((r) => r.is_active).map((r) => ({ id: r.id, label: r.room_number })) },
                 { name: "kind", label: "النوع", options: Object.entries(HOUSEKEEPING_KIND).map(([id, label]) => ({ id, label })) },
-                { name: "notes", label: "الوصف (إلزامي للصيانة)" },
-                { name: "assignee", label: "العامل (اختياري)" },
+                { name: "notes", label: "الوصف، إلزامي للصيانة" },
+                { name: "assignee", label: "العامل" },
                 { name: "date", label: "التاريخ", type: "date" },
                 { name: "out_of_service", label: "إخراج الغرفة من الخدمة حتى الإنجاز", checkbox: true },
               ]} />

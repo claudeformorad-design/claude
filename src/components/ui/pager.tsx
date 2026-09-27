@@ -1,4 +1,3 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "@/components/link";
 import { cn } from "@/lib/utils";
 
@@ -33,14 +32,14 @@ export function Pager({ page, pages, total, basePath, params }: {
   return (
     <nav className="mt-4 flex items-center justify-between gap-3" aria-label="الصفحات">
       <p className="text-[15px] text-slate-600">
-        <span className="num" dir="ltr">{from}–{to}</span> من <span className="num">{total}</span>
+        من <span className="num">{from}</span> إلى <span className="num">{to}</span> من أصل <span className="num">{total}</span>
       </p>
       <div className="flex items-center gap-2">
-        {page > 1 ? <Link href={href(page - 1)} className={btn}><ChevronRight className="size-4" />السابق</Link>
-          : <span className={cn(btn, "pointer-events-none opacity-40")}><ChevronRight className="size-4" />السابق</span>}
+        {page > 1 ? <Link href={href(page - 1)} className={btn}>السابق</Link>
+          : <span className={cn(btn, "pointer-events-none opacity-40")}>السابق</span>}
         <span className="px-1 text-[15px] text-slate-600">صفحة <span className="num">{page}</span> من <span className="num">{pages}</span></span>
-        {page < pages ? <Link href={href(page + 1)} className={btn}>التالي<ChevronLeft className="size-4" /></Link>
-          : <span className={cn(btn, "pointer-events-none opacity-40")}>التالي<ChevronLeft className="size-4" /></span>}
+        {page < pages ? <Link href={href(page + 1)} className={btn}>التالي</Link>
+          : <span className={cn(btn, "pointer-events-none opacity-40")}>التالي</span>}
       </div>
     </nav>
   );

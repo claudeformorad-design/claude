@@ -1,6 +1,7 @@
 import Link from "@/components/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
+import { plainText } from "@/lib/text";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,20 +35,20 @@ export default async function JournalEntryPage({ params }: { params: Promise<{ i
 
   const meta: [string, React.ReactNode][] = [
     [t.journal.entryDate, <span key="d" className="num">{entry.entry_date}</span>],
-    [t.journal.period, <span key="p" className="num">{detail.periodName ?? "—"}</span>],
+    [t.journal.period, <span key="p" className="num">{detail.periodName ?? ""}</span>],
     [t.journal.source, <Badge key="s" variant="outline">{t.journal.sources[entry.source]}</Badge>],
-    [t.common.reference, entry.reference ?? "—"],
+    [t.common.reference, entry.reference ?? ""],
     [t.common.currency, isForeign ? <span key="c" className="num">{entry.currency_code} × {entry.exchange_rate}</span> : entry.currency_code],
-    [t.journal.createdBy, entry.created_by ? users[entry.created_by] ?? "—" : "—"],
-    [t.journal.postedBy, entry.posted_by ? users[entry.posted_by] ?? "—" : "—"],
-    [t.journal.postedAt, entry.posted_at ? <span key="pa" className="num">{formatDateTime(entry.posted_at, ctx.hotel.timezone)}</span> : "—"],
+    [t.journal.createdBy, entry.created_by ? users[entry.created_by] ?? "" : ""],
+    [t.journal.postedBy, entry.posted_by ? users[entry.posted_by] ?? "" : ""],
+    [t.journal.postedAt, entry.posted_at ? <span key="pa" className="num">{formatDateTime(entry.posted_at, ctx.hotel.timezone)}</span> : ""],
   ];
 
   return (
     <>
       <PageHeader
-        title={`${t.journal.entry} ${entry.entry_number ?? `(${t.journal.draftNumber})`}`}
-        description={entry.description}
+        title={`${t.journal.entry} ${entry.entry_number ?? t.journal.draftNumber}`}
+        description={plainText(entry.description)}
         actions={<StatusBadge status={entry.status} reversed={!!entry.reversed_by_id} labels={t.journal.status} />}
       />
 
@@ -62,7 +63,7 @@ export default async function JournalEntryPage({ params }: { params: Promise<{ i
           {entry.reversal_of_id && (
             <div>
               <p className="text-muted-foreground">{t.journal.reversalOf}</p>
-              <Link className="num font-medium text-primary hover:underline" href={`/journal/${entry.reversal_of_id}`}>
+              <Link className="num font-medium text-primary" href={`/journal/${entry.reversal_of_id}`}>
                 {related[entry.reversal_of_id]?.entry_number}
               </Link>
             </div>
@@ -70,7 +71,7 @@ export default async function JournalEntryPage({ params }: { params: Promise<{ i
           {entry.reversed_by_id && (
             <div>
               <p className="text-muted-foreground">{t.journal.reversedBy}</p>
-              <Link className="num font-medium text-primary hover:underline" href={`/journal/${entry.reversed_by_id}`}>
+              <Link className="num font-medium text-primary" href={`/journal/${entry.reversed_by_id}`}>
                 {related[entry.reversed_by_id]?.entry_number}
               </Link>
             </div>
@@ -102,8 +103,8 @@ export default async function JournalEntryPage({ params }: { params: Promise<{ i
                   <TableCell>
                     <span className="num me-2 rounded-md bg-subtle px-1.5 py-0.5 text-[15.5px] font-semibold text-slate-700">{account?.code}</span><span className="font-medium">{name(account)}</span>
                   </TableCell>
-                  <TableCell>{dept ? dept.code : "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{l.description ?? ""}</TableCell>
+                  <TableCell>{dept ? dept.code : ""}</TableCell>
+                  <TableCell className="text-muted-foreground">{plainText(l.description)}</TableCell>
                   <TableCell className="text-end font-semibold text-accent1"><Money value={l.debit} locale={locale} blankZero /></TableCell>
                   <TableCell className="text-end font-semibold text-accent2"><Money value={l.credit} locale={locale} blankZero /></TableCell>
                   {isForeign && <TableCell className="text-end"><Money value={l.base_debit} locale={locale} blankZero /></TableCell>}

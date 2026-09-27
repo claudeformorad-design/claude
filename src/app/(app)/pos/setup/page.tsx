@@ -21,7 +21,7 @@ export default async function PosSetupPage({ searchParams }: { searchParams: Pro
   const [outlets, items, codes] = await Promise.all([
     listOutlets(ctx.supabase, ctx.hotel.id), listPosItems(ctx.supabase, ctx.hotel.id), listChargeCodes(ctx.supabase, ctx.hotel.id),
   ]);
-  const codeName = new Map(codes.map((c) => [c.id, `${c.code} — ${c.name_ar}`]));
+  const codeName = new Map(codes.map((c) => [c.id, `${c.code} ${c.name_ar}`]));
   const outletName = new Map(outlets.map((o) => [o.id, o.name_ar]));
   const editItem = items.find((i) => i.id === sp.item);
   const editOutlet = outlets.find((o) => o.id === sp.outlet);
@@ -29,7 +29,7 @@ export default async function PosSetupPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <PageHeader title="إعداد نقاط البيع" description="النقاط (مطعم، كافيه، خدمة غرف) وأصنافها وأسعارها"
+      <PageHeader title="إعداد نقاط البيع" description="المطعم والكافيه وخدمة الغرف، بأصنافها وأسعارها"
         actions={<Button asChild variant="outline"><Link href="/pos">شاشة البيع</Link></Button>} />
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
         <div className="space-y-6">
@@ -45,7 +45,7 @@ export default async function PosSetupPage({ searchParams }: { searchParams: Pro
                     <TableCell>{outletName.get(i.outlet_id)}</TableCell>
                     <TableCell className="text-[14.5px]">{codeName.get(i.charge_code_id)}</TableCell>
                     <TableCell className="text-end"><Money value={i.price} locale={locale} /></TableCell>
-                    <TableCell className="text-end"><Link href={`/pos/setup?item=${i.id}`} className="text-action hover:underline">تعديل</Link></TableCell>
+                    <TableCell className="text-end"><Link href={`/pos/setup?item=${i.id}`} className="text-action">تعديل</Link></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -60,7 +60,7 @@ export default async function PosSetupPage({ searchParams }: { searchParams: Pro
                   <TableRow key={o.id}>
                     <TableCell className="num font-semibold">{o.code}</TableCell>
                     <TableCell className="cell-fluid">{o.name_ar}{!o.is_active && <Badge variant="secondary" className="ms-2">موقوفة</Badge>}</TableCell>
-                    <TableCell className="text-end"><Link href={`/pos/setup?outlet=${o.id}`} className="text-action hover:underline">تعديل</Link></TableCell>
+                    <TableCell className="text-end"><Link href={`/pos/setup?outlet=${o.id}`} className="text-action">تعديل</Link></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -73,7 +73,7 @@ export default async function PosSetupPage({ searchParams }: { searchParams: Pro
             <CardContent>
               <SimpleForm key={editOutlet?.id ?? "new-outlet"} columns={1} submitLabel="حفظ النقطة" errors={t.errors} action={saveOutletAction} onDone="/pos/setup"
                 initial={{ id: editOutlet?.id ?? "", code: editOutlet?.code ?? "", name_ar: editOutlet?.name_ar ?? "", is_active: editOutlet?.is_active ?? true }}
-                fields={[{ name: "code", label: "الرمز", ltr: true }, { name: "name_ar", label: "الاسم (مثل: المطعم)" }, ...(editOutlet ? [{ name: "is_active", label: "مفعّلة", checkbox: true as const }] : [])]} />
+                fields={[{ name: "code", label: "الرمز", ltr: true }, { name: "name_ar", label: "الاسم، مثل المطعم" }, ...(editOutlet ? [{ name: "is_active", label: "مفعّلة", checkbox: true as const }] : [])]} />
             </CardContent>
           </Card>
           {outlets.length > 0 && (
@@ -88,9 +88,9 @@ export default async function PosSetupPage({ searchParams }: { searchParams: Pro
                   fields={[
                     { name: "outlet_id", label: "النقطة", options: outlets.map((o) => ({ id: o.id, label: o.name_ar })) },
                     { name: "item_name", label: "اسم الصنف" },
-                    { name: "category", label: "التصنيف (اختياري: مشروبات، أطباق رئيسية...)" },
+                    { name: "category", label: "التصنيف، مثل مشروبات أو أطباق رئيسية" },
                     { name: "price", label: "السعر", type: "number" },
-                    { name: "charge_code_id", label: "رمز الإيراد", options: codes.filter((c) => c.is_active).map((c) => ({ id: c.id, label: `${c.code} — ${c.name_ar}` })) },
+                    { name: "charge_code_id", label: "رمز الإيراد", options: codes.filter((c) => c.is_active).map((c) => ({ id: c.id, label: `${c.code} ${c.name_ar}` })) },
                     ...(editItem ? [{ name: "is_active", label: "مفعّل", checkbox: true as const }] : []),
                   ]} />
               </CardContent>

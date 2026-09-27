@@ -42,7 +42,7 @@ export default async function RoomSetupPage({ searchParams }: { searchParams: Pr
   for (const r of rooms) roomsByType.set(r.room_type_id, (roomsByType.get(r.room_type_id) ?? 0) + 1);
   const nightlyRooms = rooms.filter((r) => r.is_active && typeById.get(r.room_type_id)?.booking_mode === "nightly").length;
   const hourlyUnits = rooms.filter((r) => r.is_active && typeById.get(r.room_type_id)?.booking_mode === "hourly").length;
-  const typeOptions = types.filter((x) => x.is_active).map((x) => ({ id: x.id, label: `${x.name_ar} (${x.code})` }));
+  const typeOptions = types.filter((x) => x.is_active).map((x) => ({ id: x.id, label: x.name_ar }));
   const floorOptions = floors.map((x) => ({ id: x.id, label: x.name }));
   const roomCode = codes.find((c) => c.code === "ROOM")?.id ?? "";
 
@@ -86,7 +86,7 @@ export default async function RoomSetupPage({ searchParams }: { searchParams: Pr
               <TableBody>
                 {types.length === 0 && (
                   <TableRow><TableCell colSpan={9}><EmptyState icon={BedDouble} title="لا توجد أنواع غرف بعد"
-                    description="ابدأ بتعريف أنواع الغرف (مفردة، مزدوجة، جناح...) أو الوحدات بالساعة (قاعة، مسبح)، ثم أضف الغرف."
+                    description="ابدأ بتعريف أنواع الغرف مثل المفردة والمزدوجة والجناح، أو الوحدات بالساعة مثل القاعة والمسبح، ثم أضف الغرف."
                     actionHref="/room-setup?new=1" actionLabel="نوع غرف جديد" /></TableCell></TableRow>
                 )}
                 {types.map((x) => (
@@ -94,11 +94,11 @@ export default async function RoomSetupPage({ searchParams }: { searchParams: Pr
                     <TableCell className="num font-semibold">{x.code}</TableCell>
                     <TableCell className="cell-fluid font-medium">{x.name_ar}</TableCell>
                     <TableCell><Badge variant={x.booking_mode === "hourly" ? "info" : "outline"}>{BOOKING_MODE[x.booking_mode]}</Badge></TableCell>
-                    <TableCell className="num">{x.max_adults}{x.max_children ? ` + ${x.max_children}` : ""}</TableCell>
+                    <TableCell className="num">{x.max_adults}{x.max_children ? ` بالغ و${x.max_children} طفل` : ""}</TableCell>
                     <TableCell className="whitespace-nowrap text-end font-semibold"><Money value={x.base_rate} locale={locale} />
                       <span className="ms-1 text-[14.5px] font-normal text-slate-500">{x.booking_mode === "hourly" ? "/ساعة" : "/ليلة"}</span></TableCell>
-                    <TableCell className="text-end">{x.weekend_rate ? <Money value={x.weekend_rate} locale={locale} /> : <span className="text-slate-400">—</span>}</TableCell>
-                    <TableCell className="num">{x.booking_mode === "nightly" ? (x.overbooking_limit || "—") : "—"}</TableCell>
+                    <TableCell className="text-end">{x.weekend_rate ? <Money value={x.weekend_rate} locale={locale} /> : <span className="text-slate-400"></span>}</TableCell>
+                    <TableCell className="num">{x.booking_mode === "nightly" ? (x.overbooking_limit || "") : ""}</TableCell>
                     <TableCell className="num">{roomsByType.get(x.id) ?? 0}</TableCell>
                     <TableCell className="text-end"><Button asChild variant="ghost" size="sm"><Link href={`/room-setup?edit=${x.id}`}>{t.common.edit}</Link></Button></TableCell>
                   </TableRow>
@@ -124,16 +124,16 @@ export default async function RoomSetupPage({ searchParams }: { searchParams: Pr
                     is_active: editingType?.is_active ?? true,
                   }}
                   fields={[
-                    { name: "code", label: "الرمز (مثل DBL)", ltr: true },
+                    { name: "code", label: "الرمز", ltr: true },
                     { name: "name_ar", label: "الاسم" },
-                    { name: "booking_mode", label: "نوع الحجز", options: [{ id: "nightly", label: "ليلي (غرف وأجنحة)" }, { id: "hourly", label: "بالساعة (قاعات، مسابح، شاليهات)" }] },
-                    { name: "charge_code_id", label: "كود الإيراد", optional: true, options: codes.filter((c) => c.is_active).map((c) => ({ id: c.id, label: `${c.code} — ${c.name_ar}` })) },
+                    { name: "booking_mode", label: "نوع الحجز", options: [{ id: "nightly", label: "ليلي للغرف والأجنحة" }, { id: "hourly", label: "بالساعة للقاعات والمسابح والشاليهات" }] },
+                    { name: "charge_code_id", label: "كود الإيراد", optional: true, options: codes.filter((c) => c.is_active).map((c) => ({ id: c.id, label: `${c.code} ${c.name_ar}` })) },
                     { name: "max_adults", label: "أقصى عدد بالغين", type: "number" },
                     { name: "max_children", label: "أقصى عدد أطفال", type: "number" },
                     { name: "base_rate", label: "السعر الأساسي", type: "number" },
-                    { name: "weekend_rate", label: "سعر نهاية الأسبوع (اختياري)", type: "number" },
-                    { name: "overbooking_limit", label: "حد الحجز الزائد (0 = لا يُسمح)", type: "number" },
-                    { name: "min_hours", label: "أقل مدة بالساعات (للوحدات بالساعة)", type: "number" },
+                    { name: "weekend_rate", label: "سعر نهاية الأسبوع", type: "number" },
+                    { name: "overbooking_limit", label: "حد الحجز الزائد، والصفر يمنعه", type: "number" },
+                    { name: "min_hours", label: "أقل مدة بالساعات للوحدات بالساعة", type: "number" },
                     { name: "description", label: "الوصف" },
                     { name: "is_active", label: t.common.active, checkbox: true },
                   ]} />
@@ -156,7 +156,7 @@ export default async function RoomSetupPage({ searchParams }: { searchParams: Pr
               <TableBody>
                 {rooms.length === 0 && (
                   <TableRow><TableCell colSpan={6}><EmptyState icon={DoorOpen} title="لا توجد غرف بعد"
-                    description={types.length ? "أضف الغرف دفعة واحدة بمدى الأرقام (مثلًا 101 إلى 120) من البطاقة المجاورة." : "عرّف أنواع الغرف أولًا ثم أضف الغرف."}
+                    description={types.length ? "أضف الغرف دفعة واحدة بمدى الأرقام، مثلًا من 101 إلى 120، من البطاقة المجاورة." : "عرّف أنواع الغرف أولًا ثم أضف الغرف."}
                     actionHref={types.length ? undefined : "/room-setup?new=1"} actionLabel={types.length ? undefined : "نوع غرف جديد"} /></TableCell></TableRow>
                 )}
                 {rooms.map((r) => {
@@ -164,8 +164,8 @@ export default async function RoomSetupPage({ searchParams }: { searchParams: Pr
                   return (
                     <TableRow key={r.id} className={r.is_active ? "" : "opacity-50"}>
                       <TableCell className="num text-[18px] font-bold">{r.room_number}</TableCell>
-                      <TableCell className="cell-fluid">{type?.name_ar ?? "—"} {type?.booking_mode === "hourly" && <Badge variant="info" className="ms-1">بالساعة</Badge>}</TableCell>
-                      <TableCell>{r.floor_id ? floorById.get(r.floor_id)?.name : <span className="text-slate-400">—</span>}</TableCell>
+                      <TableCell className="cell-fluid">{type?.name_ar ?? ""} {type?.booking_mode === "hourly" && <Badge variant="info" className="ms-1">بالساعة</Badge>}</TableCell>
+                      <TableCell>{r.floor_id ? floorById.get(r.floor_id)?.name : <span className="text-slate-400"></span>}</TableCell>
                       <TableCell><Badge variant={HOUSEKEEPING[r.housekeeping_status].variant}>{HOUSEKEEPING[r.housekeeping_status].label}</Badge></TableCell>
                       <TableCell>{r.service_status === "out_of_service" ? <Badge variant="destructive" title={r.service_note ?? ""}>{SERVICE.out_of_service}</Badge> : <span className="text-slate-500">{SERVICE.in_service}</span>}</TableCell>
                       <TableCell className="text-end">
@@ -216,7 +216,7 @@ export default async function RoomSetupPage({ searchParams }: { searchParams: Pr
                       { name: "floor_id", label: "الطابق", optional: true, options: floorOptions },
                       { name: "from_number", label: "من رقم", type: "number" },
                       { name: "to_number", label: "إلى رقم", type: "number" },
-                      { name: "prefix", label: "بادئة اختيارية (مثل H)", ltr: true },
+                      { name: "prefix", label: "بادئة اختيارية مثل H", ltr: true },
                     ]} />
                 )}
               </CardContent>

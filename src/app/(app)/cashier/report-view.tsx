@@ -22,20 +22,20 @@ export function ShiftReportView({ report, locale, timezone, canViewFolio }: { re
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>الطريقة</TableHead><TableHead className="text-end">العهدة</TableHead><TableHead className="text-end">المقبوض</TableHead>
+              <TableHead>الطريقة</TableHead><TableHead className="text-end">الحركات</TableHead><TableHead className="text-end">العهدة</TableHead><TableHead className="text-end">المقبوض</TableHead>
               <TableHead className="text-end">المدفوع</TableHead><TableHead className="text-end">المتوقع</TableHead>
               {closed && <><TableHead className="text-end">المعدود</TableHead><TableHead className="text-end">الفرق</TableHead></>}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {report.methods.length === 0 && <TableRow><TableCell colSpan={7} className="py-8 text-center text-slate-500">لا حركات بعد</TableCell></TableRow>}
+            {report.methods.length === 0 && <TableRow><TableCell colSpan={8} className="py-8 text-center text-slate-500">لا حركات بعد</TableCell></TableRow>}
             {report.methods.map((m) => (
               <TableRow key={m.payment_method_id}>
                 <TableCell className="cell-fluid">
                   <span className="font-semibold text-ink">{m.name}</span>
                   {m.foreign && <Badge variant="info" className="ms-2">{m.currency_code}</Badge>}
-                  <span className="num block text-[13.5px] text-slate-500">{m.count} حركة</span>
                 </TableCell>
+                <TableCell className="num text-end">{m.count}</TableCell>
                 <TableCell className="text-end"><Money value={m.float} locale={locale} blankZero /></TableCell>
                 <TableCell className="text-end"><Money value={m.receipts} locale={locale} blankZero /></TableCell>
                 <TableCell className="text-end"><Money value={m.payouts} locale={locale} blankZero /></TableCell>
@@ -53,7 +53,7 @@ export function ShiftReportView({ report, locale, timezone, canViewFolio }: { re
           </TableBody>
           <TableFooter>
             <TableRow>
-              <TableCell colSpan={4}>صافي الوردية بالعملة الأساسية</TableCell>
+              <TableCell colSpan={5}>صافي الوردية بالعملة الأساسية</TableCell>
               <TableCell className="text-end"><Money value={baseTotal} locale={locale} /></TableCell>
               {closed && <><TableCell /><TableCell /></>}
             </TableRow>
@@ -62,29 +62,22 @@ export function ShiftReportView({ report, locale, timezone, canViewFolio }: { re
       </Card>
 
       <Card className="overflow-hidden">
-        <CardHeader><CardTitle className="justify-between"><span>حركات الوردية</span><span className="num text-[15px] font-medium text-slate-500">{report.transactions.length}</span></CardTitle></CardHeader>
+        <CardHeader><CardTitle className="justify-between"><span>حركات الوردية</span><span className="num font-medium text-slate-500">{report.transactions.length}</span></CardTitle></CardHeader>
         <Table>
           <TableHeader>
-            <TableRow><TableHead>الوقت</TableHead><TableHead>النزيل / الفوليو</TableHead><TableHead>النوع</TableHead><TableHead>الطريقة</TableHead><TableHead className="text-end">المبلغ</TableHead></TableRow>
+            <TableRow><TableHead>الوقت</TableHead><TableHead>النزيل</TableHead><TableHead>الفوليو</TableHead><TableHead>النوع</TableHead><TableHead>الطريقة</TableHead><TableHead className="text-end">المبلغ</TableHead><TableHead className="text-end">بالعملة الأجنبية</TableHead></TableRow>
           </TableHeader>
           <TableBody>
-            {report.transactions.length === 0 && <TableRow><TableCell colSpan={5} className="py-8 text-center text-slate-500">لا حركات في هذه الوردية</TableCell></TableRow>}
+            {report.transactions.length === 0 && <TableRow><TableCell colSpan={7} className="py-8 text-center text-slate-500">لا حركات في هذه الوردية</TableCell></TableRow>}
             {report.transactions.map((x) => (
               <TableRow key={x.id}>
                 <TableCell className="num whitespace-nowrap">{time(x.created_at)}</TableCell>
-                <TableCell className="cell-fluid">
-                  <span className="font-medium text-ink">{x.guest_name}</span>{x.room_number && <span className="num ms-2 text-slate-500">غرفة {x.room_number}</span>}
-                  <span className="num block text-[13.5px] text-slate-500">
-                    {canViewFolio ? <Link href={`/folios/${x.folio_id}`} className="text-action hover:underline">{x.folio_number}</Link> : x.folio_number}
-                    {x.reference ? ` · ${x.reference}` : ""}
-                  </span>
-                </TableCell>
+                <TableCell className="cell-fluid"><span className="font-medium text-ink">{x.guest_name}</span>{x.room_number && <span className="ms-2 text-slate-500">غرفة <span className="num">{x.room_number}</span></span>}</TableCell>
+                <TableCell className="num whitespace-nowrap">{canViewFolio ? <Link href={`/folios/${x.folio_id}`} className="text-action">{x.folio_number}</Link> : x.folio_number}</TableCell>
                 <TableCell>{TXN[x.txn_type] ?? x.txn_type}{x.direction === -1 && <Badge variant="destructive" className="ms-2">إلغاء</Badge>}</TableCell>
                 <TableCell>{x.method}</TableCell>
-                <TableCell className="text-end whitespace-nowrap">
-                  <Money value={x.amount * x.direction} locale={locale} className="font-semibold" />
-                  {x.foreign_amount != null && <span className="num block text-[13.5px] text-slate-500">{(x.foreign_amount * x.direction).toLocaleString("en-US", { minimumFractionDigits: 2 })} {x.currency_code}</span>}
-                </TableCell>
+                <TableCell className="text-end whitespace-nowrap"><Money value={x.amount * x.direction} locale={locale} className="font-semibold" /></TableCell>
+                <TableCell className="num text-end whitespace-nowrap text-slate-600">{x.foreign_amount != null ? `${(x.foreign_amount * x.direction).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${x.currency_code}` : ""}</TableCell>
               </TableRow>
             ))}
           </TableBody>

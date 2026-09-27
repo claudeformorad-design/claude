@@ -51,7 +51,7 @@ export function PurchaseLines<T extends FieldValues & { lines: PurchaseLine[] }>
           <Input placeholder={labels.quantity} dir="ltr" inputMode="decimal" {...register(`lines.${i}.quantity`)} />
           <Input placeholder={labels.price} dir="ltr" inputMode="decimal" className="num" {...register(`lines.${i}.unit_price`)} />
           <NativeSelect aria-label={labels.tax} {...register(`lines.${i}.tax_rate_id`)}>
-            <option value="">{labels.tax}: —</option>
+            <option value="">{labels.tax}</option>
             {taxes.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
           </NativeSelect>
           <Button type="button" variant="ghost" size="icon" disabled={fields.length <= 1} onClick={() => remove(i)}><Trash2 /></Button>

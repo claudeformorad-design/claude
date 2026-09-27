@@ -29,7 +29,7 @@ export function AssignRoom({ reservationId, current, rooms, allowNone, errors }:
     <div className="flex flex-wrap items-center gap-2">
       <NativeSelect value={room} onChange={(e) => setRoom(e.target.value)} className="w-56" aria-label="الغرفة">
         {allowNone && <option value="">بدون تخصيص</option>}
-        {rooms.map((r) => <option key={r.id} value={r.id}>{r.label}{r.busy ? " — محجوزة في الفترة" : ""}</option>)}
+        {rooms.map((r) => <option key={r.id} value={r.id}>{r.label}{r.busy ? "، محجوزة في الفترة" : ""}</option>)}
       </NativeSelect>
       <Button type="button" variant="outline" size="sm" loading={pending} disabled={(room || null) === current} onClick={save}>حفظ الغرفة</Button>
     </div>

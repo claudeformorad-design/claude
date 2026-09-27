@@ -1,6 +1,7 @@
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { plainText } from "@/lib/text";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -115,12 +116,12 @@ export default async function JournalPage({
             {shown.rows.map((e) => (
               <TableRow key={e.id}>
                 <TableCell>
-                  <Link href={`/journal/${e.id}`} className="num font-semibold text-ink hover:underline">
+                  <Link href={`/journal/${e.id}`} className="num font-semibold text-ink">
                     {e.entry_number ?? t.journal.draftNumber}
                   </Link>
                 </TableCell>
                 <TableCell className="num">{e.entry_date}</TableCell>
-                <TableCell className="cell-fluid font-medium">{e.description}</TableCell>
+                <TableCell className="cell-fluid font-medium">{plainText(e.description)}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{t.journal.sources[e.source]}</Badge>
                 </TableCell>

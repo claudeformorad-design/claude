@@ -207,7 +207,7 @@ export async function createReservationAction(input: unknown): Promise<ActionRes
       });
       raise(error);
       const s = data!;
-      const skipped = s.skipped.length ? ` · تُخطي ${s.skipped.length} موعد متعارض${s.waitlisted ? ` وأُضيف لقائمة الانتظار` : ""}` : "";
+      const skipped = s.skipped.length ? `، تُخطي ${s.skipped.length} موعد متعارض${s.waitlisted ? ` وأُضيف لقائمة الانتظار` : ""}` : "";
       return { href: `/reservations?series=${s.series_id}`, message: `تم حجز ${s.created} موعدًا${skipped}` };
     }
 

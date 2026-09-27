@@ -42,7 +42,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
         <Stat icon={Trash2} tone="neutral" label="حذف" value={<span className="num">{rows.filter((r) => r.action === "DELETE").length}</span>} />
       </StatGrid>
       <form className="toolbar">
-        <Input name="table" defaultValue={sp.table} placeholder="اسم الجدول (مثل journal_entries)" dir="ltr" className="w-72" />
+        <Input name="table" defaultValue={sp.table} placeholder="اسم الجدول" dir="ltr" className="w-72" />
         <Button type="submit" variant="outline">{t.common.apply}</Button>
       </form>
       <Card className="overflow-hidden">
@@ -55,7 +55,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
               <TableRow key={r.id}>
                 <TableCell className="num whitespace-nowrap">{formatDateTime(r.occurred_at, ctx.hotel.timezone, true)}</TableCell>
                 <TableCell>{r.actor_name ? <EntityCell name={r.actor_name} /> : <span className="text-slate-400">النظام</span>}</TableCell>
-                <TableCell><span className="font-medium">{TABLE_AR[r.table_name ?? ""] ?? r.table_name}</span>{TABLE_AR[r.table_name ?? ""] && <span className="num block text-[14.5px] text-slate-500">{r.table_name}</span>}</TableCell>
+                <TableCell className="whitespace-nowrap font-medium">{TABLE_AR[r.table_name ?? ""] ?? r.table_name}</TableCell>
                 <TableCell><Badge variant={r.action === "DELETE" ? "destructive" : r.action === "INSERT" ? "success" : "warning"}>{ACTION_AR[r.action ?? ""] ?? r.action}</Badge></TableCell>
                 <TableCell className="max-w-md">
                   {r.action === "UPDATE" ? (
@@ -71,8 +71,8 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
         </Table>
       </Card>
       <div className="mt-4 flex gap-2">
-        {page > 0 && <Button asChild variant="outline"><a href={`?page=${page - 1}${sp.table ? `&table=${sp.table}` : ""}`}>←</a></Button>}
-        {(data ?? []).length === 100 && <Button asChild variant="outline"><a href={`?page=${page + 1}${sp.table ? `&table=${sp.table}` : ""}`}>→</a></Button>}
+        {page > 0 && <Button asChild variant="outline"><a href={`?page=${page - 1}${sp.table ? `&table=${sp.table}` : ""}`}>السابق</a></Button>}
+        {(data ?? []).length === 100 && <Button asChild variant="outline"><a href={`?page=${page + 1}${sp.table ? `&table=${sp.table}` : ""}`}>التالي</a></Button>}
       </div>
     </>
   );

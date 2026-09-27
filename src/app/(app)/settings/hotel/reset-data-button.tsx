@@ -35,7 +35,7 @@ export function ResetHotelDataButton() {
             <h4 className="text-[17.5px] font-semibold text-ink">تصفير وضع التجربة بالكامل</h4>
           </div>
           <p className="max-w-xl text-[16.5px] leading-relaxed text-muted-foreground">
-            يحذف قاعدة بيانات التجربة المحلية بالكامل (الفندق، الإعدادات، القيود، الفوليو، الفواتير، السندات وكل الحركات) ويعيدك لشاشة إعداد فندق جديد. متاح في وضع التجربة فقط، ولا يمكن التراجع عنه.
+            يحذف قاعدة بيانات التجربة المحلية بالكامل، بالفندق وإعداداته وقيوده وفواتيره وكل حركاته، ويعيدك لشاشة إعداد فندق جديد. متاح في وضع التجربة فقط، ولا يمكن التراجع عنه.
           </p>
         </div>
 
@@ -44,7 +44,7 @@ export function ResetHotelDataButton() {
             type="button"
             variant="destructive"
             onClick={() => setOpen(true)}
-            className="shrink-0 bg-white text-urgent shadow-soft hover:bg-white"
+            className="shrink-0 bg-white text-urgent hover:bg-white"
           >
             <RotateCcw className="size-3.5 me-1" />
             تصفير بيانات النظام
@@ -93,7 +93,7 @@ export function ResetHotelDataButton() {
               />
               أنا متأكد من حذف جميع بيانات التجربة
             </label>
-            {failed && <p className="text-[15.5px] text-urgent">تعذّر التصفير — أعد المحاولة، وإن تكرر فأعد تشغيل الخادم.</p>}
+            {failed && <p className="text-[15.5px] text-urgent">تعذّر التصفير، أعد المحاولة، وإن تكرر فأعد تشغيل الخادم.</p>}
           </div>
         )}
       </div>

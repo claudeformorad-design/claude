@@ -4,17 +4,17 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "relative isolate inline-flex items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-lg text-[17.5px] font-medium transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] cursor-pointer outline-none disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:stroke-[1.75] focus-visible:ring-[3px] focus-visible:ring-action/25 active:scale-[0.98]",
+  "relative isolate inline-flex items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-lg text-[17.5px] font-medium transition-[background-color,border-color,color,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] cursor-pointer outline-none disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:stroke-[1.75] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action/40 active:scale-[0.98]",
   {
     variants: {
       variant: {
-        default: "bg-action text-white shadow-[0_1px_2px_rgba(36,131,225,0.3)] hover:bg-action-hover",
+        default: "bg-action text-white hover:bg-action-hover",
         dark: "bg-ink text-white hover:bg-ink-soft",
         destructive: "bg-urgent-tint text-urgent hover:bg-pending-tint",
         outline: "border border-line-strong bg-white text-ink hover:bg-panel",
         secondary: "bg-subtle text-slate-700 hover:bg-line hover:text-ink",
         ghost: "text-slate-700 hover:bg-subtle hover:text-ink",
-        link: "rounded-none text-action underline-offset-4 hover:underline",
+        link: "rounded-none text-action hover:opacity-75",
       },
       size: {
         default: "h-11 px-5",

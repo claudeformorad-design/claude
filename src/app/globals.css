@@ -134,6 +134,7 @@
   html {
     background: var(--color-frame);
   }
+  a, a:hover, a:focus { text-decoration: none; }
   body {
     color: #312f2e;
     font-family: var(--font-sans);
@@ -176,7 +177,7 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7'/%3E%3C/svg%3E");
     transform: scale(1.06);
   }
-  input[type="checkbox"]:not(.sr-only):focus-visible { box-shadow: 0 0 0 3px rgba(36, 131, 225, 0.2); outline: none; }
+  input[type="checkbox"]:not(.sr-only):focus-visible { outline: 2px solid rgba(36, 131, 225, 0.4); outline-offset: 2px; }
 }
 
 /* ---- سُلّم الطباعة (مستخلص من دليل جماليات ثمانية) ----
@@ -187,8 +188,8 @@
 /* حرف مرسل واحد في عنوان قصير — لا يُستخدم في كلمتين متجاورتين ولا أكثر من مرة في الجملة */
 .swash { font-feature-settings: "swsh" 1; }
 
-/* الأرقام الكبيرة المستقلة (بطاقات الإحصاء): أرقام ثمانية كما في الدليل */
-.display-num, .display-num .num { font-family: var(--font-sans); font-variant-numeric: normal; font-feature-settings: normal; }
+/* الأرقام الكبيرة (بطاقات الإحصاء) بنفس خط الأرقام في كل النظام */
+.display-num { font-family: var(--font-digits), var(--font-sans); font-variant-numeric: tabular-nums; }
 
 /* الأرقام: عرض متساوٍ واتجاه LTR داخل النص العربي */
 .num {
@@ -212,17 +213,15 @@
     font-weight: 500;
     color: var(--color-ink);
     outline: none;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02), 0 0 0 0 rgba(17, 17, 17, 0);
-    transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: border-color 0.18s ease, background-color 0.18s ease;
   }
   .field::placeholder { color: var(--color-slate-400); font-weight: 500; }
   .field:hover { border-color: #c9c5ba; }
   .field:focus, .field:focus-visible {
     border-color: var(--color-action);
     background-color: #fff;
-    box-shadow: 0 0 0 3px rgba(36, 131, 225, 0.18);
   }
-  .field[aria-invalid="true"] { border-color: var(--color-urgent); box-shadow: 0 0 0 4px rgba(226, 102, 92, 0.14); }
+  .field[aria-invalid="true"] { border-color: var(--color-urgent); }
   .field[type="date"], .field[type="month"], .field[type="number"] { font-family: var(--font-digits), var(--font-sans); }
 
   /* سهم قائمة الاختيار في جهة النهاية (يسارًا في العربية) */
@@ -241,12 +240,11 @@
 }
 
 /* ---- الأسطح ---- */
-/* بطاقة: بيضاء، زوايا 20px، ظل واحد خفيف جدًا، بلا حدود */
+/* بطاقة: بيضاء بحافة رفيعة، بلا ظل (نمط Notion) */
 .surface {
   background: #fff;
   border: 1px solid var(--color-line);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-soft);
 }
 /* عنصر صغير داخل منطقة العمل */
 .tile {
@@ -329,9 +327,8 @@ html[data-density="compact"] [data-slot="table"] table { font-size: 16px; }
 tbody.rows-animate > tr {
   animation: row-in 0.25s var(--ease-precise) backwards;
 }
-tbody.rows-animate > tr > td:first-child { transition: box-shadow 0.2s ease; }
-tbody.rows-animate > tr:hover > td:first-child { box-shadow: inset -2px 0 0 var(--color-action); }
-[dir="ltr"] tbody.rows-animate > tr:hover > td:first-child { box-shadow: inset 2px 0 0 var(--color-action); }
+tbody.rows-animate > tr > td { transition: background-color 0.15s ease; }
+tbody.rows-animate > tr:hover > td { background-color: #fbfaf8; }
 @supports (animation-timeline: view()) {
   tbody.rows-animate > tr:nth-child(n + 15) {
     animation: reveal linear both;

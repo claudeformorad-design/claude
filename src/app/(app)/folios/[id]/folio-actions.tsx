@@ -96,7 +96,7 @@ export function FolioActions(p: FolioActionsProps) {
 
   const select = (name: string, options: { id: string; label: string }[], allowEmpty = false) => (
     <NativeSelect id={name} {...register(name, { required: !allowEmpty })}>
-      <option value="">{allowEmpty ? t.common.none : "—"}</option>
+      <option value="">{allowEmpty ? t.common.none : ""}</option>
       {options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
     </NativeSelect>
   );
@@ -130,7 +130,7 @@ export function FolioActions(p: FolioActionsProps) {
                     if (cc?.price) setValue("unit_price", toMoney(cc.price).toFixed());
                   },
                 })}>
-                  <option value="">—</option>
+                  <option value="">اختر</option>
                   {p.chargeCodes.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
                 </NativeSelect>
               ), "charge_code_id")}
@@ -139,7 +139,7 @@ export function FolioActions(p: FolioActionsProps) {
               {row(t.common.description, input("description"), "description")}
               {preview && (
                 <p className="text-sm text-muted-foreground md:col-span-4">
-                  {t.folio.taxPreview}: {t.folio.net} <span className="num">{fmt(preview.net)}</span> + {t.folio.tax}{" "}
+                  {t.folio.taxPreview}: {t.folio.net} <span className="num">{fmt(preview.net)}</span> و{t.folio.tax}{" "}
                   <span className="num">{fmt(preview.taxTotal)}</span> = <strong className="num">{fmt(preview.total)}</strong>
                 </p>
               )}

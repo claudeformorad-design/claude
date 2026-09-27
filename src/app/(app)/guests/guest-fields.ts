@@ -14,7 +14,7 @@ export function guestFormFields(companies: { id: string; label: string }[]): Fie
     { name: "email", label: "البريد الإلكتروني", ltr: true },
     ...(companies.length ? [{ name: "customer_id", label: "الشركة / الجهة", optional: true, options: companies } as Field] : []),
     { name: "notes", label: "ملاحظات وتفضيلات" },
-    { name: "is_blacklisted", label: "إدراج في القائمة السوداء (يمنع الحجز)", checkbox: true },
+    { name: "is_blacklisted", label: "إدراج في القائمة السوداء ومنع الحجز", checkbox: true },
     { name: "blacklist_reason", label: "سبب الإدراج" },
   ];
 }

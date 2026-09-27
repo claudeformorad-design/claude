@@ -81,7 +81,7 @@ export default async function FoliosPage({ searchParams }: { searchParams: Promi
               <TableRow>
                 <TableCell colSpan={8} className="py-8">
                   <EmptyState
-                    title="لا توجد حسابات نزلاء (فوليو) مفتوحة"
+                    title="لا توجد حسابات نزلاء مفتوحة"
                     description="لم يتم فتح أي فوليو حالياً. يمكنك إضافة فتح حساب نزيل أو مجموعة عند وصول الضيوف."
                     actionHref="/folios/new"
                     actionLabel="فتح حساب فوليو جديد"
@@ -92,11 +92,11 @@ export default async function FoliosPage({ searchParams }: { searchParams: Promi
             )}
             {shown.rows.map((f) => (
               <TableRow key={f.id}>
-                <TableCell><Link href={`/folios/${f.id}`} className="num font-medium text-primary hover:underline">{f.folio_number}</Link></TableCell>
+                <TableCell><Link href={`/folios/${f.id}`} className="num font-medium text-primary">{f.folio_number}</Link></TableCell>
                 <TableCell className="cell-fluid"><EntityCell name={f.guest_name} sub={f.departure_date ? `مغادرة ${f.departure_date}` : undefined} /></TableCell>
-                <TableCell>{f.room_number ? <span className="num inline-flex h-7 min-w-10 items-center justify-center rounded-lg bg-subtle px-2 text-[15.5px] font-semibold text-ink">{f.room_number}</span> : <span className="text-slate-400">—</span>}</TableCell>
+                <TableCell>{f.room_number ? <span className="num inline-flex h-7 min-w-10 items-center justify-center rounded-lg bg-subtle px-2 text-[15.5px] font-semibold text-ink">{f.room_number}</span> : <span className="text-slate-400"></span>}</TableCell>
                 <TableCell>{t.folio.types[f.folio_type]}</TableCell>
-                <TableCell className="num">{f.arrival_date ?? "—"}</TableCell>
+                <TableCell className="num">{f.arrival_date ?? ""}</TableCell>
                 <TableCell className="text-end"><Money value={f.deposit_balance} locale={locale} blankZero /></TableCell>
                 <TableCell className="text-end font-semibold"><Money value={f.balance} locale={locale} /></TableCell>
                 <TableCell>

@@ -65,7 +65,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
                 <TableRow key={v.id}>
                   <TableCell className="num text-slate-600">{v.code}</TableCell>
                   <TableCell><EntityCell name={(locale === "en" && v.name_en) || v.name_ar} sub={v.phone ?? v.email ?? undefined} href={`/bills?vendor=${v.id}`} /></TableCell>
-                  <TableCell className="num">{v.tax_number ?? "—"}</TableCell>
+                  <TableCell className="num">{v.tax_number ?? ""}</TableCell>
                   <TableCell><span className="num">{v.payment_terms_days}</span> <span className="text-slate-500">يومًا</span></TableCell>
                   <TableCell><Badge variant={v.is_active ? "success" : "secondary"}>{v.is_active ? t.common.active : t.common.inactive}</Badge></TableCell>
                   {can && <TableCell className="text-end"><Button asChild variant="ghost" size="sm"><Link href={`/vendors?edit=${v.id}`}>{t.common.edit}</Link></Button></TableCell>}

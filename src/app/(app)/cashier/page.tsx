@@ -40,7 +40,7 @@ export default async function CashierPage() {
 
       {report && open && (
         <StatGrid>
-          <Stat icon={Clock} tone="ink" label="الوردية" value={<span className="num text-[21px]">{open.shift_number}</span>} hint={`منذ ${formatDateTime(open.opened_at, ctx.hotel.timezone)}`} />
+          <Stat icon={Clock} tone="ink" label="الوردية" value={<span className="num">{open.shift_number}</span>} hint={`منذ ${formatDateTime(open.opened_at, ctx.hotel.timezone)}`} />
           <Stat icon={Wallet} tone="teal" label="العهدة" value={<Money value={open.opening_float} locale={locale} />} />
           <Stat icon={Banknote} tone="clay" label="النقد المتوقع" value={<Money value={cashExpected} locale={locale} />} hint={ctx.hotel.base_currency} />
           <Stat icon={LockKeyhole} tone="neutral" label="الحركات" value={<span className="num">{report.transactions.length}</span>} />
@@ -59,10 +59,10 @@ export default async function CashierPage() {
                 {shifts.length === 0 && <TableRow><TableCell colSpan={5} className="py-8 text-center text-slate-500">لم تُفتح ورديات بعد</TableCell></TableRow>}
                 {shifts.map((s) => (
                   <TableRow key={s.id}>
-                    <TableCell><Link href={`/cashier/${s.id}`} className="num font-semibold text-action hover:underline">{s.shift_number}</Link></TableCell>
-                    <TableCell>{s.user_name || "—"}</TableCell>
+                    <TableCell><Link href={`/cashier/${s.id}`} className="num font-semibold text-action">{s.shift_number}</Link></TableCell>
+                    <TableCell>{s.user_name || ""}</TableCell>
                     <TableCell className="num whitespace-nowrap">{formatDateTime(s.opened_at, ctx.hotel.timezone)}</TableCell>
-                    <TableCell className="num whitespace-nowrap">{s.closed_at ? formatDateTime(s.closed_at, ctx.hotel.timezone) : "—"}</TableCell>
+                    <TableCell className="num whitespace-nowrap">{s.closed_at ? formatDateTime(s.closed_at, ctx.hotel.timezone) : ""}</TableCell>
                     <TableCell>
                       {s.status === "open" ? <Badge variant="success">مفتوحة</Badge> : <Badge variant="secondary">مغلقة</Badge>}
                       {s.over_short_entry_id && <Badge variant="warning" className="ms-2">فروقات</Badge>}
@@ -96,7 +96,7 @@ export default async function CashierPage() {
               <CardContent className="space-y-2">
                 {othersOpen.map((s) => (
                   <Link key={s.id} href={`/cashier/${s.id}`} className="flex items-center justify-between rounded-lg border border-line p-3 hover:bg-panel">
-                    <span><span className="font-semibold text-ink">{s.user_name || "—"}</span><span className="num block text-[13.5px] text-slate-500">{s.shift_number}</span></span>
+                    <span><span className="font-semibold text-ink">{s.user_name || ""}</span><span className="num block text-[13.5px] text-slate-500">{s.shift_number}</span></span>
                     <Badge variant="success">مفتوحة</Badge>
                   </Link>
                 ))}

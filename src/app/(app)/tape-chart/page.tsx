@@ -1,5 +1,5 @@
 import Link from "@/components/link";
-import { CalendarRange, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { CalendarRange, Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { FilterTabs } from "@/components/ui/filter-tabs";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { todayInTimeZone } from "@/lib/accounting/fiscal";
-import { addDays, dayLabel, nightsBetween, timeOf } from "@/lib/pms/dates";
+import { addDays, dayLabel, nightsBetween, timeOf, timeRange } from "@/lib/pms/dates";
 import { RESERVATION_STATUS } from "@/lib/pms/labels";
 import { cn } from "@/lib/utils";
 import { listReservations, listRooms, listRoomTypes, roomTypeAvailability, type ReservationListItem } from "@/services/pms.service";
@@ -64,11 +64,11 @@ export default async function TapeChartPage({ searchParams }: { searchParams: Pr
     const to = r.booking_mode === "hourly" ? addDays(r.arrival_date, 1) : r.departure_date > end ? end : r.departure_date;
     const st = RESERVATION_STATUS[r.status];
     return (
-      <Link href={`/reservations/${r.id}`} title={`${r.confirmation_number} · ${r.guest?.full_name ?? ""} · ${st.label}`}
+      <Link href={`/reservations/${r.id}`} title={`${r.confirmation_number}، ${r.guest?.full_name ?? ""}، ${st.label}`}
         style={{ gridColumn: `${col(from)} / ${col(to)}`, gridRow: 1 }}
         className={cn("z-[1] m-1 flex min-w-0 items-center gap-1.5 overflow-hidden rounded-md border px-2 text-[14px] font-medium transition-[filter] hover:brightness-95",
           BAR[r.status] ?? BAR.confirmed, r.arrival_date < start && "rounded-s-none", r.departure_date > end && r.booking_mode === "nightly" && "rounded-e-none")}>
-        <span className="truncate">{r.booking_mode === "hourly" ? `${timeOf(r.starts_at)}–${timeOf(r.ends_at)} ` : ""}{r.guest?.full_name}</span>
+        <span className="truncate">{r.booking_mode === "hourly" ? `${timeOf(r.starts_at)} ` : ""}{r.guest?.full_name}</span>
       </Link>
     );
   };
@@ -82,10 +82,10 @@ export default async function TapeChartPage({ searchParams }: { searchParams: Pr
       />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Button asChild variant="outline" size="sm"><Link href={nav(addDays(start, -span))}><ChevronRight className="size-4" />السابق</Link></Button>
+          <Button asChild variant="outline" size="sm"><Link href={nav(addDays(start, -span))}>السابق</Link></Button>
           <Button asChild variant="outline" size="sm"><Link href={nav(addDays(today, -1))}>اليوم</Link></Button>
-          <Button asChild variant="outline" size="sm"><Link href={nav(addDays(start, span))}>التالي<ChevronLeft className="size-4" /></Link></Button>
-          <span className="ms-2 text-[16px] font-medium text-ink">{dayLabel(start, { day: "numeric", month: "long" })} — {dayLabel(addDays(end, -1), { day: "numeric", month: "long", year: "numeric" })}</span>
+          <Button asChild variant="outline" size="sm"><Link href={nav(addDays(start, span))}>التالي</Link></Button>
+          <span className="ms-2 text-[16px] font-medium text-ink">من {dayLabel(start, { day: "numeric", month: "long" })} إلى {dayLabel(addDays(end, -1), { day: "numeric", month: "long", year: "numeric" })}</span>
         </div>
         <FilterTabs active={String(span)} items={[7, 14, 30].map((n) => ({ key: String(n), href: `/tape-chart?start=${start}${n !== 14 ? `&days=${n}` : ""}`, label: `${n} يومًا` }))} />
       </div>
@@ -120,7 +120,7 @@ export default async function TapeChartPage({ searchParams }: { searchParams: Pr
                 <section key={type.id}>
                   {/* رأس النوع: الشاغر في كل ليلة */}
                   <div className="grid border-b border-line bg-group-row" style={{ gridTemplateColumns: cols }}>
-                    <div className="px-4 py-2 font-bold text-ink">{type.name_ar}<span className="ms-2 text-[13px] font-normal text-slate-500">{type.booking_mode === "hourly" ? "بالساعة" : `${typeRooms.length} غرف`}</span></div>
+                    <div className="px-4 py-2 font-bold text-ink">{type.name_ar}<span className="ms-2 font-normal text-slate-500">{type.booking_mode === "hourly" ? "بالساعة" : `${typeRooms.length} غرف`}</span></div>
                     {days.map((d) => {
                       const a = avail.get(`${type.id}|${d}`);
                       return (
@@ -136,9 +136,9 @@ export default async function TapeChartPage({ searchParams }: { searchParams: Pr
                     return (
                       <div key={room.id} className="grid h-12 border-b border-line" style={{ gridTemplateColumns: cols }}>
                         <div style={{ gridColumn: 1, gridRow: 1 }} className="flex items-center gap-2 px-4">
-                          <span className="num text-[17px] font-bold text-ink">{room.room_number}</span>
-                          {room.service_status === "out_of_service" && <span className="rounded bg-urgent-tint px-1.5 text-[12.5px] text-urgent">خارج الخدمة</span>}
-                          {room.housekeeping_status === "dirty" && room.service_status === "in_service" && <span className="size-2 rounded-full bg-amber-dot" title="تحتاج تنظيف" />}
+                          <span className="num font-bold text-ink">{room.room_number}</span>
+                          {room.service_status === "out_of_service" && <span className="rounded bg-urgent-tint px-1.5 text-urgent">خارج الخدمة</span>}
+                          {room.housekeeping_status === "dirty" && room.service_status === "in_service" && <span className="rounded bg-amber-tint px-1.5 text-amber">تنظيف</span>}
                         </div>
                         {days.map((d, i) => (
                           canCreate && room.service_status === "in_service" && d >= today ? (
@@ -157,7 +157,7 @@ export default async function TapeChartPage({ searchParams }: { searchParams: Pr
                             return same.length === 1 ? <Bar key={day} r={same[0]!} /> : (
                               <Link key={day} href={`/reservations?q=${encodeURIComponent(room.room_number)}&tab=all`}
                                 style={{ gridColumn: `${col(day)} / ${col(addDays(day, 1))}`, gridRow: 1 }}
-                                title={same.map((r) => `${timeOf(r.starts_at)}–${timeOf(r.ends_at)} ${r.guest?.full_name ?? ""}`).join("\n")}
+                                title={same.map((r) => `${timeRange(r.starts_at, r.ends_at)} ${r.guest?.full_name ?? ""}`).join("\n")}
                                 className="z-[1] m-1 flex items-center justify-center rounded-md border border-action/40 bg-accent1-tint text-[13.5px] font-semibold text-ink">
                                 <span className="num">{same.length}</span>&nbsp;حجوزات
                               </Link>

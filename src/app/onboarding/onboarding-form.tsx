@@ -67,7 +67,7 @@ export function OnboardingForm({
           <option value="" disabled>اختر العملة</option>
           {currencies.map((c) => (
             <option key={c.code} value={c.code}>
-              {c.code} — {c.name}
+              {c.name} {c.code}
             </option>
           ))}
         </NativeSelect>

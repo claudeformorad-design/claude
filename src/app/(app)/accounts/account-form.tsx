@@ -107,7 +107,7 @@ export function AccountForm({
           <option value="">{t.accounts.noParent}</option>
           {parentOptions.map((a) => (
             <option key={a.id} value={a.id}>
-              {"  ".repeat(a.depth)}{a.code} — {a.name}
+              {"  ".repeat(a.depth)}{a.code} {a.name}
             </option>
           ))}
         </NativeSelect>

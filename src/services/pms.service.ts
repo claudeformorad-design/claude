@@ -197,5 +197,5 @@ export async function folioSnapshot(supabase: SupabaseServerClient, folioId: str
 /** العملاء (الشركات) لربط الحجز بجهة فوترة — يتطلب صلاحية عرض العملاء */
 export async function listCompanyOptions(supabase: SupabaseServerClient, hotelId: string): Promise<{ id: string; label: string }[]> {
   const { data } = await supabase.from("customers").select("id, code, name_ar").eq("hotel_id", hotelId).eq("is_active", true).order("name_ar");
-  return (data ?? []).map((c) => ({ id: c.id, label: `${c.name_ar} (${c.code})` }));
+  return (data ?? []).map((c) => ({ id: c.id, label: c.name_ar }));
 }

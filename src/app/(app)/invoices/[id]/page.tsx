@@ -1,3 +1,4 @@
+import { plainText } from "@/lib/text";
 import Link from "@/components/link";
 import { notFound } from "next/navigation";
 import { Money } from "@/components/money";
@@ -65,7 +66,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
             {inv.folio_id && (
               <div className="sm:text-end">
                 <p className="text-sm text-muted-foreground">{t.nav.folios}</p>
-                <Link href={`/folios/${inv.folio_id}`} className="num text-primary hover:underline print:no-underline">{folio?.folio_number ?? t.folio.folioNumber}</Link>
+                <Link href={`/folios/${inv.folio_id}`} className="num text-primary">{folio?.folio_number ?? t.folio.folioNumber}</Link>
                 {folio?.room_number && <p className="text-sm">{t.folio.room} <span className="num">{folio.room_number}</span></p>}
               </div>
             )}
@@ -88,7 +89,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                 <TableRow key={it.id}>
                   <TableCell className="num">{it.line_no}</TableCell>
                   <TableCell className="num">{it.business_date ?? ""}</TableCell>
-                  <TableCell>{it.description}</TableCell>
+                  <TableCell>{plainText(it.description)}</TableCell>
                   <TableCell className="num text-end">{toMoney(it.quantity).toString()}</TableCell>
                   <TableCell className="text-end">{m(it.net_amount)}</TableCell>
                   <TableCell className="text-end">{m(it.tax_amount)}</TableCell>
@@ -107,7 +108,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                     const rate = taxById.get(x.tax_rate_id);
                     return (
                       <tr key={x.tax_rate_id} className="border-b">
-                        <td className="py-1">{rate ? `${(locale === "en" && rate.name_en) || rate.name_ar} (${toMoney(rate.rate).toString()}%)` : "—"}</td>
+                        <td className="py-1">{rate ? `${(locale === "en" && rate.name_en) || rate.name_ar} ${toMoney(rate.rate).toString()}%` : ""}</td>
                         <td className="py-1 text-end text-muted-foreground">{t.invoices.taxableBase}: {m(x.taxable_base)}</td>
                         <td className="py-1 text-end">{m(x.amount)}</td>
                       </tr>
@@ -138,7 +139,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
               <ul className="space-y-1 text-sm">
                 {detail.allocations.map((a) => (
                   <li key={a.payment_id} className={a.voucher_status === "voided" ? "text-muted-foreground line-through" : ""}>
-                    <Link href={`/vouchers/${a.payment_id}`} className="num text-primary hover:underline">{a.voucher_number}</Link> — {m(a.amount)}
+                    <Link href={`/vouchers/${a.payment_id}`} className="num text-primary">{a.voucher_number}</Link> بمبلغ {m(a.amount)}
                   </li>
                 ))}
               </ul>
@@ -149,7 +150,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
               <p className="mb-2 text-sm font-semibold">{t.payables.creditNote}</p>
               <ul className="space-y-1 text-sm">
                 {(creditNotes.data ?? []).map((c) => (
-                  <li key={c.id}><span className="num">{c.credit_note_number}</span> · <span className="num">{c.issue_date}</span> · {m(c.total)} — {c.reason}</li>
+                  <li key={c.id}><span className="num">{c.credit_note_number}</span> بتاريخ <span className="num">{c.issue_date}</span> بمبلغ {m(c.total)}، {c.reason}</li>
                 ))}
               </ul>
             </div>

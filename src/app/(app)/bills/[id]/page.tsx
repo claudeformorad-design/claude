@@ -1,6 +1,7 @@
 import Link from "@/components/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
+import { plainText } from "@/lib/text";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,12 +27,12 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
     listAccounts(ctx.supabase, ctx.hotel.id),
     listPaymentMethods(ctx.supabase, ctx.hotel.id),
   ]);
-  const acc = new Map(accounts.map((a) => [a.id, `${a.code} — ${(locale === "en" && a.name_en) || a.name_ar}`]));
+  const acc = new Map(accounts.map((a) => [a.id, `${a.code} ${(locale === "en" && a.name_en) || a.name_ar}`]));
   const outstanding = toMoney(bill.total).minus(toMoney(bill.amount_paid));
   return (
     <>
       <PageHeader title={`${t.payables.billNumber} ${bill.bill_number}`}
-        description={`${(locale === "en" && vendor.data?.name_en) || vendor.data?.name_ar} · ${bill.vendor_invoice_no ?? ""}`}
+        description={`${(locale === "en" && vendor.data?.name_en) || vendor.data?.name_ar}، ${bill.vendor_invoice_no ?? ""}`}
         actions={<Badge>{t.payables.statuses[bill.status]}</Badge>} />
       <Card className="mb-6 overflow-hidden">
         <Table>
@@ -42,7 +43,7 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
           <TableBody>
             {lines.map((l) => (
               <TableRow key={l.id}>
-                <TableCell className="num">{l.line_no}</TableCell><TableCell>{l.description}</TableCell><TableCell>{acc.get(l.account_id)}</TableCell>
+                <TableCell className="num">{l.line_no}</TableCell><TableCell>{plainText(l.description)}</TableCell><TableCell>{acc.get(l.account_id)}</TableCell>
                 <TableCell className="num text-end">{toMoney(l.quantity).toString()}</TableCell>
                 <TableCell className="text-end"><Money value={l.net_amount} locale={locale} /></TableCell>
                 <TableCell className="text-end"><Money value={l.tax_amount} locale={locale} blankZero /></TableCell>
@@ -55,7 +56,7 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
           <div className="flex justify-between"><span>{t.invoices.taxTotal}</span><Money value={bill.tax_total} locale={locale} /></div>
           <div className="flex justify-between font-bold"><span>{t.invoices.total}</span><Money value={bill.total} locale={locale} /></div>
           <div className="flex justify-between"><span>{t.invoices.outstanding}</span><Money value={outstanding} locale={locale} /></div>
-          {bill.journal_entry_id && <Link className="text-primary hover:underline" href={`/journal/${bill.journal_entry_id}`}>{t.journal.entry}</Link>}
+          {bill.journal_entry_id && <Link className="text-primary" href={`/journal/${bill.journal_entry_id}`}>{t.journal.entry}</Link>}
         </CardContent>
       </Card>
       {outstanding.gt(0) && ctx.can(PERMISSIONS.paymentsDisbursement) && (

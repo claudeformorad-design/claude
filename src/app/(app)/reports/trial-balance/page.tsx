@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/layout/page-header";
-import { FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, Minus, Plus } from "lucide-react";
 import { Money } from "@/components/money";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { fiscalYearStart, isIsoDate, todayInTimeZone } from "@/lib/accounting/fi
 import { trialBalanceColumns } from "@/lib/accounting/trial-balance";
 import { getTrialBalance } from "@/services/reports.service";
 import { getI18n } from "@/i18n/server";
-import { ArrowDownToLine, ArrowUpFromLine, CheckCircle2, ListChecks, TriangleAlert } from "lucide-react";
+import { CheckCircle2, ListChecks, TriangleAlert } from "lucide-react";
 import { Stat, StatGrid } from "@/components/ui/stat";
 
 export default async function TrialBalancePage({
@@ -40,7 +40,7 @@ export default async function TrialBalancePage({
 
   return (
     <>
-      <PageHeader title={t.trialBalance.title} description={`${t.trialBalance.subtitle} (${ctx.hotel.base_currency})`}
+      <PageHeader title={t.trialBalance.title} description={t.trialBalance.subtitle}
         actions={<Button asChild variant="outline"><a href={`/api/export/trial-balance?from=${from}&to=${to}`}><FileSpreadsheet />{t.reports.exportExcel}</a></Button>} />
 
       <form className="toolbar">
@@ -60,8 +60,8 @@ export default async function TrialBalancePage({
       </form>
 
       <StatGrid>
-        <Stat icon={ArrowDownToLine} tone="teal" label="إجمالي المدين (ختامي)" value={<Money value={tb.totals.closingDebit} locale={locale} />} />
-        <Stat icon={ArrowUpFromLine} tone="clay" label="إجمالي الدائن (ختامي)" value={<Money value={tb.totals.closingCredit} locale={locale} />} />
+        <Stat icon={Plus} tone="teal" label="إجمالي المدين الختامي" value={<Money value={tb.totals.closingDebit} locale={locale} />} />
+        <Stat icon={Minus} tone="clay" label="إجمالي الدائن الختامي" value={<Money value={tb.totals.closingCredit} locale={locale} />} />
         <Stat icon={ListChecks} tone="neutral" label="حسابات بحركة" value={<span className="num">{tb.rows.length}</span>} />
         <Stat icon={tb.isBalanced ? CheckCircle2 : TriangleAlert} tone={tb.isBalanced ? "ink" : "clay"} label="حالة الميزان"
           value={tb.isBalanced ? "متوازن" : "غير متوازن"} valueClassName={tb.isBalanced ? "text-success" : "text-urgent"}

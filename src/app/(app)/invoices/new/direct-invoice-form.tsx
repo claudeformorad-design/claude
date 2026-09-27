@@ -71,7 +71,7 @@ export function DirectInvoiceForm({
         <div className="field-group space-y-1.5">
           <Label htmlFor="customer_id">{t.invoices.customer}</Label>
           <NativeSelect id="customer_id" aria-invalid={!!formState.errors.customer_id} {...register("customer_id")}>
-            <option value="">—</option>
+            <option value="">اختر</option>
             {customers.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
           </NativeSelect>
         </div>

@@ -30,7 +30,7 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
     <>
       <PageHeader
         title={`الوردية ${s.shift_number}`}
-        description={`${s.user_name || "—"} — فُتحت ${formatDateTime(s.opened_at, ctx.hotel.timezone)}${s.closed_at ? ` وأُغلقت ${formatDateTime(s.closed_at, ctx.hotel.timezone)}` : ""}`}
+        description={`${s.user_name || ""}، فُتحت ${formatDateTime(s.opened_at, ctx.hotel.timezone)}${s.closed_at ? ` وأُغلقت ${formatDateTime(s.closed_at, ctx.hotel.timezone)}` : ""}`}
         actions={
           <div className="flex items-center gap-2">
             {s.status === "open" ? <Badge variant="success" className="text-[16px]">مفتوحة</Badge> : <Badge variant="secondary" className="text-[16px]">مغلقة</Badge>}
@@ -53,7 +53,7 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
                   <Money value={Math.abs(diffBase)} locale={locale} className={diffBase < 0 ? "text-[20px] font-bold text-urgent" : "text-[20px] font-bold text-ink"} />
                 </div>
                 {s.over_short_entry_id && ctx.can(PERMISSIONS.journalView) && (
-                  <Link href={`/journal/${s.over_short_entry_id}`} className="block text-action hover:underline">عرض قيد الفروقات</Link>
+                  <Link href={`/journal/${s.over_short_entry_id}`} className="block text-action">عرض قيد الفروقات</Link>
                 )}
                 {s.closing_note && <p className="text-slate-600">{s.closing_note}</p>}
               </CardContent>

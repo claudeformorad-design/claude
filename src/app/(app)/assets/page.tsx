@@ -28,13 +28,13 @@ export default async function AssetsPage() {
   ]);
   const assets = (assetsRes.data ?? []) as unknown as FixedAssetRow[];
   const name = (x: { name_ar: string; name_en: string | null }) => (locale === "en" && x.name_en) || x.name_ar;
-  const opt = (list: typeof accounts) => list.map((a) => ({ id: a.id, label: `${a.code} — ${name(a)}` }));
+  const opt = (list: typeof accounts) => list.map((a) => ({ id: a.id, label: `${a.code} ${name(a)}` }));
   const postable = accounts.filter((a) => a.is_postable && a.is_active);
   const assetAccounts = opt(postable.filter((a) => a.account_subtype === "fixed_asset" && a.system_key !== "accumulated_depreciation"));
   const funding = opt(postable.filter((a) => ["asset", "liability", "equity"].includes(a.account_type) && a.account_subtype !== "fixed_asset"
     && !["guest_ledger", "ar_control", "guest_deposits", "ap_control"].includes(a.system_key ?? "")));
   const cash = opt(postable.filter((a) => a.account_type === "asset" && a.account_subtype === "current_asset"));
-  const depts = departments.map((d) => ({ id: d.id, label: `${d.code} — ${name(d)}` }));
+  const depts = departments.map((d) => ({ id: d.id, label: `${d.code} ${name(d)}` }));
   const can = ctx.can(PERMISSIONS.assetsManage);
   const today = todayInTimeZone(ctx.hotel.timezone);
   const a = t.assets;
@@ -77,13 +77,13 @@ export default async function AssetsPage() {
             <TableHead className="text-end">{a.nbv}</TableHead><TableHead>{t.common.status}</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {assets.length === 0 && <TableRow><TableCell colSpan={7} className="py-8"><EmptyState title="سجل الأصول فارغ" description="سجّل الأصول الثابتة (أجهزة، أثاث، مركبات) ليُحسب إهلاكها الشهري تلقائيًا." icon={Building2} /></TableCell></TableRow>}
+            {assets.length === 0 && <TableRow><TableCell colSpan={7} className="py-8"><EmptyState title="سجل الأصول فارغ" description="سجّل الأصول الثابتة مثل الأجهزة والأثاث والمركبات ليُحسب إهلاكها الشهري تلقائيًا." icon={Building2} /></TableCell></TableRow>}
             {assets.map((x) => (
               <TableRow key={x.id}>
                 <TableCell className="num font-semibold">{x.asset_number}</TableCell>
                 <TableCell>
                   <p className="font-medium">{x.name}</p>
-                  <p className="text-[15.5px] text-slate-500">{x.category} · {x.useful_life_months} شهرًا</p>
+                  <p className="text-[15.5px] text-slate-500">{x.category}، {x.useful_life_months} شهرًا</p>
                   {can && x.status !== "disposed" && (
                     <details className="mt-1 text-sm"><summary className="cursor-pointer text-[15.5px] font-medium text-accent2">{a.dispose}</summary>
                       <div className="mt-2">

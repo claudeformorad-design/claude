@@ -17,7 +17,7 @@ export default async function NewPayrollPage() {
       <Card><CardContent className="p-5">
         <PayrollForm t={{ payables: t.payables, common: t.common, errors: t.errors, journal: t.journal, folio: t.folio }} locale={locale}
           month={todayInTimeZone(ctx.hotel.timezone).slice(0, 7)}
-          departments={departments.filter((d) => d.is_active).map((d) => ({ id: d.id, label: `${d.code} — ${(locale === "en" && d.name_en) || d.name_ar}` }))} />
+          departments={departments.filter((d) => d.is_active).map((d) => ({ id: d.id, label: `${d.code} ${(locale === "en" && d.name_en) || d.name_ar}` }))} />
       </CardContent></Card>
     </>
   );

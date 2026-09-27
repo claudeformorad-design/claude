@@ -34,14 +34,14 @@ export default async function CurrenciesPage() {
 
   return (
     <>
-      <PageHeader title="العملات وأسعار الصرف" description={`العملة الأساسية: ${nameOf.get(base) ?? base} (${base}) — السعر = كم ${base} تساوي وحدة واحدة من العملة`} />
+      <PageHeader title="العملات وأسعار الصرف" description={`العملة الأساسية ${nameOf.get(base) ?? base}، والسعر هو ما تساويه وحدة واحدة من العملة الأجنبية بالعملة الأساسية`} />
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
           <Card className="overflow-hidden">
             <CardHeader><CardTitle>أسعار اليوم</CardTitle><CardDescription>تُستخدم لتحويل المقبوضات بالعملات الأجنبية وفروقات عدّ الصندوق</CardDescription></CardHeader>
             {shown.length === 0 ? (
-              <CardContent><EmptyState icon={Coins} title="لا توجد عملات أجنبية بعد" description="سجّل سعر صرف، ثم أضف طريقة دفع بعملتها من إعدادات الإيرادات (مثل: نقدًا دولار)." /></CardContent>
+              <CardContent><EmptyState icon={Coins} title="لا توجد عملات أجنبية بعد" description="سجّل سعر صرف، ثم أضف طريقة دفع بعملتها من إعدادات الإيرادات مثل نقدًا دولار." /></CardContent>
             ) : (
               <Table>
                 <TableHeader><TableRow><TableHead>العملة</TableHead><TableHead className="text-end">السعر الساري</TableHead><TableHead>منذ</TableHead><TableHead>طريقة دفع</TableHead></TableRow></TableHeader>
@@ -52,8 +52,8 @@ export default async function CurrenciesPage() {
                       <TableRow key={c.code}>
                         <TableCell><span className="num font-bold">{c.code}</span> <span className="text-slate-500">{c.name_ar}</span></TableCell>
                         <TableCell className="num text-end text-[17px] font-semibold">{r ? fmt(r.rate) : <Badge variant="warning">بلا سعر</Badge>}</TableCell>
-                        <TableCell className="num">{r ? (r.date === today ? "اليوم" : r.date) : "—"}</TableCell>
-                        <TableCell>{used.has(c.code) ? <Badge variant="success">مفعّلة</Badge> : <span className="text-slate-400">—</span>}</TableCell>
+                        <TableCell className="num">{r ? (r.date === today ? "اليوم" : r.date) : ""}</TableCell>
+                        <TableCell>{used.has(c.code) ? <Badge variant="success">مفعّلة</Badge> : <span className="text-slate-400"></span>}</TableCell>
                       </TableRow>
                     );
                   })}
@@ -86,8 +86,8 @@ export default async function CurrenciesPage() {
             <SimpleForm columns={1} submitLabel="حفظ السعر" errors={t.errors} action={setExchangeRateAction}
               initial={{ currency: [...used][0] ?? (foreign.find((c) => c.code === "USD") ?? foreign[0])?.code ?? "", rate: "", date: today }}
               fields={[
-                { name: "currency", label: "العملة", options: foreign.map((c) => ({ id: c.code, label: `${c.code} — ${c.name_ar}` })) },
-                { name: "rate", label: `السعر (${base} لكل وحدة)`, type: "number" },
+                { name: "currency", label: "العملة", options: foreign.map((c) => ({ id: c.code, label: `${c.code} ${c.name_ar}` })) },
+                { name: "rate", label: `السعر بعملة ${base} لكل وحدة`, type: "number" },
                 { name: "date", label: "التاريخ", type: "date" },
               ]} />
           </CardContent>

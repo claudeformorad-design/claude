@@ -26,9 +26,9 @@ const HK: Record<HousekeepingStatus, { label: string; dot: string }> = {
  * النقر يفتح قائمة صغيرة لتغيير الحالة (لمن يملك صلاحية حالة الغرف).
  */
 export function RoomTile({
-  id, number, typeCode, housekeeping, service, serviceNote, occupancy, canEdit, errors,
+  id, number, housekeeping, service, serviceNote, occupancy, canEdit, errors,
 }: {
-  id: string; number: string; typeCode: string; housekeeping: HousekeepingStatus; service: RoomServiceStatus; serviceNote: string | null;
+  id: string; number: string; housekeeping: HousekeepingStatus; service: RoomServiceStatus; serviceNote: string | null;
   occupancy: TileOccupancy; canEdit: boolean; errors: Record<string, string>;
 }) {
   const router = useRouter();
@@ -65,14 +65,13 @@ export function RoomTile({
         )}>
         <div className="flex items-start justify-between gap-2">
           <span className="num text-[21px] font-bold leading-none">{number}</span>
-          <span className={cn("num rounded px-1.5 text-[13px] font-medium", occupancy.kind === "occupied" ? "bg-white/15 text-white" : "bg-subtle text-slate-600")}>{typeCode}</span>
         </div>
         <div className="min-w-0">
-          <p className={cn("truncate text-[14.5px]", occupancy.kind === "occupied" ? "text-white/85" : "text-slate-600")}>
+          <p className={cn("truncate text-[15px]", occupancy.kind === "occupied" ? "text-white/85" : "text-slate-600")}>
             {oos ? (serviceNote || "خارج الخدمة") : occupancy.guest ?? "شاغرة"}
           </p>
-          <p className={cn("mt-1 flex items-center gap-1.5 text-[13.5px]", occupancy.kind === "occupied" ? "text-white/70" : "text-slate-500")}>
-            {oos ? <Wrench className="size-3.5" /> : <span className={cn("size-2 rounded-full", HK[housekeeping].dot)} />}
+          <p className={cn("mt-1 flex items-center gap-1.5 text-[15px]", occupancy.kind === "occupied" ? "text-white/70" : "text-slate-500")}>
+            {oos && <Wrench className="size-3.5" />}
             {oos ? "خارج الخدمة" : HK[housekeeping].label}
           </p>
         </div>
@@ -87,7 +86,7 @@ export function RoomTile({
             {(["clean", "dirty", "inspected"] as const).map((k) => (
               <button key={k} type="button" disabled={pending || k === housekeeping} onClick={() => set({ housekeeping_status: k })}
                 className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-start text-[15.5px] hover:bg-subtle disabled:opacity-50">
-                <span className={cn("size-2 rounded-full", HK[k].dot)} />{HK[k].label}
+                {HK[k].label}
                 {k === housekeeping && <span className="ms-auto text-[13px] text-slate-400">الحالية</span>}
               </button>
             ))}
@@ -99,7 +98,7 @@ export function RoomTile({
               </button>
             ) : askNote ? (
               <form className="space-y-2 p-1" onSubmit={(e) => { e.preventDefault(); if (note.trim()) set({ service_status: "out_of_service", service_note: note.trim() }); }}>
-                <Input autoFocus placeholder="السبب (مثل: تسريب مياه)" value={note} onChange={(e) => setNote(e.target.value)} />
+                <Input autoFocus placeholder="السبب، مثل تسريب مياه" value={note} onChange={(e) => setNote(e.target.value)} />
                 <Button type="submit" size="sm" variant="destructive" loading={pending} disabled={!note.trim()}>إخراج من الخدمة</Button>
               </form>
             ) : (
@@ -110,7 +109,7 @@ export function RoomTile({
             )}
             {occupancy.reservationId && (
               <Link href={`/reservations/${occupancy.reservationId}`} className="block rounded-md px-2.5 py-2 text-[15.5px] text-action hover:bg-subtle">
-                فتح الحجز{occupancy.until ? ` · حتى ${occupancy.until}` : ""}
+                فتح الحجز{occupancy.until ? `، حتى ${occupancy.until}` : ""}
               </Link>
             )}
           </motion.div>

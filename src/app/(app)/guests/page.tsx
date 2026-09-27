@@ -70,10 +70,10 @@ export default async function GuestsPage({ searchParams }: { searchParams: Promi
                 {shown.rows.map((g) => (
                   <TableRow key={g.id}>
                     <TableCell className="cell-fluid"><EntityCell name={g.full_name} href={`/guests/${g.id}`} sub={g.is_blacklisted ? <span className="text-urgent">القائمة السوداء</span> : g.email ?? undefined} /></TableCell>
-                    <TableCell className="num" dir="ltr">{g.phone ?? "—"}</TableCell>
-                    <TableCell className="whitespace-nowrap">{g.id_number ? <><span className="num">{g.id_number}</span><span className="block text-[13.5px] text-slate-500">{ID_TYPES[g.id_type!]}</span></> : <span className="text-slate-400">—</span>}</TableCell>
-                    <TableCell>{g.nationality ?? "—"}</TableCell>
-                    <TableCell>{g.customer_id ? companyName.get(g.customer_id) ?? "—" : "—"}</TableCell>
+                    <TableCell className="num" dir="ltr">{g.phone ?? ""}</TableCell>
+                    <TableCell className="whitespace-nowrap">{g.id_number ? <>{ID_TYPES[g.id_type!]} <span className="num">{g.id_number}</span></> : ""}</TableCell>
+                    <TableCell>{g.nationality ?? ""}</TableCell>
+                    <TableCell>{g.customer_id ? companyName.get(g.customer_id) ?? "" : ""}</TableCell>
                     {canManage && <TableCell className="text-end"><Button asChild variant="ghost" size="sm"><Link href={`/guests?edit=${g.id}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}`}>{t.common.edit}</Link></Button></TableCell>}
                   </TableRow>
                 ))}

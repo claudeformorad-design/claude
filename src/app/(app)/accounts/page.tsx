@@ -107,7 +107,7 @@ export default async function AccountsPage({
                   id: a.id, code: a.code, name: name(a), account_type: a.account_type,
                   is_postable: a.is_postable, parent_id: a.parent_id, depth: a.depth,
                 }))}
-                departments={departments.map((d) => ({ id: d.id, label: `${d.code} — ${(locale === "en" && d.name_en) || d.name_ar}` }))}
+                departments={departments.map((d) => ({ id: d.id, label: `${d.code} ${(locale === "en" && d.name_en) || d.name_ar}` }))}
               />
             </CardContent>
           </Card>

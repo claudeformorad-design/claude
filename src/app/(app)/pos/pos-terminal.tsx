@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { BedDouble, Minus, Plus, ReceiptText, Trash2, Wallet } from "lucide-react";
+import { BedDouble, Minus, Plus, ReceiptText, Wallet } from "lucide-react";
 import Link from "@/components/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,7 +78,7 @@ export function PosTerminal({ outletId, items, guests, methods, errors, canViewI
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-4">
           {shown.map((i) => (
             <button key={i.id} type="button" onClick={() => add(i.id, 1)}
-              className={cn("surface lift relative flex min-h-24 flex-col items-start justify-between p-4 text-start", cart[i.id] && "ring-2 ring-action")}>
+              className={cn("surface lift relative flex min-h-24 flex-col items-start justify-between p-4 text-start", cart[i.id] && "border-action")}>
               <span className="text-[16.5px] font-semibold leading-snug text-ink">{i.name}</span>
               <span className="num text-[15px] text-slate-600">{money(i.price)}</span>
               {cart[i.id] && <span className="num absolute end-3 top-3 flex size-7 items-center justify-center rounded-full bg-action text-[14px] font-bold text-white">{cart[i.id]}</span>}
@@ -88,7 +88,7 @@ export function PosTerminal({ outletId, items, guests, methods, errors, canViewI
       </div>
 
       <Card className="h-fit xl:sticky xl:top-0">
-        <CardHeader><CardTitle className="justify-between"><span>الطلب</span>{lines.length > 0 && <button type="button" onClick={() => setCart({})} className="text-[14px] font-medium text-urgent hover:underline"><Trash2 className="inline size-4" /> تفريغ</button>}</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="justify-between"><span>الطلب</span>{lines.length > 0 && <button type="button" onClick={() => setCart({})} className="font-medium text-urgent">تفريغ</button>}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           {lines.length === 0 ? <p className="text-[15.5px] text-slate-500">اختر الأصناف من القائمة.</p> : (
             <ul className="divide-y divide-line">
@@ -132,14 +132,14 @@ export function PosTerminal({ outletId, items, guests, methods, errors, canViewI
               </NativeSelect>
             </div>
           )}
-          <div className="field-group space-y-1.5"><Label htmlFor="pos_note">ملاحظة (طاولة، طلب خاص)</Label><Input id="pos_note" value={note} onChange={(e) => setNote(e.target.value)} /></div>
+          <div className="field-group space-y-1.5"><Label htmlFor="pos_note">ملاحظة، مثل رقم الطاولة</Label><Input id="pos_note" value={note} onChange={(e) => setNote(e.target.value)} /></div>
           <Button type="button" className="w-full" size="default" loading={pending} disabled={!lines.length || (mode === "room" ? !guest : !method)} onClick={settle}>
             {mode === "room" ? "ترحيل على الغرفة" : "دفع وإصدار الفاتورة"}
           </Button>
           {last && (
             <div className="rounded-md bg-success/10 px-3 py-2 text-[15px] text-success">
-              الطلب <b className="num">{last.number}</b> — <span className="num">{money(last.total)}</span> شامل الضريبة
-              {last.invoice && canViewInvoices && <Link href={`/invoices/${last.invoice}`} className="ms-2 inline-flex items-center gap-1 font-medium underline"><ReceiptText className="size-4" />الفاتورة</Link>}
+              الطلب <b className="num">{last.number}</b> بمبلغ <span className="num">{money(last.total)}</span> شامل الضريبة
+              {last.invoice && canViewInvoices && <Link href={`/invoices/${last.invoice}`} className="ms-2 inline-flex items-center gap-1 font-medium"><ReceiptText className="size-4" />الفاتورة</Link>}
             </div>
           )}
         </CardContent>

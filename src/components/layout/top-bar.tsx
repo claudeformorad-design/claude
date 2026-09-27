@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { CalendarCheck, ChevronLeft, LogOut, Menu, Search, Settings } from "lucide-react";
+import { CalendarCheck, LogOut, Menu, Search, Settings } from "lucide-react";
 import Link from "@/components/link";
 import { cn } from "@/lib/utils";
 import { isActivePath, navGroups, type NavAccess, type NavLabels } from "./nav-config";
@@ -46,18 +46,16 @@ export function TopBar({
       </button>
 
       {/* مسار التنقّل */}
-      <nav aria-label="المسار" className="flex min-w-0 flex-1 items-center gap-2 text-[16.5px] text-muted-foreground">
+      <nav aria-label="المسار" className="flex min-w-0 flex-1 items-center gap-5 text-[16.5px] text-muted-foreground">
         <span className="truncate md:hidden text-ink font-medium">{hotelName}</span>
         <span className="hidden truncate md:inline">{hotelName}</span>
         {group?.title && group.items.length > 1 && (
           <>
-            <ChevronLeft className="hidden size-3.5 shrink-0 text-slate-300 md:block" />
             <span className="hidden truncate md:inline">{group.title}</span>
           </>
         )}
         {current && (
           <>
-            <ChevronLeft className="hidden size-3.5 shrink-0 text-slate-300 md:block" />
             <span key={current.href} className="animate-fade hidden truncate text-ink md:inline">{current.label}</span>
           </>
         )}
@@ -67,9 +65,8 @@ export function TopBar({
 
       <div className="flex items-center gap-2">
         {demo && (
-          <Link href="/settings/hotel" title="بيانات تجريبية مؤقتة — احذفها من الإعدادات"
-            className="flex h-8 items-center gap-1.5 rounded-md bg-sky-tint px-3 text-[15.5px] font-medium text-sky">
-            <span className="size-1.5 rounded-full bg-sky-dot" />
+          <Link href="/settings/hotel" title="بيانات تجريبية مؤقتة، احذفها من الإعدادات"
+            className="flex h-8 items-center rounded-md bg-sky-tint px-3 text-[15.5px] font-medium text-sky">
             بيانات تجريبية
           </Link>
         )}
@@ -82,7 +79,7 @@ export function TopBar({
         <Link href="/settings/hotel" className={iconBtn} title={labels.hotelSettings} aria-label={labels.hotelSettings}>
           <Settings className="size-[18px] stroke-[1.75]" />
         </Link>
-        <span title={`${userName || userEmail} · ${roleLabel}`} className="flex size-10 items-center justify-center rounded-lg bg-ink text-[16.5px] font-medium text-white md:hidden">
+        <span title={`${userName || userEmail}، ${roleLabel}`} className="flex size-10 items-center justify-center rounded-lg bg-ink text-[16.5px] font-medium text-white md:hidden">
           {initials}
         </span>
       </div>

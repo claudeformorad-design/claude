@@ -28,9 +28,9 @@ export default async function NewDirectInvoicePage() {
           locale={locale}
           decimals={currency.data?.decimals ?? 2}
           today={todayInTimeZone(ctx.hotel.timezone)}
-          customers={(customers.data ?? []).map((c) => ({ id: c.id, label: `${c.code} — ${name(c)}` }))}
+          customers={(customers.data ?? []).map((c) => ({ id: c.id, label: `${c.code} ${name(c)}` }))}
           chargeCodes={codes.filter((c) => c.is_active).map((c) => ({
-            id: c.id, label: `${c.code} — ${name(c)}`, price: c.default_price, inclusive: c.price_includes_tax,
+            id: c.id, label: `${c.code} ${name(c)}`, price: c.default_price, inclusive: c.price_includes_tax,
             taxes: c.tax_rate_ids.map((id) => taxById.get(id)).filter((x) => !!x).map((x) => ({ id: x!.id, rate: x!.rate, is_compound: x!.is_compound })),
           }))}
         />

@@ -36,7 +36,7 @@ export function BackupCard({ errors }: { errors: Record<string, string> }) {
         <div className="space-y-1">
           <h3 className="text-[18.5px] font-semibold text-ink">النسخ الاحتياطي</h3>
           <p className="max-w-xl text-[16.5px] leading-relaxed text-slate-600">
-            نزّل نسخة كاملة من البيانات (الحسابات، الحجوزات، الفواتير...) واحفظها خارج الجهاز يوميًا. الاستعادة تعيد النظام كما كان وقت النسخة.
+            نزّل نسخة كاملة من البيانات بحساباتها وحجوزاتها وفواتيرها، واحفظها خارج الجهاز يوميًا. الاستعادة تعيد النظام كما كان وقت النسخة.
           </p>
           {error && <p className="text-[15.5px] text-urgent">{error}</p>}
         </div>

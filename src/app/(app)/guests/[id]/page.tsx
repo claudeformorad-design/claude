@@ -13,7 +13,7 @@ import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { ZERO, toMoney } from "@/lib/accounting/money";
 import { ID_TYPES, RESERVATION_STATUS } from "@/lib/pms/labels";
-import { nightsBetween, timeOf } from "@/lib/pms/dates";
+import { nightsBetween, timeRange } from "@/lib/pms/dates";
 import { getGuest, listCompanyOptions, listReservations } from "@/services/pms.service";
 import { getI18n } from "@/i18n/server";
 import { SimpleForm } from "../../_assets/simple-form";
@@ -40,7 +40,7 @@ export default async function GuestPage({ params }: { params: Promise<{ id: stri
     <>
       <PageHeader
         title={guest.full_name}
-        description={[guest.phone, guest.nationality, guest.id_number ? `${ID_TYPES[guest.id_type!]} ${guest.id_number}` : null].filter(Boolean).join(" · ") || "ملف النزيل"}
+        description={[guest.phone, guest.nationality, guest.id_number ? `${ID_TYPES[guest.id_type!]} ${guest.id_number}` : null].filter(Boolean).join("، ") || "ملف النزيل"}
         actions={
           <div className="flex items-center gap-2">
             {guest.is_blacklisted && <Badge variant="destructive">القائمة السوداء: {guest.blacklist_reason}</Badge>}
@@ -52,7 +52,7 @@ export default async function GuestPage({ params }: { params: Promise<{ id: stri
         <Stat icon={CalendarDays} tone="ink" label="الحجوزات" value={<span className="num">{reservations.length}</span>} hint={`${stays.length} فعّال أو منفَّذ`} />
         <Stat icon={BedDouble} tone="teal" label="الليالي" value={<span className="num">{nights}</span>} />
         <Stat icon={Wallet} tone="clay" label="قيمة الحجوزات" value={<Money value={total} locale={locale} />} hint={ctx.hotel.base_currency} />
-        <Stat icon={CalendarDays} tone="neutral" label="آخر وصول" value={<span className="num text-[22px]">{stays.at(-1)?.arrival_date ?? "—"}</span>} />
+        <Stat icon={CalendarDays} tone="neutral" label="آخر وصول" value={<span className="num">{stays.at(-1)?.arrival_date ?? ""}</span>} />
       </StatGrid>
 
       <div className={`grid gap-6 ${canManage ? "xl:grid-cols-[1fr_420px]" : ""}`}>
@@ -64,8 +64,8 @@ export default async function GuestPage({ params }: { params: Promise<{ id: stri
               {reservations.length === 0 && <TableRow><TableCell colSpan={5}><EmptyState icon={CalendarDays} title="لا توجد حجوزات لهذا النزيل" /></TableCell></TableRow>}
               {[...reservations].reverse().map((r) => (
                 <TableRow key={r.id}>
-                  <TableCell><Link href={`/reservations/${r.id}`} className="num font-semibold text-ink hover:underline">{r.confirmation_number}</Link></TableCell>
-                  <TableCell className="num">{r.booking_mode === "hourly" ? `${r.arrival_date} · ${timeOf(r.starts_at)}–${timeOf(r.ends_at)}` : `${r.arrival_date} ← ${r.departure_date}`}</TableCell>
+                  <TableCell><Link href={`/reservations/${r.id}`} className="num font-semibold text-ink">{r.confirmation_number}</Link></TableCell>
+                  <TableCell className="num">{r.booking_mode === "hourly" ? `${r.arrival_date} ${timeRange(r.starts_at, r.ends_at)}` : `من ${r.arrival_date} إلى ${r.departure_date}`}</TableCell>
                   <TableCell>{r.room ? <span className="num font-semibold">{r.room.room_number}</span> : <span className="text-slate-500">{r.room_type?.name_ar}</span>}</TableCell>
                   <TableCell><Badge variant={RESERVATION_STATUS[r.status].variant}>{RESERVATION_STATUS[r.status].label}</Badge></TableCell>
                   <TableCell className="text-end font-semibold"><Money value={r.total_amount} locale={locale} /></TableCell>

@@ -13,7 +13,7 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import { formatDateTime, todayInTimeZone } from "@/lib/accounting/fiscal";
 import { ZERO, toMoney } from "@/lib/accounting/money";
 import { ACTIVE_STATUSES, BILL_TO, PRICING_LABEL, RESERVATION_SOURCE, RESERVATION_STATUS, WEEKDAYS } from "@/lib/pms/labels";
-import { dayLabel, nightsBetween, timeOf } from "@/lib/pms/dates";
+import { dayLabel, nightsBetween, nightsText, timeRange } from "@/lib/pms/dates";
 import { folioSnapshot, getReservation, listReservations, listRoomTypes, listRooms } from "@/services/pms.service";
 import { listPaymentMethods } from "@/services/revenue-settings.service";
 import { latestRates, listExchangeRates } from "@/services/cashier.service";
@@ -69,7 +69,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
     if (r.status === "checked_in" && !hourly) {
       const rest = busyIn(today > r.arrival_date ? today : r.arrival_date, r.departure_date);
       moveRooms = usable.filter((x) => x.id !== r.room_id && !rest.has(x.id) && x.housekeeping_status !== "dirty" && nightlyTypes.has(x.room_type_id))
-        .map((x) => ({ id: x.id, label: `الغرفة ${x.room_number}${x.room_type_id !== r.room_type_id ? " (نوع آخر)" : ""}` }));
+        .map((x) => ({ id: x.id, label: `الغرفة ${x.room_number}${x.room_type_id !== r.room_type_id ? "، نوع آخر" : ""}` }));
     }
   }
 
@@ -88,14 +88,14 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
   const plans = planable ? await listRatePlans(ctx.supabase, ctx.hotel.id) : [];
   const planOptions = plans.filter((p) => (p.is_active || p.id === r.rate_plan_id)
     && (!p.customer_id || p.customer_id === r.customer_id) && (!p.room_type_id || p.room_type_id === r.room_type_id))
-    .map((p) => ({ id: p.id, label: `${p.name_ar}${p.includes_breakfast ? " (مع الإفطار)" : ""}` }));
+    .map((p) => ({ id: p.id, label: `${p.name_ar}${p.includes_breakfast ? " مع الإفطار" : ""}` }));
   const planName = plans.find((p) => p.id === r.rate_plan_id)?.name_ar;
 
   return (
     <>
       <PageHeader
         title={`الحجز ${r.confirmation_number}`}
-        description={`${r.guest?.full_name ?? ""} — ${r.room_type?.name_ar ?? ""}${r.group ? ` — مجموعة ${r.group.name}` : ""}`}
+        description={`${r.guest?.full_name ?? ""}، ${r.room_type?.name_ar ?? ""}${r.group ? `، مجموعة ${r.group.name}` : ""}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant={status.variant} className="text-[16px]">{status.label}</Badge>
@@ -105,7 +105,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
               <ActionButton variant="default" label="تأكيد الحجز" done="تم تأكيد الحجز" errors={t.errors} run={confirmReservationAction.bind(null, r.id)} />
             )}
             {canCancel && r.arrival_date <= today && (
-              <ActionButton label="لم يحضر" done="سُجّل عدم الحضور" errors={t.errors} reasonLabel="ملاحظة (اختيارية)" reasonRequired={false} run={noShowAction.bind(null, r.id)} />
+              <ActionButton label="لم يحضر" done="سُجّل عدم الحضور" errors={t.errors} reasonLabel="ملاحظة" reasonRequired={false} run={noShowAction.bind(null, r.id)} />
             )}
             {canCancel && (
               <ActionButton variant="destructive" label="إلغاء الحجز" done="أُلغي الحجز" errors={t.errors} reasonLabel="سبب الإلغاء" run={cancelReservationAction.bind(null, r.id)} />
@@ -116,11 +116,11 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
 
       <StatGrid>
         <Stat icon={CalendarRange} tone="ink" label={hourly ? "الموعد" : "الإقامة"}
-          value={<span className="num text-[21px]">{hourly ? `${timeOf(r.starts_at)}–${timeOf(r.ends_at)}` : `${nights} ${nights === 1 ? "ليلة" : "ليلة"}`}</span>}
-          hint={hourly ? dayLabel(r.arrival_date, { weekday: "long", day: "numeric", month: "long" }) : `${dayLabel(r.arrival_date)} ← ${dayLabel(r.departure_date)}`} />
-        <Stat icon={BedDouble} tone="teal" label={hourly ? "الوحدة" : "الغرفة"} value={r.room ? <span className="num">{r.room.room_number}</span> : <span className="text-[20px] text-slate-500">غير مخصصة</span>} hint={r.room_type?.name_ar} />
+          value={hourly ? timeRange(r.starts_at, r.ends_at) : nightsText(nights)}
+          hint={hourly ? dayLabel(r.arrival_date, { weekday: "long", day: "numeric", month: "long" }) : `من ${dayLabel(r.arrival_date)} إلى ${dayLabel(r.departure_date)}`} />
+        <Stat icon={BedDouble} tone="teal" label={hourly ? "الوحدة" : "الغرفة"} value={r.room ? <span className="num">{r.room.room_number}</span> : <span className="text-slate-500">غير مخصصة</span>} hint={r.room_type?.name_ar} />
         <Stat icon={Wallet} tone="clay" label="المبلغ المثبّت" value={<Money value={r.total_amount} locale={locale} />} hint={PRICING_LABEL[r.pricing]} />
-        <Stat icon={Users} tone="neutral" label="النزلاء" value={<span className="num">{r.adults}{r.children ? ` + ${r.children}` : ""}</span>} hint={`${RESERVATION_SOURCE[r.source]}${r.customer ? ` · ${r.customer.name_ar}` : ""}`} />
+        <Stat icon={Users} tone="neutral" label="النزلاء" value={<span className="num">{r.adults}{r.children ? ` بالغ و${r.children} طفل` : ""}</span>} hint={`${RESERVATION_SOURCE[r.source]}${r.customer ? `، ${r.customer.name_ar}` : ""}`} />
       </StatGrid>
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -138,7 +138,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
           <Card className="overflow-hidden">
             <CardHeader>
               <CardTitle className="justify-between">
-                <span>{hourly ? "تفصيل السعر" : "أسعار الليالي (مثبّتة وقت الحجز)"}</span>
+                <span>{hourly ? "تفصيل السعر" : "أسعار الليالي المثبّتة وقت الحجز"}</span>
                 <span className="flex flex-wrap gap-2">
                   {posted > 0 && <Badge variant="success">مُرحَّل على الفوليو: {posted} من {r.nights.length}</Badge>}
                   {r.last_minute_pct && <Badge variant="info"><BadgePercent className="size-3.5" />خصم اللحظة الأخيرة {Number(r.last_minute_pct)}%</Badge>}
@@ -153,7 +153,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
                 {r.nights.map((n) => (
                   <TableRow key={n.stay_date}>
                     <TableCell>{dayLabel(n.stay_date, { weekday: "long", day: "numeric", month: "long" })}{n.folio_transaction_id && <Badge variant="success" className="ms-2">مُرحّلة</Badge>}</TableCell>
-                    <TableCell>{hourly ? <span className="num">{Number(n.quantity)}</span> : n.season_name ? <Badge variant="outline">{n.season_name}</Badge> : <span className="text-slate-400">—</span>}</TableCell>
+                    <TableCell>{hourly ? <span className="num">{Number(n.quantity)}</span> : n.season_name ? <Badge variant="outline">{n.season_name}</Badge> : <span className="text-slate-400"></span>}</TableCell>
                     <TableCell className="text-end"><Money value={n.rate} locale={locale} /></TableCell>
                     <TableCell className="text-end"><Money value={n.discount} locale={locale} blankZero /></TableCell>
                     <TableCell className="text-end font-semibold"><Money value={n.amount} locale={locale} /></TableCell>
@@ -162,7 +162,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
               </TableBody>
               <TableFooter>
                 <TableRow>
-                  <TableCell colSpan={3}>الإجمالي{r.pricing !== "standard" && r.fixed_rate ? ` — ${PRICING_LABEL[r.pricing]}: ${Number(r.fixed_rate).toLocaleString("en")}` : ""}</TableCell>
+                  <TableCell colSpan={3}>الإجمالي{r.pricing !== "standard" && r.fixed_rate ? `، ${PRICING_LABEL[r.pricing]} ${Number(r.fixed_rate).toLocaleString("en")}` : ""}</TableCell>
                   <TableCell className="text-end"><Money value={discount} locale={locale} blankZero /></TableCell>
                   <TableCell className="text-end"><Money value={r.total_amount} locale={locale} /></TableCell>
                 </TableRow>
@@ -191,7 +191,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
             <CardHeader><CardTitle>التفاصيل</CardTitle></CardHeader>
             <CardContent>
               <dl className="space-y-3 text-[16px]">
-                <Row label="النزيل"><Link href={`/guests/${r.guest_id}`} className="font-semibold text-ink hover:underline">{r.guest?.full_name}</Link>{r.guest?.phone && <span className="num ms-2 text-slate-500" dir="ltr">{r.guest.phone}</span>}</Row>
+                <Row label="النزيل"><Link href={`/guests/${r.guest_id}`} className="font-semibold text-ink">{r.guest?.full_name}</Link>{r.guest?.phone && <span className="num ms-2 text-slate-500" dir="ltr">{r.guest.phone}</span>}</Row>
                 {r.customer && <Row label="الشركة">{r.customer.name_ar}</Row>}
                 {r.customer && (
                   <Row label="الفوترة">
@@ -211,7 +211,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
                 {r.notes && <Row label="ملاحظات">{r.notes}</Row>}
                 {r.checked_in_at && <Row label="الوصول"><span className="num">{formatDateTime(r.checked_in_at, ctx.hotel.timezone)}</span></Row>}
                 {r.checked_out_at && <Row label="المغادرة"><span className="num">{formatDateTime(r.checked_out_at, ctx.hotel.timezone)}</span></Row>}
-                {folio && folio.status !== "open" && ctx.can(PERMISSIONS.folioView) && <Row label="الفوليو"><Link href={`/folios/${folio.id}`} className="num font-semibold text-action hover:underline">{folio.number}</Link></Row>}
+                {folio && folio.status !== "open" && ctx.can(PERMISSIONS.folioView) && <Row label="الفوليو"><Link href={`/folios/${folio.id}`} className="num font-semibold text-action">{folio.number}</Link></Row>}
                 {r.cancellation_reason && <Row label={r.status === "no_show" ? "عدم الحضور" : "سبب الإلغاء"}>{r.cancellation_reason}</Row>}
                 <Row label="أُنشئ"><span className="num">{formatDateTime(r.created_at, ctx.hotel.timezone)}</span></Row>
               </dl>
@@ -229,13 +229,13 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
               <CardContent className="space-y-3">
                 <p className="text-[16px] text-slate-700">
                   كل {WEEKDAYS[r.series.weekday]} {r.series.nights ? `لـ ${r.series.nights} ليلة` : `من ${r.series.start_time?.slice(0, 5)} إلى ${r.series.end_time?.slice(0, 5)}`}
-                  <span className="num block text-[15px] text-slate-500">{r.series.start_date} ← {r.series.end_date}</span>
+                  <span className="block text-slate-500">من <span className="num">{r.series.start_date}</span> إلى <span className="num">{r.series.end_date}</span></span>
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Button asChild variant="outline" size="sm"><Link href={`/reservations?series=${r.series.id}`}>كل المواعيد</Link></Button>
                   {r.series.status === "active" && ctx.can(PERMISSIONS.pmsCancel) && (
                     <ActionButton variant="destructive" label="إلغاء بقية المواعيد" done="أُلغيت المواعيد القادمة" errors={t.errors}
-                      reasonLabel="سبب إلغاء بقية المواعيد (من اليوم)" run={cancelSeriesAction.bind(null, r.series.id)} />
+                      reasonLabel="سبب إلغاء بقية المواعيد من اليوم" run={cancelSeriesAction.bind(null, r.series.id)} />
                   )}
                   {r.series.status === "cancelled" && <Badge variant="destructive">أُلغي التكرار</Badge>}
                 </div>

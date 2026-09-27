@@ -86,19 +86,19 @@ export function VoucherForm({
         {partyType === "customer"
           ? row(t.invoices.customer, (
               <NativeSelect id="customer_id" {...register("customer_id", { onChange: (e) => loadInvoices(e.target.value) })}>
-                <option value="">—</option>
+                <option value="">اختر</option>
                 {customers.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
               </NativeSelect>
             ), "customer_id")
           : row(t.vouchers.counterAccount, (
               <NativeSelect id="counter_account_id" {...register("counter_account_id")}>
-                <option value="">—</option>
+                <option value="">اختر</option>
                 {accounts.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
               </NativeSelect>
             ), "counter_account_id")}
         {row(t.folio.method, (
           <NativeSelect id="payment_method_id" {...register("payment_method_id")}>
-            <option value="">—</option>
+            <option value="">اختر</option>
             {methods.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
           </NativeSelect>
         ), "payment_method_id")}
@@ -126,7 +126,7 @@ export function VoucherForm({
             const inv = customerInvoices.find((x) => x.id === f.invoice_id);
             return (
               <div key={f.id} className="grid items-center gap-2 md:grid-cols-[1fr_1fr_10rem]">
-                <span className="num">{inv?.number} · {inv?.issue_date}</span>
+                <span className="num">{inv?.number}، {inv?.issue_date}</span>
                 <span className="text-sm text-muted-foreground">{t.invoices.outstanding}: <span className="num">{inv ? fmt(invoiceOutstanding(inv)) : ""}</span></span>
                 <Input dir="ltr" inputMode="decimal" className="num" {...register(`allocations.${i}.amount`)} />
               </div>

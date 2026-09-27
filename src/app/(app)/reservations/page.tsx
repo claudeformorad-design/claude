@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { EntityCell } from "@/components/ui/entity";
 import { FilterTabs } from "@/components/ui/filter-tabs";
 import { Input } from "@/components/ui/input";
 import { Pager, pageSlice } from "@/components/ui/pager";
@@ -16,8 +15,8 @@ import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { todayInTimeZone } from "@/lib/accounting/fiscal";
 import { ZERO, toMoney } from "@/lib/accounting/money";
-import { RESERVATION_SOURCE, RESERVATION_STATUS } from "@/lib/pms/labels";
-import { nightsBetween, shortDate, timeOf } from "@/lib/pms/dates";
+import { RESERVATION_STATUS } from "@/lib/pms/labels";
+import { nightsBetween, nightsText, shortDate, timeRange } from "@/lib/pms/dates";
 import { listReservations, type ReservationListItem } from "@/services/pms.service";
 import { getI18n } from "@/i18n/server";
 
@@ -100,32 +99,25 @@ export default async function ReservationsPage({ searchParams }: {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>رقم الحجز</TableHead><TableHead>النزيل</TableHead><TableHead>الغرفة</TableHead><TableHead>الإقامة</TableHead>
-              <TableHead>المصدر</TableHead><TableHead>الحالة</TableHead><TableHead className="text-end">المبلغ</TableHead>
+              <TableHead>رقم الحجز</TableHead><TableHead>النزيل</TableHead><TableHead>الغرفة</TableHead><TableHead>النوع</TableHead>
+              <TableHead>الإقامة</TableHead><TableHead>المدة</TableHead><TableHead>الحالة</TableHead><TableHead className="text-end">المبلغ</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {list.length === 0 && (
-              <TableRow><TableCell colSpan={7}><EmptyState icon={CalendarDays} title={q ? "لا توجد نتائج" : "لا توجد حجوزات هنا"}
+              <TableRow><TableCell colSpan={8}><EmptyState icon={CalendarDays} title={q ? "لا توجد نتائج" : "لا توجد حجوزات هنا"}
                 description="الحجوزات الجديدة تظهر هنا مع حالتها ومبلغها المثبّت." actionHref={canManage ? "/reservations/new" : undefined} actionLabel="حجز جديد" /></TableCell></TableRow>
             )}
             {shown.rows.map((r) => (
               <TableRow key={r.id} className={r.status === "cancelled" || r.status === "no_show" ? "opacity-60" : ""}>
-                <TableCell>
-                  <Link href={`/reservations/${r.id}`} className="num font-semibold text-ink hover:underline">{r.confirmation_number}</Link>
-                  {(r.group_id || r.series_id) && <span className="mt-0.5 block text-[13.5px] text-slate-500">{r.group_id ? "ضمن مجموعة" : "حجز متكرر"}</span>}
+                <TableCell className="whitespace-nowrap"><Link href={`/reservations/${r.id}`} className="num font-semibold text-ink">{r.confirmation_number}</Link></TableCell>
+                <TableCell className="cell-fluid"><Link href={`/guests/${r.guest_id}`} className="block truncate font-medium text-ink transition-colors hover:text-action">{r.guest?.full_name}</Link></TableCell>
+                <TableCell className="whitespace-nowrap">{r.room ? <span className="num font-semibold">{r.room.room_number}</span> : <span className="text-slate-400">غير مخصصة</span>}</TableCell>
+                <TableCell className="whitespace-nowrap text-slate-600">{r.room_type?.name_ar}</TableCell>
+                <TableCell className="whitespace-nowrap">
+                  {r.booking_mode === "hourly" ? <span className="num">{shortDate(r.arrival_date)}</span> : <>من <span className="num">{shortDate(r.arrival_date)}</span> إلى <span className="num">{shortDate(r.departure_date)}</span></>}
                 </TableCell>
-                <TableCell className="cell-fluid"><EntityCell name={r.guest?.full_name ?? "—"} sub={r.guest?.phone ?? undefined} href={`/guests/${r.guest_id}`} /></TableCell>
-                <TableCell>
-                  {r.room ? <span className="num text-[17px] font-bold">{r.room.room_number}</span> : <span className="text-slate-400">غير مخصصة</span>}
-                  <span className="block text-[13.5px] text-slate-500">{r.room_type?.name_ar}</span>
-                </TableCell>
-                <TableCell className="num whitespace-nowrap">
-                  {r.booking_mode === "hourly"
-                    ? <><span title={r.arrival_date}>{shortDate(r.arrival_date)}</span><span className="block text-[13.5px] text-slate-500">{timeOf(r.starts_at)}–{timeOf(r.ends_at)}</span></>
-                    : <><span title={`${r.arrival_date} ← ${r.departure_date}`}>{shortDate(r.arrival_date)} ← {shortDate(r.departure_date)}</span><span className="block text-[13.5px] text-slate-500">{nightsBetween(r.arrival_date, r.departure_date)} ليلة</span></>}
-                </TableCell>
-                <TableCell className="text-slate-600">{RESERVATION_SOURCE[r.source]}</TableCell>
+                <TableCell className="whitespace-nowrap text-slate-600">{r.booking_mode === "hourly" ? timeRange(r.starts_at, r.ends_at) : nightsText(nightsBetween(r.arrival_date, r.departure_date))}</TableCell>
                 <TableCell><Badge variant={RESERVATION_STATUS[r.status].variant}>{RESERVATION_STATUS[r.status].label}</Badge></TableCell>
                 <TableCell className="text-end font-semibold"><Money value={r.total_amount} locale={locale} /></TableCell>
               </TableRow>

@@ -11,8 +11,8 @@ export default function GlobalError({
 }) {
   return (
     <html lang="ar" dir="rtl">
-      <body style={{ fontFamily: "system-ui, sans-serif", background: "#f7f7f5" }} className="min-h-screen flex items-center justify-center p-4">
-        <div className="max-w-md w-full rounded-[20px] bg-white p-8 shadow-sm text-center space-y-4">
+      <body style={{ background: "#f7f7f5" }} className="min-h-screen flex items-center justify-center p-4">
+        <div className="max-w-md w-full rounded-[20px] border border-line bg-white p-8 text-center space-y-4">
           <h2 className="text-xl font-bold text-slate-900">حدث خطأ عام في النظام</h2>
           <p className="text-xs text-slate-500">
             يرجى تحديث الصفحة أو المحاولة مرة أخرى.

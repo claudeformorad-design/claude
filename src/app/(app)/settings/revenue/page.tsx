@@ -31,7 +31,7 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
   const rs = t.revenueSettings;
   const name = (x: { name_ar: string; name_en: string | null }) => (locale === "en" && x.name_en) || x.name_ar;
   const accountById = new Map(accounts.map((a) => [a.id, a]));
-  const acc = (id: string) => { const a = accountById.get(id); return a ? `${a.code} — ${name(a)}` : "—"; };
+  const acc = (id: string) => { const a = accountById.get(id); return a ? `${a.code} ${name(a)}` : ""; };
   const taxById = new Map(taxes.map((x) => [x.id, x]));
 
   // تحديد النموذج المفتوح: ?new=tax أو ?edit=charge:<id>
@@ -54,7 +54,7 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
     initial = x ? { ...x, name_en: x.name_en ?? "", currency_code: x.currency_code ?? "" } : { code: "", name_ar: "", name_en: "", kind: "cash", account_id: "", currency_code: "", is_active: true };
   }
   const accountOptions = (types: string[]) =>
-    accounts.filter((a) => a.is_postable && a.is_active && types.includes(a.account_type)).map((a) => ({ id: a.id, label: `${a.code} — ${name(a)}` }));
+    accounts.filter((a) => a.is_postable && a.is_active && types.includes(a.account_type)).map((a) => ({ id: a.id, label: `${a.code} ${name(a)}` }));
 
   const section = (title: string, kind: RevenueSettingKind, head: string[], rows: React.ReactNode) => (
     <Card className="overflow-hidden">
@@ -93,7 +93,7 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
                 <TableCell>{rs.categories[x.category]}</TableCell>
                 <TableCell>{departments.find((d) => d.id === x.department_id)?.code}</TableCell>
                 <TableCell>{acc(x.revenue_account_id)}</TableCell>
-                <TableCell>{x.tax_rate_ids.map((id) => taxById.get(id)?.code).join(" + ") || "—"}{x.price_includes_tax ? ` (${t.folio.priceIncludesTax})` : ""}</TableCell>
+                <TableCell>{x.tax_rate_ids.map((id) => taxById.get(id)?.code).join(" + ") || ""}{x.price_includes_tax ? `، ${t.folio.priceIncludesTax}` : ""}</TableCell>
                 {editCell("charge", x.id)}
               </TableRow>
             )))}
@@ -116,9 +116,9 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
                 kind={formKind}
                 initial={initial}
                 accounts={accountOptions(formKind === "tax" ? ["liability"] : formKind === "charge" ? ["revenue"] : ["asset"])}
-                departments={departments.map((d) => ({ id: d.id, label: `${d.code} — ${name(d)}` }))}
-                taxes={taxes.filter((x) => x.is_active).map((x) => ({ id: x.id, label: `${x.code} (${toMoney(x.rate).toString()}%)` }))}
-                currencies={currencies.filter((c) => c.code !== ctx.hotel.base_currency).map((c) => ({ id: c.code, label: `${c.code} — ${c.name_ar}` }))}
+                departments={departments.map((d) => ({ id: d.id, label: `${d.code} ${name(d)}` }))}
+                taxes={taxes.filter((x) => x.is_active).map((x) => ({ id: x.id, label: `${x.code} ${toMoney(x.rate).toString()}%` }))}
+                currencies={currencies.filter((c) => c.code !== ctx.hotel.base_currency).map((c) => ({ id: c.code, label: `${c.code} ${c.name_ar}` }))}
               />
             </CardContent>
           </Card>
