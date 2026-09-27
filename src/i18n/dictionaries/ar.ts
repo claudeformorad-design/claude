@@ -87,6 +87,8 @@ export const ar = {
     guests: "النزلاء",
     waitlist: "قائمة الانتظار",
     cashier: "الصندوق والورديات",
+    nightAudit: "تدقيق نهاية اليوم",
+    guestRegister: "كشف النزلاء",
     currencies: "العملات وأسعار الصرف",
     groupRooms: "الغرف والأسعار",
     rooms: "الغرف وحالتها",

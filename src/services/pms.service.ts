@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseServerClient } from "@/lib/supabase/server";
 import type {
-  FloorRow, FrontDeskSummary, GuestRow, LastMinuteRuleRow, RateSeasonPriceRow, RateSeasonRow, ReservationNightRow, ReservationQuote,
+  FloorRow, FrontDeskSummary, GuestRegisterRow, GuestRow, NightAuditRow, NightAuditStatus, LastMinuteRuleRow, RateSeasonPriceRow, RateSeasonRow, ReservationNightRow, ReservationQuote,
   ReservationRow, ReservationStatus, RoomRow, RoomTypeRow, WaitlistEntryRow,
 } from "@/lib/supabase/database.types";
 import { raise } from "./errors";
@@ -161,6 +161,26 @@ export async function listLastMinuteRules(supabase: SupabaseServerClient, hotelI
     .eq("hotel_id", hotelId).order("days_before");
   raise(error);
   return (data ?? []) as unknown as LastMinuteRuleRow[];
+}
+
+// ----------------------------------------------------------------------------- تدقيق نهاية اليوم
+export async function nightAuditStatus(supabase: SupabaseServerClient, hotelId: string, date?: string | null): Promise<NightAuditStatus> {
+  const { data, error } = await supabase.rpc("night_audit_status", { p_hotel_id: hotelId, p_date: date ?? null });
+  raise(error);
+  return data as NightAuditStatus;
+}
+
+export async function listNightAudits(supabase: SupabaseServerClient, hotelId: string): Promise<NightAuditRow[]> {
+  const { data, error } = await supabase.from("night_audits").select("id, hotel_id, business_date, run_at, run_by, summary")
+    .eq("hotel_id", hotelId).order("business_date", { ascending: false }).limit(120);
+  raise(error);
+  return (data ?? []) as unknown as NightAuditRow[];
+}
+
+export async function guestRegister(supabase: SupabaseServerClient, hotelId: string, date: string): Promise<GuestRegisterRow[]> {
+  const { data, error } = await supabase.rpc("guest_register", { p_hotel_id: hotelId, p_date: date });
+  raise(error);
+  return (data ?? []) as GuestRegisterRow[];
 }
 
 /** رصيد فوليو الحجز وعربونه (الفوليو في المحاسبة) */

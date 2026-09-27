@@ -1,6 +1,6 @@
 // جولة قسم إدارة الفندق عبر الواجهة: إعداد الغرف، الحجز والتخصيص ومنع الازدواج، السعة وقائمة الانتظار،
 // الوحدات بالساعة، الحجز المتكرر والجماعي، المواسم وتثبيت الأسعار، عروض اللحظة الأخيرة، حالة الغرف،
-// العربون والتسكين والتمديد ونقل الغرفة والمغادرة بالفاتورة (الفوليو في المحاسبة)، العملات وورديات الكاشير، فصل الأقسام
+// العربون والتسكين والتمديد ونقل الغرفة والمغادرة بالفاتورة (الفوليو في المحاسبة)، العملات وورديات الكاشير، تدقيق نهاية اليوم وكشف النزلاء، فصل الأقسام
 import { chromium } from "playwright";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3100";
@@ -265,7 +265,6 @@ await step("cashier shift opens with a float", async () => {
   await page.getByRole("button", { name: "فتح الوردية" }).click();
   await bodyHas("SHF-", "إغلاق الوردية");
 });
-let fxId = "";
 await step("dollar deposit, check-out refunds the extra deposit in cash", async () => {
   await go("/rooms");
   await page.getByRole("button", { name: /^102/ }).click();
@@ -275,7 +274,7 @@ await step("dollar deposit, check-out refunds the extra deposit in cash", async 
   await pick("#room_type_id", /DBL/); await page.fill("#arrival_date", today); await page.fill("#nights", "1");
   await pick("#room_id", /102/);
   await submitReservation(); await page.waitForURL(/reservations\/[0-9a-f-]{36}$/);
-  fxId = page.url().split("/").pop();
+
   await pick("#dep_method", /USD/); await page.fill("#dep_amount", "1");
   await page.locator("text=≈ 530.00").first().waitFor();
   await page.getByRole("button", { name: "تسجيل", exact: true }).click();
@@ -303,6 +302,19 @@ await step("closing the shift with a cash shortage posts the difference", async 
   await page.getByRole("button", { name: /إغلاق الوردية وتسليم الصندوق/ }).click();
   await page.waitForURL(/cashier\/[0-9a-f-]{36}$/);
   await bodyHas("مغلقة", "عجز", "5.00");
+});
+await step("night audit posts tonight, marks no-shows and saves the manager report", async () => {
+  await go("/night-audit");
+  await bodyHas("جاهز للتدقيق");
+  await page.getByRole("button", { name: "تشغيل تدقيق نهاية اليوم" }).click();
+  await page.waitForURL(new RegExp(`night-audit/${today}$`), { timeout: 60000 });
+  await bodyHas("تقرير المدير اليومي", "مدقق", "الإيرادات حسب الفئة", "غرف");
+  await go("/night-audit"); await bodyHas("دُقّق اليوم", today);
+  if (await page.getByRole("button", { name: "تشغيل تدقيق نهاية اليوم" }).count()) throw new Error("audit can run twice");
+});
+await step("guest register lists tonight's in-house guests", async () => {
+  await go(`/guest-register?date=${today}`);
+  await bodyHas("كشف النزلاء", "نزيل سريع", "103");
 });
 await step("modules: disabling hotel management hides it and blocks its pages", async () => {
   await go("/settings/hotel");

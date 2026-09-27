@@ -1,7 +1,7 @@
 import {
   BarChart3, Banknote, BedDouble, BookOpen, Boxes, Building2, CalendarCheck, CalendarDays, CalendarRange, Clock, ConciergeBell, DoorOpen,
   FileSpreadsheet, FileText, History, Hourglass, Landmark, LayoutDashboard, ListChecks, ListTree, Percent, PieChart, Receipt, Scale,
-  Coins, Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
+  ClipboardList, Coins, MoonStar, Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
 } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import type { HotelModule } from "@/lib/supabase/database.types";
@@ -41,6 +41,8 @@ function allGroups(l: NavLabels): NavGroup[] {
         { href: "/guests", label: l.guests, icon: UserRound, permission: "pms.reservations.view" },
         { href: "/waitlist", label: l.waitlist, icon: Hourglass, permission: "pms.reservations.view" },
         { href: "/cashier", label: l.cashier, icon: Banknote, permission: "cashier.shifts" },
+        { href: "/night-audit", label: l.nightAudit, icon: MoonStar, permission: "pms.reports.view" },
+        { href: "/guest-register", label: l.guestRegister, icon: ClipboardList, permission: "pms.reports.view" },
       ],
     },
     {

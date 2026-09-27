@@ -134,6 +134,10 @@ const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
   [/Open a cashier shift before receiving or paying cash/i, "افتح وردية كاشير قبل قبض أو صرف النقد"],
   [/Invalid billing option/i, "خيار فوترة غير صالح"],
   [/Cashier shift not found/i, "الوردية غير موجودة"],
+  // تدقيق نهاية اليوم
+  [/The night audit cannot run for a future date/i, "لا يُشغَّل التدقيق لتاريخ مستقبلي"],
+  [/The night audit for (\S+) has already run/i, (m) => `تم تدقيق يوم ${m[1]} بالفعل`],
+  [/A later day has already been audited/i, "دُقّق يوم لاحق بالفعل"],
   [/Only active reservations can be changed/i, "يمكن تعديل الحجوزات النشطة فقط"],
   [/Link the reservation to a company before billing it/i, "اربط الحجز بشركة أولًا لتحويل الفاتورة عليها"],
   [/No active credit \(city ledger\) payment method/i, "لا توجد طريقة دفع آجل مفعّلة"],

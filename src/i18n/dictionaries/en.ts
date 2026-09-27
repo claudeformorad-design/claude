@@ -88,6 +88,8 @@ export const en: Dictionary = {
     guests: "Guests",
     waitlist: "Waitlist",
     cashier: "Cashier shifts",
+    nightAudit: "Night audit",
+    guestRegister: "Guest register",
     currencies: "Currencies & rates",
     groupRooms: "Rooms & rates",
     rooms: "Rooms & status",

@@ -295,6 +295,20 @@ export async function cancelSeriesAction(seriesId: string, reason: string, fromD
 // ----------------------------------------------------------------------------- التسكين والمغادرة
 const moneyInput = z.string().trim().refine((v) => isValidAmount(v) && toMoney(v).gt(0), "invalid_amount").transform((v) => toMoney(v).toFixed());
 
+/** تدقيق نهاية اليوم: ترحيل الليالي وعدم الحضور ولقطة تقرير المدير — الناتج تاريخ اليوم المدقق */
+export async function runNightAuditAction(date?: string | null): Promise<ActionResult<string>> {
+  const ctx = await requireAppContext(PERMISSIONS.pmsNightAudit);
+  const d = z.iso.date().nullish().safeParse(date);
+  if (!d.success) return fail;
+  const r = await toActionResult(async () => {
+    const { data, error } = await ctx.supabase.rpc("run_night_audit", { p_hotel_id: ctx.hotel.id, p_date: d.data ?? null });
+    raise(error);
+    return data!.date;
+  });
+  if (r.ok) refreshPms("/night-audit", "/guest-register");
+  return r;
+}
+
 /** عملة طريقة الدفع (null = العملة الأساسية) — المبلغ المُدخل يكون بعملتها */
 async function methodCurrency(ctx: Awaited<ReturnType<typeof requireAppContext>>, methodId: string) {
   const { data } = await ctx.supabase.from("payment_methods").select("currency_code").eq("hotel_id", ctx.hotel.id).eq("id", methodId).maybeSingle();

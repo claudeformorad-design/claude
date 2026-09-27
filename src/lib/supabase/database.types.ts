@@ -415,6 +415,32 @@ export type CheckOutSummary = { folio_id: string; balance: number; deposits: num
 
 export type ExchangeRateRow = { id: string; hotel_id: string; currency_code: string; rate_date: string; rate: string; created_at: string; created_by: string | null };
 
+export type DayStats = {
+  date: string; capacity: number; occupied: number; complimentary: number; vacant: number; out_of_service: number; guests: number;
+  occupancy_pct: number; room_revenue: number; adr: number; revpar: number; arrivals: number; departures: number; no_shows: number;
+  cancellations: number; new_bookings: number; hourly_sessions: number;
+  revenue_by_category: { category: string; net: number; tax: number }[];
+  collections: { method: string; kind: string; amount: number }[];
+  guest_ledger: number; deposits_held: number; forecast: { date: string; sold: number }[];
+};
+export type AuditSummary = DayStats & {
+  nights_posted: number; no_shows_marked: number; open_shifts: number;
+  overstays: { id: string; confirmation_number: string; guest: string; departure_date: string }[];
+  no_show_list: { id: string; confirmation_number: string; guest: string; arrival_date: string }[];
+};
+export type NightAuditStatus = {
+  date: string; today: string; done: boolean; last_audit: string | null; unposted_nights: number; unposted_amount: number;
+  pending_no_shows: { id: string; confirmation_number: string; guest: string; arrival_date: string; status: string }[];
+  overstays: { id: string; confirmation_number: string; guest: string; departure_date: string }[];
+  open_shifts: number; stats: DayStats;
+};
+export type NightAuditRow = { id: string; hotel_id: string; business_date: string; run_at: string; run_by: string | null; summary: AuditSummary };
+export type GuestRegisterRow = {
+  reservation_id: string; confirmation_number: string; room_number: string | null; full_name: string; nationality: string | null;
+  id_type: GuestIdType | null; id_number: string | null; date_of_birth: string | null; phone: string | null; adults: number; children: number;
+  arrival_date: string; departure_date: string; checked_in_at: string | null; company: string | null;
+};
+
 export type CashierShiftRow = {
   id: string; hotel_id: string; shift_number: string; user_id: string; business_date: string; opened_at: string;
   opening_float: string; float_method_id: string | null; status: "open" | "closed"; closed_at: string | null;
@@ -508,6 +534,7 @@ export type Database = {
       last_minute_rules: Table<LastMinuteRuleRow, "hotel_id" | "name" | "days_before" | "discount_pct">;
       reservations: ReadOnlyTable<ReservationRow>;
       cashier_shifts: ReadOnlyTable<CashierShiftRow>;
+      night_audits: ReadOnlyTable<NightAuditRow>;
       reservation_nights: ReadOnlyTable<ReservationNightRow>;
       reservation_groups: ReadOnlyTable<ReservationGroupRow>;
       reservation_series: ReadOnlyTable<ReservationSeriesRow>;
@@ -616,6 +643,9 @@ export type Database = {
       check_in_reservation: { Args: { p_reservation_id: string; p_room_id?: string | null }; Returns: string };
       post_reservation_charges: { Args: { p_reservation_id: string; p_through?: string | null }; Returns: number };
       prepare_check_out: { Args: { p_reservation_id: string }; Returns: CheckOutSummary };
+      night_audit_status: { Args: { p_hotel_id: string; p_date?: string | null }; Returns: NightAuditStatus };
+      run_night_audit: { Args: { p_hotel_id: string; p_date?: string | null }; Returns: AuditSummary };
+      guest_register: { Args: { p_hotel_id: string; p_date?: string | null }; Returns: GuestRegisterRow[] };
       set_reservation_billing: { Args: { p_reservation_id: string; p_bill_to: BillTo }; Returns: undefined };
       set_exchange_rate: { Args: { p_hotel_id: string; p_currency_code: string; p_rate: string; p_rate_date?: string | null }; Returns: undefined };
       post_folio_foreign_money: { Args: { p_folio_id: string; p_txn_type: "payment" | "deposit" | "refund" | "deposit_refund"; p_payment_method_id: string; p_foreign_amount: string; p_reference?: string | null }; Returns: string };

@@ -58,6 +58,8 @@ export const PERMISSIONS = {
   pmsRatesManage: "pms.rates.manage",
   pmsRatesOverride: "pms.rates.override",
   pmsRoomStatus: "pms.rooms.status",
+  pmsNightAudit: "pms.night_audit",
+  pmsReports: "pms.reports.view",
   pmsSetup: "pms.setup.manage",
 } as const;
 
