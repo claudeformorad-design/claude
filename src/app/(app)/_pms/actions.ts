@@ -8,7 +8,7 @@ import {
   bulkRoomsSchema, floorSchema, guestSchema, lastMinuteSchema, quoteSchema, reservationSchema, reservationUpdateSchema,
   roomSchema, roomStatusSchema, roomTypeSchema, seasonSchema, waitlistSchema,
 } from "@/lib/validation/pms";
-import type { ReservationQuote } from "@/lib/supabase/database.types";
+import type { CheckOutSummary, ReservationQuote } from "@/lib/supabase/database.types";
 import { isValidAmount, toMoney } from "@/lib/accounting/money";
 import { quoteReservation } from "@/services/pms.service";
 import { raise, type ActionResult, toActionResult } from "@/services/errors";
@@ -295,12 +295,54 @@ export async function cancelSeriesAction(seriesId: string, reason: string, fromD
 // ----------------------------------------------------------------------------- التسكين والمغادرة
 const moneyInput = z.string().trim().refine((v) => isValidAmount(v) && toMoney(v).gt(0), "invalid_amount").transform((v) => toMoney(v).toFixed());
 
+/** عملة طريقة الدفع (null = العملة الأساسية) — المبلغ المُدخل يكون بعملتها */
+async function methodCurrency(ctx: Awaited<ReturnType<typeof requireAppContext>>, methodId: string) {
+  const { data } = await ctx.supabase.from("payment_methods").select("currency_code").eq("hotel_id", ctx.hotel.id).eq("id", methodId).maybeSingle();
+  return (data as { currency_code: string | null } | null)?.currency_code ?? null;
+}
+
 export async function recordDepositAction(reservationId: string, input: unknown): Promise<ActionResult<undefined>> {
   const p = z.object({ method: z.uuid(), amount: moneyInput, reference: z.string().trim().max(100).optional() }).safeParse(input);
   if (!p.success) return fail;
-  return reservationOp(PERMISSIONS.pmsManage, reservationId, (ctx) => ctx.supabase.rpc("record_reservation_deposit", {
-    p_reservation_id: reservationId, p_payment_method_id: p.data.method, p_amount: p.data.amount, p_reference: p.data.reference || null,
-  }));
+  return reservationOp(PERMISSIONS.pmsManage, reservationId, async (ctx) => (await methodCurrency(ctx, p.data.method))
+    ? ctx.supabase.rpc("record_reservation_deposit_fx", {
+        p_reservation_id: reservationId, p_payment_method_id: p.data.method, p_foreign_amount: p.data.amount, p_reference: p.data.reference || null,
+      })
+    : ctx.supabase.rpc("record_reservation_deposit", {
+        p_reservation_id: reservationId, p_payment_method_id: p.data.method, p_amount: p.data.amount, p_reference: p.data.reference || null,
+      }));
+}
+
+export async function setBillingAction(reservationId: string, billTo: string) {
+  const b = z.enum(["guest", "company_room", "company_all"]).safeParse(billTo);
+  if (!b.success) return fail;
+  return reservationOp(PERMISSIONS.pmsManage, reservationId, (ctx) =>
+    ctx.supabase.rpc("set_reservation_billing", { p_reservation_id: reservationId, p_bill_to: b.data }));
+}
+
+/** دفعة على فوليو الحجز أثناء المغادرة (تُستخدم للعملات الأجنبية والدفع المجزأ) — الناتج ملخص المغادرة بعدها */
+export async function payStayAction(reservationId: string, input: unknown): Promise<ActionResult<CheckOutSummary>> {
+  const ctx = await requireAppContext(PERMISSIONS.pmsManage);
+  const p = z.object({ method: z.uuid(), amount: moneyInput, kind: z.enum(["payment", "refund", "deposit_refund"]).default("payment") }).safeParse(input);
+  if (!p.success || !id.safeParse(reservationId).success) return fail;
+  const r = await toActionResult(async () => {
+    const prep = await ctx.supabase.rpc("prepare_check_out", { p_reservation_id: reservationId });
+    raise(prep.error);
+    const folio = prep.data!.folio_id;
+    const pay = (await methodCurrency(ctx, p.data.method))
+      ? await ctx.supabase.rpc("post_folio_foreign_money", { p_folio_id: folio, p_txn_type: p.data.kind, p_payment_method_id: p.data.method, p_foreign_amount: p.data.amount })
+      : p.data.kind === "refund"
+        ? await ctx.supabase.rpc("post_folio_refund", { p_folio_id: folio, p_payment_method_id: p.data.method, p_amount: p.data.amount, p_description: "إرجاع الباقي للنزيل" })
+        : p.data.kind === "deposit_refund"
+          ? await ctx.supabase.rpc("refund_folio_deposit", { p_folio_id: folio, p_payment_method_id: p.data.method, p_amount: p.data.amount, p_description: "استرداد باقي العربون" })
+          : await ctx.supabase.rpc("post_folio_payment", { p_folio_id: folio, p_payment_method_id: p.data.method, p_amount: p.data.amount, p_description: "تحصيل عند المغادرة" });
+    raise(pay.error);
+    const next = await ctx.supabase.rpc("prepare_check_out", { p_reservation_id: reservationId });
+    raise(next.error);
+    return next.data!;
+  });
+  if (r.ok) refreshPms(`/reservations/${reservationId}`, "/cashier");
+  return r;
 }
 
 export async function checkInAction(reservationId: string, roomId?: string | null) {
@@ -323,7 +365,7 @@ export async function changeDepartureAction(reservationId: string, departure: st
 }
 
 /** تجهيز المغادرة: تقصير الإقامة إن كانت مبكرة وترحيل كل الليالي، ثم الرصيد المستحق */
-export async function prepareCheckOutAction(reservationId: string): Promise<ActionResult<{ folio_id: string; balance: number; deposits: number; due: number }>> {
+export async function prepareCheckOutAction(reservationId: string): Promise<ActionResult<CheckOutSummary>> {
   const ctx = await requireAppContext(PERMISSIONS.pmsManage);
   if (!id.safeParse(reservationId).success) return fail;
   const r = await toActionResult(async () => {
@@ -346,10 +388,14 @@ export async function settleAndCheckOutAction(reservationId: string, input: unkn
     const amount = p.data.amount && isValidAmount(p.data.amount) ? toMoney(p.data.amount) : null;
     if (amount && amount.gt(0)) {
       if (!p.data.method) raise({ message: "Select a payment method" });
-      const pay = await ctx.supabase.rpc("post_folio_payment", {
-        p_folio_id: prep.data!.folio_id, p_payment_method_id: p.data.method!, p_amount: amount.toFixed(),
-        p_description: "تحصيل عند المغادرة", p_customer_id: p.data.customer_id || null,
-      });
+      const pay = (await methodCurrency(ctx, p.data.method!))
+        ? await ctx.supabase.rpc("post_folio_foreign_money", {
+            p_folio_id: prep.data!.folio_id, p_txn_type: "payment", p_payment_method_id: p.data.method!, p_foreign_amount: amount.toFixed(),
+          })
+        : await ctx.supabase.rpc("post_folio_payment", {
+            p_folio_id: prep.data!.folio_id, p_payment_method_id: p.data.method!, p_amount: amount.toFixed(),
+            p_description: "تحصيل عند المغادرة", p_customer_id: p.data.customer_id || null,
+          });
       raise(pay.error);
     }
     const { data, error } = await ctx.supabase.rpc("check_out_reservation", { p_reservation_id: reservationId });

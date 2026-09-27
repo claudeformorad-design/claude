@@ -7,7 +7,7 @@ import { Money } from "@/components/money";
 const SOURCE_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
   manual: FilePen, opening: Flag, reversal: Undo2, closing: Lock, adjustment: Scale, folio: BedDouble, invoice: FileText,
   payment: Receipt, vendor_bill: FileSpreadsheet, expense: Wallet, payroll: UserCog, depreciation: Building2,
-  inventory: Boxes, petty_cash: Wallet,
+  inventory: Boxes, petty_cash: Wallet, cashier_shift: Wallet,
 };
 
 export type RecentEntry = { id: string; entry_number: string | null; entry_date: string; description: string; source: string; total: string };

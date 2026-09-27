@@ -18,7 +18,7 @@ const TABLE_AR: Record<string, string> = {
   fiscal_years: "السنوات المالية", guest_folios: "الفوليو", folio_transactions: "حركات الفوليو", invoices: "الفواتير", payments: "السندات",
   customers: "العملاء", vendors: "الموردون", vendor_bills: "فواتير الموردين", purchase_orders: "أوامر الشراء", payroll_runs: "الرواتب",
   fixed_assets: "الأصول الثابتة", inventory_items: "أصناف المخزون", inventory_movements: "حركات المخزون", hotels: "بيانات الفندق",
-  departments: "الأقسام", charge_codes: "رموز الإيراد", tax_rates: "الضرائب", payment_methods: "طرق الدفع", hotel_members: "المستخدمون",
+  departments: "الأقسام", charge_codes: "رموز الإيراد", tax_rates: "الضرائب", payment_methods: "طرق الدفع", hotel_members: "المستخدمون", cashier_shifts: "ورديات الكاشير",
   user_hotel_roles: "أدوار المستخدمين", roles: "الأدوار", bank_statement_lines: "كشوف البنك",
 };
 

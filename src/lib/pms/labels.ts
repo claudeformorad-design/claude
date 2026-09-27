@@ -22,6 +22,8 @@ export const PRICING_LABEL: Record<ReservationPricing, string> = {
   standard: "حسب الأسعار والمواسم", fixed: "سعر يدوي لليلة", monthly: "سعر شهري (إقامة طويلة)",
 };
 
+export const BILL_TO = { guest: "على النزيل", company_room: "الإقامة على الشركة والإضافات على النزيل", company_all: "كل الفاتورة على الشركة" } as const;
+
 export const BOOKING_MODE: Record<BookingMode, string> = { nightly: "ليلي", hourly: "بالساعة" };
 
 export const HOUSEKEEPING: Record<HousekeepingStatus, { label: string; variant: "success" | "warning" | "info" }> = {

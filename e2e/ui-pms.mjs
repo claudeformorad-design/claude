@@ -1,6 +1,6 @@
 // جولة قسم إدارة الفندق عبر الواجهة: إعداد الغرف، الحجز والتخصيص ومنع الازدواج، السعة وقائمة الانتظار،
 // الوحدات بالساعة، الحجز المتكرر والجماعي، المواسم وتثبيت الأسعار، عروض اللحظة الأخيرة، حالة الغرف،
-// العربون والتسكين والتمديد ونقل الغرفة والمغادرة بالفاتورة (الفوليو في المحاسبة)، فصل الأقسام
+// العربون والتسكين والتمديد ونقل الغرفة والمغادرة بالفاتورة (الفوليو في المحاسبة)، العملات وورديات الكاشير، فصل الأقسام
 import { chromium } from "playwright";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3100";
@@ -247,6 +247,62 @@ await step("front desk quick check-in and in-house list", async () => {
   await page.waitForTimeout(1500); await go("/front-desk");
   await bodyHas("المقيمون الآن", "نزيل سريع");
   if (!/المقيمون الآن[\s\S]*نزيل سريع/.test(await page.locator("main").innerText())) throw new Error("guest not in the in-house list");
+});
+await step("exchange rate and a US-dollar cash method", async () => {
+  await go("/settings/currencies");
+  await page.selectOption("#currency", "USD"); await page.fill("#rate", "530");
+  await page.getByRole("button", { name: "حفظ السعر" }).click();
+  await bodyHas("530");
+  await go("/settings/revenue?new=method");
+  await page.fill("#code", "USD"); await page.fill("#name_ar", "نقدًا دولار");
+  await page.selectOption("#kind", "cash"); await pick("#account_id", /الصندوق الرئيسي/); await page.selectOption("#currency_code", "USD");
+  await page.getByRole("button", { name: /حفظ/ }).first().click();
+  await page.waitForURL(/settings\/revenue$/); await bodyHas("نقدًا دولار", "USD");
+});
+await step("cashier shift opens with a float", async () => {
+  await go("/cashier");
+  await page.fill("#opening_float", "1000");
+  await page.getByRole("button", { name: "فتح الوردية" }).click();
+  await bodyHas("SHF-", "إغلاق الوردية");
+});
+let fxId = "";
+await step("dollar deposit, check-out refunds the extra deposit in cash", async () => {
+  await go("/rooms");
+  await page.getByRole("button", { name: /^102/ }).click();
+  await page.getByRole("button", { name: "نظيفة", exact: true }).click();
+  await page.waitForTimeout(1200);
+  await go("/reservations/new"); await newGuest("نزيل الدولار");
+  await pick("#room_type_id", /DBL/); await page.fill("#arrival_date", today); await page.fill("#nights", "1");
+  await pick("#room_id", /102/);
+  await submitReservation(); await page.waitForURL(/reservations\/[0-9a-f-]{36}$/);
+  fxId = page.url().split("/").pop();
+  await pick("#dep_method", /USD/); await page.fill("#dep_amount", "1");
+  await page.locator("text=≈ 530.00").first().waitFor();
+  await page.getByRole("button", { name: "تسجيل", exact: true }).click();
+  await bodyHas("530.00");
+  await page.getByRole("button", { name: "تسكين" }).click();
+  await bodyHas("مقيم", "تسجيل المغادرة");
+  await page.getByRole("button", { name: "تجهيز الفاتورة" }).click();
+  await bodyHas("عربون زائد عن الرصيد");
+  await page.getByRole("button", { name: "إرجاعه نقدًا" }).click();
+  await page.locator("text=عربون زائد عن الرصيد").waitFor({ state: "detached" });
+  await page.getByRole("button", { name: "تسجيل المغادرة وإصدار الفاتورة" }).click();
+  await page.waitForURL(/invoices\/[0-9a-f-]{36}$/, { timeout: 30000 });
+  await bodyHas("نزيل الدولار");
+});
+await step("closing the shift with a cash shortage posts the difference", async () => {
+  await go("/cashier");
+  await bodyHas("نقدًا دولار", "نزيل الدولار");
+  const cash = page.locator("input[id^='count_']").first();
+  const usd = page.locator("input[id^='count_']").nth(1);
+  const expCash = Number((await cash.getAttribute("placeholder")).replace(/[^\d.]/g, ""));
+  const expUsd = Number((await usd.getAttribute("placeholder")).replace(/[^\d.]/g, ""));
+  if (expUsd !== 1) throw new Error(`usd expected ${expUsd}`);
+  await cash.fill(String(expCash - 5)); await usd.fill("1");
+  await page.locator("text=عجز 5.00").first().waitFor();
+  await page.getByRole("button", { name: /إغلاق الوردية وتسليم الصندوق/ }).click();
+  await page.waitForURL(/cashier\/[0-9a-f-]{36}$/);
+  await bodyHas("مغلقة", "عجز", "5.00");
 });
 await step("modules: disabling hotel management hides it and blocks its pages", async () => {
   await go("/settings/hotel");

@@ -10,6 +10,7 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import { toMoney } from "@/lib/accounting/money";
 import { listAccounts, listDepartments } from "@/services/accounts.service";
 import { listChargeCodes, listPaymentMethods, listTaxRates } from "@/services/revenue-settings.service";
+import { listCurrencies } from "@/services/cashier.service";
 import { getI18n } from "@/i18n/server";
 import type { RevenueSettingKind } from "./actions";
 import { RevenueSettingForm } from "./settings-form";
@@ -18,12 +19,13 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
   const ctx = await requireAppContext(PERMISSIONS.accountsView);
   const { locale, t } = await getI18n();
   const sp = await searchParams;
-  const [taxes, codes, methods, accounts, departments] = await Promise.all([
+  const [taxes, codes, methods, accounts, departments, currencies] = await Promise.all([
     listTaxRates(ctx.supabase, ctx.hotel.id),
     listChargeCodes(ctx.supabase, ctx.hotel.id),
     listPaymentMethods(ctx.supabase, ctx.hotel.id),
     listAccounts(ctx.supabase, ctx.hotel.id),
     listDepartments(ctx.supabase, ctx.hotel.id),
+    listCurrencies(ctx.supabase),
   ]);
   const canManage = ctx.can(PERMISSIONS.revenueSettingsManage);
   const rs = t.revenueSettings;
@@ -49,7 +51,7 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
   } else if (canManage && (sp.new === "method" || editKind === "method")) {
     formKind = "method";
     const x = methods.find((v) => v.id === editId);
-    initial = x ? { ...x, name_en: x.name_en ?? "" } : { code: "", name_ar: "", name_en: "", kind: "cash", account_id: "", is_active: true };
+    initial = x ? { ...x, name_en: x.name_en ?? "", currency_code: x.currency_code ?? "" } : { code: "", name_ar: "", name_en: "", kind: "cash", account_id: "", currency_code: "", is_active: true };
   }
   const accountOptions = (types: string[]) =>
     accounts.filter((a) => a.is_postable && a.is_active && types.includes(a.account_type)).map((a) => ({ id: a.id, label: `${a.code} — ${name(a)}` }));
@@ -98,7 +100,7 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
           {section(rs.paymentMethods, "method", [t.customers.code, t.customers.name, rs.kind, rs.account, t.common.status],
             methods.map((x) => (
               <TableRow key={x.id}>
-                <TableCell className="num">{x.code}</TableCell><TableCell>{name(x)}</TableCell>
+                <TableCell className="num">{x.code}</TableCell><TableCell>{name(x)}{x.currency_code && <span className="num ms-2 rounded bg-subtle px-1.5 text-[13px] text-slate-600">{x.currency_code}</span>}</TableCell>
                 <TableCell>{rs.methodKinds[x.kind]}</TableCell><TableCell>{acc(x.account_id)}</TableCell>
                 <TableCell>{active(x.is_active)}</TableCell>{editCell("method", x.id)}
               </TableRow>
@@ -116,6 +118,7 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
                 accounts={accountOptions(formKind === "tax" ? ["liability"] : formKind === "charge" ? ["revenue"] : ["asset"])}
                 departments={departments.map((d) => ({ id: d.id, label: `${d.code} — ${name(d)}` }))}
                 taxes={taxes.filter((x) => x.is_active).map((x) => ({ id: x.id, label: `${x.code} (${toMoney(x.rate).toString()}%)` }))}
+                currencies={currencies.filter((c) => c.code !== ctx.hotel.base_currency).map((c) => ({ id: c.code, label: `${c.code} — ${c.name_ar}` }))}
               />
             </CardContent>
           </Card>

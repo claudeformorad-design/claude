@@ -33,7 +33,7 @@ export default async function NewVoucherPage({ searchParams }: { searchParams: P
           locale={locale}
           type={type}
           today={todayInTimeZone(ctx.hotel.timezone)}
-          methods={methods.filter((m) => m.is_active && m.kind !== "city_ledger").map((m) => ({ id: m.id, label: name(m) }))}
+          methods={methods.filter((m) => m.is_active && m.kind !== "city_ledger" && !m.currency_code).map((m) => ({ id: m.id, label: name(m) }))}
           customers={(customers.data ?? []).map((c) => ({ id: c.id, label: `${c.code} — ${name(c)}` }))}
           accounts={accounts.filter((a) => a.is_postable && a.is_active && !CONTROL_KEYS.has(a.system_key ?? "")).map((a) => ({ id: a.id, label: `${a.code} — ${name(a)}` }))}
           departments={departments.filter((d) => d.is_active).map((d) => ({ id: d.id, label: `${d.code} — ${name(d)}` }))}

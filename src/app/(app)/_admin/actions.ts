@@ -43,6 +43,7 @@ export async function saveHotelOperationsAction(input: unknown): Promise<ActionR
     check_in_time: time,
     check_out_time: time,
     weekend_nights: z.array(z.coerce.number().int().min(0).max(6)).max(7),
+    require_cashier_shift: z.boolean().optional(),
   }).safeParse(input);
   if (!p.success) return fail;
   const r = await toActionResult(async () => {
@@ -51,6 +52,7 @@ export async function saveHotelOperationsAction(input: unknown): Promise<ActionR
     const { error } = await ctx.supabase.from("hotels").update({
       check_in_time: p.data.check_in_time, check_out_time: p.data.check_out_time,
       weekend_nights: [...new Set(p.data.weekend_nights)].sort(),
+      ...(p.data.require_cashier_shift === undefined ? {} : { require_cashier_shift: p.data.require_cashier_shift }),
     }).eq("id", ctx.hotel.id);
     raise(error);
     return undefined;

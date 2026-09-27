@@ -52,6 +52,8 @@ export const paymentMethodFormSchema = z.object({
   name_en: optionalText(200),
   kind: z.enum(["cash", "card", "bank_transfer", "cheque", "e_wallet", "city_ledger"]),
   account_id: z.uuid(),
+  // عملة أجنبية للطريقة (فارغ = العملة الأساسية)
+  currency_code: z.string().trim().toUpperCase().optional().nullable().transform((v) => (v && /^[A-Z]{3}$/.test(v) ? v : null)),
   is_active: z.boolean(),
 });
 export type PaymentMethodFormValues = z.output<typeof paymentMethodFormSchema>;

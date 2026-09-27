@@ -25,7 +25,7 @@ const NIGHTS: [number, string][] = [[6, "السبت"], [0, "الأحد"], [1, "�
  * إيقاف قسم يخفي صفحاته ويمنع عملياته في قاعدة البيانات، دون حذف أي بيانات.
  */
 export function OperationsCard({ initial, errors }: {
-  initial: { modules: HotelModule[]; check_in_time: string; check_out_time: string; weekend_nights: number[] };
+  initial: { modules: HotelModule[]; check_in_time: string; check_out_time: string; weekend_nights: number[]; require_cashier_shift: boolean };
   errors: Record<string, string>;
 }) {
   const router = useRouter();
@@ -35,13 +35,14 @@ export function OperationsCard({ initial, errors }: {
   const [checkIn, setCheckIn] = useState(initial.check_in_time.slice(0, 5));
   const [checkOut, setCheckOut] = useState(initial.check_out_time.slice(0, 5));
   const [weekend, setWeekend] = useState<number[]>(initial.weekend_nights);
+  const [requireShift, setRequireShift] = useState(initial.require_cashier_shift);
 
   const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
   const save = () =>
     start(async () => {
       setError(null);
       if (modules.length === 0) { setError("فعّل قسمًا واحدًا على الأقل"); return; }
-      const r = await saveHotelOperationsAction({ modules, check_in_time: checkIn, check_out_time: checkOut, weekend_nights: weekend });
+      const r = await saveHotelOperationsAction({ modules, check_in_time: checkIn, check_out_time: checkOut, weekend_nights: weekend, require_cashier_shift: requireShift });
       if (r.ok) { toast("تم حفظ إعدادات التشغيل"); router.refresh(); }
       else setError(actionErrorText(errors, r));
     });
@@ -94,6 +95,11 @@ export function OperationsCard({ initial, errors }: {
             })}
           </div>
         </div>
+        <label className="flex items-start gap-3 rounded-lg border border-line p-3 text-[16px]">
+          <input type="checkbox" className="mt-1 size-4" checked={requireShift} onChange={(e) => setRequireShift(e.target.checked)} />
+          <span><span className="font-medium text-ink">إلزام وردية الكاشير للنقد</span>
+            <span className="block text-[14.5px] text-slate-500">لا يُقبض نقد ولا يُصرف على الفوليوهات إلا بوردية مفتوحة للموظف</span></span>
+        </label>
         <Button type="button" onClick={save} loading={pending}>حفظ</Button>
       </CardContent>
     </Card>

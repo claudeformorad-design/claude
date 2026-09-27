@@ -12,7 +12,7 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type JournalStatus = "draft" | "posted";
 export type JournalSource =
   | "manual" | "opening" | "reversal" | "closing" | "adjustment" | "folio" | "invoice"
-  | "payment" | "vendor_bill" | "expense" | "payroll" | "depreciation" | "inventory" | "petty_cash";
+  | "payment" | "vendor_bill" | "expense" | "payroll" | "depreciation" | "inventory" | "petty_cash" | "cashier_shift";
 export type PeriodStatus = "open" | "closed";
 export type DepartmentKind = "revenue_center" | "cost_center" | "service_center";
 
@@ -43,6 +43,7 @@ export type HotelRow = Audit & {
   timezone: string;
   default_locale: "ar" | "en";
   total_rooms: number | null;
+  require_cashier_shift: boolean;
   address: string | null;
   phone: string | null;
   email: string | null;
@@ -237,7 +238,7 @@ export type ChargeCodeTaxRow = { hotel_id: string; charge_code_id: string; tax_r
 
 export type PaymentMethodRow = Audit & {
   id: string; hotel_id: string; code: string; name_ar: string; name_en: string | null;
-  kind: PaymentMethodKind; account_id: string; is_active: boolean;
+  kind: PaymentMethodKind; account_id: string; is_active: boolean; currency_code: string | null;
 };
 
 export type CustomerRow = Audit & {
@@ -262,6 +263,7 @@ export type FolioTransactionRow = {
   quantity: string; unit_price: string | null; net_amount: string; tax_amount: string; total_amount: string;
   ledger_effect: string; deposit_effect: string; related_transaction_id: string | null;
   counter_folio_id: string | null; voided_by_id: string | null; journal_entry_id: string | null;
+  currency_code: string | null; foreign_amount: string | null; exchange_rate: string | null; cashier_shift_id: string | null;
   created_at: string; created_by: string | null;
 };
 
@@ -402,13 +404,35 @@ export type ReservationRow = Audit & {
   last_minute_pct: string | null; total_amount: string; group_id: string | null; series_id: string | null;
   tentative_until: string | null; special_requests: string | null; notes: string | null;
   cancelled_at: string | null; cancelled_by: string | null; cancellation_reason: string | null; folio_id: string | null;
-  checked_in_at: string | null; checked_out_at: string | null;
+  checked_in_at: string | null; checked_out_at: string | null; bill_to: BillTo;
 };
 export type ReservationNightRow = {
   reservation_id: string; hotel_id: string; stay_date: string; quantity: string; rate: string; discount: string; amount: string; season_id: string | null;
   folio_transaction_id: string | null;
 };
-export type CheckOutSummary = { folio_id: string; balance: number; deposits: number; due: number };
+export type BillTo = "guest" | "company_room" | "company_all";
+export type CheckOutSummary = { folio_id: string; balance: number; deposits: number; due: number; company_due: number; bill_to: BillTo };
+
+export type ExchangeRateRow = { id: string; hotel_id: string; currency_code: string; rate_date: string; rate: string; created_at: string; created_by: string | null };
+
+export type CashierShiftRow = {
+  id: string; hotel_id: string; shift_number: string; user_id: string; business_date: string; opened_at: string;
+  opening_float: string; float_method_id: string | null; status: "open" | "closed"; closed_at: string | null;
+  closed_by: string | null; closing_note: string | null; over_short_entry_id: string | null;
+};
+export type ShiftMethodLine = {
+  payment_method_id: string; code: string; name: string; kind: PaymentMethodKind; currency_code: string; foreign: boolean;
+  float: number; receipts: number; payouts: number; expected: number; base_total: number; count: number;
+  counted: number | null; difference: number | null; difference_base: number | null;
+};
+export type ShiftReport = {
+  shift: { id: string; shift_number: string; status: "open" | "closed"; business_date: string; opened_at: string; closed_at: string | null;
+    opening_float: number; closing_note: string | null; user_id: string; is_mine: boolean; user_name: string; over_short_entry_id: string | null };
+  methods: ShiftMethodLine[];
+  transactions: { id: string; created_at: string; txn_type: FolioTxnType; direction: 1 | -1; method: string; amount: number;
+    foreign_amount: number | null; currency_code: string | null; folio_id: string; folio_number: string; guest_name: string;
+    room_number: string | null; reference: string | null }[];
+};
 export type ReservationGroupRow = {
   id: string; hotel_id: string; group_number: string; name: string; customer_id: string | null; leader_guest_id: string | null;
   notes: string | null; created_at: string; created_by: string | null;
@@ -444,6 +468,7 @@ export type Database = {
       user_hotel_roles: Table<{ hotel_id: string; user_id: string; role_id: string; created_at: string; created_by: string | null }, "hotel_id" | "user_id" | "role_id">;
       hotel_members: Table<HotelMemberRow, "hotel_id" | "user_id">;
       currencies: Table<CurrencyRow, "code" | "name_ar" | "name_en" | "symbol">;
+      exchange_rates: Table<ExchangeRateRow, "hotel_id" | "currency_code" | "rate_date" | "rate">;
       departments: Table<DepartmentRow, "hotel_id" | "code" | "name_ar" | "kind">;
       chart_of_accounts: Table<AccountRow, "hotel_id" | "code" | "name_ar" | "account_type" | "account_subtype">;
       fiscal_years: Table<FiscalYearRow, "hotel_id" | "name" | "start_date" | "end_date">;
@@ -482,6 +507,7 @@ export type Database = {
       rate_season_prices: Table<RateSeasonPriceRow, "season_id" | "hotel_id" | "room_type_id" | "nightly_rate">;
       last_minute_rules: Table<LastMinuteRuleRow, "hotel_id" | "name" | "days_before" | "discount_pct">;
       reservations: ReadOnlyTable<ReservationRow>;
+      cashier_shifts: ReadOnlyTable<CashierShiftRow>;
       reservation_nights: ReadOnlyTable<ReservationNightRow>;
       reservation_groups: ReadOnlyTable<ReservationGroupRow>;
       reservation_series: ReadOnlyTable<ReservationSeriesRow>;
@@ -590,6 +616,13 @@ export type Database = {
       check_in_reservation: { Args: { p_reservation_id: string; p_room_id?: string | null }; Returns: string };
       post_reservation_charges: { Args: { p_reservation_id: string; p_through?: string | null }; Returns: number };
       prepare_check_out: { Args: { p_reservation_id: string }; Returns: CheckOutSummary };
+      set_reservation_billing: { Args: { p_reservation_id: string; p_bill_to: BillTo }; Returns: undefined };
+      set_exchange_rate: { Args: { p_hotel_id: string; p_currency_code: string; p_rate: string; p_rate_date?: string | null }; Returns: undefined };
+      post_folio_foreign_money: { Args: { p_folio_id: string; p_txn_type: "payment" | "deposit" | "refund" | "deposit_refund"; p_payment_method_id: string; p_foreign_amount: string; p_reference?: string | null }; Returns: string };
+      record_reservation_deposit_fx: { Args: { p_reservation_id: string; p_payment_method_id: string; p_foreign_amount: string; p_reference?: string | null }; Returns: string };
+      open_cashier_shift: { Args: { p_hotel_id: string; p_opening_float?: string }; Returns: string };
+      cashier_shift_report: { Args: { p_shift_id: string }; Returns: ShiftReport };
+      close_cashier_shift: { Args: { p_shift_id: string; p_counts: { payment_method_id: string; counted: string }[]; p_note?: string | null }; Returns: ShiftReport };
       check_out_reservation: { Args: { p_reservation_id: string }; Returns: string | null };
       move_reservation_room: { Args: { p_reservation_id: string; p_room_id: string; p_reason: string }; Returns: undefined };
       change_stay_departure: { Args: { p_reservation_id: string; p_departure_date: string }; Returns: undefined };

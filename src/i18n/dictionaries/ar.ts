@@ -86,6 +86,8 @@ export const ar = {
     tapeChart: "جدول الإشغال",
     guests: "النزلاء",
     waitlist: "قائمة الانتظار",
+    cashier: "الصندوق والورديات",
+    currencies: "العملات وأسعار الصرف",
     groupRooms: "الغرف والأسعار",
     rooms: "الغرف وحالتها",
     rates: "الأسعار والعروض",
@@ -220,6 +222,7 @@ export const ar = {
       depreciation: "إهلاك",
       inventory: "مخزون",
       petty_cash: "عهدة نثرية",
+      cashier_shift: "وردية كاشير",
     },
     lineErrors: {
       account_required: "اختر الحساب",

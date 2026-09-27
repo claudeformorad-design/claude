@@ -76,7 +76,7 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
               id: c.id, label: `${c.code} — ${name(c)}`, price: c.default_price, inclusive: c.price_includes_tax,
               taxes: c.tax_rate_ids.map((tid) => taxById.get(tid)).filter((x) => !!x).map((x) => ({ id: x!.id, rate: x!.rate, is_compound: x!.is_compound })),
             }))}
-            methods={methods.filter((m) => m.is_active).map((m) => ({ id: m.id, label: name(m), kind: m.kind }))}
+            methods={methods.filter((m) => m.is_active).map((m) => ({ id: m.id, label: m.currency_code ? `${name(m)} (${m.currency_code})` : name(m), kind: m.kind }))}
             customers={(customers?.data ?? []).map((c) => ({ id: c.id, label: `${c.code} — ${name(c)}` }))}
             defaultCustomerId={folio.customer_id}
             charges={effective.filter((x) => x.txn_type === "charge").map((x) => ({ id: x.id, label: summary(x) }))}

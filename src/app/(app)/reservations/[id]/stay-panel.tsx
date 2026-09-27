@@ -16,11 +16,14 @@ import { formatMoney } from "@/lib/accounting/money";
 import { cn } from "@/lib/utils";
 import type { ActionResult } from "@/services/errors";
 import {
-  changeDepartureAction, checkInAction, moveRoomAction, postChargesAction, prepareCheckOutAction, recordDepositAction, settleAndCheckOutAction,
+  changeDepartureAction, checkInAction, moveRoomAction, payStayAction, postChargesAction, prepareCheckOutAction, recordDepositAction,
+  settleAndCheckOutAction,
 } from "../../_pms/actions";
 
 type Option = { id: string; label: string };
-type Method = Option & { kind: string };
+/** currency: عملة أجنبية للطريقة (null = الأساسية) و rate سعرها الساري */
+type Method = Option & { kind: string; currency: string | null; rate: number | null };
+type Bill = { due: number; balance: number; deposits: number; company: number };
 
 /**
  * لوحة الإقامة في صفحة الحجز: العربون، التسكين، ترحيل الليالي، التمديد والتقصير، نقل الغرفة، والمغادرة.
@@ -28,7 +31,7 @@ type Method = Option & { kind: string };
  */
 export function StayPanel({
   reservationId, status, hourly, canCheckIn, today, arrival, departure, folio, methods, customer, checkInRooms, moveRooms,
-  currentRoomId, canViewFolio, canViewInvoices, errors,
+  currentRoomId, canViewFolio, canViewInvoices, errors, baseCurrency, billTo,
 }: {
   reservationId: string;
   status: string;
@@ -46,6 +49,8 @@ export function StayPanel({
   canViewFolio: boolean;
   canViewInvoices: boolean;
   errors: Record<string, string>;
+  baseCurrency: string;
+  billTo: "guest" | "company_room" | "company_all";
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -67,10 +72,27 @@ export function StayPanel({
   const [room, setRoom] = useState(currentRoomId ?? checkInRooms[0]?.id ?? "");
   const [newDeparture, setNewDeparture] = useState(departure);
   const [move, setMove] = useState({ room: "", reason: "" });
-  const [bill, setBill] = useState<{ due: number; balance: number; deposits: number } | null>(null);
+  const [bill, setBill] = useState<Bill | null>(null);
   const [pay, setPay] = useState({ method: cashMethods[0]?.id ?? "", amount: "" });
 
   const field = "field-group space-y-1.5";
+  const methodOf = (id: string) => methods.find((m) => m.id === id);
+  const toBill = (d: unknown): Bill => {
+    const x = d as { due: number; balance: number; deposits: number; company_due: number };
+    return { due: Number(x.due), balance: Number(x.balance), deposits: Number(x.deposits), company: Number(x.company_due ?? 0) };
+  };
+  // ما يعادل المبلغ بالعملة الأساسية لطريقة بعملة أجنبية
+  const approx = (methodId: string, amount: string) => {
+    const m = methodOf(methodId);
+    if (!m?.currency || !m.rate || !amount || Number.isNaN(Number(amount))) return null;
+    return `≈ ${money(Number(amount) * m.rate)} ${baseCurrency} (سعر ${m.rate})`;
+  };
+  const payMethod = methodOf(pay.method);
+  const payForeign = !!payMethod?.currency;
+  // رصيد دائن للنزيل بعد التسوية: دفعة زائدة (إرجاع) أو عربون يزيد عن الرصيد (استرداد عربون)
+  const credit = bill ? (bill.balance < 0 ? { amount: -bill.balance, kind: "refund" as const }
+    : bill.deposits > bill.balance ? { amount: bill.deposits - bill.balance, kind: "deposit_refund" as const } : null) : null;
+  const baseCash = methods.find((m) => m.kind === "cash" && !m.currency);
   const active = status === "tentative" || status === "confirmed" || status === "checked_in";
 
   return (
@@ -87,9 +109,9 @@ export function StayPanel({
             {!bill ? (
               <Button type="button" variant="dark" loading={busy === "prep"} disabled={pending}
                 onClick={() => run("prep", () => prepareCheckOutAction(reservationId), "تم ترحيل الليالي وتجهيز الفاتورة", (d) => {
-                  const x = d as { due: number; balance: number; deposits: number };
-                  setBill({ due: Number(x.due), balance: Number(x.balance), deposits: Number(x.deposits) });
-                  setPay((p) => ({ ...p, amount: Number(x.due) > 0 ? String(Number(x.due)) : "" }));
+                  const b = toBill(d);
+                  setBill(b);
+                  setPay((p) => ({ ...p, amount: b.due > 0 ? String(b.due) : "" }));
                   router.refresh();
                 })}>
                 <ReceiptText className="size-4" />تجهيز الفاتورة
@@ -97,37 +119,69 @@ export function StayPanel({
             ) : (
               <AnimatePresence>
                 <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                  <dl className="grid grid-cols-3 gap-3 rounded-lg border border-line bg-panel p-4 text-center">
+                  <dl className={cn("grid gap-3 rounded-lg border border-line bg-panel p-4 text-center", bill.company > 0 ? "grid-cols-4" : "grid-cols-3")}>
                     <div><dt className="text-[14px] text-slate-500">الرصيد</dt><dd className="num text-[20px] font-bold text-ink">{money(bill.balance)}</dd></div>
                     <div><dt className="text-[14px] text-slate-500">العربون</dt><dd className="num text-[20px] font-bold text-success">{money(bill.deposits)}</dd></div>
-                    <div><dt className="text-[14px] text-slate-500">المستحق</dt><dd className={cn("num text-[20px] font-bold", bill.due > 0 ? "text-urgent" : "text-ink")}>{money(bill.due)}</dd></div>
+                    {bill.company > 0 && <div><dt className="text-[14px] text-slate-500">على الشركة</dt><dd className="num text-[20px] font-bold text-sky">{money(bill.company)}</dd></div>}
+                    <div><dt className="text-[14px] text-slate-500">على النزيل</dt><dd className={cn("num text-[20px] font-bold", bill.due > 0 ? "text-urgent" : "text-ink")}>{money(bill.due)}</dd></div>
                   </dl>
-                  {bill.deposits > bill.balance && (
-                    <p className="rounded-md bg-amber-tint px-3 py-2 text-[15px] text-amber">
-                      العربون أكبر من الرصيد بـ {money(bill.deposits - bill.balance)} — استرده من صفحة الفوليو قبل المغادرة.
+                  {bill.company > 0 && (
+                    <p className="rounded-md bg-accent1-tint/70 px-3 py-2 text-[15px] text-sky">
+                      {billTo === "company_all" ? "كل الفاتورة" : "رسوم الإقامة"} تُحوَّل آجلًا على {customer?.label ?? "الشركة"} عند المغادرة، وتصدر الفاتورة باسمها.
                     </p>
+                  )}
+                  {credit && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-amber-tint px-3 py-2 text-[15px] text-amber">
+                      <span>{credit.kind === "refund" ? "الباقي للنزيل" : "عربون زائد عن الرصيد"}: <b className="num">{money(credit.amount)}</b></span>
+                      {baseCash && (
+                        <Button type="button" size="sm" variant="outline" loading={busy === "change"} disabled={pending}
+                          onClick={() => run("change", () => payStayAction(reservationId, { method: baseCash.id, amount: String(credit.amount), kind: credit.kind }),
+                            "تم إرجاع المبلغ للنزيل", (d) => { setBill(toBill(d)); router.refresh(); })}>
+                          إرجاعه نقدًا
+                        </Button>
+                      )}
+                    </div>
                   )}
                   {bill.due > 0 && (
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className={field}>
                         <Label htmlFor="pay_method">طريقة التحصيل</Label>
-                        <NativeSelect id="pay_method" value={pay.method} onChange={(e) => setPay({ ...pay, method: e.target.value })}>
-                          {cashMethods.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+                        <NativeSelect id="pay_method" value={pay.method} onChange={(e) => {
+                          const m = methodOf(e.target.value);
+                          setPay({ method: e.target.value, amount: m?.currency && m.rate ? (Math.ceil((bill.due / m.rate) * 100) / 100).toString() : String(bill.due) });
+                        }}>
+                          {cashMethods.map((m) => <option key={m.id} value={m.id}>{m.label}{m.currency ? ` (${m.currency})` : ""}</option>)}
                           {customer && methods.filter((m) => m.kind === "city_ledger").map((m) => <option key={m.id} value={m.id}>{m.label} — {customer.label}</option>)}
                         </NativeSelect>
                       </div>
-                      <div className={field}><Label htmlFor="pay_amount">المبلغ</Label><Input id="pay_amount" inputMode="decimal" dir="ltr" value={pay.amount} onChange={(e) => setPay({ ...pay, amount: e.target.value })} /></div>
+                      <div className={field}>
+                        <Label htmlFor="pay_amount">المبلغ{payForeign ? ` (${payMethod!.currency})` : ""}</Label>
+                        <Input id="pay_amount" inputMode="decimal" dir="ltr" value={pay.amount} onChange={(e) => setPay({ ...pay, amount: e.target.value })} />
+                        {approx(pay.method, pay.amount) && <p className="num text-[13.5px] text-slate-500">{approx(pay.method, pay.amount)}</p>}
+                      </div>
                     </div>
                   )}
-                  <Button type="button" className="w-full" loading={busy === "out"} disabled={pending}
-                    onClick={() => run("out", () => settleAndCheckOutAction(reservationId, {
-                      method: pay.method, amount: bill.due > 0 ? pay.amount : "",
-                      customer_id: methods.find((m) => m.id === pay.method)?.kind === "city_ledger" ? customer?.id : undefined,
-                    }), "تمت المغادرة وصدرت الفاتورة", (inv) => {
-                      if (inv && canViewInvoices) router.push(`/invoices/${inv}`); else router.refresh();
-                    })}>
-                    {bill.due > 0 ? "تحصيل وتسجيل المغادرة" : "تسجيل المغادرة وإصدار الفاتورة"}
-                  </Button>
+                  {bill.due > 0 && (payForeign || (pay.amount && Number(pay.amount) < bill.due)) ? (
+                    <Button type="button" variant="outline" className="w-full" loading={busy === "part"} disabled={pending || !pay.amount}
+                      onClick={() => run("part", () => payStayAction(reservationId, { method: pay.method, amount: pay.amount }), "تم تسجيل الدفعة", (d) => {
+                        const b = toBill(d);
+                        setBill(b);
+                        setPay({ method: cashMethods.find((m) => !m.currency)?.id ?? pay.method, amount: b.due > 0 ? String(b.due) : "" });
+                        router.refresh();
+                      })}>
+                      تسجيل الدفعة{payForeign ? " بالعملة الأجنبية" : " الجزئية"}
+                    </Button>
+                  ) : (
+                    <Button type="button" className="w-full" loading={busy === "out"} disabled={pending || !!credit}
+                      onClick={() => run("out", () => settleAndCheckOutAction(reservationId, {
+                        method: pay.method, amount: bill.due > 0 ? pay.amount : "",
+                        customer_id: methodOf(pay.method)?.kind === "city_ledger" ? customer?.id : undefined,
+                      }), "تمت المغادرة وصدرت الفاتورة", (inv) => {
+                        if (inv && canViewInvoices) router.push(`/invoices/${inv}`); else router.refresh();
+                      })}>
+                      {bill.due > 0 ? "تحصيل وتسجيل المغادرة" : "تسجيل المغادرة وإصدار الفاتورة"}
+                    </Button>
+                  )}
                 </motion.div>
               </AnimatePresence>
             )}
@@ -223,10 +277,14 @@ export function StayPanel({
                 <div className={field}>
                   <Label htmlFor="dep_method">عربون جديد</Label>
                   <NativeSelect id="dep_method" value={dep.method} onChange={(e) => setDep({ ...dep, method: e.target.value })}>
-                    {cashMethods.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+                    {cashMethods.map((m) => <option key={m.id} value={m.id}>{m.label}{m.currency ? ` (${m.currency})` : ""}</option>)}
                   </NativeSelect>
                 </div>
-                <div className={field}><Label htmlFor="dep_amount">المبلغ</Label><Input id="dep_amount" inputMode="decimal" dir="ltr" value={dep.amount} onChange={(e) => setDep({ ...dep, amount: e.target.value })} /></div>
+                <div className={field}>
+                  <Label htmlFor="dep_amount">المبلغ{methodOf(dep.method)?.currency ? ` (${methodOf(dep.method)!.currency})` : ""}</Label>
+                  <Input id="dep_amount" inputMode="decimal" dir="ltr" value={dep.amount} onChange={(e) => setDep({ ...dep, amount: e.target.value })} />
+                  {approx(dep.method, dep.amount) && <p className="num text-[13px] text-slate-500">{approx(dep.method, dep.amount)}</p>}
+                </div>
                 <div className={field}><Label htmlFor="dep_ref">مرجع (اختياري)</Label><Input id="dep_ref" value={dep.reference} onChange={(e) => setDep({ ...dep, reference: e.target.value })} placeholder="رقم الإيصال أو الحوالة" /></div>
                 <Button type="button" variant="outline" loading={busy === "dep_add"} disabled={pending || !dep.amount}
                   onClick={() => run("dep_add", () => recordDepositAction(reservationId, dep), "تم تسجيل العربون", () => { setDep({ ...dep, amount: "", reference: "" }); router.refresh(); })}>

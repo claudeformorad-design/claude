@@ -397,6 +397,14 @@ begin
     end loop;
   end if;
 
+  -- العملات: سعر الدولار وطريقة قبض نقدية بالدولار
+  if (select base_currency from public.hotels where id = h) <> 'USD' then
+    perform public.set_exchange_rate(h, 'USD', case (select base_currency from public.hotels where id = h) when 'YER' then 530 when 'SAR' then 3.75 else 1 end);
+    insert into public.payment_methods (hotel_id, code, name_ar, name_en, kind, account_id, currency_code)
+    values (h, 'USD', 'نقدًا دولار', 'Cash USD', 'cash', (select id from public.chart_of_accounts where hotel_id = h and system_key = 'cash'), 'USD')
+    on conflict (hotel_id, code) do nothing;
+  end if;
+
   -- حالة الغرف: بعضها يحتاج تنظيف وواحدة خارج الخدمة
   update public.rooms set housekeeping_status = 'dirty' where hotel_id = h and room_number in ('103', '205', '207', '302', '309');
   perform public.set_room_status((select id from public.rooms where hotel_id = h and room_number = '212'), null, 'out_of_service', 'صيانة التكييف');

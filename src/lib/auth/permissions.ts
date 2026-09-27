@@ -23,6 +23,8 @@ export const PERMISSIONS = {
   folioAllowance: "folio.allowance",
   folioVoid: "folio.void",
   folioCheckout: "folio.checkout",
+  cashierShifts: "cashier.shifts",
+  cashierShiftsManage: "cashier.shifts.manage",
   invoicesView: "invoices.view",
   invoicesCreate: "invoices.create",
   paymentsView: "payments.view",

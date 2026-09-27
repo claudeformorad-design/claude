@@ -60,7 +60,7 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
       </Card>
       {outstanding.gt(0) && ctx.can(PERMISSIONS.paymentsDisbursement) && (
         <PayBillForm t={{ payables: t.payables, folio: t.folio, errors: t.errors }} billId={bill.id} vendorId={bill.vendor_id}
-          outstanding={outstanding.toFixed()} methods={methods.filter((m) => m.is_active && m.kind !== "city_ledger").map((m) => ({ id: m.id, label: (locale === "en" && m.name_en) || m.name_ar }))} />
+          outstanding={outstanding.toFixed()} methods={methods.filter((m) => m.is_active && m.kind !== "city_ledger" && !m.currency_code).map((m) => ({ id: m.id, label: (locale === "en" && m.name_en) || m.name_ar }))} />
       )}
     </>
   );

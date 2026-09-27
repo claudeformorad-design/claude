@@ -17,7 +17,7 @@ type Option = { id: string; label: string };
 
 /** نموذج موحد لإعدادات الإيراد (ضريبة / رمز إيراد / طريقة دفع) */
 export function RevenueSettingForm({
-  t, kind, initial, accounts, departments, taxes,
+  t, kind, initial, accounts, departments, taxes, currencies = [],
 }: {
   t: Pick<Dictionary, "revenueSettings" | "common" | "errors" | "customers" | "folio">;
   kind: RevenueSettingKind;
@@ -25,6 +25,7 @@ export function RevenueSettingForm({
   accounts: Option[];
   departments: Option[];
   taxes: Option[];
+  currencies?: Option[];
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -73,6 +74,7 @@ export function RevenueSettingForm({
         <>
           {select("kind", rs.kind, enumOptions(rs.methodKinds))}
           {select("account_id", rs.account, accounts)}
+          {currencies.length > 0 && select("currency_code", "العملة (فارغ = العملة الأساسية)", currencies)}
         </>
       )}
       {kind === "charge" && (

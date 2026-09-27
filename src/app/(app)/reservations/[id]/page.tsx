@@ -12,15 +12,17 @@ import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { formatDateTime, todayInTimeZone } from "@/lib/accounting/fiscal";
 import { ZERO, toMoney } from "@/lib/accounting/money";
-import { ACTIVE_STATUSES, PRICING_LABEL, RESERVATION_SOURCE, RESERVATION_STATUS, WEEKDAYS } from "@/lib/pms/labels";
+import { ACTIVE_STATUSES, BILL_TO, PRICING_LABEL, RESERVATION_SOURCE, RESERVATION_STATUS, WEEKDAYS } from "@/lib/pms/labels";
 import { dayLabel, nightsBetween, timeOf } from "@/lib/pms/dates";
 import { folioSnapshot, getReservation, listReservations, listRoomTypes, listRooms } from "@/services/pms.service";
 import { listPaymentMethods } from "@/services/revenue-settings.service";
+import { latestRates, listExchangeRates } from "@/services/cashier.service";
 import { getI18n } from "@/i18n/server";
 import { ActionButton } from "../../_pms/action-button";
 import { cancelReservationAction, cancelSeriesAction, confirmReservationAction, noShowAction } from "../../_pms/actions";
 import { AssignRoom } from "./assign-room";
 import { StayPanel } from "./stay-panel";
+import { BillingSelect } from "./billing-select";
 
 export default async function ReservationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -70,12 +72,14 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
   }
 
   // الفوليو وطرق الدفع للوحة الإقامة (المال كله في المحاسبة)
-  const [folio, methods] = canStay
+  const [folio, methods, rates] = canStay
     ? await Promise.all([
         r.folio_id ? folioSnapshot(ctx.supabase, r.folio_id) : Promise.resolve(null),
         listPaymentMethods(ctx.supabase, ctx.hotel.id),
+        listExchangeRates(ctx.supabase, ctx.hotel.id),
       ])
-    : [null, []];
+    : [null, [], []];
+  const fx = latestRates(rates, today);
   const posted = r.nights.filter((n) => n.folio_transaction_id).length;
 
   return (
@@ -163,7 +167,11 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
               reservationId={r.id} status={r.status} hourly={hourly} canCheckIn={r.arrival_date <= today && (hourly || r.departure_date > today)}
               today={today} arrival={r.arrival_date} departure={r.departure_date}
               folio={folio && folio.status === "open" ? { id: folio.id, number: folio.number, balance: folio.balance, deposits: folio.deposits } : null}
-              methods={methods.filter((m) => m.is_active).map((m) => ({ id: m.id, label: m.name_ar, kind: m.kind }))}
+              methods={methods.filter((m) => m.is_active).map((m) => ({
+                id: m.id, label: m.name_ar, kind: m.kind, currency: m.currency_code,
+                rate: m.currency_code ? Number(fx.get(m.currency_code)?.rate ?? 0) || null : null,
+              }))}
+              baseCurrency={ctx.hotel.base_currency} billTo={r.bill_to}
               customer={r.customer && r.customer_id ? { id: r.customer_id, label: r.customer.name_ar } : null}
               checkInRooms={checkInRooms} moveRooms={moveRooms} currentRoomId={r.room_id}
               canViewFolio={ctx.can(PERMISSIONS.folioView)} canViewInvoices={ctx.can(PERMISSIONS.invoicesView)} errors={t.errors}
@@ -174,7 +182,12 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
             <CardContent>
               <dl className="space-y-3 text-[16px]">
                 <Row label="النزيل"><Link href={`/guests/${r.guest_id}`} className="font-semibold text-ink hover:underline">{r.guest?.full_name}</Link>{r.guest?.phone && <span className="num ms-2 text-slate-500" dir="ltr">{r.guest.phone}</span>}</Row>
-                {r.customer && <Row label="جهة الفوترة">{r.customer.name_ar}</Row>}
+                {r.customer && <Row label="الشركة">{r.customer.name_ar}</Row>}
+                {r.customer && (
+                  <Row label="الفوترة">
+                    {canStay && stayOpen ? <BillingSelect reservationId={r.id} current={r.bill_to} errors={t.errors} /> : BILL_TO[r.bill_to]}
+                  </Row>
+                )}
                 {r.status === "tentative" && r.tentative_until && <Row label="مبدئي حتى"><span className="num">{r.tentative_until}</span></Row>}
                 {r.rate_reason && <Row label="سبب السعر">{r.rate_reason}</Row>}
                 {r.special_requests && <Row label="طلبات النزيل">{r.special_requests}</Row>}

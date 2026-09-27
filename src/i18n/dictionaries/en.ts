@@ -87,6 +87,8 @@ export const en: Dictionary = {
     tapeChart: "Tape chart",
     guests: "Guests",
     waitlist: "Waitlist",
+    cashier: "Cashier shifts",
+    currencies: "Currencies & rates",
     groupRooms: "Rooms & rates",
     rooms: "Rooms & status",
     rates: "Rates & deals",
@@ -221,6 +223,7 @@ export const en: Dictionary = {
       depreciation: "Depreciation",
       inventory: "Inventory",
       petty_cash: "Petty cash",
+      cashier_shift: "Cashier shift",
     },
     lineErrors: {
       account_required: "Select an account",

@@ -86,6 +86,18 @@ const fixed = (v: string) => toMoney(v).toFixed();
 /** تنفيذ إجراء على الفوليو عبر دالة RPC المناسبة (كل القواعد مفروضة في قاعدة البيانات) */
 export async function runFolioAction(supabase: SupabaseServerClient, folioId: string, a: FolioAction): Promise<void> {
   let result: { error: { message: string } | null };
+  // طريقة دفع بعملة أجنبية: المبلغ المُدخل بعملتها ويُحوَّل بسعر اليوم
+  if (a.kind === "payment" || a.kind === "deposit" || a.kind === "refund" || a.kind === "depositRefund") {
+    const { data: m } = await supabase.from("payment_methods").select("currency_code").eq("id", a.payment_method_id).maybeSingle();
+    if ((m as { currency_code: string | null } | null)?.currency_code) {
+      result = await supabase.rpc("post_folio_foreign_money", {
+        p_folio_id: folioId, p_txn_type: a.kind === "depositRefund" ? "deposit_refund" : a.kind, p_payment_method_id: a.payment_method_id,
+        p_foreign_amount: fixed(a.amount), p_reference: a.reference,
+      });
+      raise(result.error);
+      return;
+    }
+  }
   switch (a.kind) {
     case "charge":
       result = await supabase.rpc("post_folio_charge", {
