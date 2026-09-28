@@ -78,10 +78,13 @@ export function PosTerminal({ outletId, items, guests, methods, errors, canViewI
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-4">
           {shown.map((i) => (
             <button key={i.id} type="button" onClick={() => add(i.id, 1)}
-              className={cn("surface lift relative flex min-h-24 flex-col items-start justify-between p-4 text-start", cart[i.id] && "border-action")}>
+              className={cn("surface lift flex min-h-24 flex-col items-start justify-between p-4 text-start", cart[i.id] && "border-action")}>
               <span className="text-[16.5px] font-semibold leading-snug text-ink">{i.name}</span>
-              <span className="num text-[15px] text-slate-600">{money(i.price)}</span>
-              {cart[i.id] && <span className="num absolute end-3 top-3 flex size-7 items-center justify-center rounded-full bg-action text-[14px] font-bold text-white">{cart[i.id]}</span>}
+              {/* الكمية في سطر السعر حتى لا تغطي اسم الصنف */}
+              <span className="flex w-full items-center justify-between gap-2">
+                <span className="num text-[15px] text-slate-600">{money(i.price)}</span>
+                {cart[i.id] && <span className="num flex size-7 shrink-0 items-center justify-center rounded-full bg-action text-[14px] font-bold text-white">{cart[i.id]}</span>}
+              </span>
             </button>
           ))}
         </div>
