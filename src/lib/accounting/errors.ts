@@ -98,6 +98,23 @@ const typesAr = (s: string) =>
   s.replace(/[{}"]/g, "").split(",").map((x) => ACCOUNT_TYPES_AR[x.trim()] ?? x.trim()).join(" أو ");
 
 const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
+  // الموارد البشرية
+  [/End of service is recorded through the final settlement/i, "إنهاء الخدمة يتم من التسوية النهائية في ملف الموظف"],
+  [/New employees start active/i, "الموظف الجديد يُضاف نشطًا"],
+  [/Employee is not active/i, "الموظف منتهية خدمته، ولا تُسجَّل له عمليات جديدة"],
+  [/Leave has no working days/i, "فترة الإجازة كلها أيام عطلة أسبوعية"],
+  [/Leave overlaps another leave/i, "الإجازة تتداخل مع إجازة أخرى للموظف نفسه"],
+  [/Leave balance is not enough/i, "رصيد الموظف من هذا النوع لا يكفي لهذه الإجازة"],
+  [/Penalty was already deducted in payroll/i, "الجزاء خُصم في مسيّر سابق ولا يُعدَّل"],
+  [/Payroll for this month is already posted/i, "مسيّر هذا الشهر مرحّل بالفعل"],
+  [/No active employees for this month/i, "لا يوجد موظفون نشطون في هذا الشهر"],
+  [/Installments must be between 1 and 60/i, "عدد الأقساط من 1 إلى 60"],
+  [/Advances are paid in the base currency/i, "تُصرف السلفة بطريقة دفع بالعملة الأساسية"],
+  [/End of service date is before hire date/i, "تاريخ نهاية الخدمة قبل تاريخ التعيين"],
+  [/Employee not found/i, "الموظف غير موجود"],
+  [/Unknown end of service reason/i, "سبب نهاية الخدمة غير معروف، اختر الاستقالة أو الإنهاء من المنشأة"],
+  [/^Amount must be positive$/i, "المبلغ يجب أن يكون أكبر من صفر"],
+  [/^Payment method not found$/i, "طريقة الدفع غير موجودة"],
   // إدارة الفندق: الأقسام والغرف
   [/At least one module must be enabled/i, "فعّل قسمًا واحدًا على الأقل (المحاسبة أو إدارة الفندق)"],
   [/Booking mode cannot change after the room type has reservations/i, "لا يمكن تغيير نوع الحجز (ليلي/بالساعة) بعد وجود حجوزات على هذا النوع"],

@@ -325,7 +325,12 @@ export type VendorBillLineRow = {
 };
 export type PayrollRunRow = {
   id: string; hotel_id: string; run_number: string; period_month: string; posting_date: string;
-  total_gross: string; total_net: string; journal_entry_id: string | null; notes: string | null; created_at: string;
+  total_gross: string; total_net: string; journal_entry_id: string | null; notes: string | null; created_at: string; from_hr: boolean;
+};
+export type PayrollLineRow = {
+  id: string; run_id: string; hotel_id: string; employee_id: string | null; employee_name: string; employee_code: string | null; department_id: string;
+  basic: string; allowances: string; overtime: string; deductions: string; insurance_employee: string; insurance_employer: string;
+  advance_recovery: string; net_pay: string; details: Json | null;
 };
 export type BankStatementLineRow = {
   id: string; hotel_id: string; account_id: string; txn_date: string; description: string; reference: string | null;
@@ -508,6 +513,52 @@ export type FrontDeskSummary = {
   available_tonight: number; out_of_service: number; dirty: number; tentative: number; waitlist_ready: number;
 };
 
+// ----------------------------------------------------------------------------- الموارد البشرية
+export type EosTier = { from: number; days: number };
+export type EosResign = { from: number; pct: number };
+export type HrSettingsRow = {
+  hotel_id: string; work_hours_per_day: string; weekend_days: number[]; month_days: number; late_grace_minutes: number;
+  late_deduction_rate: string; absence_deduction_days: string; overtime_rate: string; insurance_employee_pct: string; insurance_employer_pct: string;
+  eos_tiers: EosTier[]; eos_resign: EosResign[]; leave_encashment: boolean; expiry_alert_days: number; updated_at: string; updated_by: string | null;
+};
+export type HrLeaveTypeRow = { id: string; hotel_id: string; name: string; days_per_year: string; paid: boolean; carry_over: boolean; encashable: boolean; is_active: boolean; sort_order: number };
+export type HrPayComponentRow = {
+  id: string; hotel_id: string; name: string; kind: "allowance" | "deduction"; calc: "fixed" | "percent"; default_value: string;
+  insurable: boolean; in_eos: boolean; is_active: boolean; sort_order: number;
+};
+export type HrShiftRow = { id: string; hotel_id: string; name: string; start_time: string; end_time: string; is_active: boolean };
+export type HrEmployeeRow = {
+  id: string; hotel_id: string; code: string; full_name: string; job_title: string | null; department_id: string; phone: string | null;
+  email: string | null; nationality: string | null; id_number: string | null; id_expiry: string | null; birth_date: string | null;
+  hire_date: string; contract_type: "permanent" | "fixed" | "part_time"; contract_end: string | null; basic_salary: string;
+  shift_id: string | null; status: "active" | "terminated"; termination_date: string | null; termination_reason: "resignation" | "termination" | null;
+  notes: string | null; created_at: string; created_by: string | null; updated_at: string; updated_by: string | null;
+};
+export type HrEmployeeComponentRow = { employee_id: string; hotel_id: string; component_id: string; value: string };
+export type HrRosterRow = { hotel_id: string; employee_id: string; work_date: string; shift_id: string | null };
+export type HrAttendanceRow = {
+  id: string; hotel_id: string; employee_id: string; work_date: string; status: "present" | "absent" | "leave" | "off";
+  check_in: string | null; check_out: string | null; shift_start: string | null; shift_end: string | null;
+  late_minutes: number; overtime_minutes: number; worked_minutes: number; notes: string | null;
+};
+export type HrLeaveRow = {
+  id: string; hotel_id: string; employee_id: string; leave_type_id: string; start_date: string; end_date: string; days: string;
+  status: "pending" | "approved" | "rejected" | "cancelled"; reason: string | null; decided_by: string | null; decided_at: string | null; created_at: string;
+};
+export type HrAdvanceRow = {
+  id: string; hotel_id: string; advance_number: string; employee_id: string; advance_date: string; amount: string; installments: number;
+  installment_amount: string; recovered: string; status: "open" | "closed"; payment_method_id: string; journal_entry_id: string | null; notes: string | null;
+};
+export type HrPenaltyRow = {
+  id: string; hotel_id: string; employee_id: string; penalty_date: string; amount: string; reason: string;
+  status: "pending" | "approved" | "cancelled"; payroll_run_id: string | null;
+};
+export type HrSettlementRow = {
+  id: string; hotel_id: string; employee_id: string; settlement_date: string; reason: "resignation" | "termination"; service_years: string;
+  eos_amount: string; leave_days: string; leave_amount: string; advances_recovered: string; net_amount: string; journal_entry_id: string | null;
+  details: Record<string, unknown>; created_at: string;
+};
+
 // ----------------------------------------------------------------------------- المساعد الذكي
 export type AssistantConversationRow = { id: string; hotel_id: string; user_id: string; title: string; pinned: boolean; created_at: string; updated_at: string };
 export type AssistantMessageRow = { id: string; conversation_id: string; role: "user" | "assistant"; content: string; is_error: boolean; created_at: string };
@@ -555,6 +606,7 @@ export type Database = {
       vendor_bills: ReadOnlyTable<VendorBillRow>;
       vendor_bill_lines: ReadOnlyTable<VendorBillLineRow>;
       payroll_runs: ReadOnlyTable<PayrollRunRow>;
+      payroll_lines: ReadOnlyTable<PayrollLineRow>;
       credit_notes: ReadOnlyTable<{ id: string; hotel_id: string; credit_note_number: string; invoice_id: string; issue_date: string; net_amount: string; tax_amount: string; total: string; reason: string; created_at: string }>;
       bank_statement_lines: Table<BankStatementLineRow, "hotel_id" | "account_id" | "txn_date" | "description" | "amount">;
       floors: Table<FloorRow, "hotel_id" | "name">;
@@ -576,6 +628,18 @@ export type Database = {
       reservation_groups: ReadOnlyTable<ReservationGroupRow>;
       reservation_series: ReadOnlyTable<ReservationSeriesRow>;
       waitlist_entries: ReadOnlyTable<WaitlistEntryRow>;
+      hr_settings: Table<HrSettingsRow, "hotel_id">;
+      hr_leave_types: Table<HrLeaveTypeRow, "hotel_id" | "name">;
+      hr_pay_components: Table<HrPayComponentRow, "hotel_id" | "name" | "kind">;
+      hr_shifts: Table<HrShiftRow, "hotel_id" | "name" | "start_time" | "end_time">;
+      hr_employees: Table<HrEmployeeRow, "hotel_id" | "full_name" | "department_id" | "hire_date">;
+      hr_employee_components: Table<HrEmployeeComponentRow, "employee_id" | "hotel_id" | "component_id" | "value">;
+      hr_roster: Table<HrRosterRow, "hotel_id" | "employee_id" | "work_date">;
+      hr_attendance: Table<HrAttendanceRow, "hotel_id" | "employee_id" | "work_date">;
+      hr_leaves: Table<HrLeaveRow, "hotel_id" | "employee_id" | "leave_type_id" | "start_date" | "end_date">;
+      hr_advances: ReadOnlyTable<HrAdvanceRow>;
+      hr_penalties: Table<HrPenaltyRow, "hotel_id" | "employee_id" | "penalty_date" | "amount" | "reason">;
+      hr_settlements: ReadOnlyTable<HrSettlementRow>;
       assistant_conversations: Table<AssistantConversationRow, "hotel_id" | "title">;
       assistant_messages: Table<AssistantMessageRow, "conversation_id" | "role" | "content">;
       assistant_saved: Table<AssistantSavedRow, "hotel_id" | "content">;
@@ -853,6 +917,21 @@ export type Database = {
           period_credit: string;
         }[];
       };
+      hr_leave_balances: {
+        Args: { p_employee_id: string; p_year: number };
+        Returns: { leave_type_id: string; name: string; paid: boolean; limited: boolean; entitlement: number; carried: number; taken: number; pending: number; remaining: number }[];
+      };
+      hr_payroll_preview: { Args: { p_hotel_id: string; p_month: string }; Returns: Json };
+      hr_run_payroll: { Args: { p_hotel_id: string; p_month: string; p_posting_date?: string }; Returns: string };
+      hr_pay_advance: {
+        Args: { p_employee_id: string; p_date: string; p_amount: string; p_installments: number; p_payment_method_id: string; p_notes?: string | null };
+        Returns: string;
+      };
+      hr_settlement_quote: { Args: { p_employee_id: string; p_date: string; p_reason: string }; Returns: Json };
+      hr_terminate: { Args: { p_employee_id: string; p_date: string; p_reason: string; p_notes?: string | null }; Returns: string };
+      hr_save_attendance: { Args: { p_hotel_id: string; p_date: string; p_rows: Json }; Returns: number };
+      hr_save_roster: { Args: { p_hotel_id: string; p_rows: Json }; Returns: undefined };
+      hr_save_employee_components: { Args: { p_employee_id: string; p_rows: Json }; Returns: undefined };
     };
     Enums: {
       account_type: AccountType;

@@ -2,6 +2,7 @@ import {
   BarChart3, Banknote, BedDouble, BookOpen, Boxes, Building2, CalendarCheck, CalendarDays, CalendarRange, Clock, ConciergeBell, DoorOpen,
   FileSpreadsheet, FileText, History, Hourglass, Landmark, LayoutDashboard, ListChecks, ListTree, Percent, PieChart, Receipt, Scale,
   ClipboardList, Coins, Scale3d, MoonStar, BrushCleaning, Utensils, BadgePercent, Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
+  IdCard, ClipboardCheck, CalendarClock, Plane, HandCoins, Calculator, SlidersHorizontal,
 } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import type { HotelModule } from "@/lib/supabase/database.types";
@@ -96,6 +97,20 @@ function allGroups(l: NavLabels): NavGroup[] {
     },
     {
       module: "accounting",
+      title: l.groupHr,
+      icon: IdCard,
+      color: "#312f2e",
+      items: [
+        { href: "/hr", label: l.employees, icon: IdCard, permission: "hr.view" },
+        { href: "/hr/attendance", label: l.attendance, icon: ClipboardCheck, permission: "hr.view" },
+        { href: "/hr/roster", label: l.roster, icon: CalendarClock, permission: "hr.view" },
+        { href: "/hr/leaves", label: l.leaves, icon: Plane, permission: "hr.view" },
+        { href: "/hr/advances", label: l.advances, icon: HandCoins, permission: "hr.view" },
+        { href: "/hr/payroll", label: l.hrPayroll, icon: Calculator, permission: "hr.view" },
+      ],
+    },
+    {
+      module: "accounting",
       title: l.groupAssets,
       icon: Boxes,
       color: "#312f2e",
@@ -129,6 +144,7 @@ function allGroups(l: NavLabels): NavGroup[] {
         { href: "/settings/hotel", label: l.hotelSettings, icon: Settings },
         { href: "/settings/revenue", label: l.revenueSettings, icon: Wallet },
         { href: "/settings/currencies", label: l.currencies, icon: Coins, permission: "settings.currencies.manage" },
+        { href: "/settings/hr", label: l.hrSettings, icon: SlidersHorizontal, permission: "hr.manage", module: "accounting" },
         { href: "/opening-balances", label: l.openingBalances, icon: Scale3d, permission: "settings.hotel.manage", module: "accounting" },
         { href: "/settings/users", label: l.users, icon: ShieldCheck },
         { href: "/periods", label: l.periods, icon: CalendarCheck, module: "accounting" },

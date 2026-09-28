@@ -14,7 +14,7 @@ import { toast } from "@/components/ui/toast";
 import { useDialogClose } from "@/components/ui/dialog";
 
 export type Field =
-  | { name: string; label: string; type?: "text" | "date" | "number" | "month"; ltr?: boolean }
+  | { name: string; label: string; type?: "text" | "date" | "number" | "month" | "time"; ltr?: boolean }
   | { name: string; label: string; options: { id: string; label: string }[]; optional?: boolean }
   | { name: string; label: string; checkbox: true };
 

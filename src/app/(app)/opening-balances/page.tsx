@@ -12,7 +12,7 @@ import { listVendors } from "@/services/payables.service";
 import { getI18n } from "@/i18n/server";
 import { OpeningForm } from "./opening-form";
 
-const CONTROL_KEYS = new Set(["guest_ledger", "guest_deposits", "ar_control", "ap_control"]);
+const CONTROL_KEYS = new Set(["guest_ledger", "guest_deposits", "ar_control", "ap_control", "employee_advances"]);
 
 /**
  * الأرصدة الافتتاحية عند بدء استخدام النظام: تُرحَّل مرة واحدة بقيد افتتاحي، وأرصدة العملاء

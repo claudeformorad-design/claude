@@ -4,6 +4,7 @@
  * بصلاحيات المستخدم نفسه، فتبقى كل الأرصدة مطابقة لدفاترها الفرعية وميزان المراجعة متوازنًا.
  * القيم عشوائية لكن ثابتة (setseed) حتى تتكرر نفس الصورة في كل مرة.
  * وإن كان قسم إدارة الفندق مفعّلًا: غرف ووحدات بالساعة وأسعار ومواسم وحجوزات الأسابيع القادمة.
+ * والموارد البشرية: موظفون وورديات وحضور الشهر وإجازات وسلف وجزاءات وتسوية نهائية.
  */
 export const DEMO_DATA_SQL = /* sql */ `
 do $demo$
@@ -410,4 +411,121 @@ begin
   perform public.set_room_status((select id from public.rooms where hotel_id = h and room_number = '212'), null, 'out_of_service', 'صيانة التكييف');
 end
 $pms$;
+-- =============================================================================
+-- الموارد البشرية: موظفون حقيقيون بالأقسام والورديات، وحضور الشهر الحالي بالاستثناءات
+-- (تأخير، غياب، إضافي)، وإجازات معتمدة ومعلّقة، وسلف وجزاءات، وموظف مستقيل بتسوية نهائية.
+-- مسيّر الشهر الحالي يبقى معاينة جاهزة للترحيل من صفحة المسيّر.
+-- =============================================================================
+do $hr$
+declare
+  h        uuid := current_setting('demo.hotel_id')::uuid;
+  v_today  date := app.today_for_hotel(current_setting('demo.hotel_id')::uuid);
+  m_start  date := date_trunc('month', app.today_for_hotel(current_setting('demo.hotel_id')::uuid))::date;
+  ws       date;
+  s_am uuid; s_pm uuid; s_night uuid;
+  lt_annual uuid; lt_sick uuid; lt_urgent uuid;
+  pc_house uuid; pc_trans uuid; pc_food uuid;
+  pm_cash uuid;
+  e uuid; emps uuid[] := '{}'; d date; i int; r numeric; v_start time; v_end time;
+  names  text[] := array['أحمد سالم الحضرمي','منى عبدالرحمن اليافعي','يوسف علي باوزير','هدى محمد الشامي','عمر خالد النهدي','سامي حسن العمودي',
+                         'رامي عبدالله القاضي','فاطمة صالح الكثيري','خديجة أحمد المقطري','ماهر سعيد العبسي','ليلى ناصر الصبري','بلال مراد الحداد'];
+  titles text[] := array['مدير الفندق','محاسبة','موظف استقبال أول','موظفة استقبال','موظف استقبال ليلي','رئيس الطهاة',
+                         'نادل','مشرفة الإشراف الداخلي','عاملة نظافة','فني صيانة','أخصائية سبا','نادل'];
+  depts  text[] := array['ADMIN','ADMIN','ROOMS','ROOMS','ROOMS','FNB','FNB','HK','HK','MAINT','SPA','FNB'];
+  basics numeric[] := array[12000, 7000, 5000, 4200, 4200, 9000, 3500, 4800, 2800, 4000, 4500, 3200];
+  shifts int[] := array[1, 1, 1, 2, 3, 1, 2, 1, 1, 1, 2, 2];
+  hired  int[] := array[74, 38, 50, 26, 18, 62, 13, 36, 8, 24, 10, 37];
+begin
+  perform setseed(0.17);
+  select id into s_am from public.hr_shifts where hotel_id = h and start_time = '07:00' limit 1;
+  select id into s_pm from public.hr_shifts where hotel_id = h and start_time = '15:00' limit 1;
+  select id into s_night from public.hr_shifts where hotel_id = h and start_time = '23:00' limit 1;
+  select id into lt_annual from public.hr_leave_types where hotel_id = h and name = 'الإجازة السنوية';
+  select id into lt_sick from public.hr_leave_types where hotel_id = h and name = 'الإجازة المرضية';
+  select id into lt_urgent from public.hr_leave_types where hotel_id = h and name = 'إجازة اضطرارية';
+  select id into pc_house from public.hr_pay_components where hotel_id = h and name = 'بدل السكن';
+  select id into pc_trans from public.hr_pay_components where hotel_id = h and name = 'بدل النقل';
+  select id into pc_food from public.hr_pay_components where hotel_id = h and name = 'بدل الطعام';
+  select id into pm_cash from public.payment_methods where hotel_id = h and code = 'CASH';
+  if s_am is null or lt_annual is null or pc_house is null then return; end if;
+
+  update public.hr_settings set insurance_employee_pct = 9, insurance_employer_pct = 12 where hotel_id = h;
+  update public.hr_pay_components set default_value = 25 where id = pc_house;
+  update public.hr_pay_components set default_value = 300 where id = pc_trans;
+  update public.hr_pay_components set default_value = 200 where id = pc_food;
+
+  for i in 1..12 loop
+    insert into public.hr_employees (hotel_id, full_name, job_title, department_id, phone, nationality, id_number, id_expiry,
+                                     hire_date, contract_type, contract_end, basic_salary, shift_id)
+    values (h, names[i], titles[i], (select id from public.departments where hotel_id = h and code = depts[i]),
+            '77' || (1000000 + floor(random() * 8999999))::int, 'يمني', (10000000 + floor(random() * 89999999))::bigint::text,
+            case i when 5 then v_today + 12 when 11 then v_today + 20 else v_today + 200 + floor(random() * 700)::int end,
+            (v_today - make_interval(months => hired[i]))::date,
+            case when i = 10 then 'fixed' else 'permanent' end,
+            case when i = 10 then v_today + 25 end,
+            basics[i], (array[s_am, s_pm, s_night])[shifts[i]])
+    returning id into e;
+    emps := emps || e;
+  end loop;
+  -- مزايا خاصة: سكن ونقل أعلى للمدير، ولا بدل طعام للإدارة
+  insert into public.hr_employee_components (employee_id, hotel_id, component_id, value) values
+    (emps[1], h, pc_house, 30), (emps[1], h, pc_trans, 800), (emps[1], h, pc_food, 0), (emps[2], h, pc_food, 0);
+
+  -- استقالة الشهر الماضي بتسوية نهائية (مكافأة نهاية الخدمة وتعويض الإجازات)
+  perform public.hr_terminate(emps[12], m_start - 5, 'resignation', 'انتقل إلى مدينة أخرى');
+
+  -- جدول ورديات الأسبوع الحالي والقادم للاستقبال بالتناوب، مع يوم راحة لكل موظف
+  ws := v_today - ((extract(dow from v_today)::int + 1) % 7);
+  for i in 0..13 loop
+    d := ws + i;
+    insert into public.hr_roster (hotel_id, employee_id, work_date, shift_id) values
+      (h, emps[3], d, case when extract(dow from d) = 5 then null when i < 7 then s_am else s_pm end),
+      (h, emps[4], d, case when extract(dow from d) = 4 then null when i < 7 then s_pm else s_am end),
+      (h, emps[5], d, case when extract(dow from d) = 3 then null else s_night end);
+  end loop;
+
+  -- إجازات: منتهية ومعتمدة، وقادمة معلّقة بانتظار القرار
+  insert into public.hr_leaves (hotel_id, employee_id, leave_type_id, start_date, end_date, status, reason) values
+    (h, emps[3], lt_annual, v_today - 12, v_today - 10, 'approved', 'زيارة عائلية'),
+    (h, emps[8], lt_sick, v_today - 4, v_today - 3, 'approved', 'تقرير طبي'),
+    (h, emps[2], lt_annual, v_today + 20, v_today + 26, 'approved', 'إجازة سنوية'),
+    (h, emps[6], lt_annual, v_today + 7, v_today + 11, 'pending', 'سفر'),
+    (h, emps[10], lt_urgent, v_today + 2, v_today + 3, 'pending', 'ظرف عائلي');
+
+  -- الحضور: يُسجَّل الاستثناء فقط، واليوم غير المسجل حضور عادي
+  d := m_start;
+  while d < v_today loop
+    if extract(dow from d) <> 5 then
+      for i in 1..11 loop
+        continue when exists (select 1 from public.hr_leaves where employee_id = emps[i] and status = 'approved' and d between start_date and end_date)
+                  or exists (select 1 from public.hr_roster where employee_id = emps[i] and work_date = d and shift_id is null);
+        r := random();
+        continue when r >= 0.16;
+        select coalesce(rs.start_time, es.start_time), coalesce(rs.end_time, es.end_time) into v_start, v_end
+        from public.hr_employees x
+        left join public.hr_shifts es on es.id = x.shift_id
+        left join public.hr_roster ro on ro.employee_id = x.id and ro.work_date = d
+        left join public.hr_shifts rs on rs.id = ro.shift_id
+        where x.id = emps[i];
+        insert into public.hr_attendance (hotel_id, employee_id, work_date, status, check_in, check_out, notes)
+        values (h, emps[i], d,
+                case when r < 0.012 then 'absent' else 'present' end,
+                case when r < 0.012 then null when r < 0.085 then v_start + make_interval(mins => 15 + floor(random() * 40)::int) else v_start end,
+                case when r < 0.012 then null when r < 0.085 then v_end else v_end + make_interval(mins => 60 + floor(random() * 90)::int) end,
+                case when r < 0.012 then 'بدون إذن' end);
+      end loop;
+    end if;
+    d := d + 1;
+  end loop;
+
+  -- سلف تُستعاد أقساطًا من المسيّر، وجزاءات معتمدة ومعلّقة
+  if pm_cash is not null then
+    perform public.hr_pay_advance(emps[7], m_start - 18, 1500, 3, pm_cash, 'ظرف طارئ');
+    perform public.hr_pay_advance(emps[4], greatest(m_start, v_today - 5), 1000, 2, pm_cash, null);
+  end if;
+  insert into public.hr_penalties (hotel_id, employee_id, penalty_date, amount, reason, status) values
+    (h, emps[7], greatest(m_start, v_today - 6), 200, 'تأخر متكرر عن بداية الوردية', 'approved'),
+    (h, emps[9], v_today, 100, 'مخالفة تعليمات السلامة', 'pending');
+end
+$hr$;
 `;

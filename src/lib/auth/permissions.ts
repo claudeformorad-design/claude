@@ -50,6 +50,8 @@ export const PERMISSIONS = {
   journalApprove: "gl.journal.approve",
   paymentsApproveLarge: "payments.approve_large",
   taxReportView: "reports.tax.view",
+  hrView: "hr.view",
+  hrManage: "hr.manage",
   // قسم إدارة الفندق
   pmsView: "pms.reservations.view",
   pmsManage: "pms.reservations.manage",

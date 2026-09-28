@@ -9,7 +9,7 @@ import { listPaymentMethods } from "@/services/revenue-settings.service";
 import { getI18n } from "@/i18n/server";
 import { VoucherForm } from "./voucher-form";
 
-const CONTROL_KEYS = new Set(["guest_ledger", "ar_control", "guest_deposits", "ap_control"]);
+const CONTROL_KEYS = new Set(["guest_ledger", "ar_control", "guest_deposits", "ap_control", "employee_advances"]);
 
 export default async function NewVoucherPage({ searchParams }: { searchParams: Promise<{ type?: string }> }) {
   const type = (await searchParams).type === "disbursement" ? "disbursement" : "receipt";

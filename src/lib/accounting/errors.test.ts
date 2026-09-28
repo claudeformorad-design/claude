@@ -12,6 +12,7 @@ const INTERNAL = [
   "kind must be receivable or payable",
   "p_lines must be a JSON array",
   "post_system_entry is only for document-generated entries",
+  "Unknown HR account %",
 ];
 
 describe("describeDatabaseError", () => {
