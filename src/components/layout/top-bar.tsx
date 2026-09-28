@@ -9,7 +9,7 @@ import Link from "@/components/link";
 import { cn } from "@/lib/utils";
 import { isActivePath, navGroups, type NavAccess, type NavLabels } from "./nav-config";
 import { SearchBox } from "./search-box";
-import { Assistant } from "@/components/assistant/assistant";
+import { AssistantLauncher } from "@/components/assistant/launcher";
 
 
 export function TopBar({
@@ -69,7 +69,7 @@ export function TopBar({
       <SearchBox groups={groups} className="hidden w-80 md:block lg:w-96" />
 
       <div className="flex items-center gap-2">
-        {assistant && <Assistant />}
+        {assistant && <AssistantLauncher />}
         {demo && (
           <Link href="/settings/hotel" title="بيانات تجريبية مؤقتة، احذفها من الإعدادات"
             className="flex h-8 items-center rounded-md bg-sky-tint px-3 text-[15.5px] font-medium text-sky">

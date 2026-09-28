@@ -168,6 +168,8 @@ await step("assistant stays off without a provider key", async () => {
   if (await page.getByRole("button", { name: /المساعد/ }).count()) throw new Error("assistant button shown without a key");
   const res = await page.request.post(`${BASE}/api/assistant`, { data: { messages: [{ role: "user", content: "مرحبا" }], page: { path: "/" } } });
   if (res.status() !== 503) throw new Error(`status ${res.status()}`);
+  await go("/assistant");
+  await page.getByText("المساعد غير مفعّل بعد").waitFor();
 });
 console.log(`\nproblems (${problems.length}):`);
 for (const p of problems) console.log(" - " + p);

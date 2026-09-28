@@ -508,6 +508,12 @@ export type FrontDeskSummary = {
   available_tonight: number; out_of_service: number; dirty: number; tentative: number; waitlist_ready: number;
 };
 
+// ----------------------------------------------------------------------------- المساعد الذكي
+export type AssistantConversationRow = { id: string; hotel_id: string; user_id: string; title: string; pinned: boolean; created_at: string; updated_at: string };
+export type AssistantMessageRow = { id: string; conversation_id: string; role: "user" | "assistant"; content: string; is_error: boolean; created_at: string };
+export type AssistantSavedRow = { id: string; hotel_id: string; user_id: string; conversation_id: string | null; question: string; content: string; created_at: string };
+export type AssistantSettingsRow = { hotel_id: string; user_id: string; instructions: string; open_mode: "panel" | "page"; updated_at: string };
+
 export type Database = {
   public: {
     Tables: {
@@ -570,6 +576,10 @@ export type Database = {
       reservation_groups: ReadOnlyTable<ReservationGroupRow>;
       reservation_series: ReadOnlyTable<ReservationSeriesRow>;
       waitlist_entries: ReadOnlyTable<WaitlistEntryRow>;
+      assistant_conversations: Table<AssistantConversationRow, "hotel_id" | "title">;
+      assistant_messages: Table<AssistantMessageRow, "conversation_id" | "role" | "content">;
+      assistant_saved: Table<AssistantSavedRow, "hotel_id" | "content">;
+      assistant_settings: Table<AssistantSettingsRow, "hotel_id">;
     };
     Views: {
       folio_balances: {
