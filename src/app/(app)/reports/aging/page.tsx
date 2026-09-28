@@ -30,11 +30,11 @@ export default async function AgingPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <PageHeader title={t.nav.aging} description={t.payables.agingSubtitle}
+      <PageHeader title={t.nav.aging}
         actions={<ExportButtons report={`aging-${kind}`} query={`to=${asOf}`} labels={{ excel: t.reports.exportExcel, pdf: t.reports.printPdf }} />} />
       <StatGrid className="lg:grid-cols-5">
         {AGING_BUCKETS.map((b, i) => (
-          <Stat key={b} icon={i === 0 ? CalendarCheck2 : Clock} tone={i === 0 ? "teal" : i >= 3 ? "clay" : "neutral"} label={t.payables.buckets[b]}
+          <Stat currency={ctx.hotel.base_currency} key={b} icon={i === 0 ? CalendarCheck2 : Clock} tone={i === 0 ? "teal" : i >= 3 ? "clay" : "neutral"} label={t.payables.buckets[b]}
             value={<Money value={totals.buckets[b]} locale={locale} />}
             hint={totals.total.gt(0) ? `${totals.buckets[b].div(totals.total).times(100).toFixed(1)}%` : undefined} />
         ))}

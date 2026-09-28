@@ -23,7 +23,7 @@ export default async function PeriodsPage() {
   const nextStart = latest ? new Date(Date.parse(`${latest.end_date}T00:00:00Z`) + 86400000).toISOString().slice(0, 10) : undefined;
   return (
     <>
-      <PageHeader title={t.nav.periods} description={a.periodsSubtitle}
+      <PageHeader title={t.nav.periods}
         actions={can && latest && nextStart && <PeriodButton op="newYear" id={latest.id} startDate={nextStart} label={`${a.newYear} من ${nextStart}`} errorLabels={errs} />} />
       <StatGrid className="lg:grid-cols-3">
         <Stat icon={CalendarCheck} tone="ink" label="سنوات مالية" value={<span className="num">{(years.data ?? []).length}</span>} hint={`${(years.data ?? []).filter((y) => y.status === "open").length} مفتوحة`} />

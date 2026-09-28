@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/layout/page-header";
+import { Properties } from "@/components/ui/properties";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireAppContext } from "@/lib/auth/context";
@@ -26,7 +27,6 @@ export default async function GuestRegisterPage({ searchParams }: { searchParams
     <>
       <PageHeader
         title="كشف النزلاء"
-        description={`${ctx.hotel.name_ar}، ليلة ${dayLabel(date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}، ${rows.length} حجز و${persons} شخص`}
         actions={
           <div className="flex items-center gap-2">
             <form className="flex items-center gap-2 print:hidden">
@@ -37,6 +37,12 @@ export default async function GuestRegisterPage({ searchParams }: { searchParams
           </div>
         }
       />
+      <Properties items={[
+        ["الفندق", ctx.hotel.name_ar],
+        ["الليلة", dayLabel(date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })],
+        ["الحجوزات", <span key="r" className="num">{rows.length}</span>],
+        ["الأشخاص", <span key="p" className="num">{persons}</span>],
+      ]} />
       <Card className="overflow-hidden">
         <Table>
           <TableHeader>

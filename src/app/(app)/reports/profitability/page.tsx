@@ -1,4 +1,5 @@
 import { ExportButtons } from "@/components/reports/export-buttons";
+import { CodeName } from "@/components/ui/code-text";
 import { PageHeader } from "@/components/layout/page-header";
 import { Money } from "@/components/money";
 import { Button } from "@/components/ui/button";
@@ -44,7 +45,7 @@ export default async function ProfitabilityPage({ searchParams }: { searchParams
   );
   return (
     <>
-      <PageHeader title={t.nav.profitability} description={p.subtitle}
+      <PageHeader title={t.nav.profitability}
         actions={<ExportButtons report={`profitability`} query={`from=${from}&to=${to}`} labels={{ excel: t.reports.exportExcel, pdf: t.reports.printPdf }} />} />
       <form className="toolbar">
         <Input type="date" name="from" defaultValue={from} dir="ltr" className="w-52" aria-label={t.common.from} />
@@ -52,10 +53,10 @@ export default async function ProfitabilityPage({ searchParams }: { searchParams
         <Button type="submit" variant="outline">{t.common.apply}</Button>
       </form>
       <StatGrid>
-        <Stat icon={TrendingUp} tone="teal" label={p.revenue} value={<Money value={total.revenue} locale={locale} />} />
-        <Stat icon={Package} tone="clay" label={p.cos} value={<Money value={total.costOfSales} locale={locale} />} />
-        <Stat icon={Receipt} tone="neutral" label={p.opex} value={<Money value={total.operatingExpenses} locale={locale} />} />
-        <Stat icon={PieChart} tone="ink" label={p.net} value={<Money value={total.netProfit} locale={locale} />}
+        <Stat currency={ctx.hotel.base_currency} icon={TrendingUp} tone="teal" label={p.revenue} value={<Money value={total.revenue} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Package} tone="clay" label={p.cos} value={<Money value={total.costOfSales} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Receipt} tone="neutral" label={p.opex} value={<Money value={total.operatingExpenses} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={PieChart} tone="ink" label={p.net} value={<Money value={total.netProfit} locale={locale} />}
           valueClassName={total.netProfit.isNegative() ? "text-urgent" : "text-success"} hint={total.margin ? `هامش ${total.margin.toFixed(1)}%` : undefined} />
       </StatGrid>
       <Card className="overflow-hidden">
@@ -70,7 +71,7 @@ export default async function ProfitabilityPage({ searchParams }: { searchParams
             {rows.map((r) => (
               <TableRow key={r.departmentId ?? "none"}>
                 <TableCell>
-                  <span className="font-medium">{r.departmentId ? deptName.get(r.departmentId) : p.unassigned}</span>
+                  <CodeName className="font-medium" label={(r.departmentId && deptName.get(r.departmentId)) || p.unassigned} />
                   {total.revenue.gt(0) && r.revenue.gt(0) && (
                     <span className="mt-1.5 block h-1.5 w-full max-w-40 overflow-hidden rounded-sm bg-subtle">
                       <span className="block h-full rounded-sm bg-accent1" style={{ width: `${Math.min(100, r.revenue.div(total.revenue).times(100).toNumber())}%` }} />

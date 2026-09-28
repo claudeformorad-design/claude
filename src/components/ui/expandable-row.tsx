@@ -7,7 +7,8 @@ import { Plus } from "lucide-react";
 import Link from "@/components/link";
 import { loadDetailAction } from "@/app/(app)/_details/actions";
 import { callAction } from "@/lib/action-error";
-import type { Detail, DetailKind } from "@/lib/details";
+import type { Detail, DetailCell, DetailKind } from "@/lib/details";
+import { CodeTag, DocText } from "@/components/ui/code-text";
 import { cn } from "@/lib/utils";
 
 /**
@@ -71,15 +72,26 @@ export function ExpandMark() {
   return <Plus aria-hidden className="expand-mark me-2 inline size-4 shrink-0 align-[-3px] text-slate-400 transition-transform duration-200" />;
 }
 
+/** محاذاة العمود من نوع خلاياه: المبالغ والكميات في نهاية السطر، وكل ما عداها من بدايته */
+const isAmount = (c: DetailCell | undefined) => c?.type === "amount";
+
+function CellContent({ c }: { c: DetailCell }) {
+  if (!c.text) return null;
+  // رقم المستند المرتبط شارة قابلة للضغط، ورمز الحساب نص هادئ في عموده
+  const body = c.type === "code" ? (c.href ? <CodeTag className="m-0">{c.text}</CodeTag> : <span className="num text-slate-500">{c.text}</span>)
+    : c.type === "date" || c.type === "amount" ? <span className="num">{c.text}</span>
+    : <DocText text={c.text} />;
+  return c.href ? <Link href={c.href} className="text-action hover:opacity-75">{body}</Link> : body;
+}
+
 function DetailView({ detail }: { detail: Detail }) {
-  const cell = (c: Detail["rows"][number][number], i: number) => {
-    const content = c.href ? <Link href={c.href} className="text-action hover:opacity-75">{c.text}</Link> : c.text;
-    return (
-      <td key={i} className={cn("px-3 py-2", i > 0 && c.num && "text-end", c.num && "num", c.tone === "neg" && "text-urgent", c.tone === "muted" && "text-slate-500")}>
-        {content}
-      </td>
-    );
-  };
+  const endCols = detail.columns.map((_, i) => detail.rows.some((r) => isAmount(r[i])));
+  const cell = (c: DetailCell, i: number) => (
+    <td key={i} className={cn("px-3 py-2 align-top", endCols[i] ? "text-end whitespace-nowrap" : "text-start",
+      c.tone === "neg" && "text-urgent", c.tone === "muted" && "text-slate-500")}>
+      <CellContent c={c} />
+    </td>
+  );
   return (
     <div className="space-y-3">
       {detail.facts && detail.facts.length > 0 && (
@@ -87,7 +99,7 @@ function DetailView({ detail }: { detail: Detail }) {
           {detail.facts.map((f) => (
             <div key={f.label} className="flex items-baseline gap-2">
               <dt className="text-slate-500">{f.label}</dt>
-              <dd className={cn("font-semibold text-ink", f.num && "num")}>{f.value}</dd>
+              <dd className="font-semibold text-ink">{f.amount ? <span className="num">{f.value}</span> : <DocText text={f.value} />}</dd>
             </div>
           ))}
         </dl>
@@ -100,7 +112,7 @@ function DetailView({ detail }: { detail: Detail }) {
             <thead>
               <tr className="border-b border-line text-slate-500">
                 {detail.columns.map((c, i) => (
-                  <th key={c} className={cn("px-3 py-2 text-start font-medium", i > 0 && detail.rows[0]?.[i]?.num && "text-end")}>{c}</th>
+                  <th key={c} className={cn("px-3 py-2 font-medium whitespace-nowrap", endCols[i] ? "text-end" : "text-start")}>{c}</th>
                 ))}
               </tr>
             </thead>

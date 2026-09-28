@@ -32,7 +32,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <PageHeader title={t.nav.users} description={a.usersSubtitle} />
+      <PageHeader title={t.nav.users} />
       <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
         <Card className="overflow-hidden">
           <CardHeader><CardTitle>{a.roles}</CardTitle></CardHeader>

@@ -47,15 +47,14 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
     <>
       <PageHeader
         title={t.invoices.title}
-        description={t.invoices.subtitle}
         actions={ctx.can(PERMISSIONS.invoicesCreate) && (
           <Button asChild><Link href="/invoices/new"><Plus />{t.invoices.newDirect}</Link></Button>
         )}
       />
       <StatGrid>
         <Stat icon={FileText} tone="ink" label="فواتير في القائمة" value={<span className="num">{invoices.length}</span>} />
-        <Stat icon={Receipt} tone="teal" label="إجمالي المفوتر" value={<Money value={totalInvoiced} locale={locale} />} />
-        <Stat icon={Hourglass} tone="clay" label="المتبقي للتحصيل" value={<Money value={totalOutstanding} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Receipt} tone="teal" label="إجمالي المفوتر" value={<Money value={totalInvoiced} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Hourglass} tone="clay" label="المتبقي للتحصيل" value={<Money value={totalOutstanding} locale={locale} />} />
         <Stat icon={AlarmClock} tone="neutral" label="متأخرة السداد" value={<span className="num">{overdue.length}</span>}
           hint={overdue.length ? <>بقيمة <Money value={overdue.reduce((a, i) => a.plus(outstanding(i)), ZERO)} locale={locale} /></> : "لا يوجد تأخير"} />
       </StatGrid>

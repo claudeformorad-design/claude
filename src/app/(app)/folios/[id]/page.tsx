@@ -1,4 +1,5 @@
 import Link from "@/components/link";
+import { CodeTag, DocText } from "@/components/ui/code-text";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { plainText } from "@/lib/text";
@@ -15,7 +16,7 @@ import { listChargeCodes, listPaymentMethods, listTaxRates } from "@/services/re
 import { getI18n } from "@/i18n/server";
 import { cn } from "@/lib/utils";
 import { FolioActions } from "./folio-actions";
-import { CalendarRange, HandCoins, ListOrdered, Wallet } from "lucide-react";
+import { CalendarRange, HandCoins, UserRound, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Stat, StatGrid } from "@/components/ui/stat";
 
@@ -50,7 +51,6 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
     <>
       <PageHeader
         title={`${t.folio.folioNumber} ${folio.folio_number}`}
-        description={`${folio.guest_name}${folio.room_number ? `، ${t.folio.room} ${folio.room_number}` : ""}`}
         actions={
           <div className="flex items-center gap-2">
             {detail.invoiceId && <Button asChild variant="outline"><Link href={`/invoices/${detail.invoiceId}`}>{t.folio.invoice}</Link></Button>}
@@ -61,10 +61,10 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
       />
 
       <StatGrid>
-        <Stat icon={Wallet} tone="ink" label={t.folio.balance} value={<><Money value={detail.balance} locale={locale} /> <span className="text-[15.5px] font-normal text-slate-500">{ctx.hotel.base_currency}</span></>} />
-        <Stat icon={HandCoins} tone="teal" label={t.folio.deposits} value={<Money value={detail.deposits} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="ink" label={t.folio.balance} value={<Money value={detail.balance} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={HandCoins} tone="teal" label={t.folio.deposits} value={<Money value={detail.deposits} locale={locale} />} />
         <Stat icon={CalendarRange} tone="clay" label="الإقامة" value={folio.arrival_date ? <span>من <span className="num">{folio.arrival_date}</span> إلى <span className="num">{folio.departure_date ?? ""}</span></span> : ""} hint={t.folio.types[folio.folio_type]} />
-        <Stat icon={ListOrdered} tone="neutral" label={t.folio.transactions} value={<span className="num">{transactions.length}</span>} hint={folio.room_number ? `${t.folio.room} ${folio.room_number}` : undefined} />
+        <Stat icon={UserRound} tone="neutral" label="النزيل" value={folio.guest_name} hint={folio.room_number ? `${t.folio.room} ${folio.room_number}` : undefined} />
       </StatGrid>
 
       {isOpen && (
@@ -79,7 +79,7 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
               id: c.id, label: `${c.code} ${name(c)}`, price: c.default_price, inclusive: c.price_includes_tax,
               taxes: c.tax_rate_ids.map((tid) => taxById.get(tid)).filter((x) => !!x).map((x) => ({ id: x!.id, rate: x!.rate, is_compound: x!.is_compound })),
             }))}
-            methods={methods.filter((m) => m.is_active).map((m) => ({ id: m.id, label: m.currency_code ? `${name(m)} ${m.currency_code}` : name(m), kind: m.kind }))}
+            methods={methods.filter((m) => m.is_active).map((m) => ({ id: m.id, label: m.currency_code ? `${m.currency_code} ${name(m)}` : name(m), kind: m.kind }))}
             customers={(customers?.data ?? []).map((c) => ({ id: c.id, label: `${c.code} ${name(c)}` }))}
             defaultCustomerId={folio.customer_id}
             charges={effective.filter((x) => x.txn_type === "charge").map((x) => ({ id: x.id, label: summary(x) }))}
@@ -115,7 +115,7 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
               <TableRow key={x.id} className={cn((x.voided_by_id || x.direction === -1) && "text-muted-foreground line-through decoration-muted-foreground/40")}>
                 <TableCell className="num">{x.business_date}</TableCell>
                 <TableCell><Badge variant="outline">{t.folio.txnTypes[x.txn_type]}</Badge></TableCell>
-                <TableCell>{plainText(x.description)}{x.reference ? `، ${x.reference}` : ""}</TableCell>
+                <TableCell><DocText text={x.description} />{x.reference && <CodeTag>{x.reference}</CodeTag>}</TableCell>
                 <TableCell className="text-end"><Money value={x.net_amount} locale={locale} blankZero /></TableCell>
                 <TableCell className="text-end"><Money value={x.tax_amount} locale={locale} blankZero /></TableCell>
                 <TableCell className={cn("text-end", toMoney(x.ledger_effect).isNegative() && "text-success")}><Money value={x.ledger_effect} locale={locale} blankZero /></TableCell>

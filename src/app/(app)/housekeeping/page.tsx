@@ -1,5 +1,5 @@
 import { FormDialog } from "@/components/ui/dialog";
-import { CheckCircle2, Clock, Sparkles, Wrench } from "lucide-react";
+import { CheckCircle2, CircleDashed, Clock, Wrench } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -36,7 +36,7 @@ export default async function HousekeepingPage({ searchParams }: { searchParams:
 
   return (
     <>
-      <PageHeader title="التدبير الفندقي" description="مهام تنظيف الغرف وفحصها وصيانتها لليوم" actions={<div className="flex gap-2">
+      <PageHeader title="التدبير الفندقي" actions={<div className="flex gap-2">
           <FormDialog label="مهمة جديدة" title="مهمة جديدة" variant="outline">
                   <SimpleForm columns={2} submitLabel="إضافة المهمة" errors={t.errors} action={addHousekeepingTaskAction}
               initial={{ room_id: rooms.find((r) => r.is_active)?.id ?? "", kind: "maintenance", date: today, notes: "", assignee: "", out_of_service: false }}
@@ -53,7 +53,7 @@ export default async function HousekeepingPage({ searchParams }: { searchParams:
         </div>} />
       <StatGrid>
         <Stat icon={Clock} tone="ink" label="مهام مفتوحة" value={<span className="num">{open.length}</span>} />
-        <Stat icon={Sparkles} tone="clay" label="قيد التنفيذ" value={<span className="num">{tasks.filter((x) => x.status === "in_progress").length}</span>} />
+        <Stat icon={CircleDashed} tone="clay" label="قيد التنفيذ" value={<span className="num">{tasks.filter((x) => x.status === "in_progress").length}</span>} />
         <Stat icon={CheckCircle2} tone="teal" label="أُنجزت اليوم" value={<span className="num">{tasks.filter((x) => x.status === "done").length}</span>} />
         <Stat icon={Wrench} tone="neutral" label="غرف تحتاج تنظيف" value={<span className="num">{rooms.filter((r) => r.is_active && r.housekeeping_status === "dirty").length}</span>} />
       </StatGrid>

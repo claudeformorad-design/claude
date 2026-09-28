@@ -31,7 +31,7 @@ export default async function ReportPage({ params, searchParams }: {
 
   return (
     <>
-      <PageHeader title={table.title} description={table.subtitle} />
+      <PageHeader title={table.title} />
       <form className="toolbar print:hidden">
         {!pointInTime && <Input type="date" name="from" defaultValue={from} dir="ltr" className="w-52" aria-label={t.common.from} />}
         <Input type="date" name="to" defaultValue={to} dir="ltr" className="w-52" aria-label={t.common.to} />

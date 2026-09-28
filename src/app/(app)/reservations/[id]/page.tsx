@@ -95,7 +95,6 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
     <>
       <PageHeader
         title={`الحجز ${r.confirmation_number}`}
-        description={`${r.guest?.full_name ?? ""}، ${r.room_type?.name_ar ?? ""}${r.group ? `، مجموعة ${r.group.name}` : ""}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant={status.variant} className="text-[16px]">{status.label}</Badge>
@@ -119,7 +118,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
           value={hourly ? timeRange(r.starts_at, r.ends_at) : nightsText(nights)}
           hint={hourly ? dayLabel(r.arrival_date, { weekday: "long", day: "numeric", month: "long" }) : `من ${dayLabel(r.arrival_date)} إلى ${dayLabel(r.departure_date)}`} />
         <Stat icon={BedDouble} tone="teal" label={hourly ? "الوحدة" : "الغرفة"} value={r.room ? <span className="num">{r.room.room_number}</span> : <span className="text-slate-500">غير مخصصة</span>} hint={r.room_type?.name_ar} />
-        <Stat icon={Wallet} tone="clay" label="المبلغ المثبّت" value={<Money value={r.total_amount} locale={locale} />} hint={PRICING_LABEL[r.pricing]} />
+        <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="clay" label="المبلغ المثبّت" value={<Money value={r.total_amount} locale={locale} />} hint={PRICING_LABEL[r.pricing]} />
         <Stat icon={Users} tone="neutral" label="النزلاء" value={<span className="num">{r.adults}{r.children ? ` بالغ و${r.children} طفل` : ""}</span>} hint={`${RESERVATION_SOURCE[r.source]}${r.customer ? `، ${r.customer.name_ar}` : ""}`} />
       </StatGrid>
 

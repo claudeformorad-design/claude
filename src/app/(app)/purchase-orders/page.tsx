@@ -23,7 +23,7 @@ export default async function PurchaseOrdersPage() {
   const vName = new Map(vendors.map((v) => [v.id, (locale === "en" && v.name_en) || v.name_ar]));
   return (
     <>
-      <PageHeader title={t.nav.purchaseOrders} description={t.payables.poSubtitle}
+      <PageHeader title={t.nav.purchaseOrders}
         actions={<Button asChild><Link href="/purchase-orders/new"><Plus />{t.payables.newPo}</Link></Button>} />
       <StatGrid className="lg:grid-cols-3">
         <Stat icon={ShoppingCart} tone="ink" label="أوامر الشراء" value={<span className="num">{pos.length}</span>} />

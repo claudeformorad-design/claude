@@ -3,6 +3,7 @@ import {
 } from "lucide-react";
 import Link from "@/components/link";
 import { Money } from "@/components/money";
+import { DocText } from "@/components/ui/code-text";
 import { plainText } from "@/lib/text";
 
 const SOURCE_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -47,7 +48,7 @@ export function RecentEntries({ entries, today, sources }: { entries: RecentEntr
                   <Link href={`/journal/${e.id}`} title={`${e.entry_number ?? ""} ${sources[e.source] ?? ""}`.trim()}
                     className="group flex items-center gap-3 rounded-lg px-2 py-2.5 text-[16px] transition-colors hover:bg-subtle">
                     <Icon className="size-[18px] shrink-0 stroke-[1.7] text-slate-400 transition-colors group-hover:text-action" />
-                    <span className="min-w-0 flex-1 truncate text-ink">{title}</span>
+                    <DocText text={title} className="min-w-0 flex-1 truncate text-ink" />
                     <Money value={e.total} locale="ar" className="shrink-0 font-semibold text-ink" />
                   </Link>
                 </li>

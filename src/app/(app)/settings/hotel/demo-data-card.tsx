@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Trash2 } from "lucide-react";
+import { Database, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { actionErrorText, callAction } from "@/lib/action-error";
 import { loadDemoDataAction, removeDemoDataAction } from "../../_admin/actions";
@@ -26,7 +26,7 @@ export function DemoDataCard({ active, errors }: { active: boolean; errors: Reco
     <div className="surface flex flex-wrap items-center justify-between gap-4 p-6">
       <div className="flex min-w-0 items-start gap-4">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent1-tint text-accent1">
-          <Sparkles className="size-5 stroke-[1.75]" />
+          <Database className="size-5 stroke-[1.75]" />
         </span>
         <div className="space-y-1">
           <h3 className="text-[18.5px] font-semibold text-ink">بيانات تجريبية مؤقتة</h3>
@@ -45,7 +45,7 @@ export function DemoDataCard({ active, errors }: { active: boolean; errors: Reco
         </Button>
       ) : (
         <Button loading={pending} onClick={() => run(loadDemoDataAction, "/")}>
-          <Sparkles />
+          <Database />
           {pending ? "جارٍ التوليد، قد يستغرق دقيقة" : "إنشاء بيانات تجريبية"}
         </Button>
       )}

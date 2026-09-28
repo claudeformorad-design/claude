@@ -42,12 +42,12 @@ export default async function AssetsPage() {
 
   return (
     <>
-      <PageHeader title={t.nav.fixedAssets} description={a.subtitle} />
+      <PageHeader title={t.nav.fixedAssets} />
       <StatGrid>
         <Stat icon={Building2} tone="ink" label="أصول فعّالة" value={<span className="num">{active.length}</span>} hint={`${assets.length - active.length} مستبعد`} />
-        <Stat icon={Coins} tone="teal" label="التكلفة" value={<Money value={active.reduce((s, x) => s.plus(toMoney(x.cost)), ZERO)} locale={locale} />} />
-        <Stat icon={TrendingDown} tone="clay" label="مجمع الإهلاك" value={<Money value={active.reduce((s, x) => s.plus(toMoney(x.accumulated_depreciation)), ZERO)} locale={locale} />} />
-        <Stat icon={Scale} tone="neutral" label="صافي القيمة الدفترية" value={<Money value={active.reduce((s, x) => s.plus(toMoney(x.cost)).minus(toMoney(x.accumulated_depreciation)), ZERO)} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Coins} tone="teal" label="التكلفة" value={<Money value={active.reduce((s, x) => s.plus(toMoney(x.cost)), ZERO)} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={TrendingDown} tone="clay" label="مجمع الإهلاك" value={<Money value={active.reduce((s, x) => s.plus(toMoney(x.accumulated_depreciation)), ZERO)} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Scale} tone="neutral" label="صافي القيمة الدفترية" value={<Money value={active.reduce((s, x) => s.plus(toMoney(x.cost)).minus(toMoney(x.accumulated_depreciation)), ZERO)} locale={locale} />} />
       </StatGrid>
       {can && (
         <div className="mb-6 grid gap-6 xl:grid-cols-[2fr_1fr]">

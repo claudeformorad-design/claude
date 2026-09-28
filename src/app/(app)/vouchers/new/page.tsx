@@ -26,7 +26,7 @@ export default async function NewVoucherPage({ searchParams }: { searchParams: P
 
   return (
     <>
-      <PageHeader title={type === "receipt" ? t.vouchers.newReceipt : t.vouchers.newDisbursement} description={t.vouchers.subtitle} />
+      <PageHeader title={type === "receipt" ? t.vouchers.newReceipt : t.vouchers.newDisbursement} />
       <Card><CardContent className="p-5">
         <VoucherForm
           t={{ vouchers: t.vouchers, folio: t.folio, invoices: t.invoices, common: t.common, errors: t.errors }}

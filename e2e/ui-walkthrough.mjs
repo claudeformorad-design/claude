@@ -21,6 +21,7 @@ const noErrorScreen = async () => {
 };
 const pick = async (loc, re) => {
   const l = typeof loc === "string" ? page.locator(loc) : loc;
+  await l.first().waitFor({ state: "attached" });
   const texts = await l.locator("option").allTextContents();
   const i = texts.findIndex((t) => re.test(t));
   if (i < 0) throw new Error(`no option matching ${re}`);
@@ -155,6 +156,18 @@ await step("excel export downloads", async () => {
   if (res.status() !== 200 || !(res.headers()["content-type"] ?? "").includes("spreadsheet")) throw new Error(`status ${res.status()}`);
   const buf = await res.body();
   if (buf.subarray(0, 2).toString() !== "PK") throw new Error("not an xlsx zip");
+});
+await step("pdf export is a real vector document", async () => {
+  const res = await page.request.get(`${BASE}/api/export/balance-sheet?format=pdf`);
+  if (res.status() !== 200 || res.headers()["content-type"] !== "application/pdf") throw new Error(`status ${res.status()}`);
+  const buf = await res.body();
+  if (buf.subarray(0, 5).toString() !== "%PDF-") throw new Error("not a pdf");
+  if (buf.length > 400_000) throw new Error(`pdf too large (${buf.length} bytes), looks like an image`);
+});
+await step("assistant stays off without a provider key", async () => {
+  if (await page.getByRole("button", { name: /المساعد/ }).count()) throw new Error("assistant button shown without a key");
+  const res = await page.request.post(`${BASE}/api/assistant`, { data: { messages: [{ role: "user", content: "مرحبا" }], page: { path: "/" } } });
+  if (res.status() !== 503) throw new Error(`status ${res.status()}`);
 });
 console.log(`\nproblems (${problems.length}):`);
 for (const p of problems) console.log(" - " + p);

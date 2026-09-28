@@ -59,7 +59,6 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
     <>
       <PageHeader
         title={t.nav.rates}
-        description="السعر الأساسي ونهاية الأسبوع والمواسم وعروض اللحظة الأخيرة. كل حجز يثبّت سعر لياليه وقت إنشائه، فتغيير الأسعار لا يمس الحجوزات القائمة."
         actions={canManage && (
           <>
             <Button asChild variant="outline"><Link href="/rates?rule=new"><BadgePercent />عرض لحظة أخيرة</Link></Button>

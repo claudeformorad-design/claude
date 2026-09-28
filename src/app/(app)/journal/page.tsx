@@ -1,8 +1,9 @@
 import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
+import { CurrencyTag } from "@/components/ui/currency-tag";
+import { DocText } from "@/components/ui/code-text";
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
-import { plainText } from "@/lib/text";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,7 +58,6 @@ export default async function JournalPage({
     <>
       <PageHeader
         title={t.journal.title}
-        description={t.journal.subtitle}
         actions={
           ctx.can(PERMISSIONS.journalCreate) && (
             <Button asChild>
@@ -122,12 +122,12 @@ export default async function JournalPage({
                   </Link>
                 </TableCell>
                 <TableCell className="num">{e.entry_date}</TableCell>
-                <TableCell className="cell-fluid font-medium">{plainText(e.description)}</TableCell>
+                <TableCell className="cell-fluid font-medium"><DocText text={e.description} /></TableCell>
                 <TableCell>
                   <Badge variant="outline">{t.journal.sources[e.source]}</Badge>
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-end font-semibold">
-                  <Money value={e.total_debit} locale={locale} /> <span className="text-xs font-normal text-slate-500">{e.currency_code}</span>
+                  <Money value={e.total_debit} locale={locale} />{e.currency_code !== ctx.hotel.base_currency && <CurrencyTag code={e.currency_code} className="ms-2" />}
                 </TableCell>
                 <TableCell>
                   <StatusBadge status={e.status} reversed={!!e.reversed_by_id} labels={t.journal.status} />

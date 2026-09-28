@@ -1,8 +1,8 @@
 import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
+import { DocText } from "@/components/ui/code-text";
 import Link from "@/components/link";
 import { CreditCard, HandCoins, Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
-import { plainText } from "@/lib/text";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,6 @@ export default async function VouchersPage({ searchParams }: { searchParams: Pro
     <>
       <PageHeader
         title={t.vouchers.title}
-        description={t.vouchers.subtitle}
         actions={
           <>
             {ctx.can(PERMISSIONS.paymentsReceipt) && <Button asChild><Link href="/vouchers/new?type=receipt"><Plus />{t.vouchers.newReceipt}</Link></Button>}
@@ -55,9 +54,9 @@ export default async function VouchersPage({ searchParams }: { searchParams: Pro
       />
       <StatGrid>
         <Stat icon={Receipt} tone="ink" label="سندات في القائمة" value={<span className="num">{vouchers.length}</span>} />
-        <Stat icon={HandCoins} tone="teal" label="مقبوضات" value={<Money value={receipts} locale={locale} />} />
-        <Stat icon={CreditCard} tone="clay" label="مدفوعات" value={<Money value={disbursements} locale={locale} />} />
-        <Stat icon={Scale} tone="neutral" label="صافي الحركة" value={<Money value={receipts.minus(disbursements)} locale={locale} />}
+        <Stat currency={ctx.hotel.base_currency} icon={HandCoins} tone="teal" label="مقبوضات" value={<Money value={receipts} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={CreditCard} tone="clay" label="مدفوعات" value={<Money value={disbursements} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Scale} tone="neutral" label="صافي الحركة" value={<Money value={receipts.minus(disbursements)} locale={locale} />}
           valueClassName={receipts.minus(disbursements).isNegative() ? "text-urgent" : undefined} hint="بدون السندات الملغاة" />
       </StatGrid>
 
@@ -106,7 +105,7 @@ export default async function VouchersPage({ searchParams }: { searchParams: Pro
                 <TableCell className="num">{v.payment_date}</TableCell>
                 <TableCell><Badge variant={v.voucher_type === "receipt" ? "success" : "warning"}>{t.vouchers.types[v.voucher_type]}</Badge></TableCell>
                 <TableCell>{v.party_name ? <div className="max-w-52"><EntityCell name={v.party_name} /></div> : <span className="text-slate-400"></span>}</TableCell>
-                <TableCell className="cell-fluid">{plainText(v.description)}</TableCell>
+                <TableCell className="cell-fluid"><DocText text={v.description} /></TableCell>
                 <TableCell className={`text-end font-semibold ${v.voucher_type === "receipt" ? "text-success" : "text-ink"}`}><Money value={v.amount} locale={locale} /></TableCell>
                 <TableCell><Badge variant={v.status === "voided" ? "destructive" : "secondary"}>{t.vouchers.statuses[v.status]}</Badge></TableCell>
               </ExpandableRow>

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "@/components/link";
 import { BedDouble, CalendarDays, Plus, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { Properties } from "@/components/ui/properties";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,6 @@ export default async function GuestPage({ params }: { params: Promise<{ id: stri
     <>
       <PageHeader
         title={guest.full_name}
-        description={[guest.phone, guest.nationality, guest.id_number ? `${ID_TYPES[guest.id_type!]} ${guest.id_number}` : null].filter(Boolean).join("، ") || "ملف النزيل"}
         actions={
           <div className="flex items-center gap-2">
             {guest.is_blacklisted && <Badge variant="destructive">القائمة السوداء: {guest.blacklist_reason}</Badge>}
@@ -54,10 +54,15 @@ export default async function GuestPage({ params }: { params: Promise<{ id: stri
           </div>
         }
       />
+      <Properties items={[
+        ["الجوال", guest.phone && <span className="num" dir="ltr">{guest.phone}</span>],
+        ["الجنسية", guest.nationality],
+        [guest.id_type ? ID_TYPES[guest.id_type] : "الهوية", guest.id_number && <span className="num">{guest.id_number}</span>],
+      ]} />
       <StatGrid>
         <Stat icon={CalendarDays} tone="ink" label="الحجوزات" value={<span className="num">{reservations.length}</span>} hint={`${stays.length} فعّال أو منفَّذ`} />
         <Stat icon={BedDouble} tone="teal" label="الليالي" value={<span className="num">{nights}</span>} />
-        <Stat icon={Wallet} tone="clay" label="قيمة الحجوزات" value={<Money value={total} locale={locale} />} hint={ctx.hotel.base_currency} />
+        <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="clay" label="قيمة الحجوزات" value={<Money value={total} locale={locale} />} />
         <Stat icon={CalendarDays} tone="neutral" label="آخر وصول" value={<span className="num">{stays.at(-1)?.arrival_date ?? ""}</span>} />
       </StatGrid>
 
@@ -71,7 +76,7 @@ export default async function GuestPage({ params }: { params: Promise<{ id: stri
               {[...reservations].reverse().map((r) => (
                 <TableRow key={r.id}>
                   <TableCell><Link href={`/reservations/${r.id}`} className="num font-semibold text-ink">{r.confirmation_number}</Link></TableCell>
-                  <TableCell className="num">{r.booking_mode === "hourly" ? `${r.arrival_date} ${timeRange(r.starts_at, r.ends_at)}` : `من ${r.arrival_date} إلى ${r.departure_date}`}</TableCell>
+                  <TableCell>{r.booking_mode === "hourly" ? <span className="num">{`${r.arrival_date} ${timeRange(r.starts_at, r.ends_at)}`}</span> : <>من <span className="num">{r.arrival_date}</span> إلى <span className="num">{r.departure_date}</span></>}</TableCell>
                   <TableCell>{r.room ? <span className="num font-semibold">{r.room.room_number}</span> : <span className="text-slate-500">{r.room_type?.name_ar}</span>}</TableCell>
                   <TableCell><Badge variant={RESERVATION_STATUS[r.status].variant}>{RESERVATION_STATUS[r.status].label}</Badge></TableCell>
                   <TableCell className="text-end font-semibold"><Money value={r.total_amount} locale={locale} /></TableCell>

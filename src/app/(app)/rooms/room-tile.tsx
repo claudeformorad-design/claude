@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
-import { Sparkles, Wrench } from "lucide-react";
+import { CircleCheck, Wrench } from "lucide-react";
 import Link from "@/components/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,7 +95,7 @@ export function RoomTile({
             {oos ? (
               <button type="button" disabled={pending} onClick={() => set({ service_status: "in_service" })}
                 className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-start text-[15.5px] hover:bg-subtle">
-                <Sparkles className="size-4 text-success" />إعادتها للخدمة
+                <CircleCheck className="size-4 text-success" />إعادتها للخدمة
               </button>
             ) : askNote ? (
               <form className="space-y-2 p-1" onSubmit={(e) => { e.preventDefault(); if (note.trim()) set({ service_status: "out_of_service", service_note: note.trim() }); }}>

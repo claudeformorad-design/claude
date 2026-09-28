@@ -30,12 +30,12 @@ export default async function BillsPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <PageHeader title={t.nav.bills} description={t.payables.billsSubtitle}
+      <PageHeader title={t.nav.bills}
         actions={ctx.can(PERMISSIONS.billsCreate) && <Button asChild><Link href="/bills/new"><Plus />{t.payables.newBill}</Link></Button>} />
       <StatGrid>
         <Stat icon={FileSpreadsheet} tone="ink" label="فواتير الموردين" value={<span className="num">{bills.length}</span>} />
-        <Stat icon={Receipt} tone="teal" label="إجمالي المشتريات" value={<Money value={bills.reduce((a, b) => a.plus(toMoney(b.total)), ZERO)} locale={locale} />} />
-        <Stat icon={Hourglass} tone="clay" label="المستحق للموردين" value={<Money value={bills.reduce((a, b) => a.plus(toMoney(b.total).minus(toMoney(b.amount_paid))), ZERO)} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Receipt} tone="teal" label="إجمالي المشتريات" value={<Money value={bills.reduce((a, b) => a.plus(toMoney(b.total)), ZERO)} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Hourglass} tone="clay" label="المستحق للموردين" value={<Money value={bills.reduce((a, b) => a.plus(toMoney(b.total).minus(toMoney(b.amount_paid))), ZERO)} locale={locale} />} />
         <Stat icon={AlarmClock} tone="neutral" label="متأخرة السداد" value={<span className="num">{bills.filter((b) => b.due_date < today && toMoney(b.total).gt(toMoney(b.amount_paid))).length}</span>} />
       </StatGrid>
       <Card className="overflow-hidden">
@@ -50,7 +50,7 @@ export default async function BillsPage({ searchParams }: { searchParams: Promis
             {shown.rows.map((b) => (
               <ExpandableRow kind="bill" id={b.id} colSpan={7} key={b.id}>
                 <TableCell><ExpandMark /><Link href={`/bills/${b.id}`} className="num font-semibold text-ink">{b.bill_number}</Link></TableCell>
-                <TableCell className="cell-fluid"><EntityCell name={vName.get(b.vendor_id) ?? ""} sub={b.vendor_invoice_no ? <>مرجع <span className="num">{b.vendor_invoice_no}</span></> : undefined} /></TableCell>
+                <TableCell className="cell-fluid"><EntityCell name={vName.get(b.vendor_id) ?? ""} sub={b.vendor_invoice_no ? <span className="num">{b.vendor_invoice_no}</span> : undefined} /></TableCell>
                 <TableCell className="num">{b.bill_date}</TableCell><TableCell className={`num ${b.due_date < today && toMoney(b.total).gt(toMoney(b.amount_paid)) ? "font-semibold text-urgent" : ""}`}>{b.due_date}</TableCell>
                 <TableCell className="text-end font-semibold"><Money value={b.total} locale={locale} /></TableCell>
                 <TableCell className="text-end"><Money value={toMoney(b.total).minus(toMoney(b.amount_paid))} locale={locale} blankZero /></TableCell>

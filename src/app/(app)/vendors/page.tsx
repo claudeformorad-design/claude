@@ -34,7 +34,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
     : null;
   return (
     <>
-      <PageHeader title={t.nav.vendors} description={t.payables.vendorsSubtitle}
+      <PageHeader title={t.nav.vendors}
         actions={can && <Button asChild><Link href="/vendors?new=1"><Plus />{t.payables.newVendor}</Link></Button>} />
       <StatGrid className="lg:grid-cols-3">
         <Stat icon={Truck} tone="ink" label="الموردون" value={<span className="num">{vendors.length}</span>} />

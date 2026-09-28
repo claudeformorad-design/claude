@@ -1,5 +1,5 @@
 import Link from "@/components/link";
-import { BedDouble, BellRing, CalendarCheck, CalendarRange, DoorOpen, Hourglass, KeyRound, LogOut, Plus, Sparkles, Users, Wrench } from "lucide-react";
+import { BedDouble, BellRing, BrushCleaning, CalendarCheck, CalendarRange, DoorOpen, Hourglass, KeyRound, LogOut, Plus, Users, Wrench } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -51,7 +51,6 @@ export default async function FrontDeskPage() {
     <>
       <PageHeader
         title={t.nav.frontDesk}
-        description={`${dayLabel(today, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}، الوصول بعد ${ctx.hotel.check_in_time.slice(0, 5)} والمغادرة قبل ${ctx.hotel.check_out_time.slice(0, 5)}`}
         actions={
           <>
             <Button asChild variant="outline"><Link href="/tape-chart"><CalendarRange />جدول الإشغال</Link></Button>
@@ -71,7 +70,7 @@ export default async function FrontDeskPage() {
         <div className="stagger mb-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {s.waitlist_ready > 0 && <Alert href="/waitlist?tab=ready" icon={BellRing} tone="action" title={`${s.waitlist_ready} طلب انتظار أصبح متاحًا`} text="تحررت غرف لطلبات في قائمة الانتظار، حوّلها لحجوزات" />}
           {expiring.length > 0 && <Alert href="/reservations?tab=tentative" icon={Hourglass} tone="amber" title={`${expiring.length} حجز مبدئي انتهت مهلته`} text="أكّدها مع النزيل أو ألغها لتحرير الغرف" />}
-          {s.dirty > 0 && <Alert href="/rooms?filter=dirty" icon={Sparkles} tone="neutral" title={`${s.dirty} غرفة تحتاج تنظيف`} text="تابعها مع التدبير الفندقي قبل وصول النزلاء" />}
+          {s.dirty > 0 && <Alert href="/rooms?filter=dirty" icon={BrushCleaning} tone="neutral" title={`${s.dirty} غرفة تحتاج تنظيف`} text="تابعها مع التدبير الفندقي قبل وصول النزلاء" />}
           {s.out_of_service > 0 && <Alert href="/rooms?filter=oos" icon={Wrench} tone="urgent" title={`${s.out_of_service} غرفة خارج الخدمة`} text="لا تُباع حتى تعود للخدمة" />}
         </div>
       )}

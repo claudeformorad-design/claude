@@ -42,11 +42,11 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
 
   return (
     <>
-      <PageHeader title={t.nav.stock} description={i.subtitle}
+      <PageHeader title={t.nav.stock}
         actions={can && <Button asChild variant="outline"><Link href="/inventory?new=1">{i.newItem}</Link></Button>} />
       <StatGrid>
         <Stat icon={Boxes} tone="ink" label="الأصناف" value={<span className="num">{items.length}</span>} hint={`${items.filter((x) => x.is_active).length} فعّال`} />
-        <Stat icon={Coins} tone="teal" label="قيمة المخزون" value={<Money value={items.reduce((s, x) => s.plus(toMoney(x.stock_value)), ZERO)} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Coins} tone="teal" label="قيمة المخزون" value={<Money value={items.reduce((s, x) => s.plus(toMoney(x.stock_value)), ZERO)} locale={locale} />} />
         <Stat icon={TriangleAlert} tone="clay" label="تحت حد إعادة الطلب" value={<span className="num">{lowCount}</span>} />
         <Stat icon={PackageX} tone="neutral" label="نفدت كميتها" value={<span className="num">{items.filter((x) => x.is_active && toMoney(x.quantity_on_hand).lte(0)).length}</span>} />
       </StatGrid>

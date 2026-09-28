@@ -9,6 +9,8 @@ import {
   StripedBars,
 } from "@/components/dashboard/charts";
 import { Money } from "@/components/money";
+import { PageHeader } from "@/components/layout/page-header";
+import { CurrencyTag } from "@/components/ui/currency-tag";
 import { Scale, TrendingDown, TrendingUp, Wallet, Plus } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -65,16 +67,6 @@ const BUCKET_META: Record<AgingBucket, { label: string; color: string }> = {
   over_90: { label: "متأخرة أكثر من 90 يومًا", color: CHART_COLORS.overdue[3] },
 };
 
-function currencySymbol(code: string): string {
-  try {
-    const part = new Intl.NumberFormat("ar-SA", { style: "currency", currency: code, currencyDisplay: "narrowSymbol" })
-      .formatToParts(0)
-      .find((p) => p.type === "currency")?.value;
-    return (part ?? code).replace(/\.$/, "");
-  } catch {
-    return code;
-  }
-}
 
 const addDays = (iso: string, n: number) => {
   const d = new Date(`${iso}T00:00:00Z`);
@@ -153,7 +145,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // أي خطأ في مصدر بيانات يُظهر صفحة الخطأ بدل أرقام ناقصة مضللة
   for (const res of [deptRows, cash, drafts, recent, openFolios, period, recon, invIssued, invPartial, invPaid]) raise(res?.error ?? null);
 
-  const currency = currencySymbol(hotel.base_currency);
+  const currency = hotel.base_currency;
 
   // آخر القيود المرحّلة مع إجمالي كل قيد بالعملة الأساسية
   const recentEntries = (recent?.data ?? []) as { id: string; entry_number: string | null; entry_date: string; description: string; source: string }[];
@@ -231,9 +223,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   ];
   const invoiceTotal = invoiceSegments.reduce((s, x) => s + x.value, 0);
 
-  const businessDate = new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", {
-    weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "UTC",
-  }).format(new Date(`${today}T00:00:00Z`));
   const pct = (v: MoneyValue | null) => (v === null ? "" : `${v.toFixed(1)}%`);
 
   const deptTotal = deptSummary.filter((d) => d.revenue.gt(0)).reduce((a2, d) => a2.plus(d.revenue), ZERO);
@@ -248,19 +237,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   return (
     <div className="space-y-6 pb-6">
       {/* العنوان + الإجراء الأساسي الوحيد + الإجراءات الثانوية */}
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="space-y-1">
-          <p className="text-[15.5px] text-muted-foreground">{businessDate}</p>
-          <h1 className="type-display text-[34px] text-ink">{t.dashboard.title}</h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {quick.map((q, i) => (
-            <Button key={q.href} asChild variant={i === 0 ? "default" : "outline"}>
-              <Link href={q.href}>{i === 0 && <Plus />}{q.label}</Link>
-            </Button>
-          ))}
-        </div>
-      </div>
+      <PageHeader title={t.dashboard.title} actions={quick.map((q, i) => (
+        <Button key={q.href} asChild variant={i === 0 ? "default" : "outline"}>
+          <Link href={q.href}>{i === 0 && <Plus />}{q.label}</Link>
+        </Button>
+      ))} />
 
       {/* الفترة: تبويب واحد نشط بمؤشر منزلق */}
       <FilterTabs active={range} items={RANGES.map((x) => ({ key: x.key, href: x.key === "month" ? "/" : `/?range=${x.key}`, label: x.label }))} />
@@ -296,11 +277,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
           {/* الأداء + ما يحتاج انتباهك */}
           <div className="grid gap-5 xl:grid-cols-12">
-            <Card2 className="xl:col-span-8" title="الإيرادات والمصروفات" note="آخر 6 أشهر" link={{ href: "/reports/income-statement", label: t.nav.incomeStatement }}>
-              <IncomeExpenseChart data={chartData} currency={currency} labels={{ revenue: r.revenue, expenses: r.expenses, net: "صافي النتيجة" }} />
+            <Card2 className="xl:col-span-8" title="الإيرادات والمصروفات" note="آخر 6 أشهر" currency={currency} link={{ href: "/reports/income-statement", label: t.nav.incomeStatement }}>
+              <IncomeExpenseChart data={chartData} labels={{ revenue: r.revenue, expenses: r.expenses, net: "صافي النتيجة" }} />
             </Card2>
 
-            <Card2 className="xl:col-span-4" title="آخر القيود المرحّلة" link={ctx.can(PERMISSIONS.journalView) ? { href: "/journal", label: t.nav.journal } : undefined}>
+            <Card2 className="xl:col-span-4" title="آخر القيود المرحّلة" currency={currency} link={ctx.can(PERMISSIONS.journalView) ? { href: "/journal", label: t.nav.journal } : undefined}>
               {!ctx.can(PERMISSIONS.journalView) ? <NoAccess text={t.errors.permission_denied} /> : recentEntries.length === 0 ? (
                 <p className="py-6 text-[16.5px] text-muted-foreground">لم يُرحَّل أي قيد بعد.</p>
               ) : (
@@ -318,16 +299,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   emptyTitle="لم تُصدر أي فاتورة بعد" emptyHint="تُصدر الفواتير عند مغادرة النزيل أو كفاتورة آجلة لعميل." />
               ) : <NoAccess text={t.errors.permission_denied} />}
             </Card2>
-            <Card2 title="أعمار الذمم المدينة" note={canAging ? `${formatAmount(agingTotal)} ${currency}` : undefined} link={canAging ? { href: "/reports/aging", label: t.nav.aging } : undefined}>
+            <Card2 title="أعمار الذمم المدينة" note={canAging ? formatAmount(agingTotal) : undefined} currency={currency} link={canAging ? { href: "/reports/aging", label: t.nav.aging } : undefined}>
               {canAging ? (
-                <StripedBars rows={agingRows} currency={currency} emptyTitle="لا توجد ذمم مدينة قائمة" emptyHint="تظهر هنا الفواتير الآجلة غير المسددة حسب تاريخ استحقاقها." />
+                <StripedBars rows={agingRows} emptyTitle="لا توجد ذمم مدينة قائمة" emptyHint="تظهر هنا الفواتير الآجلة غير المسددة حسب تاريخ استحقاقها." />
               ) : <NoAccess text={t.errors.permission_denied} />}
             </Card2>
           </div>
 
           {/* الأرصدة والمطابقة + الأقسام والغرف */}
           <div className="grid gap-5 xl:grid-cols-5">
-            <Card2 className="xl:col-span-3 xl:self-start" title="الأرصدة ومطابقتها مع الأستاذ" note={unreconciled.length ? `${unreconciled.length} فرق` : "مطابقة"} noteTone={unreconciled.length ? "neg" : "pos"}>
+            <Card2 className="xl:col-span-3 xl:self-start" title="الأرصدة ومطابقتها مع الأستاذ" currency={currency} note={unreconciled.length ? `${unreconciled.length} فرق` : "مطابقة"} noteTone={unreconciled.length ? "neg" : "pos"}>
               <ul className="mb-3 divide-y divide-line text-[16.5px]" id="reconciliation">
                 {BALANCE_ROWS.map((b) => {
                   const row = reconRows.find((x) => x.control === b.control);
@@ -359,15 +340,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               })()}
             </Card2>
             <div className="flex min-w-0 flex-col gap-5 xl:col-span-2">
-              <Card2 title="الإيرادات حسب القسم" note={rangeLabel} link={canProfit ? { href: "/reports/profitability", label: t.nav.profitability } : undefined}>
+              <Card2 title="الإيرادات حسب القسم" note={rangeLabel} currency={currency} link={canProfit ? { href: "/reports/profitability", label: t.nav.profitability } : undefined}>
                 {!canProfit ? <NoAccess text={t.errors.permission_denied} /> : deptSegments.length === 0 ? (
                   <p className="py-6 text-[16.5px] text-muted-foreground">لا توجد إيرادات مرحّلة في هذه الفترة.</p>
                 ) : (
                   <>
-                    <StripedBars rows={deptSegments.map((d) => ({ label: d.label, count: 0, amount: d.value, amountText: d.display, color: CHART_COLORS.revenue }))}
-                      currency={currency} emptyTitle="" emptyHint="" />
+                    <StripedBars rows={deptSegments.map((d) => ({ label: d.label, count: 0, amount: d.value, amountText: d.display, color: CHART_COLORS.revenue }))} emptyTitle="" emptyHint="" />
                     <p className="mt-4 border-t border-line pt-3 text-[15.5px] text-muted-foreground">
-                      المجموع <span className="num text-ink">{formatAmount(deptTotal)}</span> من إيراد الفترة <span className="num text-ink">{formatAmount(revenue)}</span> {currency}
+                      المجموع <span className="num text-ink">{formatAmount(deptTotal)}</span> من إيراد الفترة <span className="num text-ink">{formatAmount(revenue)}</span>
                       {negativeDepts.length > 0 && (
                         <span className="block text-amber">
                           تسويات صافية سالبة: {negativeDepts.map((d) => `${deptLabel(d.departmentId)} ${formatAmount(d.revenue)}`).join("، ")}
@@ -377,11 +357,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   </>
                 )}
               </Card2>
-              <Card2 className="flex flex-1 flex-col" title="الغرف" note={rangeLabel} link={{ href: "/reports/rooms", label: t.nav.roomStats }}>
+              <Card2 className="flex flex-1 flex-col" title="الغرف" note={rangeLabel} currency={currency} link={{ href: "/reports/rooms", label: t.nav.roomStats }}>
                 <dl className="mb-5 grid grid-cols-2 gap-x-6 gap-y-5">
                   <Figure label="نسبة الإشغال" value={pct(rangeRooms.occupancy)} />
-                  <Figure label="متوسط سعر الغرفة" value={rangeRooms.adr ? formatAmount(rangeRooms.adr) : ""} unit={rangeRooms.adr ? currency : undefined} />
-                  <Figure label="RevPAR" value={rangeRooms.revpar ? formatAmount(rangeRooms.revpar) : ""} unit={rangeRooms.revpar ? currency : undefined} />
+                  <Figure label="متوسط سعر الغرفة" value={rangeRooms.adr ? formatAmount(rangeRooms.adr) : ""} />
+                  <Figure label="RevPAR" value={rangeRooms.revpar ? formatAmount(rangeRooms.revpar) : ""} />
                   <Figure label="الليالي المباعة" value={`${rangeRooms.roomNightsSold.toString()} / ${rangeRooms.roomNightsAvailable.toString()}`} />
                 </dl>
                 <p className="mt-auto border-t border-line pt-3 text-[15.5px] text-muted-foreground">
@@ -400,11 +380,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 // مكونات العرض — بسيطة عمدًا: العنوان والرقم أولًا، بلا زخارف
 // =============================================================================
 function Card2({
-  title, note, noteTone, link, className, children,
+  title, note, noteTone, currency, link, className, children,
 }: {
   title: string;
   note?: string;
   noteTone?: "pos" | "neg";
+  /** رمز العملة إن كانت البطاقة تعرض مبالغ، يظهر اسمها كشارة صغيرة في الزاوية */
+  currency?: string;
   link?: { href: string; label: string };
   className?: string;
   children: React.ReactNode;
@@ -413,9 +395,14 @@ function Card2({
     <section className={cn("dash-card flex min-w-0 flex-col rounded-2xl border border-line bg-white p-6", className)}>
       <header className="mb-5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[17px]">
         <h2 className="font-semibold text-ink">{title}</h2>
-        {note && (
-          <span className={cn("rounded-md px-2 py-0.5 text-[15px]", noteTone === "neg" ? "bg-urgent-tint text-urgent" : noteTone === "pos" ? "bg-success/10 text-success" : "bg-subtle text-slate-600")}>
-            {note}
+        {(note || currency) && (
+          <span className="flex items-center gap-2">
+            {note && (
+              <span className={cn("rounded-md px-2 py-0.5 text-[15px]", noteTone === "neg" ? "bg-urgent-tint text-urgent" : noteTone === "pos" ? "bg-success/10 text-success" : "bg-subtle text-slate-600")}>
+                {note}
+              </span>
+            )}
+            {currency && <CurrencyTag code={currency} />}
           </span>
         )}
       </header>
@@ -447,15 +434,15 @@ function Kpi({
         <span className="lift-icon flex size-9 items-center justify-center rounded-[10px] bg-ink text-white">
           <Icon className="size-[17px] stroke-[1.75]" />
         </span>
-        <p className="truncate text-[16.5px] font-medium text-slate-600">{label}</p>
+        <p className="min-w-0 truncate text-[16.5px] font-medium text-slate-600">{label}</p>
+        <CurrencyTag code={currency} className="ms-auto" />
       </div>
       <p className={cn("display-num truncate text-[22px] font-bold leading-tight text-ink sm:text-[30px]", tone === "neg" && "text-urgent")}>
         <AnimatedNumber value={value.toNumber()} text={formatAmount(value)} />
-        <span className="ms-2 font-sans text-slate-400">{currency}</span>
       </p>
       <p className="mt-1 truncate text-[16.5px] text-slate-600">{sub}</p>
       <div className="mt-3">
-        {spark ? <Sparkline values={spark.values} months={spark.months} color={spark.color} currency={currency} /> : <p className="flex h-10 items-end text-[15px] text-slate-500">رصيد الصندوق والبنوك في الأستاذ</p>}
+        {spark ? <Sparkline values={spark.values} months={spark.months} color={spark.color} /> : <p className="flex h-10 items-end text-[15px] text-slate-500">رصيد الصندوق والبنوك في الأستاذ</p>}
       </div>
     </Link>
   );
@@ -466,13 +453,12 @@ function formatAmount(v: MoneyValue): string {
   return new Intl.NumberFormat("ar-SA-u-nu-latn", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(v.toFixed(2)));
 }
 
-function Figure({ label, value, unit }: { label: string; value: string; unit?: string }) {
+function Figure({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt className="text-[15.5px] text-muted-foreground">{label}</dt>
       <dd className="mt-1.5 text-[22px] font-bold leading-none text-ink">
         <span className="num">{value}</span>
-        {unit && <span className="ms-1.5 text-slate-400">{unit}</span>}
       </dd>
     </div>
   );

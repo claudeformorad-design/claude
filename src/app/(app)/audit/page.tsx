@@ -34,7 +34,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   const rows = data ?? [];
   return (
     <>
-      <PageHeader title={t.nav.audit} description={a.auditSubtitle} />
+      <PageHeader title={t.nav.audit} />
       <StatGrid>
         <Stat icon={History} tone="ink" label="أحداث في الصفحة" value={<span className="num">{rows.length}</span>} />
         <Stat icon={PlusCircle} tone="teal" label="إضافات" value={<span className="num">{rows.filter((r) => r.action === "INSERT").length}</span>} />

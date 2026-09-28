@@ -42,7 +42,7 @@ export default async function TrialBalancePage({
 
   return (
     <>
-      <PageHeader title={t.trialBalance.title} description={t.trialBalance.subtitle}
+      <PageHeader title={t.trialBalance.title}
         actions={<ExportButtons report={`trial-balance`} query={`from=${from}&to=${to}`} labels={{ excel: t.reports.exportExcel, pdf: t.reports.printPdf }} />} />
 
       <form className="toolbar">
@@ -62,8 +62,8 @@ export default async function TrialBalancePage({
       </form>
 
       <StatGrid>
-        <Stat icon={Plus} tone="teal" label="إجمالي المدين الختامي" value={<Money value={tb.totals.closingDebit} locale={locale} />} />
-        <Stat icon={Minus} tone="clay" label="إجمالي الدائن الختامي" value={<Money value={tb.totals.closingCredit} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Plus} tone="teal" label="إجمالي المدين الختامي" value={<Money value={tb.totals.closingDebit} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Minus} tone="clay" label="إجمالي الدائن الختامي" value={<Money value={tb.totals.closingCredit} locale={locale} />} />
         <Stat icon={ListChecks} tone="neutral" label="حسابات بحركة" value={<span className="num">{tb.rows.length}</span>} />
         <Stat icon={tb.isBalanced ? CheckCircle2 : TriangleAlert} tone={tb.isBalanced ? "ink" : "clay"} label="حالة الميزان"
           value={tb.isBalanced ? "متوازن" : "غير متوازن"} valueClassName={tb.isBalanced ? "text-success" : "text-urgent"}

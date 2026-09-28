@@ -38,15 +38,14 @@ export default async function FoliosPage({ searchParams }: { searchParams: Promi
     <>
       <PageHeader
         title={t.folio.title}
-        description={t.folio.subtitle}
         actions={ctx.can(PERMISSIONS.folioManage) && (
           <Button asChild><Link href="/folios/new"><Plus />{t.folio.newFolio}</Link></Button>
         )}
       />
       <StatGrid>
         <Stat icon={BedDouble} tone="ink" label={status === "open" ? "فوليوهات مفتوحة" : "فوليوهات في القائمة"} value={<span className="num">{folios.length}</span>} />
-        <Stat icon={Wallet} tone="teal" label="أرصدة مستحقة على النزلاء" value={<Money value={totalBalance} locale={locale} />} hint={`${withBalance} فوليو برصيد`} />
-        <Stat icon={HandCoins} tone="clay" label="عربون غير مطبّق" value={<Money value={totalDeposits} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="teal" label="أرصدة مستحقة على النزلاء" value={<Money value={totalBalance} locale={locale} />} hint={`${withBalance} فوليو برصيد`} />
+        <Stat currency={ctx.hotel.base_currency} icon={HandCoins} tone="clay" label="عربون غير مطبّق" value={<Money value={totalDeposits} locale={locale} />} />
         <Stat icon={DoorOpen} tone="neutral" label="غرف مشغولة" value={<span className="num">{new Set(folios.filter((f) => f.status === "open" && f.room_number).map((f) => f.room_number)).size}</span>} hint="من الفوليوهات المفتوحة المعروضة" />
       </StatGrid>
 
@@ -94,7 +93,7 @@ export default async function FoliosPage({ searchParams }: { searchParams: Promi
             {shown.rows.map((f) => (
               <ExpandableRow kind="folio" id={f.id} colSpan={8} key={f.id}>
                 <TableCell><ExpandMark /><Link href={`/folios/${f.id}`} className="num font-medium text-primary">{f.folio_number}</Link></TableCell>
-                <TableCell className="cell-fluid"><EntityCell name={f.guest_name} sub={f.departure_date ? `مغادرة ${f.departure_date}` : undefined} /></TableCell>
+                <TableCell className="cell-fluid"><EntityCell name={f.guest_name} sub={f.departure_date ? <>مغادرة <span className="num">{f.departure_date}</span></> : undefined} /></TableCell>
                 <TableCell>{f.room_number ? <span className="num inline-flex h-7 min-w-10 items-center justify-center rounded-lg bg-subtle px-2 text-[15.5px] font-semibold text-ink">{f.room_number}</span> : <span className="text-slate-400"></span>}</TableCell>
                 <TableCell>{t.folio.types[f.folio_type]}</TableCell>
                 <TableCell className="num">{f.arrival_date ?? ""}</TableCell>

@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/layout/page-header";
-import { plainText } from "@/lib/text";
+import { DocText } from "@/components/ui/code-text";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
 
   return (
     <>
-      <PageHeader title={t.nav.bank} description={t.payables.bankSubtitle} />
+      <PageHeader title={t.nav.bank} />
       <form className="toolbar">
         <NativeSelect name="account" defaultValue={accountId} className="w-72">
           {banks.map((a) => <option key={a.id} value={a.id}>{a.code} {name(a)}</option>)}
@@ -48,9 +48,9 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
       {accountId && (
         <>
           <StatGrid>
-            <Stat icon={Landmark} tone="ink" label={t.payables.glBalance} value={<Money value={glBalance} locale={locale} />} />
-            <Stat icon={FileText} tone="teal" label={t.payables.statementTotal} value={<Money value={sumMoney(lines.map((l) => l.amount))} locale={locale} />} hint={`${lines.length} سطر في الكشف`} />
-            <Stat icon={Link2Off} tone="clay" label={t.payables.unmatchedLedger} value={<Money value={sumMoney(unmatchedLedger.map(net))} locale={locale} />} hint={`${unmatchedLedger.length} حركة`} />
+            <Stat currency={ctx.hotel.base_currency} icon={Landmark} tone="ink" label={t.payables.glBalance} value={<Money value={glBalance} locale={locale} />} />
+            <Stat currency={ctx.hotel.base_currency} icon={FileText} tone="teal" label={t.payables.statementTotal} value={<Money value={sumMoney(lines.map((l) => l.amount))} locale={locale} />} hint={`${lines.length} سطر في الكشف`} />
+            <Stat currency={ctx.hotel.base_currency} icon={Link2Off} tone="clay" label={t.payables.unmatchedLedger} value={<Money value={sumMoney(unmatchedLedger.map(net))} locale={locale} />} hint={`${unmatchedLedger.length} حركة`} />
             <Stat icon={CheckCircle2} tone="neutral" label="أسطر مطابقة" value={<span className="num">{lines.filter((l) => l.matched_line_id).length} / {lines.length}</span>} />
           </StatGrid>
           <Card className="mb-4"><CardContent className="p-4"><AddBankLine t={tt} accountId={accountId} today={todayInTimeZone(ctx.hotel.timezone)} /></CardContent></Card>
@@ -64,7 +64,7 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
                 {lines.length === 0 && <TableRow><TableCell colSpan={6} className="py-8"><EmptyState title="كشف الحساب فارغ" description="أضف أسطر كشف البنك من النموذج أعلاه، ثم طابقها مع حركات الأستاذ يدويًا أو تلقائيًا." icon={Landmark} /></TableCell></TableRow>}
                 {lines.map((l) => (
                   <TableRow key={l.id}>
-                    <TableCell className="num">{l.txn_date}</TableCell><TableCell>{plainText(l.description)}</TableCell><TableCell className="num">{l.reference ?? ""}</TableCell>
+                    <TableCell className="num">{l.txn_date}</TableCell><TableCell><DocText text={l.description} /></TableCell><TableCell className="num">{l.reference ?? ""}</TableCell>
                     <TableCell className={`text-end font-semibold ${toMoney(l.amount).isNegative() ? "text-ink" : "text-success"}`}><Money value={l.amount} locale={locale} /></TableCell>
                     <TableCell><Badge variant={l.matched_line_id ? "success" : "warning"}>{l.matched_line_id ? t.payables.matched : t.payables.unmatched}</Badge></TableCell>
                     <TableCell>

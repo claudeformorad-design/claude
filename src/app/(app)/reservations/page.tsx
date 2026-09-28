@@ -2,6 +2,7 @@ import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import Link from "@/components/link";
 import { CalendarCheck, CalendarDays, Hourglass, Plus, Repeat, Search, Users, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { Properties } from "@/components/ui/properties";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,6 @@ export default async function ReservationsPage({ searchParams }: {
     <>
       <PageHeader
         title={sp.group ? "حجوزات المجموعة" : sp.series ? "الحجز المتكرر" : t.nav.reservations}
-        description={sp.group || sp.series ? `${scoped.length} حجز مرتبط` : "كل الحجوزات بحالاتها: الفردية والجماعية والمتكررة والطويلة والوحدات بالساعة."}
         actions={canManage && (
           <>
             <Button asChild variant="outline"><Link href="/reservations/new?kind=group"><Users />مجموعة</Link></Button>
@@ -69,11 +69,17 @@ export default async function ReservationsPage({ searchParams }: {
           </>
         )}
       />
+      {(sp.group || sp.series) && (
+        <Properties items={[
+          [sp.group ? "المجموعة" : "السلسلة", `${scoped.length} حجز مرتبط`],
+          ["العودة", <Link key="all" href="/reservations" className="text-action">كل الحجوزات</Link>],
+        ]} />
+      )}
       <StatGrid>
         <Stat icon={CalendarDays} tone="ink" label="حجوزات قادمة وقائمة" value={<span className="num">{upcoming.length}</span>} />
         <Stat icon={CalendarCheck} tone="teal" label="وصول اليوم" value={<span className="num">{scoped.filter(is.arrivals).length}</span>} />
         <Stat icon={Hourglass} tone="clay" label="مبدئية بانتظار التأكيد" value={<span className="num">{scoped.filter(is.tentative).length}</span>} />
-        <Stat icon={Wallet} tone="neutral" label="قيمة الحجوزات القادمة" value={<Money value={upcoming.reduce((a, r) => a.plus(toMoney(r.total_amount)), ZERO)} locale={locale} />} hint={ctx.hotel.base_currency} />
+        <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="neutral" label="قيمة الحجوزات القادمة" value={<Money value={upcoming.reduce((a, r) => a.plus(toMoney(r.total_amount)), ZERO)} locale={locale} />} />
       </StatGrid>
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">

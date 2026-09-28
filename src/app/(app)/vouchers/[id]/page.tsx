@@ -1,7 +1,7 @@
 import Link from "@/components/link";
+import { CodeName, DocText } from "@/components/ui/code-text";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
-import { plainText } from "@/lib/text";
 import { PrintButton } from "../../invoices/[id]/print-button";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
@@ -33,14 +33,14 @@ export default async function VoucherPage({ params }: { params: Promise<{ id: st
     [t.folio.method, name(method.data)],
     [t.folio.amount, <Money key="a" value={v.amount} locale={locale} />],
     [t.common.reference, v.reference ?? ""],
-    [t.vouchers.counterAccount, counter?.data ? `${counter.data.code} ${name(counter.data)}` : ""],
+    [t.common.description, v.description && <DocText key="desc" text={v.description} />],
+    [t.vouchers.counterAccount, counter?.data && <CodeName key="ca" label={`${counter.data.code} ${name(counter.data)}`} />],
   ];
 
   return (
     <>
       <PageHeader
         title={`${t.vouchers.types[v.voucher_type]} ${v.voucher_number}`}
-        description={plainText(v.description)}
         actions={<div className="flex items-center gap-2"><Badge variant={v.status === "voided" ? "destructive" : "success"}>{t.vouchers.statuses[v.status]}</Badge><PrintButton label="طباعة السند" /></div>}
       />
       <Card className="mb-6">

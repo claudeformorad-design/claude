@@ -44,7 +44,7 @@ export default async function OpeningBalancesPage() {
   ]);
   return (
     <>
-      <PageHeader title="الأرصدة الافتتاحية" description="أرصدة الانتقال من النظام السابق: الحسابات، ما على العملاء، وما للموردين" />
+      <PageHeader title="الأرصدة الافتتاحية" />
       <OpeningForm today={todayInTimeZone(ctx.hotel.timezone)} errors={t.errors}
         accounts={accounts.filter((a) => a.is_postable && a.is_active && !CONTROL_KEYS.has(a.system_key ?? "")).map((a) => ({ id: a.id, label: `${a.code} ${a.name_ar}` }))}
         customers={customers.filter((c) => c.is_active).map((c) => ({ id: c.id, label: `${c.name_ar} ${c.code}` }))}

@@ -33,7 +33,7 @@ export default async function PosPage({ searchParams }: { searchParams: Promise<
 
   return (
     <>
-      <PageHeader title="نقاط البيع" description="المطعم والكافيه وخدمة الغرف: ترحيل على فوليو النزيل أو دفع فوري بفاتورة ضريبية"
+      <PageHeader title="نقاط البيع"
         actions={canSetup && <Button asChild variant="outline"><Link href="/pos/setup"><Settings2 />إعداد النقاط والأصناف</Link></Button>} />
       {!outlet ? (
         <EmptyState title="لا توجد نقاط بيع بعد" description="أنشئ نقطة بيع مثل المطعم، وأضف أصنافها بأسعارها." actionHref={canSetup ? "/pos/setup" : undefined} actionLabel={canSetup ? "إعداد نقاط البيع" : undefined} />

@@ -51,7 +51,6 @@ export default async function WaitlistPage({ searchParams }: {
     <>
       <PageHeader
         title={t.nav.waitlist}
-        description="الطلبات التي لم تتوفر لها غرف. يتغير الطلب إلى «متاح الآن» تلقائيًا عند تحرر غرفة، ويتحول إلى حجز بنقرة."
         actions={canManage && <Button asChild><Link href="/waitlist?new=1"><Plus />إضافة طلب</Link></Button>}
       />
       <StatGrid>

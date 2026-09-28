@@ -98,7 +98,7 @@ function Tooltip({ children, style }: { children: React.ReactNode; style: React.
   );
 }
 
-function TipRow({ color, label, value, suffix, strong }: { color?: string; label: string; value: string; suffix?: string; strong?: boolean }) {
+function TipRow({ color, label, value, strong }: { color?: string; label: string; value: string; strong?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-4 py-0.5">
       <span className="flex items-center gap-1.5 text-slate-600">
@@ -107,7 +107,6 @@ function TipRow({ color, label, value, suffix, strong }: { color?: string; label
       </span>
       <span className={`num ${strong ? "font-semibold" : ""}`}>
         {value}
-        {suffix && <span className="ms-1 text-slate-500">{suffix}</span>}
       </span>
     </div>
   );
@@ -136,7 +135,7 @@ export function AnimatedNumber({ value, text, digits = 2, className }: { value: 
 // =============================================================================
 // خط صغير داخل بطاقة الإحصاء (اتجاه آخر 6 أشهر) مع قيمة الشهر عند المرور
 // =============================================================================
-export function Sparkline({ values, months, color, currency }: { values: number[]; months: string[]; color: string; currency: string }) {
+export function Sparkline({ values, months, color }: { values: number[]; months: string[]; color: string }) {
   const [hover, setHover] = useState<number | null>(null);
   const [ref, W] = useWidth<HTMLDivElement>(160);
   if (values.length < 2 || values.every((v) => v === 0)) return <div className="h-10" />;
@@ -163,7 +162,7 @@ export function Sparkline({ values, months, color, currency }: { values: number[
       {hover !== null && (
         <div className="pointer-events-none absolute -top-8 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg bg-ink px-2 py-1 text-[14.5px] text-white"
           style={{ left: `${(x(hover) / W) * 100}%` }}>
-          {monthLabel(months[hover]!, true)}: <span className="num">{compact(values[hover]!)}</span> {currency}
+          {monthLabel(months[hover]!, true)}: <span className="num">{compact(values[hover]!)}</span>
         </div>
       )}
     </div>
@@ -177,10 +176,9 @@ export function Sparkline({ values, months, color, currency }: { values: number[
 type SeriesKey = "revenue" | "expenses" | "net";
 
 export function IncomeExpenseChart({
-  data, currency, labels,
+  data, labels,
 }: {
   data: { month: string; revenue: number; expenses: number }[];
-  currency: string;
   labels: { revenue: string; expenses: string; net: string };
 }) {
   const [hover, setHover] = useState<number | null>(null);
@@ -222,7 +220,6 @@ export function IncomeExpenseChart({
             {s.label}
           </button>
         ))}
-        <span className="ms-auto text-slate-500">المبالغ بـ {currency}</span>
       </div>
 
       <div ref={boxRef} className="relative" onMouseLeave={() => setHover(null)}>
@@ -273,7 +270,7 @@ export function IncomeExpenseChart({
               <TipRow color={CHART_COLORS.revenue} label={labels.revenue} value={fmt(h.revenue, 2)} />
               <TipRow color={CHART_COLORS.expenses} label={labels.expenses} value={fmt(h.expenses, 2)} />
               <div className="mt-1.5 border-t border-line pt-1.5">
-                <TipRow color={CHART_COLORS.net} label={labels.net} value={fmt(h.net, 2)} suffix={currency} strong />
+                <TipRow color={CHART_COLORS.net} label={labels.net} value={fmt(h.net, 2)} strong />
                 {h.revenue > 0 && <TipRow label="هامش الربح" value={`${fmt((h.net / h.revenue) * 100, 1)}%`} />}
               </div>
             </Tooltip>
@@ -370,10 +367,9 @@ export function DonutChart({
 // أشرطة أفقية مع تلميح (أعمار الذمم، الإيرادات حسب القسم)
 // =============================================================================
 export function StripedBars({
-  rows, currency, emptyTitle, emptyHint,
+  rows, emptyTitle, emptyHint,
 }: {
   rows: { label: string; count: number; amount: number; amountText: string; color: string }[];
-  currency: string;
   emptyTitle: string;
   emptyHint: string;
 }) {
@@ -387,10 +383,7 @@ export function StripedBars({
         <div key={r.label} className="relative" onMouseEnter={() => setHover(i)}>
           <div className="mb-1.5 flex items-baseline justify-between gap-3 text-[16.5px]">
             <span className="text-slate-700">{r.label}</span>
-            <span>
-              <span className="num font-semibold text-ink">{r.amountText}</span>
-              <span className="ms-1.5 text-slate-400">{currency}</span>
-            </span>
+            <span className="num font-semibold text-ink">{r.amountText}</span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-subtle">
             <div
@@ -408,7 +401,7 @@ export function StripedBars({
             {hover === i && r.amount > 0 && (
               <Tooltip style={{ top: -8, left: 0, transform: "translateY(-100%)" }}>
                 <p className="mb-1 font-semibold">{r.label}</p>
-                <TipRow label="المبلغ" value={r.amountText} suffix={currency} strong />
+                <TipRow label="المبلغ" value={r.amountText} strong />
                 {r.count > 0 && <TipRow label="عدد المستندات" value={fmt(r.count)} />}
                 <TipRow label="الحصة" value={`${fmt((r.amount / total) * 100, 1)}%`} />
               </Tooltip>

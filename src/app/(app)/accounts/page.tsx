@@ -61,7 +61,6 @@ export default async function AccountsPage({
     <>
       <PageHeader
         title={t.accounts.title}
-        description={t.accounts.subtitle}
         actions={
           canManage && (
             <Button asChild>

@@ -1,7 +1,7 @@
 import Link from "@/components/link";
+import { DocText } from "@/components/ui/code-text";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
-import { plainText } from "@/lib/text";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -48,12 +48,17 @@ export default async function JournalEntryPage({ params }: { params: Promise<{ i
     <>
       <PageHeader
         title={`${t.journal.entry} ${entry.entry_number ?? t.journal.draftNumber}`}
-        description={plainText(entry.description)}
         actions={<StatusBadge status={entry.status} reversed={!!entry.reversed_by_id} labels={t.journal.status} />}
       />
 
       <Card className="mb-6">
         <CardContent className="grid gap-x-8 gap-y-5 p-6 text-sm sm:grid-cols-2 lg:grid-cols-4">
+          {entry.description && (
+            <div className="border-s-2 border-line ps-3 sm:col-span-2 lg:col-span-4">
+              <p className="text-[15.5px] text-slate-500">{t.common.description}</p>
+              <div className="mt-0.5 font-semibold text-ink"><DocText text={entry.description} /></div>
+            </div>
+          )}
           {meta.map(([label, value]) => (
             <div key={label} className="border-s-2 border-line ps-3">
               <p className="text-[15.5px] text-slate-500">{label}</p>
@@ -84,13 +89,14 @@ export default async function JournalEntryPage({ params }: { params: Promise<{ i
           <TableHeader>
             <TableRow>
               <TableHead className="w-10">#</TableHead>
+              <TableHead>الرمز</TableHead>
               <TableHead>{t.journal.account}</TableHead>
               <TableHead>{t.journal.department}</TableHead>
               <TableHead>{t.common.description}</TableHead>
               <TableHead className="text-end">{t.journal.debit}</TableHead>
               <TableHead className="text-end">{t.journal.credit}</TableHead>
-              {isForeign && <TableHead className="text-end">{t.journal.debit} ({ctx.hotel.base_currency})</TableHead>}
-              {isForeign && <TableHead className="text-end">{t.journal.credit} ({ctx.hotel.base_currency})</TableHead>}
+              {isForeign && <TableHead className="text-end">{t.journal.debit} بالعملة الأساسية</TableHead>}
+              {isForeign && <TableHead className="text-end">{t.journal.credit} بالعملة الأساسية</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -100,11 +106,10 @@ export default async function JournalEntryPage({ params }: { params: Promise<{ i
               return (
                 <TableRow key={l.id}>
                   <TableCell className="num text-muted-foreground">{l.line_no}</TableCell>
-                  <TableCell>
-                    <span className="num me-2 rounded-md bg-subtle px-1.5 py-0.5 text-[15.5px] font-semibold text-slate-700">{account?.code}</span><span className="font-medium">{name(account)}</span>
-                  </TableCell>
-                  <TableCell>{dept ? dept.code : ""}</TableCell>
-                  <TableCell className="text-muted-foreground">{plainText(l.description)}</TableCell>
+                  <TableCell className="num text-slate-500">{account?.code}</TableCell>
+                  <TableCell className="font-medium">{name(account)}</TableCell>
+                  <TableCell>{dept ? name(dept) : ""}</TableCell>
+                  <TableCell className="text-muted-foreground"><DocText text={l.description} /></TableCell>
                   <TableCell className="text-end font-semibold text-accent1"><Money value={l.debit} locale={locale} blankZero /></TableCell>
                   <TableCell className="text-end font-semibold text-accent2"><Money value={l.credit} locale={locale} blankZero /></TableCell>
                   {isForeign && <TableCell className="text-end"><Money value={l.base_debit} locale={locale} blankZero /></TableCell>}
@@ -115,7 +120,7 @@ export default async function JournalEntryPage({ params }: { params: Promise<{ i
           </TableBody>
           <TableFooter>
             <TableRow>
-              <TableCell colSpan={4}>{t.journal.totals}</TableCell>
+              <TableCell colSpan={5}>{t.journal.totals}</TableCell>
               <TableCell className="text-end"><Money value={sumMoney(lines.map((l) => l.debit))} locale={locale} /></TableCell>
               <TableCell className="text-end"><Money value={sumMoney(lines.map((l) => l.credit))} locale={locale} /></TableCell>
               {isForeign && <TableCell className="text-end"><Money value={sumMoney(lines.map((l) => l.base_debit))} locale={locale} /></TableCell>}

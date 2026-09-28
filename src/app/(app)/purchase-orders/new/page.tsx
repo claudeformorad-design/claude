@@ -13,7 +13,7 @@ export default async function NewPoPage() {
   const o = await loadPurchaseOptions(ctx, locale);
   return (
     <>
-      <PageHeader title={t.payables.newPo} description={t.payables.poSubtitle} />
+      <PageHeader title={t.payables.newPo} />
       <Card><CardContent className="p-5">
         <PurchaseDocForm kind="po" locale={locale} today={todayInTimeZone(ctx.hotel.timezone)} vendors={o.vendors} accounts={o.accounts}
           departments={o.departments} taxes={o.taxes}

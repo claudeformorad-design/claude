@@ -33,11 +33,11 @@ const nextConfig: NextConfig = {
   output: "standalone",
   agentRules: false,
   allowedDevOrigins: previewOrigins,
-  // قاعدة وضع التجربة المحلية (PostgreSQL مضمّن WASM) تعمل على الخادم فقط ولا تُحزم
-  serverExternalPackages: ["@electric-sql/pglite"],
-  // ملفات الترحيل تُقرأ وقت التشغيل لبناء قاعدة التجربة المحلية
+  // قاعدة وضع التجربة المحلية (PostgreSQL مضمّن WASM) ومولّد PDF يعملان على الخادم فقط ولا يُحزمان
+  serverExternalPackages: ["@electric-sql/pglite", "pdfkit"],
+  // ملفات الترحيل تُقرأ وقت التشغيل لبناء قاعدة التجربة المحلية، وخطوط ملف PDF وقت توليده
   outputFileTracingIncludes: {
-    "/**": ["./supabase/migrations/*.sql", "./supabase/tests/supabase_shim.sql"],
+    "/**": ["./supabase/migrations/*.sql", "./supabase/tests/supabase_shim.sql", "./src/lib/export/fonts/*.ttf"],
   },
   experimental: {
     // يتيح forbidden() لصفحات الصلاحيات (403)

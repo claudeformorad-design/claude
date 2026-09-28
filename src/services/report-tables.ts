@@ -17,8 +17,11 @@ import { raise } from "./errors";
  * القيم المالية تبقى Money حتى لحظة العرض/التصدير.
  */
 export type Cell = string | Money | null;
-/** account: معرّف الحساب لصفوف الحسابات، فيُفتح الصف على حركاته في الفترة */
-export interface ReportRow { kind: "section" | "line" | "subtotal" | "total"; cells: Cell[]; account?: string }
+/**
+ * code: رمز الحساب أو القسم أو الضريبة، يُعرض في عمود «الرمز» مستقلًا عن الاسم.
+ * account: معرّف الحساب لصفوف الحسابات، فيُفتح الصف على حركاته في الفترة.
+ */
+export interface ReportRow { kind: "section" | "line" | "subtotal" | "total"; cells: Cell[]; code?: string; account?: string }
 export interface ReportTable { title: string; subtitle: string; columns: string[]; rows: ReportRow[]; note?: { ok: boolean; text: string } }
 
 export const REPORTS = {
@@ -38,7 +41,7 @@ export type ReportKey = keyof typeof REPORTS;
 export interface ReportParams { from: string; to: string }
 
 const line = (...cells: Cell[]): ReportRow => ({ kind: "line", cells });
-const acc = (a: { id: string; code: string }, label: string, ...cells: Cell[]): ReportRow => ({ kind: "line", cells: [`${a.code} ${label}`, ...cells], account: a.id });
+const acc = (a: { id: string; code: string }, label: string, ...cells: Cell[]): ReportRow => ({ kind: "line", cells: [label, ...cells], code: a.code, account: a.id });
 const sub = (...cells: Cell[]): ReportRow => ({ kind: "subtotal", cells });
 const total = (...cells: Cell[]): ReportRow => ({ kind: "total", cells });
 const head = (text: string, width: number): ReportRow => ({ kind: "section", cells: [text, ...Array(width - 1).fill(null)] });
@@ -137,9 +140,9 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
         .select("code, name, kind, rate::text, sales_base::text, sales_tax::text, purchases_base::text, purchases_tax::text");
       raise(error);
       const a = t.admin;
-      const rows = (data ?? []).map((x) => {
+      const rows: ReportRow[] = (data ?? []).map((x) => {
         const out = toMoney(x.sales_tax), inp = toMoney(x.purchases_tax);
-        return line(`${x.code} ${x.name} ${toMoney(x.rate).toString()}%`, toMoney(x.sales_base), out, toMoney(x.purchases_base), inp, out.minus(inp));
+        return { ...line(`${x.name} ${toMoney(x.rate).toString()}%`, toMoney(x.sales_base), out, toMoney(x.purchases_base), inp, out.minus(inp)), code: x.code };
       });
       const sum = (k: "sales_base" | "sales_tax" | "purchases_base" | "purchases_tax") => sumMoney((data ?? []).map((x) => x[k]));
       rows.push(total(t.common.total, sum("sales_base"), sum("sales_tax"), sum("purchases_base"), sum("purchases_tax"), sum("sales_tax").minus(sum("purchases_tax"))));
@@ -153,10 +156,13 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
       ]);
       raise(res.error);
       const { departments: ds, total: tt } = summarizeProfitability((res.data ?? []) as never);
-      const dn = new Map(departments.map((d) => [d.id, `${d.code} ${(locale === "en" && d.name_en) || d.name_ar}`]));
+      const dept = new Map(departments.map((d) => [d.id, d]));
       const pr = t.profitability;
       const cells = (x: typeof tt): Cell[] => [x.revenue, x.costOfSales, x.grossProfit, x.operatingExpenses, x.netProfit, x.margin ? `${x.margin.toFixed(1)}%` : ""];
-      const rows = ds.map((x) => line(x.departmentId ? dn.get(x.departmentId) ?? "" : pr.unassigned, ...cells(x)));
+      const rows: ReportRow[] = ds.map((x) => {
+        const d = x.departmentId ? dept.get(x.departmentId) : undefined;
+        return { ...line(d ? (locale === "en" && d.name_en) || d.name_ar : pr.unassigned, ...cells(x)), code: d?.code };
+      });
       rows.push(total(t.common.total, ...cells(tt)));
       return { title: t.nav.profitability, subtitle: period, columns: [t.folio.department, pr.revenue, pr.cos, pr.gross, pr.opex, pr.net, pr.margin], rows };
     }

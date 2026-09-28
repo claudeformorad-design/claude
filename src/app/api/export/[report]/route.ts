@@ -3,11 +3,12 @@ import { getAppContext, type AppContext } from "@/lib/auth/context";
 import { fiscalYearStart, formatDateTime, isIsoDate, todayInTimeZone } from "@/lib/accounting/fiscal";
 import { reportWorkbook } from "@/lib/export/excel";
 import { docMeta, toPlainReport } from "@/lib/export/plain-report";
+import { reportPdf } from "@/lib/export/pdf-report";
 import { REPORTS, type ReportKey, buildReport } from "@/services/report-tables";
 import { getI18n } from "@/i18n/server";
 
 /**
- * تصدير أي تقرير: Excel بهوية النظام (افتراضيًا)، أو ?format=json لبيانات مستند PDF الذي يُبنى في المتصفح.
+ * تصدير أي تقرير: Excel بهوية النظام (افتراضيًا)، أو ?format=pdf لملف PDF متجهي بخطوط النظام.
  * التقرير نفسه يُبنى مرة واحدة بنفس بنية الصفحة.
  */
 export async function GET(request: Request, { params }: { params: Promise<{ report: string }> }) {
@@ -29,15 +30,18 @@ export async function GET(request: Request, { params }: { params: Promise<{ repo
   const generatedAt = formatDateTime(new Date().toISOString(), app.hotel.timezone);
   const fileName = `${table.title} ${to}`;
 
-  if (url.searchParams.get("format") === "json") {
-    return NextResponse.json({ report: toPlainReport(table, locale), meta: docMeta(app.hotel, generatedAt, app.profile?.full_name), fileName });
+  const disposition = (ext: string) => `attachment; filename="${key}-${to}.${ext}"; filename*=UTF-8''${encodeURIComponent(`${fileName}.${ext}`)}`;
+
+  if (url.searchParams.get("format") === "pdf") {
+    const pdf = await reportPdf(toPlainReport(table, locale), docMeta(app.hotel, generatedAt, app.profile?.full_name));
+    return new NextResponse(new Uint8Array(pdf), { headers: { "Content-Type": "application/pdf", "Content-Disposition": disposition("pdf") } });
   }
 
   const buffer = await reportWorkbook(table, { hotel: app.hotel, rtl: locale === "ar", appName: t.app.name, generatedAt, preparedBy: app.profile?.full_name });
   return new NextResponse(buffer as ArrayBuffer, {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="${key}-${to}.xlsx"; filename*=UTF-8''${encodeURIComponent(`${fileName}.xlsx`)}`,
+      "Content-Disposition": disposition("xlsx"),
     },
   });
 }

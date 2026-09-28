@@ -13,7 +13,7 @@ export default async function NewBillPage() {
   const o = await loadPurchaseOptions(ctx, locale);
   return (
     <>
-      <PageHeader title={t.payables.newBill} description={t.payables.billsSubtitle} />
+      <PageHeader title={t.payables.newBill} />
       <Card><CardContent className="p-5">
         <PurchaseDocForm kind="bill" locale={locale} today={todayInTimeZone(ctx.hotel.timezone)} vendors={o.vendors} accounts={o.accounts}
           departments={o.departments} taxes={o.taxes}

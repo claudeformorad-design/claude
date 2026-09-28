@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Play, Sparkles, X } from "lucide-react";
+import { Check, ListChecks, Play, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
@@ -38,7 +38,7 @@ export function GenerateButton({ date, errors }: { date: string; errors: Record<
       const r = await callAction(generateHousekeepingAction(date));
       if (r.ok) { toast(r.data ? `أُنشئت ${r.data} مهمة` : "لا مهام جديدة"); router.refresh(); } else toast(actionErrorText(errors, r), "error");
     })}>
-      <Sparkles />توليد مهام اليوم
+      <ListChecks />توليد مهام اليوم
     </Button>
   );
 }

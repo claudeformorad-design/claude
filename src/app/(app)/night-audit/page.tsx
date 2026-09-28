@@ -1,6 +1,7 @@
 import Link from "@/components/link";
 import { AlertTriangle, BedDouble, CheckCircle2, MoonStar, UserX, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { Properties } from "@/components/ui/properties";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,11 +29,15 @@ export default async function NightAuditPage() {
 
   return (
     <>
-      <PageHeader title="تدقيق نهاية اليوم" description={`يوم العمل ${dayLabel(s.date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}${s.last_audit ? `، آخر تدقيق ${s.last_audit}` : ""}`} />
+      <PageHeader title="تدقيق نهاية اليوم" />
+      <Properties items={[
+        ["يوم العمل", dayLabel(s.date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })],
+        ["آخر تدقيق", s.last_audit && <span className="num">{s.last_audit}</span>],
+      ]} />
 
       <StatGrid>
         <Stat icon={BedDouble} tone="ink" label="الإشغال الليلة" value={<span className="num">{s.stats.occupancy_pct}%</span>} hint={`${s.stats.occupied} من ${s.stats.capacity} غرفة`} />
-        <Stat icon={Wallet} tone="teal" label="ليالٍ لم تُرحَّل" value={<span className="num">{s.unposted_nights}</span>} hint={<Money value={s.unposted_amount} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="teal" label="ليالٍ لم تُرحَّل" value={<span className="num">{s.unposted_nights}</span>} hint={<Money value={s.unposted_amount} locale={locale} />} />
         <Stat icon={UserX} tone="clay" label="لم يحضروا بعد" value={<span className="num">{pending}</span>} hint="يُسجَّلون عدم حضور عند التدقيق" />
         <Stat icon={AlertTriangle} tone="neutral" label="ورديات مفتوحة" value={<span className="num">{s.open_shifts}</span>} />
       </StatGrid>
@@ -106,7 +111,7 @@ export default async function NightAuditPage() {
               <li>حفظ تقرير المدير بالإشغال ومتوسط السعر والعائد لكل غرفة والإيرادات والمقبوضات</li>
             </ul>
             {s.open_shifts > 0 && !s.done && <p className="rounded-md bg-amber-tint px-3 py-2 text-[14.5px] text-amber">توجد {s.open_shifts} وردية كاشير مفتوحة، ويُفضَّل إغلاقها قبل التدقيق.</p>}
-            {canRun && <RunAuditButton date={s.date} errors={t.errors} confirmText={`تشغيل تدقيق يوم ${s.date}؟ سيُرحّل ${s.unposted_nights} ليلة ويُسجّل ${pending} عدم حضور.`} />}
+            {canRun && <RunAuditButton date={s.date} errors={t.errors} confirmText={`تشغيل تدقيق يوم ${dayLabel(s.date)}؟ سيُرحّل ${s.unposted_nights} ليلة ويُسجّل ${pending} عدم حضور.`} />}
             <div className="grid grid-cols-2 gap-2">
               <Link href={`/night-audit/${s.date}`} className="rounded-md border border-line px-3 py-2 text-center text-[15px] font-medium text-ink hover:bg-panel">تقرير المدير</Link>
               <Link href={`/guest-register?date=${s.date}`} className="rounded-md border border-line px-3 py-2 text-center text-[15px] font-medium text-ink hover:bg-panel">كشف النزلاء</Link>

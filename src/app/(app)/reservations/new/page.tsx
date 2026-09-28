@@ -40,7 +40,7 @@ export default async function NewReservationPage({ searchParams }: {
 
   return (
     <>
-      <PageHeader title="حجز جديد" description="السعر يُحسب ليلة بليلة من المواسم وأسعار نهاية الأسبوع وعروض اللحظة الأخيرة، والسعة تُفحص قبل الحفظ." />
+      <PageHeader title="حجز جديد" />
       {data.roomTypes.length === 0 ? (
         <Card><EmptyState icon={BedDouble} title="لا توجد أنواع غرف" description="عرّف أنواع الغرف والغرف أولًا لتتمكن من الحجز."
           actionHref={ctx.can(PERMISSIONS.pmsSetup) ? "/room-setup" : undefined} actionLabel="إعداد الغرف" /></Card>

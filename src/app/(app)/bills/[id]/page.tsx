@@ -1,7 +1,8 @@
 import Link from "@/components/link";
+import { CodeName, DocText } from "@/components/ui/code-text";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
-import { plainText } from "@/lib/text";
+import { Properties } from "@/components/ui/properties";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,8 +33,13 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
   return (
     <>
       <PageHeader title={`${t.payables.billNumber} ${bill.bill_number}`}
-        description={`${(locale === "en" && vendor.data?.name_en) || vendor.data?.name_ar}، ${bill.vendor_invoice_no ?? ""}`}
         actions={<Badge>{t.payables.statuses[bill.status]}</Badge>} />
+      <Properties items={[
+        [t.payables.vendor, (locale === "en" && vendor.data?.name_en) || vendor.data?.name_ar],
+        [t.payables.vendorInvoiceNo, bill.vendor_invoice_no && <span className="num">{bill.vendor_invoice_no}</span>],
+        [t.common.date, <span key="d" className="num">{bill.bill_date}</span>],
+        ["الاستحقاق", bill.due_date && <span className="num">{bill.due_date}</span>],
+      ]} />
       <Card className="mb-6 overflow-hidden">
         <Table>
           <TableHeader><TableRow>
@@ -43,7 +49,7 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
           <TableBody>
             {lines.map((l) => (
               <TableRow key={l.id}>
-                <TableCell className="num">{l.line_no}</TableCell><TableCell>{plainText(l.description)}</TableCell><TableCell>{acc.get(l.account_id)}</TableCell>
+                <TableCell className="num">{l.line_no}</TableCell><TableCell><DocText text={l.description} /></TableCell><TableCell><CodeName label={acc.get(l.account_id) ?? ""} /></TableCell>
                 <TableCell className="num text-end">{toMoney(l.quantity).toString()}</TableCell>
                 <TableCell className="text-end"><Money value={l.net_amount} locale={locale} /></TableCell>
                 <TableCell className="text-end"><Money value={l.tax_amount} locale={locale} blankZero /></TableCell>

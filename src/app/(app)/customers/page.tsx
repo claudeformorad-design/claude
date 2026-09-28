@@ -48,14 +48,13 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
     <>
       <PageHeader
         title={t.customers.title}
-        description={t.customers.subtitle}
         actions={canManage && <Button asChild><Link href="/customers?new=1"><Plus />{t.customers.newCustomer}</Link></Button>}
       />
       <StatGrid>
         <Stat icon={Users} tone="ink" label="العملاء" value={<span className="num">{customers.length}</span>} hint={`${customers.filter((x) => x.is_active).length} فعّال`} />
         <Stat icon={BadgeCheck} tone="teal" label="مسموح لهم بالآجل" value={<span className="num">{customers.filter((x) => x.allow_credit).length}</span>} />
-        <Stat icon={Hourglass} tone="clay" label="فواتير مفتوحة" value={<Money value={customers.reduce((a, x) => a.plus(toMoney(x.open_invoices)), ZERO)} locale={locale} />} />
-        <Stat icon={Wallet} tone="neutral" label="أرصدة دائنة غير مخصصة" value={<Money value={customers.reduce((a, x) => a.plus(toMoney(x.unapplied_credit)), ZERO)} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Hourglass} tone="clay" label="فواتير مفتوحة" value={<Money value={customers.reduce((a, x) => a.plus(toMoney(x.open_invoices)), ZERO)} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="neutral" label="أرصدة دائنة غير مخصصة" value={<Money value={customers.reduce((a, x) => a.plus(toMoney(x.unapplied_credit)), ZERO)} locale={locale} />} />
       </StatGrid>
       <div className="grid gap-6">
         <Card className="overflow-hidden">

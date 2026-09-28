@@ -8,9 +8,13 @@ export type PlainReport = {
   title: string;
   subtitle: string;
   columns: string[];
-  rows: { kind: "section" | "line" | "subtotal" | "total"; cells: { text: string; num: boolean }[]; account?: string }[];
+  rows: { kind: "section" | "line" | "subtotal" | "total"; cells: { text: string; num: boolean }[]; code?: string; account?: string }[];
   note?: { ok: boolean; text: string };
 };
+
+/** عنوان عمود الرمز حين يحمل التقرير رموزًا، ويظهر قبل عمود الاسم */
+export const CODE_COLUMN = "الرمز";
+export const hasCodes = (rows: { code?: string }[]) => rows.some((r) => !!r.code);
 
 /** بيانات رأس المستند: الفندق وبياناته النظامية ووقت الإعداد */
 export type DocMeta = {
@@ -31,6 +35,7 @@ export function toPlainReport(table: ReportTable, locale: string): PlainReport {
     note: table.note,
     rows: table.rows.map((r) => ({
       kind: r.kind,
+      code: r.code,
       account: r.account,
       cells: r.cells.map((c) => c instanceof MoneyDecimal
         ? { text: c.isZero() ? "" : formatMoney(c, { locale }), num: true }

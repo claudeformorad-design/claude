@@ -1,4 +1,5 @@
-import { plainText } from "@/lib/text";
+import { DocText } from "@/components/ui/code-text";
+import { currencyName } from "@/lib/currency-name";
 import Link from "@/components/link";
 import { notFound } from "next/navigation";
 import { Money } from "@/components/money";
@@ -89,7 +90,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                 <TableRow key={it.id}>
                   <TableCell className="num">{it.line_no}</TableCell>
                   <TableCell className="num">{it.business_date ?? ""}</TableCell>
-                  <TableCell>{plainText(it.description)}</TableCell>
+                  <TableCell><DocText text={it.description} /></TableCell>
                   <TableCell className="num text-end">{toMoney(it.quantity).toString()}</TableCell>
                   <TableCell className="text-end">{m(it.net_amount)}</TableCell>
                   <TableCell className="text-end">{m(it.tax_amount)}</TableCell>
@@ -121,7 +122,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
               <tbody>
                 <tr><td className="py-1">{t.invoices.subtotal}</td><td className="py-1 text-end">{m(inv.subtotal)}</td></tr>
                 <tr><td className="py-1">{t.invoices.taxTotal}</td><td className="py-1 text-end">{m(inv.tax_total)}</td></tr>
-                <tr className="text-base font-bold"><td className="rounded-s-lg bg-accent1-tint px-3 py-2.5 text-accent1 print:bg-transparent print:text-ink">{t.invoices.total} ({inv.currency_code})</td><td className="rounded-e-lg bg-accent1-tint px-3 py-2.5 text-end text-accent1 print:bg-transparent print:text-ink">{m(inv.total)}</td></tr>
+                <tr className="text-base font-bold"><td className="rounded-s-lg bg-accent1-tint px-3 py-2.5 text-accent1 print:bg-transparent print:text-ink">{t.invoices.total} {currencyName(inv.currency_code)}</td><td className="rounded-e-lg bg-accent1-tint px-3 py-2.5 text-end text-accent1 print:bg-transparent print:text-ink">{m(inv.total)}</td></tr>
                 {toMoney(inv.amount_due).gt(0) && (
                   <>
                     <tr><td className="py-1">{t.invoices.amountDue}</td><td className="py-1 text-end">{m(inv.amount_due)}</td></tr>

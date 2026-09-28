@@ -57,7 +57,6 @@ export default async function RoomSetupPage({ searchParams }: { searchParams: Pr
     <>
       <PageHeader
         title={t.nav.roomSetup}
-        description="أنواع الغرف وأسعارها الأساسية وسعتها، والغرف والقاعات، والطوابق. الأسعار الموسمية والعروض من صفحة الأسعار."
         actions={<div className="flex gap-2">{tab === "rooms" && (<FormDialog label="إضافة غرف دفعة واحدة" variant="outline" title="إضافة غرف دفعة واحدة" description="مدى أرقام متتالي من نفس النوع؛ الأرقام الموجودة تُتجاوز تلقائيًا.">
               {typeOptions.length === 0 ? <p className="text-[16px] text-slate-500">عرّف نوع غرف أولًا.</p> : (
                 <SimpleForm columns={2} submitLabel="إضافة الغرف" errors={t.errors} action={createRoomsBulkAction}

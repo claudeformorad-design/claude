@@ -38,7 +38,7 @@ export function MemberRow({ t, userId, email, name, active, roleIds, roles, isSe
           <label key={r.id} className={`flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-[16.5px] font-medium transition-colors ${sel.has(r.id) ? "bg-ink text-white" : "bg-subtle text-slate-700 hover:bg-line"}`}>
             <input type="checkbox" className="sr-only" checked={sel.has(r.id)}
               onChange={(e) => { const n = new Set(sel); if (e.target.checked) n.add(r.id); else n.delete(r.id); setSel(n); }} />
-            {r.label}{r.system && <span className={`text-[14.5px] ${sel.has(r.id) ? "text-white/70" : "text-slate-500"}`}>({t.admin.systemRole})</span>}
+            {r.label}{r.system && <span className={`ms-1 ${sel.has(r.id) ? "text-white/70" : "text-slate-500"}`}>{t.admin.systemRole}</span>}
           </label>
         ))}
       </div>

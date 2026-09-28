@@ -13,7 +13,7 @@ export default async function NewPayrollPage() {
   const departments = await listDepartments(ctx.supabase, ctx.hotel.id);
   return (
     <>
-      <PageHeader title={t.payables.newPayroll} description={t.payables.payrollSubtitle} />
+      <PageHeader title={t.payables.newPayroll} />
       <Card><CardContent className="p-5">
         <PayrollForm t={{ payables: t.payables, common: t.common, errors: t.errors, journal: t.journal, folio: t.folio }} locale={locale}
           month={todayInTimeZone(ctx.hotel.timezone).slice(0, 7)}

@@ -1,4 +1,5 @@
 import { FormDialog } from "@/components/ui/dialog";
+import { CodeName } from "@/components/ui/code-text";
 import { Coins } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -35,7 +36,7 @@ export default async function CurrenciesPage() {
 
   return (
     <>
-      <PageHeader title="العملات وأسعار الصرف" description={`العملة الأساسية ${nameOf.get(base) ?? base}، والسعر هو ما تساويه وحدة واحدة من العملة الأجنبية بالعملة الأساسية`}
+      <PageHeader title="العملات وأسعار الصرف"
         actions={
           <FormDialog label="تسجيل سعر صرف" title="تسجيل سعر صرف" description="تسجيل سعر لنفس اليوم يستبدله">
             <SimpleForm columns={2} submitLabel="حفظ السعر" errors={t.errors} action={setExchangeRateAction}
@@ -62,7 +63,7 @@ export default async function CurrenciesPage() {
                     const r = current.get(c.code);
                     return (
                       <TableRow key={c.code}>
-                        <TableCell><span className="num font-bold">{c.code}</span> <span className="text-slate-500">{c.name_ar}</span></TableCell>
+                        <TableCell><CodeName label={`${c.code} ${c.name_ar}`} /></TableCell>
                         <TableCell className="num text-end text-[17px] font-semibold">{r ? fmt(r.rate) : <Badge variant="warning">بلا سعر</Badge>}</TableCell>
                         <TableCell className="num">{r ? (r.date === today ? "اليوم" : r.date) : ""}</TableCell>
                         <TableCell>{used.has(c.code) ? <Badge variant="success">مفعّلة</Badge> : <span className="text-slate-400"></span>}</TableCell>
@@ -83,7 +84,7 @@ export default async function CurrenciesPage() {
                 {rates.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="num">{r.rate_date}</TableCell>
-                    <TableCell><span className="num font-semibold">{r.currency_code}</span> <span className="text-slate-500">{nameOf.get(r.currency_code)}</span></TableCell>
+                    <TableCell><CodeName label={`${r.currency_code} ${nameOf.get(r.currency_code) ?? ""}`} /></TableCell>
                     <TableCell className="num text-end">{fmt(r.rate)}</TableCell>
                   </TableRow>
                 ))}

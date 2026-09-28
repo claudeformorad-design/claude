@@ -5,7 +5,7 @@ import { Alert } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
 import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { PlainReport } from "@/lib/export/plain-report";
+import { CODE_COLUMN, hasCodes, type PlainReport } from "@/lib/export/plain-report";
 import { cn } from "@/lib/utils";
 
 /**
@@ -25,7 +25,8 @@ export function ReportView({ report, from, to, actions }: {
     group.push(r.kind === "section" ? null : g);
   });
   const toggle = (i: number) => setClosed((s) => { const n = new Set(s); if (n.has(i)) n.delete(i); else n.add(i); return n; });
-  const cols = report.columns.length;
+  const codes = hasCodes(report.rows);
+  const cols = report.columns.length + (codes ? 1 : 0);
 
   return (
     <div className="space-y-4">
@@ -36,18 +37,26 @@ export function ReportView({ report, from, to, actions }: {
       <Card className="overflow-hidden">
         <Table>
           <TableHeader><TableRow>
+            {codes && <TableHead className="w-28">{CODE_COLUMN}</TableHead>}
             {report.columns.map((c, i) => <TableHead key={c} className={i > 0 ? "text-end" : ""}>{c}</TableHead>)}
           </TableRow></TableHeader>
           <TableBody>
             {report.rows.map((row, ri) => {
               const owner = group[ri];
               if (owner != null && closed.has(owner) && row.kind === "line") return null;
-              const cells = row.cells.map((c, ci) => (
-                <TableCell key={ci} className={cn(ci > 0 && "text-end", c.num && "num", row.kind === "line" && ci === 0 && "ps-9 text-slate-700")}>
-                  {ci === 0 && (row.kind === "section" || row.account) && <ExpandMark />}
-                  {c.text}
-                </TableCell>
-              ));
+              // عمود الرمز: رمز الحساب في سطره، ويمتد عنوان القسم والإجمالي عليه ليبدأ من الحافة
+              const mark = (row.kind === "section" || !!row.account) && <ExpandMark />;
+              const lineRow = row.kind === "line";
+              const cells = [
+                codes && lineRow && <TableCell key="code" className="text-slate-500">{mark}<span className="num">{row.code}</span></TableCell>,
+                ...row.cells.map((c, ci) => (
+                  <TableCell key={ci} colSpan={codes && ci === 0 && !lineRow ? 2 : undefined}
+                    className={cn(ci > 0 && "text-end", c.num && "num", lineRow && ci === 0 && (codes ? "text-slate-700" : "ps-9 text-slate-700"))}>
+                    {ci === 0 && !(codes && lineRow) && mark}
+                    {c.text}
+                  </TableCell>
+                )),
+              ];
               if (row.kind === "line" && row.account) {
                 return <ExpandableRow key={ri} kind="account" id={row.account} colSpan={cols} from={from} to={to}>{cells}</ExpandableRow>;
               }

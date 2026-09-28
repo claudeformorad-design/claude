@@ -38,7 +38,6 @@ export default async function GuestsPage({ searchParams }: { searchParams: Promi
     <>
       <PageHeader
         title={t.nav.guests}
-        description="ملفات النزلاء ببياناتهم وهوياتهم وتاريخ إقامتهم. رقم الهوية لا يتكرر لنزيلين."
         actions={canManage && <Button asChild><Link href="/guests?new=1"><Plus />نزيل جديد</Link></Button>}
       />
       <StatGrid>

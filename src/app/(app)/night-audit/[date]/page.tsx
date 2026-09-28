@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "@/components/link";
 import { BedDouble, CalendarCheck, Coins, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { Properties } from "@/components/ui/properties";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,6 @@ export default async function ManagerReportPage({ params }: { params: Promise<{ 
     <>
       <PageHeader
         title="تقرير المدير اليومي"
-        description={`${ctx.hotel.name_ar}، ${dayLabel(date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {audit ? <Badge variant="success" className="text-[15px]">مدقق {formatDateTime(audit.run_at, ctx.hotel.timezone)}</Badge> : <Badge variant="warning" className="text-[15px]">أرقام حية قبل التدقيق</Badge>}
@@ -52,11 +52,15 @@ export default async function ManagerReportPage({ params }: { params: Promise<{ 
         }
       />
 
+      <Properties items={[
+        ["الفندق", ctx.hotel.name_ar],
+        ["يوم العمل", dayLabel(date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })],
+      ]} />
       <StatGrid>
         <Stat icon={BedDouble} tone="ink" label="الإشغال" value={<span className="num">{s.occupancy_pct}%</span>} hint={`${s.occupied} مشغولة، ${s.vacant} شاغرة، ${s.out_of_service} خارج الخدمة`} />
-        <Stat icon={Coins} tone="teal" label="متوسط سعر الغرفة" value={<Money value={s.adr} locale={locale} />} />
-        <Stat icon={TrendingUp} tone="clay" label="العائد لكل غرفة متاحة" value={<Money value={s.revpar} locale={locale} />} />
-        <Stat icon={CalendarCheck} tone="neutral" label="إيراد الغرف" value={<Money value={s.room_revenue} locale={locale} />} hint={`${s.guests} نزيل مقيم`} />
+        <Stat currency={ctx.hotel.base_currency} icon={Coins} tone="teal" label="متوسط سعر الغرفة" value={<Money value={s.adr} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={TrendingUp} tone="clay" label="العائد لكل غرفة متاحة" value={<Money value={s.revpar} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={CalendarCheck} tone="neutral" label="إيراد الغرف" value={<Money value={s.room_revenue} locale={locale} />} hint={`${s.guests} نزيل مقيم`} />
       </StatGrid>
 
       <div className="grid items-start gap-6 xl:grid-cols-2">

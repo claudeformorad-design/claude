@@ -1,4 +1,5 @@
 import { RouteDialog } from "@/components/ui/dialog";
+import { CodeName, CodeTag } from "@/components/ui/code-text";
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -75,7 +76,7 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
 
   return (
     <>
-      <PageHeader title={rs.title} description={rs.subtitle} />
+      <PageHeader title={rs.title} />
       <div className="grid gap-6">
         <div className="min-w-0 space-y-6">
           {section(rs.taxes, "tax", [t.customers.code, t.customers.name, rs.kind, rs.rate, rs.account, t.common.status],
@@ -84,7 +85,7 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
                 <TableCell className="num">{x.code}</TableCell><TableCell>{name(x)}</TableCell>
                 <TableCell>{rs.taxKinds[x.kind]}{x.is_compound ? " *" : ""}</TableCell>
                 <TableCell className="num">{toMoney(x.rate).toString()}%</TableCell>
-                <TableCell>{acc(x.account_id)}</TableCell><TableCell>{active(x.is_active)}</TableCell>{editCell("tax", x.id)}
+                <TableCell><CodeName label={acc(x.account_id)} /></TableCell><TableCell>{active(x.is_active)}</TableCell>{editCell("tax", x.id)}
               </TableRow>
             )))}
           {section(rs.chargeCodes, "charge", [t.customers.code, t.customers.name, rs.category, rs.department, rs.revenueAccount, rs.appliedTaxes],
@@ -92,8 +93,8 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
               <TableRow key={x.id} className={x.is_active ? "" : "opacity-50"}>
                 <TableCell className="num">{x.code}</TableCell><TableCell>{name(x)}</TableCell>
                 <TableCell>{rs.categories[x.category]}</TableCell>
-                <TableCell>{departments.find((d) => d.id === x.department_id)?.code}</TableCell>
-                <TableCell>{acc(x.revenue_account_id)}</TableCell>
+                <TableCell>{(() => { const d = departments.find((y) => y.id === x.department_id); return d ? name(d) : ""; })()}</TableCell>
+                <TableCell><CodeName label={acc(x.revenue_account_id)} /></TableCell>
                 <TableCell>{x.tax_rate_ids.map((id) => taxById.get(id)?.code).join(" + ") || ""}{x.price_includes_tax ? `، ${t.folio.priceIncludesTax}` : ""}</TableCell>
                 {editCell("charge", x.id)}
               </TableRow>
@@ -101,8 +102,8 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
           {section(rs.paymentMethods, "method", [t.customers.code, t.customers.name, rs.kind, rs.account, t.common.status],
             methods.map((x) => (
               <TableRow key={x.id}>
-                <TableCell className="num">{x.code}</TableCell><TableCell>{name(x)}{x.currency_code && <span className="num ms-2 rounded bg-subtle px-1.5 text-[13px] text-slate-600">{x.currency_code}</span>}</TableCell>
-                <TableCell>{rs.methodKinds[x.kind]}</TableCell><TableCell>{acc(x.account_id)}</TableCell>
+                <TableCell className="num">{x.code}</TableCell><TableCell>{name(x)}{x.currency_code && <CodeTag>{x.currency_code}</CodeTag>}</TableCell>
+                <TableCell>{rs.methodKinds[x.kind]}</TableCell><TableCell><CodeName label={acc(x.account_id)} /></TableCell>
                 <TableCell>{active(x.is_active)}</TableCell>{editCell("method", x.id)}
               </TableRow>
             )))}

@@ -36,7 +36,6 @@ export default async function CashierPage() {
     <>
       <PageHeader
         title="الصندوق"
-        description={ctx.hotel.require_cashier_shift ? "قبض النقد وصرفه يتطلب وردية مفتوحة" : "ورديات الكاشير وتسليم الصندوق"}
         actions={
           <>
             {mine && !open && (
@@ -56,9 +55,9 @@ export default async function CashierPage() {
 
       {report && open && (
         <StatGrid>
-          <Stat icon={Clock} tone="ink" label="الوردية" value={<span className="num">{open.shift_number}</span>} hint={`منذ ${formatDateTime(open.opened_at, ctx.hotel.timezone)}`} />
-          <Stat icon={Wallet} tone="teal" label="العهدة" value={<Money value={open.opening_float} locale={locale} />} />
-          <Stat icon={Banknote} tone="clay" label="النقد المتوقع" value={<Money value={cashExpected} locale={locale} />} hint={ctx.hotel.base_currency} />
+          <Stat icon={Clock} tone="ink" label="الوردية" value={<span className="num">{open.shift_number}</span>} hint={<>منذ <span className="num">{formatDateTime(open.opened_at, ctx.hotel.timezone)}</span></>} />
+          <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="teal" label="العهدة" value={<Money value={open.opening_float} locale={locale} />} />
+          <Stat currency={ctx.hotel.base_currency} icon={Banknote} tone="clay" label="النقد المتوقع" value={<Money value={cashExpected} locale={locale} />} />
           <Stat icon={LockKeyhole} tone="neutral" label="الحركات" value={<span className="num">{report.transactions.length}</span>} />
         </StatGrid>
       )}

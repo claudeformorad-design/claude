@@ -1,4 +1,5 @@
 import Link from "@/components/link";
+import { CodeTag } from "@/components/ui/code-text";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,7 +78,7 @@ export function ShiftReportView({ report, locale, timezone, canViewFolio }: { re
                 <TableCell>{TXN[x.txn_type] ?? x.txn_type}{x.direction === -1 && <Badge variant="destructive" className="ms-2">إلغاء</Badge>}</TableCell>
                 <TableCell>{x.method}</TableCell>
                 <TableCell className="text-end whitespace-nowrap"><Money value={x.amount * x.direction} locale={locale} className="font-semibold" /></TableCell>
-                <TableCell className="num text-end whitespace-nowrap text-slate-600">{x.foreign_amount != null ? `${(x.foreign_amount * x.direction).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${x.currency_code}` : ""}</TableCell>
+                <TableCell className="text-end whitespace-nowrap text-slate-600">{x.foreign_amount != null && <><span className="num">{(x.foreign_amount * x.direction).toLocaleString("en-US", { minimumFractionDigits: 2 })}</span><CodeTag className="me-0">{x.currency_code}</CodeTag></>}</TableCell>
               </TableRow>
             ))}
           </TableBody>

@@ -2,6 +2,7 @@ import { FormDialog } from "@/components/ui/dialog";
 import { forbidden, notFound } from "next/navigation";
 import Link from "@/components/link";
 import { PageHeader } from "@/components/layout/page-header";
+import { Properties } from "@/components/ui/properties";
 import { PrintButton } from "../../invoices/[id]/print-button";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +32,6 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
     <>
       <PageHeader
         title={`الوردية ${s.shift_number}`}
-        description={`${s.user_name || ""}، فُتحت ${formatDateTime(s.opened_at, ctx.hotel.timezone)}${s.closed_at ? ` وأُغلقت ${formatDateTime(s.closed_at, ctx.hotel.timezone)}` : ""}`}
         actions={
           <div className="flex items-center gap-2">
             {s.status === "open" ? <Badge variant="success" className="text-[16px]">مفتوحة</Badge> : <Badge variant="secondary" className="text-[16px]">مغلقة</Badge>}
@@ -46,6 +46,11 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
           </div>
         }
       />
+      <Properties items={[
+        ["الكاشير", s.user_name],
+        ["فُتحت", <span key="o" className="num">{formatDateTime(s.opened_at, ctx.hotel.timezone)}</span>],
+        ["أُغلقت", s.closed_at && <span className="num">{formatDateTime(s.closed_at, ctx.hotel.timezone)}</span>],
+      ]} />
       <div className={`grid items-start gap-6 ${s.status === "closed" ? "xl:grid-cols-[minmax(0,1fr)_380px]" : ""}`}>
         <div className="space-y-6">
           <ShiftReportView report={report} locale={locale} timezone={ctx.hotel.timezone} canViewFolio={ctx.can(PERMISSIONS.folioView)} />

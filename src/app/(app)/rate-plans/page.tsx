@@ -1,4 +1,5 @@
 import { FormDialog, RouteDialog } from "@/components/ui/dialog";
+import { CodeTag } from "@/components/ui/code-text";
 import Link from "@/components/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Money } from "@/components/money";
@@ -51,7 +52,7 @@ export default async function RatePlansPage({ searchParams }: { searchParams: Pr
 
   return (
     <>
-      <PageHeader title="خطط الأسعار" description="إقامة فقط، مع الإفطار، أسعار الشركات والعروض، وتُطبَّق على الأسعار والمواسم القياسية"
+      <PageHeader title="خطط الأسعار"
         actions={canManage && <FormDialog label="خطة جديدة" title="خطة جديدة" description={planHint}>{planForm()}</FormDialog>} />
       <div className="grid gap-6">
         <Card className="overflow-hidden">
@@ -62,7 +63,7 @@ export default async function RatePlansPage({ searchParams }: { searchParams: Pr
               {plans.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="cell-fluid">
-                    <span className="num font-semibold">{p.code}</span> <span className="text-ink">{p.name_ar}</span>
+                    <span className="text-ink">{p.name_ar}</span><CodeTag>{p.code}</CodeTag>
                     {p.includes_breakfast && <Badge variant="info" className="ms-2">يشمل الإفطار</Badge>}
                     {!p.is_active && <Badge variant="secondary" className="ms-2">موقوفة</Badge>}
                   </TableCell>

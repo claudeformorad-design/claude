@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { CurrencyTag } from "./currency-tag";
 
 type Tone = "ink" | "teal" | "clay" | "neutral";
 const TONES: Record<Tone, string> = {
@@ -14,13 +15,15 @@ export function StatGrid({ children, className }: { children: React.ReactNode; c
 }
 
 export function Stat({
-  icon: Icon, label, value, hint, tone = "neutral", valueClassName,
+  icon: Icon, label, value, hint, tone = "neutral", currency, valueClassName,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: React.ReactNode;
   hint?: React.ReactNode;
   tone?: Tone;
+  /** رمز العملة إن كانت القيمة مبلغًا، يظهر اسمها كشارة في الزاوية بدل رمز بجانب الرقم */
+  currency?: string;
   valueClassName?: string;
 }) {
   return (
@@ -29,7 +32,8 @@ export function Stat({
         <span className={cn("lift-icon flex size-9 shrink-0 items-center justify-center rounded-[10px]", TONES[tone])}>
           <Icon className="size-[17px] stroke-[1.9]" />
         </span>
-        <p className="truncate text-[16.5px] font-medium text-slate-600">{label}</p>
+        <p className="line-clamp-2 min-w-0 text-[16.5px] leading-tight font-medium text-slate-600">{label}</p>
+        {currency && <CurrencyTag code={currency} className="ms-auto" />}
       </div>
       <p className={cn("display-num mt-3 truncate text-[24px] font-bold leading-tight text-ink", valueClassName)}>{value}</p>
       {hint && <p className="mt-1 truncate text-[15.5px] text-slate-500">{hint}</p>}

@@ -35,7 +35,7 @@ export default async function HotelSettingsPage() {
   const amt = (v: string | null) => (v ? toMoney(v).toString() : "");
   return (
     <>
-      <PageHeader title={t.nav.hotelSettings} description={a.hotelSubtitle} />
+      <PageHeader title={t.nav.hotelSettings} />
       <div className="space-y-6">
         <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
           <Card><CardHeader><CardTitle>{h.name_ar}</CardTitle></CardHeader><CardContent>

@@ -1,5 +1,5 @@
 import Link from "@/components/link";
-import { BedDouble, DoorOpen, Sparkles, Wrench } from "lucide-react";
+import { BedDouble, BrushCleaning, DoorOpen, Wrench } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -72,13 +72,12 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
     <>
       <PageHeader
         title={t.nav.rooms}
-        description="حالة كل غرفة الليلة ونظافتها. انقر على الغرفة لتغيير حالة النظافة أو إخراجها من الخدمة."
         actions={ctx.can(PERMISSIONS.pmsSetup) && <Button asChild variant="outline"><Link href="/room-setup?tab=rooms">إعداد الغرف</Link></Button>}
       />
       <StatGrid>
         <Stat icon={DoorOpen} tone="ink" label="الغرف والوحدات" value={<span className="num">{active.length}</span>} hint={`${[...occupancy.values()].filter((x) => x.kind === "occupied").length} مشغولة الآن`} />
         <Stat icon={BedDouble} tone="teal" label="شاغرة الليلة" value={<span className="num">{counts.vacant}</span>} hint="في الخدمة وبلا حجز مخصص" />
-        <Stat icon={Sparkles} tone="clay" label="تحتاج تنظيف" value={<span className="num">{counts.dirty}</span>} />
+        <Stat icon={BrushCleaning} tone="clay" label="تحتاج تنظيف" value={<span className="num">{counts.dirty}</span>} />
         <Stat icon={Wrench} tone="neutral" label="خارج الخدمة" value={<span className="num">{counts.oos}</span>} />
       </StatGrid>
 

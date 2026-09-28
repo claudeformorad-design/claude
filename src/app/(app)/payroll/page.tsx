@@ -19,12 +19,12 @@ export default async function PayrollPage() {
   const runs = await listPayrollRuns(ctx.supabase, ctx.hotel.id);
   return (
     <>
-      <PageHeader title={t.nav.payroll} description={t.payables.payrollSubtitle}
+      <PageHeader title={t.nav.payroll}
         actions={<Button asChild><Link href="/payroll/new"><Plus />{t.payables.newPayroll}</Link></Button>} />
       <StatGrid className="lg:grid-cols-3">
         <Stat icon={UserCog} tone="ink" label="مسيّرات مرحّلة" value={<span className="num">{runs.length}</span>} hint={runs[0] ? `آخرها ${runs[0].period_month.slice(0, 7)}` : undefined} />
-        <Stat icon={Banknote} tone="teal" label="إجمالي آخر مسيّر" value={runs[0] ? <Money value={runs[0].total_gross} locale={locale} /> : ""} />
-        <Stat icon={Wallet} tone="clay" label="صافي آخر مسيّر" value={runs[0] ? <Money value={runs[0].total_net} locale={locale} /> : ""} />
+        <Stat currency={ctx.hotel.base_currency} icon={Banknote} tone="teal" label="إجمالي آخر مسيّر" value={runs[0] ? <Money value={runs[0].total_gross} locale={locale} /> : ""} />
+        <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="clay" label="صافي آخر مسيّر" value={runs[0] ? <Money value={runs[0].total_net} locale={locale} /> : ""} />
       </StatGrid>
       <Card className="overflow-hidden">
         <Table>

@@ -77,7 +77,6 @@ export default async function TapeChartPage({ searchParams }: { searchParams: Pr
     <>
       <PageHeader
         title={t.nav.tapeChart}
-        description="الغرف والأيام في شاشة واحدة. انقر على خانة فارغة لبدء حجز لتلك الغرفة من ذلك اليوم."
         actions={canCreate && <Button asChild><Link href="/reservations/new"><Plus />حجز جديد</Link></Button>}
       />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

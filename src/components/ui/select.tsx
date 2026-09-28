@@ -5,6 +5,7 @@ import { Check, Search } from "lucide-react";
 import { Popover, setNativeValue } from "@/components/ui/popover";
 import { useMergedRef } from "@/components/ui/use-merged-ref";
 import { cn } from "@/lib/utils";
+import { CodeName } from "@/components/ui/code-text";
 
 type Opt = { value: string; label: string; disabled: boolean };
 
@@ -59,7 +60,7 @@ export function NativeSelect({ className, children, onChange, ref, disabled, ...
           className,
         )}
       >
-        <span className={cn("truncate", !selected?.value && "text-slate-400")}>{selected?.label ?? ""}</span>
+        <CodeName label={selected?.label ?? ""} className={cn("w-full", !selected?.value && "text-slate-400")} />
       </button>
       <Popover open={open} anchor={buttonRef} onClose={close}>
         <OptionList options={opts} value={current} onChoose={choose} />
@@ -107,7 +108,7 @@ function OptionList({ options, value, onChoose }: { options: Opt[]; value: strin
                 isSel ? "font-semibold text-ink" : "text-slate-700",
                 !o.value && "text-slate-400",
               )}>
-              <span className="truncate">{o.label}</span>
+              <CodeName label={o.label} className="flex-1" />
               {isSel && o.value && <Check className="size-4 shrink-0 text-action" />}
             </button>
           );

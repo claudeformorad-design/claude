@@ -1,4 +1,5 @@
 import { FormDialog, RouteDialog } from "@/components/ui/dialog";
+import { CodeName } from "@/components/ui/code-text";
 import Link from "@/components/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Money } from "@/components/money";
@@ -53,7 +54,7 @@ export default async function PosSetupPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <PageHeader title="إعداد نقاط البيع" description="المطعم والكافيه وخدمة الغرف، بأصنافها وأسعارها"
+      <PageHeader title="إعداد نقاط البيع"
         actions={
           <div className="flex gap-2">
             <Button asChild variant="outline"><Link href="/pos">شاشة البيع</Link></Button>
@@ -73,7 +74,7 @@ export default async function PosSetupPage({ searchParams }: { searchParams: Pro
                   <TableRow key={i.id}>
                     <TableCell className="cell-fluid"><span className="font-medium text-ink">{i.name_ar}</span>{i.category && <span className="block text-[13.5px] text-slate-500">{i.category}</span>}{!i.is_active && <Badge variant="secondary" className="ms-2">موقوف</Badge>}</TableCell>
                     <TableCell>{outletName.get(i.outlet_id)}</TableCell>
-                    <TableCell className="text-[14.5px]">{codeName.get(i.charge_code_id)}</TableCell>
+                    <TableCell><CodeName label={codeName.get(i.charge_code_id) ?? ""} /></TableCell>
                     <TableCell className="text-end"><Money value={i.price} locale={locale} /></TableCell>
                     <TableCell className="text-end"><Link href={`/pos/setup?item=${i.id}`} className="text-action">تعديل</Link></TableCell>
                   </TableRow>
