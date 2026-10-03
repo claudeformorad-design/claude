@@ -459,6 +459,9 @@ export type PosOrderRow = {
   id: string; hotel_id: string; outlet_id: string; order_number: string; settle_mode: "room" | "paid"; reservation_id: string | null;
   folio_id: string; invoice_id: string | null; payment_method_id: string | null; total: string; note: string | null; created_at: string; created_by: string | null;
 };
+export type PosOrderLineRow = {
+  order_id: string; line_no: number; hotel_id: string; item_id: string; name_ar: string; quantity: string; unit_price: string; folio_transaction_id: string | null;
+};
 export type HousekeepingKind = "departure" | "stayover" | "inspection" | "maintenance" | "turndown";
 export type HousekeepingTaskStatus = "pending" | "in_progress" | "done" | "cancelled";
 export type HousekeepingTaskRow = {
@@ -622,6 +625,7 @@ export type Database = {
       pos_outlets: Table<PosOutletRow, "hotel_id" | "code" | "name_ar">;
       pos_items: Table<PosItemRow, "hotel_id" | "outlet_id" | "name_ar" | "price" | "charge_code_id">;
       pos_orders: ReadOnlyTable<PosOrderRow>;
+      pos_order_lines: ReadOnlyTable<PosOrderLineRow>;
       housekeeping_tasks: ReadOnlyTable<HousekeepingTaskRow>;
       rate_plans: Table<RatePlanRow, "hotel_id" | "code" | "name_ar">;
       reservation_nights: ReadOnlyTable<ReservationNightRow>;

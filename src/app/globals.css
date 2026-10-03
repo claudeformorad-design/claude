@@ -494,8 +494,8 @@ tbody.rows-animate > tr:hover > td { background-color: #fbfaf8; }
 /* المساعد: ظلال ناعمة منتشرة كاللوحات العائمة، علامة تتنفس أثناء التفكير، ولمعة تمر على حالة القراءة */
 .assistant-panel { box-shadow: 0 0 0 1px rgb(15 15 15 / 0.02), 0 8px 24px rgb(15 15 15 / 0.07), 0 28px 72px rgb(15 15 15 / 0.12); }
 .assistant-composer { box-shadow: 0 1px 2px rgb(15 15 15 / 0.03), 0 6px 20px rgb(15 15 15 / 0.05); }
-.assistant-mark-thinking { animation: assistant-breathe 1.6s ease-in-out infinite; transform-origin: center; }
-@keyframes assistant-breathe { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.84); opacity: 0.6; } }
+.assistant-mark-thinking { animation: assistant-turn 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite; transform-origin: 12px 12px; transform-box: view-box; }
+@keyframes assistant-turn { 0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(45deg) scale(0.86); } 100% { transform: rotate(90deg) scale(1); } }
 .assistant-shimmer {
   background: linear-gradient(90deg, var(--color-slate-500) 0%, var(--color-slate-500) 40%, #c9c6bd 50%, var(--color-slate-500) 60%, var(--color-slate-500) 100%);
   background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;

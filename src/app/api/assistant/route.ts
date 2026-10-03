@@ -7,7 +7,7 @@ import { TOOL_SPECS, runTool } from "@/lib/assistant/tools";
 import { addMessage, createConversation, dropLastAnswer, getConversation, getSettings } from "@/services/assistant.service";
 import { getI18n } from "@/i18n/server";
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const body = z.object({
   conversationId: z.uuid().optional(),
@@ -18,7 +18,7 @@ const body = z.object({
 });
 
 /** أقصى عدد جولات أدوات في السؤال الواحد، حتى لا تطول المحادثة أو تكلفتها */
-const MAX_ROUNDS = 8;
+const MAX_ROUNDS = 12;
 /** آخر الرسائل التي تُرسل للنموذج من تاريخ المحادثة */
 const HISTORY = 20;
 
@@ -82,10 +82,10 @@ export async function POST(request: Request) {
             role: "assistant", content: turn.text || null, tool_calls: turn.toolCalls,
             ...(turn.reasoningDetails.length ? { reasoning_details: turn.reasoningDetails } : {}),
           });
-          for (const call of turn.toolCalls) {
-            send({ type: "tool", name: call.function.name });
-            messages.push({ role: "tool", tool_call_id: call.id, content: await runTool(app, t, locale, call.function.name, call.function.arguments) });
-          }
+          // الأدوات المطلوبة في الجولة الواحدة تعمل معًا، وتُضاف نتائجها بترتيب طلبها
+          for (const call of turn.toolCalls) send({ type: "tool", name: call.function.name });
+          const outputs = await Promise.all(turn.toolCalls.map((call) => runTool(app, t, locale, call.function.name, call.function.arguments)));
+          turn.toolCalls.forEach((call, i) => messages.push({ role: "tool", tool_call_id: call.id, content: outputs[i]! }));
         }
         if (answer.trim()) await addMessage(app.supabase, convId, "assistant", answer.trim());
         send({ type: "done" });
