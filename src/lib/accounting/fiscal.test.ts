@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fiscalYearStart, isIsoDate, todayInTimeZone } from "./fiscal";
+import { fiscalYearStart, formatDateTime, isIsoDate, todayInTimeZone } from "./fiscal";
 
 describe("fiscalYearStart", () => {
   it("سنة تقويمية", () => {
@@ -20,5 +20,12 @@ describe("todayInTimeZone", () => {
     const utcLate = new Date("2026-09-25T22:30:00Z");
     expect(todayInTimeZone("Asia/Riyadh", utcLate)).toBe("2026-09-26");
     expect(todayInTimeZone("UTC", utcLate)).toBe("2026-09-25");
+  });
+});
+
+describe("formatDateTime", () => {
+  it("صيغة ثابتة بتوقيت الفندق", () => {
+    expect(formatDateTime("2026-09-25T22:30:05Z", "Asia/Riyadh")).toBe("2026-09-26 01:30");
+    expect(formatDateTime("2026-09-25T22:30:05Z", "UTC", true)).toBe("2026-09-25 22:30:05");
   });
 });

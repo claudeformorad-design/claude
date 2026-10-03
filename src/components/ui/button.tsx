@@ -4,22 +4,23 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+  "relative isolate inline-flex items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-lg text-[17.5px] font-medium transition-[background-color,border-color,color,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] cursor-pointer outline-none disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:stroke-[1.75] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action/40 active:scale-[0.98]",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90",
-        destructive: "bg-destructive text-white shadow-sm hover:bg-destructive/90",
-        outline: "border border-input bg-card shadow-sm hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        default: "bg-action text-white hover:bg-action-hover",
+        dark: "bg-ink text-white hover:bg-ink-soft",
+        destructive: "bg-urgent-tint text-urgent hover:bg-pending-tint",
+        outline: "border border-line-strong bg-white text-ink hover:bg-panel",
+        secondary: "bg-subtle text-slate-700 hover:bg-line hover:text-ink",
+        ghost: "text-slate-700 hover:bg-subtle hover:text-ink",
+        link: "rounded-none text-action hover:opacity-75",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-6",
-        icon: "size-9",
+        default: "h-11 px-5",
+        sm: "h-9 px-3 text-[16.5px] rounded-md",
+        lg: "h-11 px-6 text-sm",
+        icon: "size-11",
       },
     },
     defaultVariants: { variant: "default", size: "default" },
@@ -28,11 +29,21 @@ const buttonVariants = cva(
 
 export interface ButtonProps extends React.ComponentProps<"button">, VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  /** أثناء تنفيذ العملية: مؤشر دوران ويُمنع الضغط المكرر */
+  loading?: boolean;
 }
 
-export function Button({ className, variant, size, asChild = false, ...props }: ButtonProps) {
-  const Comp = asChild ? Slot : "button";
-  return <Comp data-slot="button" className={cn(buttonVariants({ variant, size, className }))} {...props} />;
+export function Button({ className, variant, size, asChild = false, loading = false, disabled, children, ...props }: ButtonProps) {
+  if (asChild) {
+    return <Slot data-slot="button" className={cn(buttonVariants({ variant, size, className }))} {...props}>{children}</Slot>;
+  }
+  return (
+    <button data-slot="button" aria-busy={loading || undefined} disabled={disabled || loading}
+      className={cn(buttonVariants({ variant, size, className }), loading && "cursor-wait")} {...props}>
+      {loading && <span className="size-4 animate-spin rounded-full border-2 border-current border-e-transparent" aria-hidden />}
+      {children}
+    </button>
+  );
 }
 
 export { buttonVariants };

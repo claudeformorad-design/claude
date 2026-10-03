@@ -15,10 +15,21 @@ export const LINE_AMOUNT_SCALE = 4;
 
 export const ZERO: Money = new MoneyDecimal(0);
 
+/**
+ * توحيد الأرقام المكتوبة بلوحة مفاتيح عربية: ٠-٩ و۰-۹ ⇒ 0-9، والفاصلة العشرية «٫» ⇒ «.»،
+ * وفواصل الآلاف («٬» و«،» و«,») والمسافات تُحذف.
+ */
+export function normalizeDigits(value: string): string {
+  return value
+    .replace(/[\u0660-\u0669]/g, (c) => String(c.charCodeAt(0) - 0x0660))
+    .replace(/[\u06F0-\u06F9]/g, (c) => String(c.charCodeAt(0) - 0x06f0))
+    .replace(/\u066B/g, ".");
+}
+
 export function toMoney(value: MoneyInput): Money {
   if (value === null || value === undefined || value === "") return ZERO;
   if (value instanceof MoneyDecimal) return value;
-  const d = new MoneyDecimal(typeof value === "string" ? value.trim().replace(/,/g, "") : value);
+  const d = new MoneyDecimal(typeof value === "string" ? normalizeDigits(value).trim().replace(/[,\u066C\u060C\s]/g, "") : value);
   if (!d.isFinite()) throw new RangeError(`Invalid amount: ${String(value)}`);
   return d;
 }
@@ -42,10 +53,6 @@ export function sumMoney(values: Iterable<MoneyInput>): Money {
 /** تقريب مالي (نصف للأعلى) إلى عدد الخانات العشرية للعملة */
 export function roundMoney(value: MoneyInput, decimals = 2): Money {
   return toMoney(value).toDecimalPlaces(decimals, MoneyDecimal.ROUND_HALF_UP);
-}
-
-export function decimalPlaces(value: MoneyInput): number {
-  return toMoney(value).decimalPlaces();
 }
 
 /** تنسيق مبلغ للعرض حسب اللغة والعملة (الأرقام تبقى لاتينية لتسهيل القراءة المحاسبية) */

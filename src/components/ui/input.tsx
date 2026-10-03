@@ -1,17 +1,27 @@
-import * as React from "react";
-import { cn } from "@/lib/utils";
+"use client";
 
-export function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+import * as React from "react";
+import { DateField } from "@/components/ui/date-field";
+import { cn } from "@/lib/utils";
+import { normalizeDigits } from "@/lib/accounting/money";
+
+export function Input({ className, type, onChange, onClick, ...props }: React.ComponentProps<"input">) {
+  // حقول التاريخ بتقويم النظام بدل تقويم المتصفح
+  if (type === "date") return <DateField className={className} onChange={onChange} onClick={onClick} {...props} />;
+  const numeric = props.inputMode === "decimal" || props.inputMode === "numeric";
   return (
     <input
       type={type}
       data-slot="input"
-      className={cn(
-        "flex h-9 w-full min-w-0 rounded-md border border-input bg-card px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
-        "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
-        "aria-invalid:border-destructive aria-invalid:ring-destructive/20",
-        className,
-      )}
+      // الحقول الرقمية تقبل الأرقام العربية وتحوّلها فورًا (١٥٠٠٫٥ ⇒ 1500.5)
+      onChange={numeric ? (e) => {
+        const v = normalizeDigits(e.target.value);
+        if (v !== e.target.value) e.target.value = v;
+        onChange?.(e);
+      } : onChange}
+      // حقل الشهر: الضغط في أي مكان يفتح منتقي المتصفح
+      onClick={type === "month" ? (e) => { try { e.currentTarget.showPicker?.(); } catch {} onClick?.(e); } : onClick}
+      className={cn("h-11 py-2 flex w-full min-w-0 field disabled:cursor-not-allowed disabled:opacity-50", className)}
       {...props}
     />
   );

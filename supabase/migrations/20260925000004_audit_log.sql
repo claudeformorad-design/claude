@@ -78,6 +78,8 @@ create trigger audit_hotels after insert or update or delete on public.hotels
   for each row execute function app.audit_trigger();
 create trigger audit_hotel_members after insert or update or delete on public.hotel_members
   for each row execute function app.audit_trigger();
+create trigger audit_user_hotel_roles after insert or update or delete on public.user_hotel_roles
+  for each row execute function app.audit_trigger();
 create trigger audit_roles after insert or update or delete on public.roles
   for each row execute function app.audit_trigger();
 create trigger audit_departments after insert or update or delete on public.departments

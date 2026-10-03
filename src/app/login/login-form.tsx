@@ -30,16 +30,16 @@ export function LoginForm({ t }: { t: Pick<Dictionary, "auth" | "errors"> }) {
       {state?.info === "check_email" && <Alert variant="success">{t.auth.checkEmail}</Alert>}
 
       {mode === "up" && (
-        <div className="space-y-2">
+        <div className="field-group space-y-2">
           <Label htmlFor="full_name">{t.auth.fullName}</Label>
           <Input id="full_name" name="full_name" autoComplete="name" />
         </div>
       )}
-      <div className="space-y-2">
+      <div className="field-group space-y-2">
         <Label htmlFor="email">{t.auth.email}</Label>
         <Input id="email" name="email" type="email" dir="ltr" autoComplete="email" required />
       </div>
-      <div className="space-y-2">
+      <div className="field-group space-y-2">
         <Label htmlFor="password">{t.auth.password}</Label>
         <Input
           id="password"
@@ -54,7 +54,16 @@ export function LoginForm({ t }: { t: Pick<Dictionary, "auth" | "errors"> }) {
       <Button type="submit" className="w-full" disabled={signingIn || signingUp}>
         {mode === "in" ? t.auth.signIn : t.auth.signUp}
       </Button>
-      <Button type="button" variant="link" className="w-full" onClick={() => setMode(mode === "in" ? "up" : "in")}>
+      <Button
+        type="button"
+        variant="ghost"
+        className="w-full cursor-pointer text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setMode((m) => (m === "in" ? "up" : "in"));
+        }}
+      >
         {mode === "in" ? t.auth.noAccount : t.auth.haveAccount}
       </Button>
     </form>

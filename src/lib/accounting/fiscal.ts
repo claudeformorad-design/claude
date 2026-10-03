@@ -6,7 +6,7 @@ export type IsoDate = string; // YYYY-MM-DD
 
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-export function parseIsoDate(date: IsoDate): { year: number; month: number; day: number } {
+function parseIsoDate(date: IsoDate): { year: number; month: number; day: number } {
   const m = ISO_DATE.exec(date);
   if (!m) throw new RangeError(`Invalid ISO date: ${date}`);
   const [year, month, day] = [Number(m[1]), Number(m[2]), Number(m[3])];
@@ -26,7 +26,7 @@ export function isIsoDate(value: string): boolean {
   }
 }
 
-export function formatIsoDate(year: number, month: number, day: number): IsoDate {
+function formatIsoDate(year: number, month: number, day: number): IsoDate {
   return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
@@ -43,4 +43,14 @@ export function fiscalYearStart(date: IsoDate, startMonth: number): IsoDate {
 /** تاريخ اليوم في منطقة زمنية محددة (مهم: يوم الفندق وليس يوم الخادم) */
 export function todayInTimeZone(timeZone: string, now: Date = new Date()): IsoDate {
   return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+}
+
+/** تاريخ ووقت بصيغة ثابتة لا لبس فيها في الاتجاهين (2026-09-26 13:05) بتوقيت الفندق */
+export function formatDateTime(iso: string, timeZone: string, withSeconds = false): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit",
+    second: withSeconds ? "2-digit" : undefined, hourCycle: "h23",
+  }).formatToParts(new Date(iso));
+  const g = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${g("year")}-${g("month")}-${g("day")} ${g("hour")}:${g("minute")}${withSeconds ? `:${g("second")}` : ""}`;
 }

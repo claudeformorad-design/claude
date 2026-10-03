@@ -28,3 +28,23 @@ describe("mapDatabaseError", () => {
     expect(mapDatabaseError("something else")).toBe("unknown");
   });
 });
+
+describe("mapDatabaseError — المرحلة 2", () => {
+  it("يميز أخطاء الفوليو والآجل والسندات", () => {
+    expect(mapDatabaseError("Folio F-2026-000001 is not open")).toBe("folio_not_open");
+    expect(mapDatabaseError("Closed folios cannot be modified")).toBe("folio_not_open");
+    expect(mapDatabaseError("Credit limit exceeded for customer ACME")).toBe("credit_limit");
+    expect(mapDatabaseError("Folio balance must be zero before checkout (balance: 5)")).toBe("balance_not_zero");
+    expect(mapDatabaseError("System-generated entries must be corrected from their source document")).toBe("system_generated");
+  });
+});
+
+describe("الأرقام العربية في المبالغ", () => {
+  it("تقبل ٠-٩ و۰-۹ والفاصلة العشرية العربية وفواصل الآلاف", () => {
+    expect(toMoney("١٬٥٠٠٫٧٥").toString()).toBe("1500.75");
+    expect(toMoney("۲۵۰").toString()).toBe("250");
+    expect(toMoney("1,234.50").toString()).toBe("1234.5");
+    expect(isValidAmount("١٢٣")).toBe(true);
+    expect(isValidAmount("abc")).toBe(false);
+  });
+});

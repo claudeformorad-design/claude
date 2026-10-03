@@ -1,6 +1,8 @@
+import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
+import { ExportButtons } from "@/components/reports/export-buttons";
 import { PageHeader } from "@/components/layout/page-header";
+import { Minus, Plus } from "lucide-react";
 import { Money } from "@/components/money";
-import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +13,8 @@ import { fiscalYearStart, isIsoDate, todayInTimeZone } from "@/lib/accounting/fi
 import { trialBalanceColumns } from "@/lib/accounting/trial-balance";
 import { getTrialBalance } from "@/services/reports.service";
 import { getI18n } from "@/i18n/server";
+import { CheckCircle2, ListChecks, TriangleAlert } from "lucide-react";
+import { Stat, StatGrid } from "@/components/ui/stat";
 
 export default async function TrialBalancePage({
   searchParams,
@@ -38,16 +42,17 @@ export default async function TrialBalancePage({
 
   return (
     <>
-      <PageHeader title={t.trialBalance.title} description={`${t.trialBalance.subtitle} (${ctx.hotel.base_currency})`} />
+      <PageHeader title={t.trialBalance.title}
+        actions={<ExportButtons report={`trial-balance`} query={`from=${from}&to=${to}`} labels={{ excel: t.reports.exportExcel, pdf: t.reports.printPdf }} />} />
 
-      <form className="mb-4 flex flex-wrap items-end gap-2">
+      <form className="toolbar">
         <label className="space-y-1 text-sm">
           <span className="text-muted-foreground">{t.common.from}</span>
-          <Input type="date" name="from" defaultValue={from} dir="ltr" className="w-40" />
+          <Input type="date" name="from" defaultValue={from} dir="ltr" className="w-52" />
         </label>
         <label className="space-y-1 text-sm">
           <span className="text-muted-foreground">{t.common.to}</span>
-          <Input type="date" name="to" defaultValue={to} dir="ltr" className="w-40" />
+          <Input type="date" name="to" defaultValue={to} dir="ltr" className="w-52" />
         </label>
         <label className="flex h-9 items-center gap-2 text-sm">
           <input type="checkbox" name="zero" value="1" defaultChecked={includeZero} className="size-4" />
@@ -56,9 +61,14 @@ export default async function TrialBalancePage({
         <Button type="submit" variant="outline">{t.common.apply}</Button>
       </form>
 
-      <Alert variant={tb.isBalanced ? "success" : "destructive"} className="mb-4">
-        {tb.isBalanced ? t.trialBalance.balancedNote : t.trialBalance.unbalancedNote}
-      </Alert>
+      <StatGrid>
+        <Stat currency={ctx.hotel.base_currency} icon={Plus} tone="teal" label="إجمالي المدين الختامي" value={<Money value={tb.totals.closingDebit} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Minus} tone="clay" label="إجمالي الدائن الختامي" value={<Money value={tb.totals.closingCredit} locale={locale} />} />
+        <Stat icon={ListChecks} tone="neutral" label="حسابات بحركة" value={<span className="num">{tb.rows.length}</span>} />
+        <Stat icon={tb.isBalanced ? CheckCircle2 : TriangleAlert} tone={tb.isBalanced ? "ink" : "clay"} label="حالة الميزان"
+          value={tb.isBalanced ? "متوازن" : "غير متوازن"} valueClassName={tb.isBalanced ? "text-success" : "text-urgent"}
+          hint={tb.isBalanced ? t.trialBalance.balancedNote : t.trialBalance.unbalancedNote} />
+      </StatGrid>
 
       <Card className="overflow-hidden">
         <Table>
@@ -85,9 +95,9 @@ export default async function TrialBalancePage({
             )}
             {tb.rows.map((row) => {
               const c = trialBalanceColumns(row);
-              return (
-                <TableRow key={row.account?.id ?? "unallocated"}>
-                  <TableCell className="num">{row.account?.code ?? ""}</TableCell>
+              const cells = (
+                <>
+                  <TableCell>{row.account && <ExpandMark />}<span className="num">{row.account?.code ?? ""}</span></TableCell>
                   <TableCell>{row.account ? name(row.account) : t.trialBalance.unallocatedEarnings}</TableCell>
                   <TableCell className="text-end">{m(c.openingDebit)}</TableCell>
                   <TableCell className="text-end">{m(c.openingCredit)}</TableCell>
@@ -95,8 +105,11 @@ export default async function TrialBalancePage({
                   <TableCell className="text-end">{m(c.periodCredit)}</TableCell>
                   <TableCell className="text-end">{m(c.closingDebit)}</TableCell>
                   <TableCell className="text-end">{m(c.closingCredit)}</TableCell>
-                </TableRow>
+                </>
               );
+              return row.account
+                ? <ExpandableRow key={row.account.id} kind="account" id={row.account.id} colSpan={8} from={from} to={to}>{cells}</ExpandableRow>
+                : <TableRow key="unallocated">{cells}</TableRow>;
             })}
           </TableBody>
           <TableFooter>

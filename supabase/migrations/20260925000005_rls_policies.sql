@@ -11,6 +11,7 @@ alter table public.permissions         enable row level security;
 alter table public.roles               enable row level security;
 alter table public.role_permissions    enable row level security;
 alter table public.hotel_members       enable row level security;
+alter table public.user_hotel_roles    enable row level security;
 alter table public.departments         enable row level security;
 alter table public.exchange_rates      enable row level security;
 alter table public.chart_of_accounts   enable row level security;
@@ -95,6 +96,14 @@ create policy hotel_members_read on public.hotel_members
   for select to authenticated using (user_id = auth.uid() or app.is_hotel_member(hotel_id));
 
 create policy hotel_members_write on public.hotel_members
+  for all to authenticated
+  using (app.has_permission(hotel_id, 'settings.users.manage'))
+  with check (app.has_permission(hotel_id, 'settings.users.manage'));
+
+create policy user_hotel_roles_read on public.user_hotel_roles
+  for select to authenticated using (user_id = auth.uid() or app.is_hotel_member(hotel_id));
+
+create policy user_hotel_roles_write on public.user_hotel_roles
   for all to authenticated
   using (app.has_permission(hotel_id, 'settings.users.manage'))
   with check (app.has_permission(hotel_id, 'settings.users.manage'));

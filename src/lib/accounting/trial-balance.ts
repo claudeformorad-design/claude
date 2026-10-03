@@ -61,10 +61,10 @@ export interface TrialBalance {
   priorYearsEarnings: Money;
 }
 
-export const RETAINED_EARNINGS_KEY = "retained_earnings";
+const RETAINED_EARNINGS_KEY = "retained_earnings";
 
 /** تقسيم رصيد صافٍ إلى عمودي مدين/دائن */
-export function splitBalance(net: Money): { debit: Money; credit: Money } {
+function splitBalance(net: Money): { debit: Money; credit: Money } {
   return net.isNegative() ? { debit: ZERO, credit: net.negated() } : { debit: net, credit: ZERO };
 }
 

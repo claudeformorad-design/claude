@@ -23,7 +23,7 @@ export default async function EditJournalEntryPage({ params }: { params: Promise
 
   return (
     <>
-      <PageHeader title={`${t.journal.draftNumber} — ${t.common.edit}`} />
+      <PageHeader title={`${t.common.edit} ${t.journal.draftNumber}`} />
       <Card>
         <CardContent className="p-5">
           <JournalForm

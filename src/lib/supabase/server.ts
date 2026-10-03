@@ -1,11 +1,19 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import type { Database } from "./database.types";
-import { supabaseEnv } from "./env";
+import { isSupabaseConfigured, supabaseEnv } from "./env";
+import { createLocalSupabaseClient } from "./local-client";
 
-/** عميل Supabase للخادم (Server Components / Server Actions) — يعمل بصلاحيات المستخدم وتنطبق عليه RLS */
+/** عميل Supabase للخادم (Server Components / Server Actions) — يعمل بالعميل المحلي إن لم تكن Supabase مهيأة */
 export async function createClient() {
+  if (!isSupabaseConfigured()) {
+    // يجعل الصفحة ديناميكية (لا تُولَّد وقت البناء): البيانات تُقرأ من القاعدة المحلية عند كل طلب
+    await connection();
+    return createLocalSupabaseClient() as unknown as ReturnType<typeof createServerClient<Database>>;
+  }
+
   const cookieStore = await cookies();
   const { url, anonKey } = supabaseEnv();
 
