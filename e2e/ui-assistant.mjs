@@ -92,7 +92,8 @@ await step("smart report runs in a new conversation", async () => {
   await page.getByRole("navigation", { name: "أدوات المساعد" }).getByRole("button", { name: "التقارير الذكية" }).click();
   await page.getByRole("button", { name: /فحص صحة الحسابات/ }).click();
   await answered("main");
-  if ((await page.locator("aside").getByText(/افحص صحة الحسابات/).count()) === 0) throw new Error("new conversation not listed");
+  // القائمة الجانبية تتحدث بعد اكتمال الرد، فننتظر ظهور المحادثة
+  await page.locator("aside").getByText(/افحص صحة الحسابات/).first().waitFor({ timeout: 15000 }).catch(() => { throw new Error("new conversation not listed"); });
 });
 await step("regenerate the last answer", async () => {
   const before = calls.length;
