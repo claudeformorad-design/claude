@@ -1,6 +1,6 @@
 import "server-only";
 import { PERMISSIONS } from "@/lib/auth/permissions";
-import { isIsoDate } from "@/lib/accounting/fiscal";
+import { isIsoDate, startOfDayInTimeZone } from "@/lib/accounting/fiscal";
 import type { ReservationStatus } from "@/lib/supabase/database.types";
 import {
   frontDeskSummary, getGuest, getReservation, listReservations, listRooms, listRoomTypes, nightAuditStatus, quoteReservation, roomTypeAvailability,
@@ -80,13 +80,14 @@ export const hotel: ToolModule = {
     },
     async reservation_details(env, a) {
       const no = needPms(env); if (no) return no;
+      const { ctx } = env;
       const r = await getReservation(env.ctx.supabase, env.ctx.hotel.id, asStr(a.id));
       if (!r) return { error: "الحجز غير موجود" };
       return {
         ...brief(r), id: r.id, adults: r.adults, children: r.children, source: r.source, pricing: r.pricing, booking_mode: r.booking_mode,
         phone: r.guest?.phone ?? null, customer: r.customer?.name_ar ?? null, group: r.group?.name ?? null, bill_to: r.bill_to,
         special_requests: r.special_requests, notes: r.notes, cancellation_reason: r.cancellation_reason,
-        checked_in_at: r.checked_in_at, checked_out_at: r.checked_out_at, folio_path: r.folio_id ? `/folios/${r.folio_id}` : null,
+        checked_in_at: r.checked_in_at, checked_out_at: r.checked_out_at, keys_handed_over: r.keys_issued, room_access: ctx.hotel.room_access === "key" ? "مفتاح" : "بطاقة", folio_path: r.folio_id ? `/folios/${r.folio_id}` : null,
         nights: r.nights.map((n) => ({ date: n.stay_date, rate: Number(n.rate), discount: Number(n.discount), amount: Number(n.amount), season: n.season_name, posted: Boolean(n.folio_transaction_id) })),
       };
     },
@@ -197,7 +198,7 @@ export const hotel: ToolModule = {
       const from = isIsoDate(asStr(a.from)) && asStr(a.from) <= to ? asStr(a.from) : to;
       const [orders, outlets] = await Promise.all([
         ctx.supabase.from("pos_orders").select("id, outlet_id, order_number, settle_mode, total::text, created_at")
-          .eq("hotel_id", ctx.hotel.id).gte("created_at", `${from}T00:00:00`).lt("created_at", `${addDays(to, 1)}T00:00:00`).limit(5000),
+          .eq("hotel_id", ctx.hotel.id).gte("created_at", startOfDayInTimeZone(from, ctx.hotel.timezone)).lt("created_at", startOfDayInTimeZone(addDays(to, 1), ctx.hotel.timezone)).limit(5000),
         ctx.supabase.from("pos_outlets").select("id, name_ar").eq("hotel_id", ctx.hotel.id),
       ]);
       if (orders.error) return { error: orders.error.message };

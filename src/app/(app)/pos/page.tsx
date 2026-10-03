@@ -10,7 +10,7 @@ import { FilterTabs } from "@/components/ui/filter-tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
-import { todayInTimeZone } from "@/lib/accounting/fiscal";
+import { startOfDayInTimeZone, todayInTimeZone } from "@/lib/accounting/fiscal";
 import { listOutlets, listPosItems, listPosOrders, posInHouse } from "@/services/operations.service";
 import { listPaymentMethods } from "@/services/revenue-settings.service";
 import { getI18n } from "@/i18n/server";
@@ -24,7 +24,7 @@ export default async function PosPage({ searchParams }: { searchParams: Promise<
   const today = todayInTimeZone(ctx.hotel.timezone);
   const [outlets, items, guests, methods, orders] = await Promise.all([
     listOutlets(ctx.supabase, ctx.hotel.id), listPosItems(ctx.supabase, ctx.hotel.id), posInHouse(ctx.supabase, ctx.hotel.id),
-    listPaymentMethods(ctx.supabase, ctx.hotel.id), listPosOrders(ctx.supabase, ctx.hotel.id, `${today}T00:00:00`),
+    listPaymentMethods(ctx.supabase, ctx.hotel.id), listPosOrders(ctx.supabase, ctx.hotel.id, startOfDayInTimeZone(today, ctx.hotel.timezone)),
   ]);
   const active = outlets.filter((o) => o.is_active);
   const outlet = active.find((o) => o.id === sp.outlet) ?? active[0];

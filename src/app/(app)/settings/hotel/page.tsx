@@ -85,7 +85,7 @@ export default async function HotelSettingsPage() {
 
         {ctx.can(PERMISSIONS.hotelManage) && (
           <OperationsCard errors={t.errors} initial={{
-            modules: h.enabled_modules, check_in_time: h.check_in_time, check_out_time: h.check_out_time, weekend_nights: h.weekend_nights, require_cashier_shift: h.require_cashier_shift,
+            modules: h.enabled_modules, check_in_time: h.check_in_time, check_out_time: h.check_out_time, weekend_nights: h.weekend_nights, require_cashier_shift: h.require_cashier_shift, room_access: h.room_access,
           }} />
         )}
 

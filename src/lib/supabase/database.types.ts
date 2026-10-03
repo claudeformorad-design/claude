@@ -30,6 +30,7 @@ type Table<Row, Required extends keyof Row = never> = {
   Relationships: [];
 };
 
+export type RoomAccess = "card" | "key";
 export type HotelRow = Audit & {
   id: string;
   name_ar: string;
@@ -44,6 +45,8 @@ export type HotelRow = Audit & {
   default_locale: "ar" | "en";
   total_rooms: number | null;
   require_cashier_shift: boolean;
+  /** طريقة دخول الغرف التي تُسلَّم للنزيل عند التسكين */
+  room_access: RoomAccess;
   address: string | null;
   phone: string | null;
   email: string | null;
@@ -414,6 +417,7 @@ export type ReservationRow = Audit & {
   tentative_until: string | null; special_requests: string | null; notes: string | null;
   cancelled_at: string | null; cancelled_by: string | null; cancellation_reason: string | null; folio_id: string | null;
   checked_in_at: string | null; checked_out_at: string | null; bill_to: BillTo; rate_plan_id: string | null;
+  keys_issued: number | null; keys_issued_by: string | null;
 };
 export type ReservationNightRow = {
   reservation_id: string; hotel_id: string; stay_date: string; quantity: string; rate: string; discount: string; amount: string; season_id: string | null;
@@ -749,7 +753,7 @@ export type Database = {
       };
       front_desk_summary: { Args: { p_hotel_id: string }; Returns: FrontDeskSummary };
       record_reservation_deposit: { Args: { p_reservation_id: string; p_payment_method_id: string; p_amount: string; p_reference?: string | null }; Returns: string };
-      check_in_reservation: { Args: { p_reservation_id: string; p_room_id?: string | null }; Returns: string };
+      check_in_reservation: { Args: { p_reservation_id: string; p_room_id?: string | null; p_keys?: number }; Returns: string };
       post_reservation_charges: { Args: { p_reservation_id: string; p_through?: string | null }; Returns: number };
       prepare_check_out: { Args: { p_reservation_id: string }; Returns: CheckOutSummary };
       night_audit_status: { Args: { p_hotel_id: string; p_date?: string | null }; Returns: NightAuditStatus };

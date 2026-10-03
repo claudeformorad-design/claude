@@ -191,6 +191,7 @@ const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
   [/Check-in opens on the arrival date \((\S+)\)/i, (m) => `التسكين يبدأ من تاريخ الوصول (${m[1]})`],
   [/This stay has already ended; update the dates first/i, "انتهت فترة هذا الحجز؛ عدّل التواريخ أولًا"],
   [/Assign a room before check-in/i, "خصّص غرفة قبل التسكين"],
+  [/Handed over keys must be between 1 and 9/i, "عدد ما يُسلَّم للنزيل من بطاقات أو مفاتيح بين 1 و9"],
   [/Room (\S+) is not clean yet/i, (m) => `الغرفة ${m[1]} لم تُنظَّف بعد`],
   [/Charges are posted for in-house guests only/i, "تُرحَّل الليالي للنزلاء المقيمين فقط"],
   [/Room type has no revenue charge code/i, "نوع الغرفة بلا كود إيراد؛ حدده من إعداد الغرف"],

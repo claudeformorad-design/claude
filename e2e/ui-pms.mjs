@@ -207,13 +207,16 @@ await step("deposit before arrival opens the folio in accounting", async () => {
   await page.getByRole("button", { name: "تسجيل", exact: true }).click();
   await bodyHas("فتح الفوليو", "100.00");
 });
-await step("dirty room blocks check-in; clean room checks in", async () => {
+await step("check-in waits for the card handover; dirty room blocks it; clean room checks in", async () => {
   await pick("#checkin_room", /102/);
-  await page.getByRole("button", { name: "تسكين" }).click();
+  if (await page.getByRole("button", { name: "إتمام التسكين" }).isEnabled()) throw new Error("check-in allowed before confirming the card handover");
+  await page.fill("#checkin_keys", "2");
+  await page.getByLabel("سلّمتُ البطاقة للنزيل").check();
+  await page.getByRole("button", { name: "إتمام التسكين" }).click();
   await page.locator("text=لم تُنظَّف بعد").first().waitFor();
   await pick("#checkin_room", /103/);
-  await page.getByRole("button", { name: "تسكين" }).click();
-  await bodyHas("مقيم", "تسجيل المغادرة", "أثناء الإقامة");
+  await page.getByRole("button", { name: "إتمام التسكين" }).click();
+  await bodyHas("مقيم", "تسجيل المغادرة", "أثناء الإقامة", "البطاقات المسلّمة", "استلم البطاقات من النزيل عند المغادرة");
 });
 await step("post tonight, extend the stay and move rooms", async () => {
   await page.getByRole("button", { name: "ترحيل الليالي" }).click();
@@ -222,6 +225,8 @@ await step("post tonight, extend the stay and move rooms", async () => {
   await page.getByRole("button", { name: "تمديد" }).click();
   await bodyHas("3 ليالٍ");
   await pick("#move_room", /101/); await page.fill("#move_reason", "ترقية");
+  if (await page.getByRole("button", { name: "نقل", exact: true }).isEnabled()) throw new Error("room move allowed before the new card handover");
+  await page.getByLabel(/سلّمتُ البطاقة للغرفة الجديدة/).check();
   await page.getByRole("button", { name: "نقل", exact: true }).click();
   await page.waitForTimeout(1500); await go(`/reservations/${stayId}`);
   await bodyHas("نُقل", "101");
@@ -247,6 +252,8 @@ await step("front desk quick check-in and in-house list", async () => {
   await submitReservation(); await page.waitForURL(/reservations\/[0-9a-f-]{36}$/);
   await go("/front-desk");
   await page.getByRole("row", { name: /نزيل سريع/ }).getByRole("button", { name: "تسكين" }).click();
+  await page.getByLabel("سلّمتُ البطاقة للنزيل").check();
+  await page.getByRole("button", { name: "إتمام التسكين" }).click();
   await page.waitForTimeout(1500); await go("/front-desk");
   await bodyHas("المقيمون الآن", "نزيل سريع");
   if (!/المقيمون الآن[\s\S]*نزيل سريع/.test(await page.locator("main").innerText())) throw new Error("guest not in the in-house list");
@@ -270,6 +277,12 @@ await step("cashier shift opens with a float", async () => {
   await page.getByRole("button", { name: "فتح الوردية" }).click();
   await bodyHas("SHF-", "إغلاق الوردية");
 });
+await step("hotel switches to room keys from the settings", async () => {
+  await go("/settings/hotel");
+  await page.getByRole("radio", { name: /مفتاح/ }).check();
+  await page.getByRole("button", { name: "حفظ إعدادات التشغيل" }).click();
+  await page.locator("text=تم حفظ إعدادات التشغيل").first().waitFor();
+});
 await step("dollar deposit, check-out refunds the extra deposit in cash", async () => {
   await go("/rooms");
   await page.getByRole("button", { name: /^102/ }).click();
@@ -284,7 +297,8 @@ await step("dollar deposit, check-out refunds the extra deposit in cash", async 
   await page.locator("text=يعادل 530.00").first().waitFor();
   await page.getByRole("button", { name: "تسجيل", exact: true }).click();
   await bodyHas("530.00");
-  await page.getByRole("button", { name: "تسكين" }).click();
+  await page.getByLabel("سلّمتُ المفتاح للنزيل").check();
+  await page.getByRole("button", { name: "إتمام التسكين" }).click();
   await bodyHas("مقيم", "تسجيل المغادرة");
   await page.getByRole("button", { name: "تجهيز الفاتورة" }).click();
   await bodyHas("عربون زائد عن الرصيد");
@@ -396,13 +410,13 @@ await step("backup downloads and restores the whole database", async () => {
 await step("modules: disabling hotel management hides it and blocks its pages", async () => {
   await go("/settings/hotel");
   await page.locator("label", { hasText: "إدارة الفندق" }).locator("input[type=checkbox]").uncheck();
-  await page.getByRole("button", { name: "حفظ", exact: true }).last().click();
+  await page.getByRole("button", { name: "حفظ إعدادات التشغيل" }).click();
   await page.waitForTimeout(1500);
   await go("/"); await bodyLacks("الاستقبال والحجوزات");
   await go("/front-desk"); await bodyHas("403");
   await go("/settings/hotel");
   await page.locator("label", { hasText: "إدارة الفندق" }).locator("input[type=checkbox]").check();
-  await page.getByRole("button", { name: "حفظ", exact: true }).last().click();
+  await page.getByRole("button", { name: "حفظ إعدادات التشغيل" }).click();
   await page.waitForTimeout(1500);
   await go("/front-desk"); await bodyHas("لوحة الاستقبال");
 });

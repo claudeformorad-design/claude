@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, LayoutGroup } from "motion/react";
 import * as m from "motion/react-m";
-import { Building2, ChevronDown, LogOut, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { ChevronDown, LogOut, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { BrandMark } from "@/components/brand-mark";
 import Link from "@/components/link";
 import { cn } from "@/lib/utils";
 import { SIDEBAR_COOKIE, isActivePath, navGroups, type NavAccess, type NavGroup, type NavLabels } from "./nav-config";
@@ -72,9 +73,7 @@ export function Sidebar({
     >
       {/* الشعار واسم المنشأة */}
       <Link href="/" className={cn("mb-6 flex items-center gap-3", expanded ? "px-5" : "justify-center")} title={hotelName}>
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-[10px] bg-ink text-white">
-          <Building2 className="size-5 stroke-[1.75]" />
-        </span>
+        <BrandMark className="size-11" />
         {expanded && (
           <span className="min-w-0 leading-tight">
             <span className="block truncate text-[18.5px] font-bold text-ink">{hotelName}</span>

@@ -20,6 +20,8 @@ import {
   changeDepartureAction, checkInAction, moveRoomAction, payStayAction, postChargesAction, prepareCheckOutAction, recordDepositAction,
   settleAndCheckOutAction,
 } from "../../_pms/actions";
+import { HandoverFields, accessWords, validKeys } from "../../_pms/handover";
+import type { RoomAccess } from "@/lib/supabase/database.types";
 
 type Option = { id: string; label: string };
 /** currency: عملة أجنبية للطريقة (null = الأساسية) و rate سعرها الساري */
@@ -32,7 +34,7 @@ type Bill = { due: number; balance: number; deposits: number; company: number };
  */
 export function StayPanel({
   reservationId, status, hourly, canCheckIn, today, arrival, departure, folio, methods, customer, checkInRooms, moveRooms,
-  currentRoomId, canViewFolio, canViewInvoices, errors, baseCurrency, billTo,
+  currentRoomId, canViewFolio, canViewInvoices, errors, baseCurrency, billTo, roomAccess, keysIssued,
 }: {
   reservationId: string;
   status: string;
@@ -52,6 +54,8 @@ export function StayPanel({
   errors: Record<string, string>;
   baseCurrency: string;
   billTo: "guest" | "company_room" | "company_all";
+  roomAccess: RoomAccess;
+  keysIssued: number | null;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -72,7 +76,10 @@ export function StayPanel({
   const [dep, setDep] = useState({ method: cashMethods[0]?.id ?? "", amount: "", reference: "" });
   const [room, setRoom] = useState(currentRoomId ?? checkInRooms[0]?.id ?? "");
   const [newDeparture, setNewDeparture] = useState(departure);
-  const [move, setMove] = useState({ room: "", reason: "" });
+  const [move, setMove] = useState({ room: "", reason: "", handed: false });
+  const [keys, setKeys] = useState("1");
+  const [handed, setHanded] = useState(false);
+  const words = accessWords(roomAccess);
   const [bill, setBill] = useState<Bill | null>(null);
   const [pay, setPay] = useState({ method: cashMethods[0]?.id ?? "", amount: "" });
 
@@ -107,6 +114,9 @@ export function StayPanel({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {keysIssued != null && (
+              <p className="flex items-center gap-2 rounded-lg bg-panel p-3 text-[15.5px] text-ink"><KeyRound className="size-4 text-slate-500" />{words.collect} <span className="num font-semibold">{keysIssued}</span></p>
+            )}
             {!bill ? (
               <Button type="button" variant="dark" loading={busy === "prep"} disabled={pending}
                 onClick={() => run("prep", () => prepareCheckOutAction(reservationId), "تم ترحيل الليالي وتجهيز الفاتورة", (d) => {
@@ -194,7 +204,7 @@ export function StayPanel({
         <Card className="border-action/30">
           <CardHeader>
             <CardTitle><KeyRound className="size-5" />تسجيل الوصول</CardTitle>
-            <CardDescription>{hourly ? "بدء الجلسة وفتح فوليو الحجز." : "غرفة نظيفة في الخدمة، ويُفتح فوليو الحجز أو يُستخدم فوليو العربون."}</CardDescription>
+            <CardDescription>{hourly ? `بدء الجلسة وفتح فوليو الحجز، وتسليم ${words.one} للنزيل.` : `غرفة نظيفة في الخدمة، وتسليم ${words.one} للنزيل، ويُفتح فوليو الحجز أو يُستخدم فوليو العربون.`}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap items-end gap-3">
             {!hourly && (
@@ -206,9 +216,10 @@ export function StayPanel({
                 </NativeSelect>
               </div>
             )}
-            <Button type="button" loading={busy === "in"} disabled={pending || (!hourly && !room)}
-              onClick={() => run("in", () => checkInAction(reservationId, hourly ? null : room), "تم تسجيل الوصول")}>
-              <KeyRound className="size-4" />تسكين
+            <HandoverFields access={roomAccess} keys={keys} onKeys={setKeys} confirmed={handed} onConfirmed={setHanded} idPrefix="checkin" />
+            <Button type="button" loading={busy === "in"} disabled={pending || (!hourly && !room) || !handed || !validKeys(keys)}
+              onClick={() => run("in", () => checkInAction(reservationId, hourly ? null : room, Number(keys)), words.done)}>
+              <KeyRound className="size-4" />إتمام التسكين
             </Button>
           </CardContent>
         </Card>
@@ -216,7 +227,12 @@ export function StayPanel({
 
       {status === "checked_in" && (
         <Card>
-          <CardHeader><CardTitle><BedDouble className="size-5" />أثناء الإقامة</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="justify-between">
+              <span className="flex items-center gap-2"><BedDouble className="size-5" />أثناء الإقامة</span>
+              {keysIssued != null && <span className="text-[15px] font-medium text-slate-500">{words.issued} <span className="num text-ink">{keysIssued}</span></span>}
+            </CardTitle>
+          </CardHeader>
           <CardContent className="space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-panel p-3">
               <p className="text-[15.5px] text-slate-600">ترحيل الليالي المستحقة حتى اليوم على الفوليو، ويتم تلقائيًا عند المغادرة.</p>
@@ -248,8 +264,12 @@ export function StayPanel({
                   <Label htmlFor="move_reason">السبب</Label>
                   <Input id="move_reason" value={move.reason} onChange={(e) => setMove({ ...move, reason: e.target.value })} placeholder="مثل: عطل في التكييف، ترقية" />
                 </div>
-                <Button type="button" variant="outline" loading={busy === "move"} disabled={pending || !move.room || !move.reason.trim()}
-                  onClick={() => run("move", () => moveRoomAction(reservationId, move.room, move.reason.trim()), "تم نقل النزيل")}>
+                <label className="flex h-11 cursor-pointer items-center gap-2.5 rounded-md border border-line px-3 text-[15.5px] text-ink">
+                  <input type="checkbox" className="size-4" checked={move.handed} onChange={(e) => setMove({ ...move, handed: e.target.checked })} />
+                  سلّمتُ {words.one} للغرفة الجديدة واستلمتُ السابقة
+                </label>
+                <Button type="button" variant="outline" loading={busy === "move"} disabled={pending || !move.room || !move.reason.trim() || !move.handed}
+                  onClick={() => run("move", () => moveRoomAction(reservationId, move.room, move.reason.trim()), "تم نقل النزيل", () => { setMove({ room: "", reason: "", handed: false }); router.refresh(); })}>
                   <DoorOpen className="size-4" />نقل
                 </Button>
               </div>

@@ -92,12 +92,16 @@ select pg_temp.expect_error($q$ select public.check_in_reservation((select v fro
 select public.set_room_status((select v from ids where k = 'room_101'), 'dirty');
 select pg_temp.expect_error($q$ select public.check_in_reservation((select v from ids where k = 'r1'), (select v from ids where k = 'room_101')) $q$, 'not clean');
 select public.set_room_status((select v from ids where k = 'room_101'), 'inspected');
-select public.check_in_reservation((select v from ids where k = 'r1'), (select v from ids where k = 'room_101'));
+select pg_temp.expect_error($q$ select public.check_in_reservation((select v from ids where k = 'r1'), (select v from ids where k = 'room_101'), 0::smallint) $q$, 'between 1 and 9');
+select pg_temp.expect_error($q$ select public.check_in_reservation((select v from ids where k = 'r1'), (select v from ids where k = 'room_101'), 10::smallint) $q$, 'between 1 and 9');
+select public.check_in_reservation((select v from ids where k = 'r1'), (select v from ids where k = 'room_101'), 2::smallint);
 do $$
 declare v_r public.reservations%rowtype;
 begin
   select * into v_r from public.reservations where id = (select v from ids where k = 'r1');
   assert v_r.status = 'checked_in' and v_r.checked_in_at is not null, 'checked in';
+  assert v_r.keys_issued = 2, 'room cards handed over are recorded';
+  assert (select room_access from public.hotels where id = v_r.hotel_id) = 'card', 'hotels hand over cards by default';
   assert (select room_number from public.guest_folios where id = v_r.folio_id) = '101', 'folio room';
   assert (public.front_desk_summary(v_r.hotel_id) ->> 'in_house')::int = 1, 'in house';
 end $$;

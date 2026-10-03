@@ -180,7 +180,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
                 id: m.id, label: m.name_ar, kind: m.kind, currency: m.currency_code,
                 rate: m.currency_code ? Number(fx.get(m.currency_code)?.rate ?? 0) || null : null,
               }))}
-              baseCurrency={ctx.hotel.base_currency} billTo={r.bill_to}
+              baseCurrency={ctx.hotel.base_currency} billTo={r.bill_to} roomAccess={ctx.hotel.room_access} keysIssued={r.keys_issued}
               customer={r.customer && r.customer_id ? { id: r.customer_id, label: r.customer.name_ar } : null}
               checkInRooms={checkInRooms} moveRooms={moveRooms} currentRoomId={r.room_id}
               canViewFolio={ctx.can(PERMISSIONS.folioView)} canViewInvoices={ctx.can(PERMISSIONS.invoicesView)} errors={t.errors}

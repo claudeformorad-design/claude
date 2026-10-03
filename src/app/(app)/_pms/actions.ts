@@ -359,9 +359,11 @@ export async function payStayAction(reservationId: string, input: unknown): Prom
   return r;
 }
 
-export async function checkInAction(reservationId: string, roomId?: string | null) {
+/** التسكين مع تأكيد تسليم بطاقة الغرفة أو مفتاحها للنزيل، وعددها */
+export async function checkInAction(reservationId: string, roomId: string | null | undefined, keys: number) {
+  if (!Number.isInteger(keys) || keys < 1 || keys > 9) return fail;
   return reservationOp(PERMISSIONS.pmsManage, reservationId, (ctx) =>
-    ctx.supabase.rpc("check_in_reservation", { p_reservation_id: reservationId, p_room_id: roomId || null }));
+    ctx.supabase.rpc("check_in_reservation", { p_reservation_id: reservationId, p_room_id: roomId || null, p_keys: keys }));
 }
 
 export async function postChargesAction(reservationId: string) {

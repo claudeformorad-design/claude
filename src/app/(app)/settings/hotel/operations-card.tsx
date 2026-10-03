@@ -10,12 +10,17 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/toast";
 import { actionErrorText, callAction } from "@/lib/action-error";
 import { cn } from "@/lib/utils";
-import type { HotelModule } from "@/lib/supabase/database.types";
+import type { HotelModule, RoomAccess } from "@/lib/supabase/database.types";
 import { saveHotelOperationsAction } from "../../_admin/actions";
 
 const MODULES: { value: HotelModule; title: string; description: string }[] = [
   { value: "accounting", title: "المحاسبة", description: "الحسابات والقيود، الفوليو والفواتير، المشتريات، الأصول والمخزون، التقارير المالية." },
   { value: "pms", title: "إدارة الفندق", description: "الحجوزات والنزلاء، الغرف وحالاتها، الأسعار والمواسم، قائمة الانتظار، القاعات بالساعة." },
+];
+/** ما يُسلَّم للنزيل عند التسكين ليدخل غرفته */
+const ACCESS: { value: RoomAccess; title: string; description: string }[] = [
+  { value: "card", title: "بطاقة", description: "يؤكد الموظف تسليم بطاقة الغرفة للنزيل عند التسكين" },
+  { value: "key", title: "مفتاح", description: "يؤكد الموظف تسليم مفتاح الغرفة للنزيل عند التسكين" },
 ];
 /** ليالي الأسبوع بترتيب يبدأ من السبت (القيم: 0 = الأحد … 6 = السبت) */
 const NIGHTS: [number, string][] = [[6, "السبت"], [0, "الأحد"], [1, "الاثنين"], [2, "الثلاثاء"], [3, "الأربعاء"], [4, "الخميس"], [5, "الجمعة"]];
@@ -25,7 +30,7 @@ const NIGHTS: [number, string][] = [[6, "السبت"], [0, "الأحد"], [1, "�
  * إيقاف قسم يخفي صفحاته ويمنع عملياته في قاعدة البيانات، دون حذف أي بيانات.
  */
 export function OperationsCard({ initial, errors }: {
-  initial: { modules: HotelModule[]; check_in_time: string; check_out_time: string; weekend_nights: number[]; require_cashier_shift: boolean };
+  initial: { modules: HotelModule[]; check_in_time: string; check_out_time: string; weekend_nights: number[]; require_cashier_shift: boolean; room_access: RoomAccess };
   errors: Record<string, string>;
 }) {
   const router = useRouter();
@@ -36,13 +41,14 @@ export function OperationsCard({ initial, errors }: {
   const [checkOut, setCheckOut] = useState(initial.check_out_time.slice(0, 5));
   const [weekend, setWeekend] = useState<number[]>(initial.weekend_nights);
   const [requireShift, setRequireShift] = useState(initial.require_cashier_shift);
+  const [access, setAccess] = useState<RoomAccess>(initial.room_access);
 
   const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
   const save = () =>
     start(async () => {
       setError(null);
       if (modules.length === 0) { setError("فعّل قسمًا واحدًا على الأقل"); return; }
-      const r = await callAction(saveHotelOperationsAction({ modules, check_in_time: checkIn, check_out_time: checkOut, weekend_nights: weekend, require_cashier_shift: requireShift }));
+      const r = await callAction(saveHotelOperationsAction({ modules, check_in_time: checkIn, check_out_time: checkOut, weekend_nights: weekend, require_cashier_shift: requireShift, room_access: access }));
       if (r.ok) { toast("تم حفظ إعدادات التشغيل"); router.refresh(); }
       else setError(actionErrorText(errors, r));
     });
@@ -95,12 +101,30 @@ export function OperationsCard({ initial, errors }: {
             })}
           </div>
         </div>
+        <div className="space-y-2">
+          <p className="text-[16px] font-medium text-ink">ما يُسلَّم للنزيل عند التسكين</p>
+          <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="ما يُسلَّم للنزيل عند التسكين">
+            {ACCESS.map((a) => {
+              const on = access === a.value;
+              return (
+                <label key={a.value} className={cn("flex cursor-pointer items-start gap-3 rounded-lg border bg-white p-4 transition-colors",
+                  on ? "border-action bg-accent1-tint/40" : "border-line hover:border-line-strong")}>
+                  <input type="radio" name="room_access" value={a.value} checked={on} onChange={() => setAccess(a.value)} className="mt-1 size-4" />
+                  <span className="min-w-0">
+                    <span className="block text-[16.5px] font-semibold text-ink">{a.title}</span>
+                    <span className="mt-0.5 block text-[15px] leading-relaxed text-slate-600">{a.description}</span>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
         <label className="flex items-start gap-3 rounded-lg border border-line p-3 text-[16px]">
           <input type="checkbox" className="mt-1 size-4" checked={requireShift} onChange={(e) => setRequireShift(e.target.checked)} />
           <span><span className="font-medium text-ink">إلزام وردية الكاشير للنقد</span>
             <span className="block text-[14.5px] text-slate-500">لا يُقبض نقد ولا يُصرف على الفوليوهات إلا بوردية مفتوحة للموظف</span></span>
         </label>
-        <Button type="button" onClick={save} loading={pending}>حفظ</Button>
+        <Button type="button" onClick={save} loading={pending}>حفظ إعدادات التشغيل</Button>
       </CardContent>
     </Card>
   );

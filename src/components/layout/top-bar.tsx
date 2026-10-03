@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
 import { CalendarCheck, LogOut, Menu, Search, Settings } from "lucide-react";
+import { BrandMark } from "@/components/brand-mark";
 import Link from "@/components/link";
 import { cn } from "@/lib/utils";
 import { isActivePath, navGroups, type NavAccess, type NavLabels } from "./nav-config";
@@ -40,7 +41,6 @@ export function TopBar({
   const groups = useMemo(() => navGroups(labels, access), [labels, access]);
   const current = groups.flatMap((g) => g.items).filter((i) => isActivePath(pathname, i.href)).sort((a, b) => b.href.length - a.href.length)[0];
 
-  const initials = (userName || userEmail || "؟").trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("");
   const iconBtn = "flex size-10 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-slate-600 transition-colors duration-200 hover:text-ink";
   const group = current ? groups.find((g) => g.items.includes(current)) : undefined;
 
@@ -85,9 +85,9 @@ export function TopBar({
         <Link href="/settings/hotel" className={iconBtn} title={labels.hotelSettings} aria-label={labels.hotelSettings}>
           <Settings className="size-[18px] stroke-[1.75]" />
         </Link>
-        <span title={`${userName || userEmail}، ${roleLabel}`} className="flex size-10 items-center justify-center rounded-lg bg-ink text-[16.5px] font-medium text-white md:hidden">
-          {initials}
-        </span>
+        <Link href="/" title={`${userName || userEmail}، ${roleLabel}`} aria-label="الرئيسية" className="md:hidden">
+          <BrandMark className="size-10" />
+        </Link>
       </div>
 
       {searchOpen && (
@@ -113,7 +113,7 @@ function MobileDrawer({ groups, pathname, hotelName, signOut, onClose }: { group
         transition={{ type: "spring", stiffness: 320, damping: 34 }}
         className="absolute inset-y-3 end-auto start-3 w-72 overflow-y-auto rounded-[20px] bg-sidebar p-4 shadow-lift"
       >
-        <p className="mb-3 px-2 text-[18.5px] font-semibold text-ink">{hotelName}</p>
+        <p className="mb-3 flex items-center gap-2.5 px-2 text-[18.5px] font-semibold text-ink"><BrandMark className="size-8" />{hotelName}</p>
         {groups.map((g, gi) => (
           <div key={gi} className="mb-3 space-y-1">
             {g.title && <p className="px-3 text-[14.5px] text-slate-400">{g.title}</p>}

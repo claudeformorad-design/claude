@@ -1,5 +1,5 @@
 import Link from "@/components/link";
-import { BedDouble, BellRing, BrushCleaning, CalendarCheck, CalendarRange, DoorOpen, Hourglass, KeyRound, LogOut, Plus, Users, Wrench } from "lucide-react";
+import { BedDouble, BellRing, BrushCleaning, CalendarCheck, CalendarRange, DoorOpen, Hourglass, LogOut, Plus, Users, Wrench } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,7 @@ import { RESERVATION_STATUS } from "@/lib/pms/labels";
 import { cn } from "@/lib/utils";
 import { frontDeskSummary, listReservations, listRooms, roomTypeAvailability, type ReservationListItem } from "@/services/pms.service";
 import { getI18n } from "@/i18n/server";
-import { ActionButton } from "../_pms/action-button";
-import { checkInAction } from "../_pms/actions";
+import { QuickCheckIn } from "../_pms/handover";
 
 /**
  * لوحة الاستقبال: ما يحتاجه موظف الاستقبال اليوم في شاشة واحدة — الوصول والمغادرة، الإشغال الليلة،
@@ -95,8 +94,7 @@ export default async function FrontDeskPage() {
                         {r.room_id && r.booking_mode === "nightly" && dirtyRooms.has(r.room_id)
                           ? <Badge variant="warning">الغرفة تحتاج تنظيف</Badge>
                           : (r.room_id || r.booking_mode === "hourly") && (
-                            <ActionButton variant="default" label="تسكين" done="تم تسجيل الوصول" errors={t.errors} icon={<KeyRound className="size-4" />}
-                              run={checkInAction.bind(null, r.id, r.room_id)} />
+                            <QuickCheckIn reservationId={r.id} roomId={r.room_id} access={ctx.hotel.room_access} errors={t.errors} />
                           )}
                       </TableCell>
                     )}
