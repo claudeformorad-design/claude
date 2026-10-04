@@ -5,6 +5,7 @@ import type {
   AssistantConversationRow, AssistantMessageRow, AssistantSavedRow, AssistantSettingsRow,
 } from "@/lib/supabase/database.types";
 import { raise } from "./errors";
+import { searchTerm } from "@/lib/search-term";
 
 /**
  * محادثات المساعد ومحفوظاته وتعليماته. كلها خاصة بالمستخدم نفسه:
@@ -25,7 +26,7 @@ export function titleFrom(question: string): string {
 
 export async function listConversations(supabase: SupabaseServerClient, hotelId: string, q?: string): Promise<Conversation[]> {
   let query = supabase.from("assistant_conversations").select("id, title, pinned, updated_at").eq("hotel_id", hotelId);
-  const s = q?.replace(/[%,()*]/g, " ").trim();
+  const s = searchTerm(q);
   if (s) query = query.ilike("title", `%${s}%`);
   const { data, error } = await query.order("pinned", { ascending: false }).order("updated_at", { ascending: false }).limit(200);
   raise(error);

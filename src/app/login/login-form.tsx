@@ -36,8 +36,8 @@ export function LoginForm({ t }: { t: Pick<Dictionary, "auth" | "errors"> }) {
         </div>
       )}
       <div className="field-group space-y-2">
-        <Label htmlFor="email">{t.auth.email}</Label>
-        <Input id="email" name="email" type="email" dir="ltr" autoComplete="email" required />
+        <Label htmlFor="email">{mode === "in" ? t.auth.emailOrUsername : t.auth.email}</Label>
+        <Input id="email" name="email" type={mode === "in" ? "text" : "email"} dir="ltr" autoCapitalize="none" autoComplete={mode === "in" ? "username" : "email"} required />
       </div>
       <div className="field-group space-y-2">
         <Label htmlFor="password">{t.auth.password}</Label>
@@ -46,7 +46,8 @@ export function LoginForm({ t }: { t: Pick<Dictionary, "auth" | "errors"> }) {
           name="password"
           type="password"
           dir="ltr"
-          minLength={8}
+          minLength={mode === "in" ? 1 : 8}
+          maxLength={72}
           autoComplete={mode === "in" ? "current-password" : "new-password"}
           required
         />

@@ -5,6 +5,7 @@ import type { FolioAction, OpenFolioInput } from "@/lib/validation/revenue";
 import { openFolioSchema } from "@/lib/validation/revenue";
 import { toMoney } from "@/lib/accounting/money";
 import { raise } from "./errors";
+import { searchTerm } from "@/lib/search-term";
 
 const TXN_COLUMNS =
   "id, hotel_id, folio_id, txn_type, direction, business_date, charge_code_id, payment_method_id, department_id, customer_id, description, reference, quantity::text, unit_price::text, net_amount::text, tax_amount::text, total_amount::text, ledger_effect::text, deposit_effect::text, related_transaction_id, counter_folio_id, voided_by_id, journal_entry_id, created_at, created_by";
@@ -19,7 +20,7 @@ export async function listFolios(
   let query = supabase.from("guest_folios").select("*").eq("hotel_id", hotelId).order("created_at", { ascending: false }).limit(300);
   if (filters.status === "open" || filters.status === "closed" || filters.status === "cancelled") query = query.eq("status", filters.status);
   if (filters.q) {
-    const s = filters.q.replace(/[%,()]/g, " ").trim();
+    const s = searchTerm(filters.q);
     if (s) query = query.or(`guest_name.ilike.%${s}%,folio_number.ilike.%${s}%,room_number.ilike.%${s}%`);
   }
   const { data, error } = await query;

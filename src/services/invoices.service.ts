@@ -4,6 +4,7 @@ import type { InvoiceItemRow, InvoiceRow, InvoiceTaxRow, PaymentAllocationRow } 
 import { type DirectInvoiceInput, directInvoiceSchema } from "@/lib/validation/revenue";
 import { toMoney } from "@/lib/accounting/money";
 import { raise } from "./errors";
+import { searchTerm } from "@/lib/search-term";
 
 const INVOICE_COLUMNS =
   "id, hotel_id, invoice_number, invoice_type, folio_id, customer_id, bill_to_name, bill_to_tax_number, bill_to_address, issue_date, due_date, currency_code, subtotal::text, tax_total::text, total::text, amount_due::text, amount_paid::text, status, journal_entry_id, notes, created_at, created_by, updated_at";
@@ -17,7 +18,7 @@ export async function listInvoices(
   if (filters.status === "issued" || filters.status === "partially_paid" || filters.status === "paid") query = query.eq("status", filters.status);
   if (filters.customerId) query = query.eq("customer_id", filters.customerId);
   if (filters.q) {
-    const s = filters.q.replace(/[%,()]/g, " ").trim();
+    const s = searchTerm(filters.q);
     if (s) query = query.or(`invoice_number.ilike.%${s}%,bill_to_name.ilike.%${s}%`);
   }
   const { data, error } = await query;

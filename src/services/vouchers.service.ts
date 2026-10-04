@@ -4,6 +4,7 @@ import type { PaymentAllocationRow, PaymentRow } from "@/lib/supabase/database.t
 import { type VoucherInput, voucherSchema } from "@/lib/validation/revenue";
 import { toMoney } from "@/lib/accounting/money";
 import { raise } from "./errors";
+import { searchTerm } from "@/lib/search-term";
 
 const COLUMNS =
   "id, hotel_id, voucher_number, voucher_type, party_type, payment_date, payment_method_id, amount::text, customer_id, counter_account_id, department_id, party_name, reference, description, status, journal_entry_id, void_reason, voided_at, voided_by, void_journal_entry_id, created_at, created_by";
@@ -16,7 +17,7 @@ export async function listVouchers(
   let query = supabase.from("payments").select(COLUMNS).eq("hotel_id", hotelId).order("payment_date", { ascending: false }).order("voucher_number", { ascending: false }).limit(300);
   if (filters.type === "receipt" || filters.type === "disbursement") query = query.eq("voucher_type", filters.type);
   if (filters.q) {
-    const s = filters.q.replace(/[%,()]/g, " ").trim();
+    const s = searchTerm(filters.q);
     if (s) query = query.or(`voucher_number.ilike.%${s}%,party_name.ilike.%${s}%,description.ilike.%${s}%`);
   }
   const { data, error } = await query;

@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { loginName } from "@/lib/auth/staff";
 import { getAuthMode, usernamesOf } from "@/lib/supabase/local-auth";
 import { raise } from "@/services/errors";
 import { getI18n } from "@/i18n/server";
@@ -31,7 +32,7 @@ export default async function MemberAccessPage({ params }: { params: Promise<{ i
   const a = access.data as unknown as Access;
   const member = (members.data ?? []).find((m) => m.user_id === id);
   const local = !isSupabaseConfigured();
-  const username = local ? (await usernamesOf([id])).get(id) : member?.email;
+  const username = local ? (await usernamesOf([id])).get(id) : loginName(member?.email);
   const name = member?.full_name || username || tr("موظف");
   // لا يدير المدير من يملك صلاحيات ليست عنده
   const above = a.effective.filter((c) => !ctx.permissions.has(c));
@@ -45,7 +46,7 @@ export default async function MemberAccessPage({ params }: { params: Promise<{ i
         <Alert variant="warning">{tr("هذا الموظف يملك صلاحيات ليست عندك، فلا يمكنك تعديل حسابه. يعدّله مدير يملك صلاحياته كلها.")}</Alert>
       ) : (
         <Card><CardContent className="pt-6">
-          <MemberAccessEditor userId={id} name={name} local={local && (await getAuthMode()) === "multi"}
+          <MemberAccessEditor userId={id} name={name} local={!local || (await getAuthMode()) === "multi"}
             roles={data.roles.map((r) => ({ id: r.id, label: r.label }))} permissions={data.permissions} rolePermissions={data.rolePermissions}
             homeOptions={data.homeOptions}
             initial={{ role_ids: a.role_ids, grants: a.grants, denies: a.denies, home_path: a.home_path, limits: a.limits ?? {}, is_active: a.is_active }} />

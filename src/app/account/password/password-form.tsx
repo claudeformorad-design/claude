@@ -13,6 +13,7 @@ const MESSAGES: Record<string, string> = {
   get mismatch() { return tr("كلمتا المرور غير متطابقتين"); },
   get current() { return tr("كلمة المرور الحالية غير صحيحة"); },
   get validation() { return tr("تحقق من الحقول"); },
+  get same() { return tr("اختر كلمة مرور جديدة غير الكلمة المؤقتة"); },
 };
 
 export function PasswordForm({ forced }: { forced: boolean }) {

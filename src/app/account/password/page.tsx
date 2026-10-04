@@ -2,14 +2,22 @@ import { tr } from "@/i18n/tr";
 import { redirect } from "next/navigation";
 import { BrandMark } from "@/components/brand-mark";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { getAppContext } from "@/lib/auth/context";
 import { currentLocalUserId, getAuthMode, mustChangePassword } from "@/lib/supabase/local-auth";
 import { PasswordForm } from "./password-form";
 
 export default async function ChangePasswordPage() {
-  if (isSupabaseConfigured() || (await getAuthMode()) !== "multi") redirect("/");
-  const userId = await currentLocalUserId();
-  if (!userId) redirect("/login");
-  const forced = await mustChangePassword(userId);
+  let forced: boolean;
+  if (isSupabaseConfigured()) {
+    const ctx = await getAppContext();
+    if (!ctx.user) redirect("/login");
+    forced = ctx.hotel ? ctx.profile?.must_change_password === true : false;
+  } else {
+    if ((await getAuthMode()) !== "multi") redirect("/");
+    const userId = await currentLocalUserId();
+    if (!userId) redirect("/login");
+    forced = await mustChangePassword(userId);
+  }
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
       <div className="surface animate-rise w-full max-w-md p-8">

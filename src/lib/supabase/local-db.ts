@@ -3,6 +3,7 @@ import { cpSync, existsSync, readdirSync, readFileSync, renameSync, rmSync, mkdi
 import path from "node:path";
 import { PGlite, type Transaction } from "@electric-sql/pglite";
 import { btree_gist } from "@electric-sql/pglite/contrib/btree_gist";
+import { pgcrypto } from "@electric-sql/pglite/contrib/pgcrypto";
 
 /**
  * وضع التجربة المحلي: قاعدة PostgreSQL حقيقية مضمّنة (PGlite) تُطبَّق عليها
@@ -38,7 +39,7 @@ function readSql(file: string): string {
 
 async function bootstrap(): Promise<LocalDb> {
   mkdirSync(/*turbopackIgnore: true*/ LOCAL_DATA_DIR, { recursive: true });
-  const db = new PGlite(LOCAL_DATA_DIR, { extensions: { btree_gist } });
+  const db = new PGlite(LOCAL_DATA_DIR, { extensions: { btree_gist, pgcrypto } });
   await db.waitReady;
   await db.exec("set timezone = 'UTC'");
 
@@ -230,7 +231,7 @@ export function restoreLocalBackup(file: Blob): Promise<void> {
     rmDir(aside);
     if (existsSync(/*turbopackIgnore: true*/ LOCAL_DATA_DIR)) renameSync(/*turbopackIgnore: true*/ LOCAL_DATA_DIR, aside);
     try {
-      const db = new PGlite(LOCAL_DATA_DIR, { extensions: { btree_gist }, loadDataDir: file });
+      const db = new PGlite(LOCAL_DATA_DIR, { extensions: { btree_gist, pgcrypto }, loadDataDir: file });
       await db.waitReady;
       // يجب أن تكون نسخة من هذا النظام
       await db.query("select 1 from local_meta.applied_migrations limit 1");

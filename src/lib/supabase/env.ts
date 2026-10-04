@@ -14,3 +14,11 @@ export function supabaseEnv(): { url: string; anonKey: string } {
   }
   return { url, anonKey };
 }
+
+/** خيارات كوكي جلسة Supabase: غير مقروءة من JavaScript، وآمنة على HTTPS، ولا تُرسل مع طلبات المواقع الأخرى */
+export const SESSION_COOKIE_OPTIONS = {
+  path: "/",
+  sameSite: "lax" as const,
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+};

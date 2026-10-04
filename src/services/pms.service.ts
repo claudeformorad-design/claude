@@ -6,6 +6,7 @@ import type {
   ReservationRow, ReservationStatus, RoomRow, RoomTypeRow, WaitlistEntryRow,
 } from "@/lib/supabase/database.types";
 import { raise } from "./errors";
+import { searchTerm } from "@/lib/search-term";
 
 /**
  * قراءات قسم إدارة الفندق. الكتابة كلها عبر دوال قاعدة البيانات (RPC) أو سياسات RLS،
@@ -36,7 +37,7 @@ export async function listRooms(supabase: SupabaseServerClient, hotelId: string)
 // ----------------------------------------------------------------------------- النزلاء
 export async function listGuests(supabase: SupabaseServerClient, hotelId: string, q?: string): Promise<GuestRow[]> {
   let query = supabase.from("guests").select("*").eq("hotel_id", hotelId);
-  const term = q?.trim().replace(/[%,()]/g, " ");
+  const term = searchTerm(q);
   if (term) query = query.or(`full_name.ilike.%${term}%,phone.ilike.%${term}%,id_number.ilike.%${term}%`);
   const { data, error } = await query.order("full_name").limit(500);
   raise(error);

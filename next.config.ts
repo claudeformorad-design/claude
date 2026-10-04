@@ -29,8 +29,22 @@ const previewOrigins = [
 // وكيل المعاينة؛ في الإنتاج مع Supabase يبقى الفحص الافتراضي الصارم (نفس النطاق فقط) ما لم تُحدَّد نطاقات صراحةً.
 const trialMode = !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+/** رؤوس أمان لكل الاستجابات (والصفحات تأخذ فوقها سياسة المحتوى برمز لكل طلب من proxy) */
+const securityHeaders = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()" },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  { key: "X-DNS-Prefetch-Control", value: "off" },
+];
+
 const nextConfig: NextConfig = {
   output: "standalone",
+  poweredByHeader: false,
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
+  },
   agentRules: false,
   allowedDevOrigins: previewOrigins,
   // قاعدة وضع التجربة المحلية (PostgreSQL مضمّن WASM) ومولّد PDF يعملان على الخادم فقط ولا يُحزمان

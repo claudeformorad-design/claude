@@ -393,6 +393,19 @@ const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
   // تقييمات النزلاء
   [/This survey link is no longer valid/i, "رابط التقييم لم يعد صالحًا"],
   [/Choose the overall rating/i, "اختر التقييم العام"],
+  // أمان الحسابات
+  [/Sign-up is by invitation only/i, "التسجيل بالدعوة فقط، اطلب من مدير النظام إنشاء حسابك"],
+  [/Only the system owner can create hotels/i, "إنشاء الفنادق لصاحب النظام فقط"],
+  [/Write the employee name/i, "اكتب اسم الموظف"],
+  [/Username must be 3 to 32 English lowercase letters or digits/i, "اسم المستخدم من 3 إلى 32 حرفًا إنجليزيًا صغيرًا أو رقمًا"],
+  [/The password must be at least 8 characters with a letter and a digit/i, "كلمة المرور 8 أحرف على الأقل، وفيها حرف ورقم"],
+  [/This username is already taken/i, "اسم المستخدم مستخدم لحساب آخر"],
+  [/You cannot manage your own account from here/i, "لا يمكنك إدارة حسابك من هنا"],
+  [/The employee is not in this hotel/i, "الموظف غير موجود في هذا الفندق"],
+  [/The system owner account cannot be managed by others/i, "حساب صاحب النظام لا يديره غيره"],
+  [/You cannot manage an employee who has permissions you do not have/i, "لا يمكنك إدارة موظف يملك صلاحيات ليست عندك"],
+  [/Only staff accounts created in the system can be reset here/i, "إعادة تعيين كلمة المرور لحسابات الموظفين المنشأة من النظام فقط"],
+  [/Choose a new password different from the temporary one/i, "اختر كلمة مرور جديدة غير الكلمة المؤقتة"],
   // عناصر غير موجودة
   [/Bill not found for this vendor/i, "فاتورة المورد غير موجودة لهذا المورد"],
   [/Invoice not found for this customer/i, "الفاتورة غير موجودة لهذا العميل"],

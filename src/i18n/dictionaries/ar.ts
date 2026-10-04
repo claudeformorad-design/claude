@@ -119,6 +119,7 @@ export const ar = {
     signInTitle: "تسجيل الدخول",
     signUpTitle: "إنشاء حساب",
     email: "البريد الإلكتروني",
+    emailOrUsername: "البريد الإلكتروني أو اسم المستخدم",
     password: "كلمة المرور",
     fullName: "الاسم الكامل",
     signIn: "دخول",

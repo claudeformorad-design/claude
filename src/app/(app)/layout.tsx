@@ -34,6 +34,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // التثبيت المحلي بعدة مستخدمين: زر خروج، وإلزام تغيير كلمة المرور المؤقتة قبل أي صفحة
   const localMulti = !isSupabaseConfigured() && (await getAuthMode()) === "multi";
   if (localMulti && (await mustChangePassword(ctx.user.id))) redirect("/account/password");
+  // النسخة المنشورة: الكلمة المؤقتة من المدير تُغيَّر قبل أي صفحة
+  if (isSupabaseConfigured() && ctx.profile?.must_change_password) redirect("/account/password");
   const signOut = isSupabaseConfigured() ? signOutAction : localMulti ? localSignOutAction : undefined;
   // ما يظهر في التنقل: الأقسام المفعّلة للفندق وصلاحيات المستخدم فيه
   const access = { modules: ctx.hotel.enabled_modules ?? ["accounting", "pms"], permissions: [...ctx.permissions].sort() };

@@ -2296,4 +2296,7 @@ export const EN: Record<string, string> = {
   "عدد النسخ المحفوظة": "Copies to keep",
   "تفعيل النسخ اليومي": "Enable daily backup",
   "تنزيل {0}": "Download {0}",
+  // أمان الحسابات
+  "اختر كلمة مرور جديدة غير الكلمة المؤقتة": "Choose a new password different from the temporary one",
+  "التسجيل بالدعوة فقط، اطلب من مدير النظام إنشاء حسابك": "Sign-up is by invitation only. Ask the system manager to create your account.",
 };

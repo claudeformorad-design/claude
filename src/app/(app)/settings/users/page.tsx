@@ -12,6 +12,7 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import { EDITION } from "@/lib/edition";
 import { localName } from "@/lib/local-name";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { loginName } from "@/lib/auth/staff";
 import { IDLE_MINUTES, getAuthMode, usernamesOf } from "@/lib/supabase/local-auth";
 import { raise } from "@/services/errors";
 import { AddEmployee, EnableLogin } from "./users-client";
@@ -32,7 +33,7 @@ export default async function UsersPage() {
   const roleRows = (roles.data ?? []).filter((r) => !EDITION.hiddenRoles.has(r.code));
   const roleName = new Map(roleRows.map((r) => [r.id, localName(r)]));
   const list = members.data ?? [];
-  const usernames = local ? await usernamesOf(list.map((m) => m.user_id)) : new Map<string, string>();
+  const usernames = local ? await usernamesOf(list.map((m) => m.user_id)) : new Map(list.map((m) => [m.user_id, loginName(m.email)]));
   const roleOptions = roleRows.map((r) => ({ id: r.id, label: localName(r) }));
 
   return (
@@ -81,7 +82,7 @@ export default async function UsersPage() {
           </Table>
           {(!local || mode === "multi") && (
             <CardContent className="border-t border-line pt-5">
-              <AddEmployee local={local} roles={roleOptions} />
+              <AddEmployee roles={roleOptions} />
             </CardContent>
           )}
         </Card>

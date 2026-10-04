@@ -72,6 +72,7 @@ export type UserProfileRow = {
   preferred_locale: "ar" | "en";
   default_hotel_id: string | null;
   is_active: boolean;
+  must_change_password: boolean;
   created_at: string;
   updated_at: string;
   updated_by: string | null;
@@ -1093,6 +1094,10 @@ export type Database = {
         Returns: undefined;
       };
       services_in_house: { Args: { p_hotel_id: string }; Returns: { reservation_id: string; room_number: string | null; guest_name: string }[] };
+      create_staff_account: { Args: { p_hotel_id: string; p_full_name: string; p_username: string; p_password: string; p_role_ids: string[] }; Returns: string };
+      reset_staff_password: { Args: { p_hotel_id: string; p_user_id: string; p_password: string }; Returns: undefined };
+      end_staff_sessions: { Args: { p_hotel_id: string; p_user_id: string }; Returns: undefined };
+      confirm_password_changed: { Args: Record<string, never>; Returns: undefined };
       survey_info: { Args: { p_token: string }; Returns: { hotel_name: string; hotel_name_en: string | null; guest_name: string; room_number: string | null; valid: boolean }[] };
       record_paper_survey: {
         Args: { p_hotel_id: string; p_guest_name: string | null; p_room_number: string | null; p_overall: number; p_cleanliness: number | null; p_staff: number | null;

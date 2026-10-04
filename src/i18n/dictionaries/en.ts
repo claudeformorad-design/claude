@@ -121,6 +121,7 @@ export const en: Dictionary = {
     signInTitle: "Sign in",
     signUpTitle: "Create account",
     email: "Email",
+    emailOrUsername: "Email or username",
     password: "Password",
     fullName: "Full name",
     signIn: "Sign in",

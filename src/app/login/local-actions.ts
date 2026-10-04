@@ -7,9 +7,11 @@ import {
   checkPassword, currentLocalUserId, getAuthMode, mustChangePassword, renewSession, setLocalPassword, signIn, signOut, strongPassword,
 } from "@/lib/supabase/local-auth";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { createClient } from "@/lib/supabase/server";
+import { getAppContext, type AppContext } from "@/lib/auth/context";
 import { applyPreferredLocale } from "../locale-actions";
 
-export type LocalAuthState = { error?: "invalid" | "locked" | "inactive" | "validation" | "weak" | "mismatch" | "current" } | null;
+export type LocalAuthState = { error?: "invalid" | "locked" | "inactive" | "validation" | "weak" | "mismatch" | "current" | "same" } | null;
 
 const userAgent = async () => (await headers()).get("user-agent")?.slice(0, 300) ?? null;
 
@@ -31,7 +33,8 @@ export async function localSignOutAction(): Promise<void> {
 
 /** تغيير كلمة المرور: إلزامي بعد أول دخول بكلمة مؤقتة، ومتاح لكل موظف لحسابه */
 export async function changePasswordAction(_prev: LocalAuthState, formData: FormData): Promise<LocalAuthState> {
-  if (isSupabaseConfigured() || (await getAuthMode()) !== "multi") return { error: "validation" };
+  if (isSupabaseConfigured()) return changeSupabasePassword(formData);
+  if ((await getAuthMode()) !== "multi") return { error: "validation" };
   const userId = await currentLocalUserId();
   if (!userId) redirect("/login");
   const p = z.object({ current: z.string().max(200), password: z.string().max(200), confirm: z.string().max(200) }).safeParse(Object.fromEntries(formData));
@@ -42,5 +45,28 @@ export async function changePasswordAction(_prev: LocalAuthState, formData: Form
   if (!strongPassword(p.data.password)) return { error: "weak" };
   await setLocalPassword(userId, p.data.password, false);
   await renewSession(userId, await userAgent());
+  redirect("/?home=1");
+}
+
+/** النسخة المنشورة: تغيير كلمة المرور في Supabase Auth، ثم رفع علامة الكلمة المؤقتة بعد تحقق قاعدة البيانات أنها تغيّرت */
+async function changeSupabasePassword(formData: FormData): Promise<LocalAuthState> {
+  const ctx = await getAppContext();
+  if (!ctx.user) redirect("/login");
+  const p = z.object({ current: z.string().max(200), password: z.string().max(200), confirm: z.string().max(200) }).safeParse(Object.fromEntries(formData));
+  if (!p.success) return { error: "validation" };
+  const app = ctx as AppContext;
+  const forced = app.hotel ? app.profile?.must_change_password === true : false;
+  if (p.data.password !== p.data.confirm) return { error: "mismatch" };
+  if (!strongPassword(p.data.password) || p.data.password.length > 72) return { error: "weak" };
+  const supabase = await createClient();
+  // خارج الكلمة المؤقتة: يُتحقق من الكلمة الحالية قبل التغيير
+  if (!forced) {
+    const { error } = await supabase.auth.signInWithPassword({ email: ctx.user.email ?? "", password: p.data.current });
+    if (error) return { error: "current" };
+  }
+  const { error } = await supabase.auth.updateUser({ password: p.data.password });
+  if (error) return { error: /different/i.test(error.message) ? "same" : "weak" };
+  const { error: e2 } = await supabase.rpc("confirm_password_changed");
+  if (e2) return { error: "same" };
   redirect("/?home=1");
 }

@@ -8,6 +8,7 @@ import { REPORTS, type ReportKey, buildReport } from "@/services/report-tables";
 import { getDailyCash } from "@/services/financial.service";
 import { GUIDE } from "../guide";
 import { type ToolEnv, type ToolModule, asStr, denied, fn, obj, safe, str, today } from "./shared";
+import { searchTerm } from "@/lib/search-term";
 
 /** الأدوات الأساسية: دليل النظام، والتقارير، والبحث في السجلات وتفاصيلها، وسجل التدقيق، والنقدية */
 
@@ -114,6 +115,7 @@ export const core: ToolModule = {
 };
 
 async function search({ ctx }: ToolEnv, kind: SearchKind, q: string) {
+  q = searchTerm(q);
   const s = ctx.supabase, h = ctx.hotel.id, like = `%${q}%`;
   const need: Record<SearchKind, Permission> = {
     folio: PERMISSIONS.folioView, invoice: PERMISSIONS.invoicesView, voucher: PERMISSIONS.paymentsView, journal: PERMISSIONS.journalView,

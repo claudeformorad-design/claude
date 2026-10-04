@@ -5,6 +5,7 @@ import type { JournalEntryFormValues } from "@/lib/validation/journal-entry";
 import { isBlankLine } from "@/lib/accounting/journal";
 import { toMoney } from "@/lib/accounting/money";
 import { raise, ServiceError } from "./errors";
+import { searchTerm } from "@/lib/search-term";
 
 const ENTRY_COLUMNS =
   "id, hotel_id, entry_number, entry_date, period_id, description, reference, source, source_id, currency_code, exchange_rate::text, status, posted_at, posted_by, reversal_of_id, reversed_by_id, created_at, created_by, updated_at, updated_by";
@@ -39,7 +40,7 @@ export async function listJournalEntries(
   if (filters.from) query = query.gte("entry_date", filters.from);
   if (filters.to) query = query.lte("entry_date", filters.to);
   if (filters.search) {
-    const s = filters.search.replace(/[%,()]/g, " ").trim();
+    const s = searchTerm(filters.search);
     if (s) query = query.or(`description.ilike.%${s}%,entry_number.ilike.%${s}%,reference.ilike.%${s}%`);
   }
 

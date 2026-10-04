@@ -241,9 +241,7 @@ end $$;
 set role anon;
 select pg_temp.expect_error($q$ select public.submit_guest_survey('wrong', 5::smallint, null, null, null, null, null, true, null) $q$, 'no longer valid');
 -- الزائر المجهول لا يرى الاستبيانات ولا رموزها
-do $$ begin
-  assert (select count(*) from public.guest_surveys) = 0, 'anon sees no surveys';
-end $$;
+select pg_temp.expect_error($q$ select count(*) from public.guest_surveys $q$, 'permission denied');
 reset role;
 create temp table tok as select token from public.guest_surveys where id = (select v from ids where k = 'survey');
 grant select on tok to anon;

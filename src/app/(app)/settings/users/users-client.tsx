@@ -72,7 +72,7 @@ export function EnableLogin() {
 // -----------------------------------------------------------------------------
 // إضافة موظف
 // -----------------------------------------------------------------------------
-export function AddEmployee({ local, roles }: { local: boolean; roles: Option[] }) {
+export function AddEmployee({ roles }: { roles: Option[] }) {
   const { pending, error, run, router } = useSubmit();
   const [v, setV] = useState({ full_name: "", username: "", email: "", password: "", role_id: roles.find((r) => r.label.includes("استقبال"))?.id ?? roles[0]?.id ?? "" });
   return (
@@ -83,25 +83,18 @@ export function AddEmployee({ local, roles }: { local: boolean; roles: Option[] 
       <p className="font-semibold text-ink">{tr("إضافة موظف")}</p>
       {error && <Alert variant="destructive">{error}</Alert>}
       <div className="grid gap-3 sm:grid-cols-2">
-        {local ? (
-          <>
-            <div className={field}><Label htmlFor="emp_name">{tr("اسم الموظف")}</Label>
-              <Input id="emp_name" value={v.full_name} onChange={(e) => setV({ ...v, full_name: e.target.value })} /></div>
-            <div className={field}><Label htmlFor="emp_username">{tr("اسم المستخدم")}</Label>
-              <Input id="emp_username" dir="ltr" autoCapitalize="none" value={v.username} onChange={(e) => setV({ ...v, username: e.target.value })} /></div>
-            <div className={field}><Label htmlFor="emp_password">{tr("كلمة مرور مؤقتة")}</Label>
-              <Input id="emp_password" dir="ltr" value={v.password} onChange={(e) => setV({ ...v, password: e.target.value })} /></div>
-          </>
-        ) : (
-          <div className={field}><Label htmlFor="emp_email">{tr("البريد الإلكتروني")}</Label>
-            <Input id="emp_email" type="email" dir="ltr" value={v.email} onChange={(e) => setV({ ...v, email: e.target.value })} /></div>
-        )}
+        <div className={field}><Label htmlFor="emp_name">{tr("اسم الموظف")}</Label>
+          <Input id="emp_name" value={v.full_name} onChange={(e) => setV({ ...v, full_name: e.target.value })} /></div>
+        <div className={field}><Label htmlFor="emp_username">{tr("اسم المستخدم")}</Label>
+          <Input id="emp_username" dir="ltr" autoCapitalize="none" value={v.username} onChange={(e) => setV({ ...v, username: e.target.value })} /></div>
+        <div className={field}><Label htmlFor="emp_password">{tr("كلمة مرور مؤقتة")}</Label>
+          <Input id="emp_password" dir="ltr" value={v.password} onChange={(e) => setV({ ...v, password: e.target.value })} /></div>
         <div className={field}><Label htmlFor="emp_role">{tr("الدور")}</Label>
           <NativeSelect id="emp_role" value={v.role_id} onChange={(e) => setV({ ...v, role_id: e.target.value })}>
             {roles.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
           </NativeSelect></div>
       </div>
-      {local && <p className="text-[14.5px] text-slate-500">{tr("يغيّر الموظف كلمة المرور المؤقتة عند أول دخول.")}</p>}
+      <p className="text-[14.5px] text-slate-500">{tr("يغيّر الموظف كلمة المرور المؤقتة عند أول دخول.")}</p>
       <Button type="submit" loading={pending}>{tr("إضافة الموظف")}</Button>
     </form>
   );

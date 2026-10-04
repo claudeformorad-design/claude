@@ -1,5 +1,6 @@
 // اختبار أمني/وظيفي عبر الواجهة البرمجية الحقيقية (GoTrue + PostgREST) — مستخدمان في فندقين مختلفين
 // التشغيل: SUPABASE_URL=... ANON_KEY=... node e2e/api-security.mjs
+// على مشروع بالتسجيل بالدعوة: LOGIN_A=email:password LOGIN_B=email:password (حسابات اختبار جاهزة) بدل التسجيل
 import { createClient } from "@supabase/supabase-js";
 
 const URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
@@ -8,8 +9,14 @@ const results = [];
 const check = (name, ok, extra = "") => { results.push({ name, ok }); console.log(`${ok ? "✓" : "✗"} ${name}${extra ? " — " + extra : ""}`); };
 const client = () => createClient(URL, KEY, { auth: { persistSession: false } });
 
-async function user(email) {
+async function user(email, login) {
   const c = client();
+  if (login) {
+    const i = login.indexOf(":");
+    const { error } = await c.auth.signInWithPassword({ email: login.slice(0, i), password: login.slice(i + 1) });
+    if (error) throw error;
+    return c;
+  }
   const { error } = await c.auth.signUp({ email, password: "Passw0rd!123", options: { data: { full_name: email.split("@")[0] } } });
   if (error && !/already/.test(error.message)) throw error;
   const { error: e2 } = await c.auth.signInWithPassword({ email, password: "Passw0rd!123" });
@@ -18,8 +25,8 @@ async function user(email) {
 }
 
 const stamp = Date.now();
-const A = await user(`owner-a-${stamp}@test.dev`);
-const B = await user(`owner-b-${stamp}@test.dev`);
+const A = await user(`owner-a-${stamp}@test.dev`, process.env.LOGIN_A);
+const B = await user(`owner-b-${stamp}@test.dev`, process.env.LOGIN_B);
 const anon = client();
 
 // كل مستخدم ينشئ فندقه
@@ -60,7 +67,18 @@ const probes = [
   ["B tax return of A", async () => !!(await B.rpc("tax_return", { p_hotel_id: hA, p_from: "2026-01-01", p_to: "2026-12-31" })).error],
   ["B cash report of A", async () => !!(await B.rpc("daily_cash_report", { p_hotel_id: hA, p_date: "2026-09-26" })).error],
   ["B updates A hotel", async () => { await B.from("hotels").update({ name_ar: "hacked" }).eq("id", hA); return (await A.from("hotels").select("name_ar").eq("id", hA).single()).data.name_ar === "فندق أ"; }],
+  // حسابات الموظفين وكلمات المرور
+  ["B creates staff account in A", async () => !!(await B.rpc("create_staff_account", { p_hotel_id: hA, p_full_name: "دخيل", p_username: `x${stamp}`, p_password: "Hack1234", p_role_ids: [] })).error],
+  ["B resets password of A owner", async () => !!(await B.rpc("reset_staff_password", { p_hotel_id: hA, p_user_id: (await A.auth.getUser()).data.user.id, p_password: "Hack1234" })).error],
+  ["B ends sessions of A owner", async () => !!(await B.rpc("end_staff_sessions", { p_hotel_id: hA, p_user_id: (await A.auth.getUser()).data.user.id })).error],
+  ["B changes own email in profile", async () => !!(await B.from("users_profiles").update({ email: "admin@x.y" }).eq("id", (await B.auth.getUser()).data.user.id)).error],
+  ["B clears forced-password flag", async () => !!(await B.from("users_profiles").update({ must_change_password: false }).eq("id", (await B.auth.getUser()).data.user.id)).error],
+  ["B reads system settings schema", async () => !!(await B.schema("app").from("system_settings").select("*")).error],
+  ["B search filter injection", async () => ((await B.from("guest_folios").select("id").or(`guest_name.ilike.%x%,hotel_id.eq.${hA}`)).data ?? []).length === 0],
   // مجهول الهوية
+  ["anon create_staff_account", async () => !!(await anon.rpc("create_staff_account", { p_hotel_id: hA, p_full_name: "x", p_username: `y${stamp}`, p_password: "Hack1234", p_role_ids: [] })).error],
+  ["anon reads app schema", async () => !!(await anon.schema("app").from("temp_passwords").select("*")).error],
+  ["anon reads guest_surveys", async () => ((await anon.from("guest_surveys").select("token")).data ?? []).length === 0],
   ["anon reads hotels", async () => ((await anon.from("hotels").select("id")).data ?? []).length === 0],
   ["anon create_hotel", async () => !!(await anon.rpc("create_hotel", { p_name_ar: "x", p_country_code: "SA", p_base_currency: "SAR" })).error],
   ["anon open_folio", async () => !!(await anon.rpc("open_folio", { p_hotel_id: hA, p_guest_name: "x" })).error],
@@ -77,6 +95,8 @@ const probes = [
     await A.from("journal_entries").update({ created_by: other }).eq("id", data);
     return (await A.from("journal_entries").select("created_by").eq("id", data).single()).data.created_by !== other; }],
 ];
+// على مشروع بالتسجيل بالدعوة: أي بريد غريب يُرفض حتى عبر واجهة Supabase مباشرة
+if (process.env.INVITE_ONLY) probes.push(["stranger sign-up rejected", async () => !!(await client().auth.signUp({ email: `stranger-${stamp}@evil.test`, password: "Passw0rd!123" })).error]);
 for (const [name, fn] of probes) {
   try { check(name, await fn()); } catch (e) { check(name, false, String(e.message ?? e)); }
 }

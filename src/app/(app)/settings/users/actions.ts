@@ -41,7 +41,7 @@ export async function enableLoginAction(input: unknown): Promise<ActionResult<un
   return { ok: true, data: undefined };
 }
 
-/** إضافة موظف: في التثبيت المحلي باسم دخول وكلمة مرور مؤقتة، ومع Supabase ببريد مسجّل */
+/** إضافة موظف باسم دخول وكلمة مرور مؤقتة يغيّرها عند أول دخول */
 export async function addEmployeeAction(input: unknown): Promise<ActionResult<string>> {
   const ctx = await requireAppContext(PERMISSIONS.usersManage);
   const p = z.object({
@@ -51,9 +51,15 @@ export async function addEmployeeAction(input: unknown): Promise<ActionResult<st
   if (!p.success) return fail;
   const v = p.data;
   if (isSupabaseConfigured()) {
-    if (!z.email().safeParse(v.email).success) return fail;
+    // النسخة المنشورة: حساب موظف باسم مستخدم وكلمة مرور مؤقتة، تنشئه قاعدة البيانات بحراسة الصلاحيات نفسها
+    const username = normalizeUsername(v.username ?? "");
+    if (!v.full_name) return msg(tr("اكتب اسم الموظف"));
+    if (!USERNAME_RE.test(username)) return msg(tr("اسم المستخدم من 3 إلى 32 حرفًا إنجليزيًا صغيرًا أو رقمًا"));
+    if (!strongPassword(v.password ?? "")) return msg(tr("كلمة المرور المؤقتة 8 أحرف على الأقل، وفيها حرف ورقم"));
     const r = await toActionResult(async () => {
-      const { data, error } = await ctx.supabase.rpc("add_hotel_member", { p_hotel_id: ctx.hotel.id, p_email: v.email!, p_role_ids: [v.role_id] });
+      const { data, error } = await ctx.supabase.rpc("create_staff_account", {
+        p_hotel_id: ctx.hotel.id, p_full_name: v.full_name!, p_username: username, p_password: v.password!, p_role_ids: [v.role_id],
+      });
       raise(error);
       return data!;
     });
@@ -97,7 +103,10 @@ export async function saveMemberAccessAction(userId: string, input: unknown): Pr
   });
   if (r.ok) {
     // الحساب الموقوف يخرج من كل أجهزته فورًا
-    if (!v.is_active && !isSupabaseConfigured()) await endSessionsOf(userId);
+    if (!v.is_active) {
+      if (isSupabaseConfigured()) await ctx.supabase.rpc("end_staff_sessions", { p_hotel_id: ctx.hotel.id, p_user_id: userId });
+      else await endSessionsOf(userId);
+    }
     revalidatePath("/settings/users", "layout");
   }
   return r;
@@ -116,10 +125,18 @@ async function canManage(ctx: Awaited<ReturnType<typeof requireAppContext>>, use
 /** المدير يعيّن كلمة مرور مؤقتة لموظف، فيغيّرها الموظف عند دخوله */
 export async function resetPasswordAction(userId: string, password: string): Promise<ActionResult<undefined>> {
   const ctx = await requireAppContext(PERMISSIONS.usersManage);
-  if (isSupabaseConfigured() || (await getAuthMode()) !== "multi" || !z.uuid().safeParse(userId).success) return fail;
+  if (!z.uuid().safeParse(userId).success) return fail;
+  if (!isSupabaseConfigured() && (await getAuthMode()) !== "multi") return fail;
   const denied = await canManage(ctx, userId);
   if (denied) return msg(denied);
   if (!strongPassword(password)) return msg(tr("كلمة المرور المؤقتة 8 أحرف على الأقل، وفيها حرف ورقم"));
+  if (isSupabaseConfigured()) {
+    return toActionResult(async () => {
+      const { error } = await ctx.supabase.rpc("reset_staff_password", { p_hotel_id: ctx.hotel.id, p_user_id: userId, p_password: password });
+      raise(error);
+      return undefined;
+    });
+  }
   await setLocalPassword(userId, password, true);
   return { ok: true, data: undefined };
 }
@@ -127,9 +144,16 @@ export async function resetPasswordAction(userId: string, password: string): Pro
 /** إخراج الموظف من كل الأجهزة */
 export async function endSessionsAction(userId: string): Promise<ActionResult<undefined>> {
   const ctx = await requireAppContext(PERMISSIONS.usersManage);
-  if (isSupabaseConfigured() || !z.uuid().safeParse(userId).success) return fail;
+  if (!z.uuid().safeParse(userId).success) return fail;
   const denied = await canManage(ctx, userId);
   if (denied) return msg(denied);
+  if (isSupabaseConfigured()) {
+    return toActionResult(async () => {
+      const { error } = await ctx.supabase.rpc("end_staff_sessions", { p_hotel_id: ctx.hotel.id, p_user_id: userId });
+      raise(error);
+      return undefined;
+    });
+  }
   await endSessionsOf(userId);
   return { ok: true, data: undefined };
 }

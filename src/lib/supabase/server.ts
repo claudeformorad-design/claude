@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import type { Database } from "./database.types";
-import { isSupabaseConfigured, supabaseEnv } from "./env";
+import { isSupabaseConfigured, SESSION_COOKIE_OPTIONS, supabaseEnv } from "./env";
 import { createLocalSupabaseClient } from "./local-client";
 import { currentLocalUserId } from "./local-auth";
 
@@ -20,6 +20,7 @@ export async function createClient() {
   const { url, anonKey } = supabaseEnv();
 
   return createServerClient<Database>(url, anonKey, {
+    cookieOptions: SESSION_COOKIE_OPTIONS,
     cookies: {
       getAll() {
         return cookieStore.getAll();

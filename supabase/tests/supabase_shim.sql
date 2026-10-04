@@ -10,8 +10,22 @@ create schema if not exists auth;
 create table if not exists auth.users (
   id uuid primary key default gen_random_uuid(),
   email text,
-  raw_user_meta_data jsonb default '{}'::jsonb
+  raw_user_meta_data jsonb default '{}'::jsonb,
+  -- أعمدة Supabase Auth التي تكتبها دالة إنشاء حسابات الموظفين
+  instance_id uuid, aud text, role text, encrypted_password text, email_confirmed_at timestamptz,
+  raw_app_meta_data jsonb, created_at timestamptz, updated_at timestamptz,
+  confirmation_token text, recovery_token text, email_change_token_new text, email_change text
 );
+create table if not exists auth.identities (
+  id uuid primary key default gen_random_uuid(),
+  provider_id text not null, user_id uuid not null references auth.users(id) on delete cascade,
+  identity_data jsonb not null, provider text not null, last_sign_in_at timestamptz, created_at timestamptz, updated_at timestamptz
+);
+create table if not exists auth.sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade, created_at timestamptz default now()
+);
+create schema if not exists extensions;
 create or replace function auth.uid() returns uuid language sql stable as $$
   select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
 $$;
