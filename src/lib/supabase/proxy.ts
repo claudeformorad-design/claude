@@ -6,19 +6,12 @@ import { isSupabaseConfigured, supabaseEnv } from "./env";
 const PUBLIC_PATHS = ["/login"];
 
 /**
- * وضع التجربة المحلي (بدون Supabase): لا يوجد تسجيل دخول — مستخدم تشغيل محلي واحد.
+ * التثبيت المحلي (بدون Supabase): تسجيل الدخول يتحقق منه الخادم بجلسة محلية، أو لا دخول في وضع المستخدم الواحد.
  * مع Supabase: تحديث الجلسة في كل طلب وتحويل غير المسجلين إلى صفحة الدخول.
  */
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
-  if (!isSupabaseConfigured()) {
-    if (request.nextUrl.pathname.startsWith("/login")) {
-      const redirectUrl = request.nextUrl.clone();
-      redirectUrl.pathname = "/";
-      redirectUrl.search = "";
-      return NextResponse.redirect(redirectUrl);
-    }
-    return NextResponse.next({ request });
-  }
+  // التثبيت المحلي: الجلسة تُتحقق في الخادم نفسه (صفحة الدخول تعيد للرئيسية في وضع المستخدم الواحد)
+  if (!isSupabaseConfigured()) return NextResponse.next({ request });
 
   let response = NextResponse.next({ request });
   const { url, anonKey } = supabaseEnv();

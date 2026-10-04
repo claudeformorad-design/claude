@@ -13,7 +13,7 @@ export default async function Forbidden() {
       <p className="animate-rise text-5xl font-bold text-ink">403</p>
       <p className="animate-rise text-[18.5px] text-muted-foreground">{t.errors.permission_denied}</p>
       <Button asChild variant="outline">
-        <Link href="/">{t.nav.dashboard}</Link>
+        <Link href="/">الصفحة الرئيسية</Link>
       </Button>
     </div>
   );

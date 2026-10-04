@@ -78,34 +78,6 @@ export async function saveDepartmentAction(input: unknown): Promise<ActionResult
   }), "/settings/hotel");
 }
 
-export async function addMemberAction(input: unknown): Promise<ActionResult<string>> {
-  const ctx = await requireAppContext(PERMISSIONS.usersManage);
-  const p = z.object({ email: z.email(), role_id: z.uuid() }).safeParse(input);
-  if (!p.success) return fail;
-  return done(await toActionResult(async () => {
-    const { data, error } = await ctx.supabase.rpc("add_hotel_member", { p_hotel_id: ctx.hotel.id, p_email: p.data.email, p_role_ids: [p.data.role_id] });
-    raise(error);
-    return data!;
-  }), "/settings/users");
-}
-
-/** استبدال أدوار عضو (إضافة الجديد وحذف غير المحدد) + تفعيل/تعطيل */
-export async function setMemberRolesAction(userId: string, roleIds: string[], isActive: boolean): Promise<ActionResult<undefined>> {
-  const ctx = await requireAppContext(PERMISSIONS.usersManage);
-  if (!z.uuid().safeParse(userId).success || !z.array(z.uuid()).safeParse(roleIds).success) return fail;
-  return done(await toActionResult(async () => {
-    const { data: current, error: e1 } = await ctx.supabase.from("user_hotel_roles").select("role_id").eq("hotel_id", ctx.hotel.id).eq("user_id", userId);
-    raise(e1);
-    const have = new Set((current ?? []).map((r) => r.role_id));
-    const add = roleIds.filter((r) => !have.has(r));
-    const remove = [...have].filter((r) => !roleIds.includes(r));
-    if (add.length) raise((await ctx.supabase.from("user_hotel_roles").insert(add.map((role_id) => ({ hotel_id: ctx.hotel.id, user_id: userId, role_id })))).error);
-    if (remove.length) raise((await ctx.supabase.from("user_hotel_roles").delete().eq("hotel_id", ctx.hotel.id).eq("user_id", userId).in("role_id", remove)).error);
-    raise((await ctx.supabase.from("hotel_members").update({ is_active: isActive }).eq("hotel_id", ctx.hotel.id).eq("user_id", userId)).error);
-    return undefined;
-  }), "/settings/users");
-}
-
 export async function saveRoleAction(input: unknown): Promise<ActionResult<undefined>> {
   const ctx = await requireAppContext(PERMISSIONS.usersManage);
   const p = z.object({
@@ -159,7 +131,7 @@ export async function loadDemoDataAction(): Promise<ActionResult<undefined>> {
   if (isSupabaseConfigured()) return { ok: false, error: "permission_denied" };
   if (isDemoDataActive()) return { ok: false, error: "unknown", message: "البيانات التجريبية محمّلة بالفعل" };
   try {
-    await loadDemoData(ctx.hotel.id, DEMO_DATA_SQL);
+    await loadDemoData(ctx.hotel.id, DEMO_DATA_SQL, ctx.user.id);
   } catch (e) {
     console.error(e);
     const msg = e instanceof Error ? e.message : String(e);

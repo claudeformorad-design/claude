@@ -87,10 +87,23 @@ export type RoleRow = Audit & {
   is_system: boolean;
 };
 
+export type RoleSettingsRow = {
+  hotel_id: string; role_id: string; home_path: string | null; quick_actions: string[]; dashboard_hidden: string[];
+  limits: Record<string, number | null>; updated_at: string; updated_by: string | null;
+};
+export type ApprovalKind = "folio_action" | "reservation_cancel" | "voucher_void";
+export type ApprovalStatus = "pending" | "approved" | "rejected" | "executed" | "failed" | "cancelled";
+export type ApprovalRequestRow = {
+  id: string; hotel_id: string; kind: ApprovalKind; payload: Json; summary: string; amount: string | null; note: string | null;
+  status: ApprovalStatus; requested_by: string; requested_at: string; decided_by: string | null; decided_at: string | null;
+  decision_note: string | null; result: string | null; error: string | null;
+};
 export type HotelMemberRow = Audit & {
   hotel_id: string;
   user_id: string;
   is_active: boolean;
+  home_path: string | null;
+  limits: Record<string, number | null>;
 };
 
 /** أدوار المستخدم في الفندق (متعدد لمتعدد) — الصلاحيات = اتحاد صلاحيات الأدوار */
@@ -578,10 +591,13 @@ export type Database = {
       hotels: Table<HotelRow, "name_ar" | "country_code" | "base_currency">;
       users_profiles: Table<UserProfileRow, "id">;
       roles: Table<RoleRow, "code" | "name_ar" | "name_en">;
-      permissions: ReadOnlyTable<{ code: string; module: string; action: string; name_ar: string; name_en: string; sort_order: number }>;
+      permissions: ReadOnlyTable<{ code: string; module: string; action: string; name_ar: string; name_en: string; sort_order: number; product: string }>;
       role_permissions: Table<{ role_id: string; permission_code: string }, "role_id" | "permission_code">;
       user_hotel_roles: Table<{ hotel_id: string; user_id: string; role_id: string; created_at: string; created_by: string | null }, "hotel_id" | "user_id" | "role_id">;
       hotel_members: Table<HotelMemberRow, "hotel_id" | "user_id">;
+      user_permission_overrides: Table<{ hotel_id: string; user_id: string; permission_code: string; allow: boolean; created_at: string; created_by: string | null }, "hotel_id" | "user_id" | "permission_code" | "allow">;
+      role_settings: Table<RoleSettingsRow, "hotel_id" | "role_id">;
+      approval_requests: Table<ApprovalRequestRow, "hotel_id" | "kind" | "payload" | "summary">;
       currencies: Table<CurrencyRow, "code" | "name_ar" | "name_en" | "symbol">;
       exchange_rates: Table<ExchangeRateRow, "hotel_id" | "currency_code" | "rate_date" | "rate">;
       departments: Table<DepartmentRow, "hotel_id" | "code" | "name_ar" | "kind">;
@@ -881,6 +897,13 @@ export type Database = {
       allocate_payment: { Args: { p_payment_id: string; p_allocations: Json }; Returns: undefined };
       void_payment_voucher: { Args: { p_payment_id: string; p_reason: string; p_date?: string | null }; Returns: undefined };
       my_permissions: { Args: { p_hotel_id: string }; Returns: string[] };
+      my_limits: { Args: { p_hotel_id: string }; Returns: Json };
+      my_interface: { Args: { p_hotel_id: string }; Returns: Json };
+      decide_approval: { Args: { p_request_id: string; p_approve: boolean; p_note?: string | null }; Returns: string };
+      finish_approval: { Args: { p_request_id: string; p_ok: boolean; p_result?: string | null; p_error?: string | null }; Returns: undefined };
+      cancel_approval: { Args: { p_request_id: string }; Returns: undefined };
+      member_access: { Args: { p_hotel_id: string; p_user_id: string }; Returns: Json };
+      set_member_access: { Args: { p_hotel_id: string; p_user_id: string; p_role_ids: string[]; p_grants: string[]; p_denies: string[]; p_home_path: string | null; p_limits: Json; p_is_active: boolean }; Returns: undefined };
       create_hotel: {
         Args: {
           p_name_ar: string;

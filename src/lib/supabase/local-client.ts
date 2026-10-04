@@ -257,7 +257,7 @@ class LocalQueryBuilder implements PromiseLike<LocalResult> {
   private singleMode: "single" | "maybe" | null = null;
   private payload: Record<string, unknown> | Record<string, unknown>[] | null = null;
 
-  constructor(private readonly target: string, private readonly rpcArgs?: Record<string, unknown>) {
+  constructor(private readonly userId: string | null, private readonly target: string, private readonly rpcArgs?: Record<string, unknown>) {
     if (rpcArgs) this.mode = "rpc";
   }
 
@@ -424,7 +424,7 @@ class LocalQueryBuilder implements PromiseLike<LocalResult> {
       if (this.head) return { rows: [], count };
       const res = await tx.query<{ rows: unknown[] }>(sql, params.values);
       return { rows: (res.rows[0]?.rows as unknown[] | undefined) ?? [], count };
-    });
+    }, this.userId ?? "");
   }
 
   private async runRpc(): Promise<{ rows: unknown[]; count: number | null }> {
@@ -460,7 +460,7 @@ class LocalQueryBuilder implements PromiseLike<LocalResult> {
       this.rpcScalar = true;
       this.rpcValue = fn.retVoid ? null : (res.rows[0]?.value ?? null);
       return { rows: [this.rpcValue], count: null };
-    });
+    }, this.userId ?? "");
   }
 }
 
@@ -471,34 +471,37 @@ function fail(error: LocalError): LocalResult {
   return { data: null, error, count: null, status: 400, statusText: "Bad Request" };
 }
 
-/** المستخدم المحلي بصيغة Supabase User */
-async function localUser() {
-  const { getLocalDb } = await import("./local-db");
-  const { userId } = await getLocalDb();
+/** مستخدم الطلب بصيغة Supabase User */
+async function localUser(userId: string | null) {
+  if (!userId) return null;
+  const { catalogQuery } = await import("./local-db");
+  const [u] = await catalogQuery<{ email: string | null; full_name: string | null }>(
+    "select u.email, p.full_name from auth.users u left join public.users_profiles p on p.id = u.id where u.id = $1", [userId]);
   return {
     id: userId,
     aud: "authenticated",
     role: "authenticated",
-    email: "local@localhost",
+    email: u?.email ?? null,
     app_metadata: {},
-    user_metadata: { full_name: "مدير النظام" },
+    user_metadata: { full_name: u?.full_name ?? "" },
     created_at: new Date(0).toISOString(),
   };
 }
 
-export function createLocalSupabaseClient() {
+/** عميل محلي مربوط بمستخدم الطلب (من جلسة الدخول، أو مستخدم التشغيل الوحيد في وضع المستخدم الواحد) */
+export function createLocalSupabaseClient(userId: string | null) {
   return {
-    from: (table: string) => new LocalQueryBuilder(table),
-    rpc: (fn: string, args: Record<string, unknown> = {}) => new LocalQueryBuilder(fn, args),
+    from: (table: string) => new LocalQueryBuilder(userId, table),
+    rpc: (fn: string, args: Record<string, unknown> = {}) => new LocalQueryBuilder(userId, fn, args),
     auth: {
-      getUser: async () => ({ data: { user: await localUser() }, error: null }),
+      getUser: async () => ({ data: { user: await localUser(userId) }, error: null }),
       getClaims: async () => {
-        const u = await localUser();
-        return { data: { claims: { sub: u.id, email: u.email, role: u.role } }, error: null };
+        const u = await localUser(userId);
+        return { data: { claims: u ? { sub: u.id, email: u.email, role: u.role } : null }, error: null };
       },
       getSession: async () => ({ data: { session: null }, error: null }),
-      signInWithPassword: async () => ({ data: { user: await localUser(), session: null }, error: null }),
-      signUp: async () => ({ data: { user: await localUser(), session: {} }, error: null }),
+      signInWithPassword: async () => ({ data: { user: null, session: null }, error: { message: "Use local sign-in" } }),
+      signUp: async () => ({ data: { user: null, session: null }, error: { message: "Sign-up is disabled locally" } }),
       signOut: async () => ({ error: null }),
     },
   };

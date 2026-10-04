@@ -11,13 +11,14 @@ import {
 import { Money } from "@/components/money";
 import { PageHeader } from "@/components/layout/page-header";
 import { CurrencyTag } from "@/components/ui/currency-tag";
-import { Scale, TrendingDown, TrendingUp, Wallet, Plus } from "lucide-react";
+import { Scale, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { RecentEntries } from "@/components/dashboard/recent-entries";
 import { FilterTabs } from "@/components/ui/filter-tabs";
-import { Button } from "@/components/ui/button";
 import { requireAppContext } from "@/lib/auth/context";
+import { DASHBOARD_PERMISSIONS, allowed, navGroups } from "@/components/layout/nav-config";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { AGING_BUCKETS, type AgingBucket } from "@/lib/accounting/aging";
 import { todayInTimeZone } from "@/lib/accounting/fiscal";
@@ -74,14 +75,24 @@ const addDays = (iso: string, n: number) => {
   return d.toISOString().slice(0, 10);
 };
 
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ range?: string; home?: string }> }) {
   const ctx = await requireAppContext();
-  // فندق بقسم إدارة الفندق فقط: لوحته هي لوحة الاستقبال
-  if (!ctx.hotel.enabled_modules?.includes("accounting")) redirect("/front-desk");
   const { t } = await getI18n();
+  const sp = await searchParams;
+  // الصفحة الأولى: بعد الدخول تُفتح صفحة الموظف المحددة له، ومن لا تخصه اللوحة يذهب لأول صفحة مسموحة له
+  const modules = ctx.hotel.enabled_modules ?? ["accounting", "pms"];
+  const pages = navGroups(t.nav, { modules, permissions: [...ctx.permissions] }).flatMap((g) => g.items.map((i) => i.href));
+  const dashboard = modules.includes("accounting") && allowed(DASHBOARD_PERMISSIONS, ctx.permissions);
+  const home = ctx.ui.home_path && ctx.ui.home_path !== "/" && pages.includes(ctx.ui.home_path) ? ctx.ui.home_path : null;
+  if (sp.home && home) redirect(home);
+  if (!dashboard) {
+    const first = home ?? pages.find((h) => h !== "/");
+    if (first) redirect(first);
+    return <EmptyState title="لا توجد صفحات متاحة لحسابك" description="اطلب من مدير النظام منحك صلاحيات العمل." />;
+  }
+  const show = (section: string) => !ctx.ui.dashboard_hidden.includes(section);
   const { supabase, hotel } = ctx;
   const r = t.reports;
-  const sp = await searchParams;
   const range: Range = RANGES.some((x) => x.key === sp.range) ? (sp.range as Range) : "month";
 
   const today = todayInTimeZone(hotel.timezone);
@@ -205,16 +216,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const alerts: { title: string; text: string; href: string; tone: "red" | "amber" | "blue" }[] = [];
   if (period && !period.data) alerts.push({ title: "لا توجد فترة محاسبية لليوم", text: "لن يُقبل ترحيل أي قيد بتاريخ اليوم.", href: "/periods", tone: "red" });
   else if (period?.data?.status === "closed") alerts.push({ title: "الفترة الحالية مقفلة", text: `${period.data.name}، الترحيل يتطلب صلاحية خاصة.`, href: "/periods", tone: "amber" });
-  if (unreconciled.length > 0) alerts.push({ title: "فرق في المطابقة", text: `${unreconciled.length} من حسابات المراقبة لا تطابق دفاترها.`, href: "#reconciliation", tone: "red" });
+  if (unreconciled.length > 0) alerts.push({ title: "فرق في المطابقة", text: `${unreconciled.length} من حسابات المراقبة لا تطابق دفاترها.`, href: show("controls") ? "#reconciliation" : "/reports/trial-balance", tone: "red" });
   if (canFin && cashBalance.isNegative()) alerts.push({ title: "رصيد النقدية سالب", text: "راجع السندات والمدفوعات أو سجّل التمويل.", href: "/reports/daily-cash", tone: "red" });
   if (canFin && totalRooms <= 0) alerts.push({ title: "عدد الغرف غير محدد", text: "مطلوب لحساب الإشغال وRevPAR.", href: "/settings/hotel", tone: "amber" });
   if (draftCount > 0) alerts.push({ title: `${draftCount} قيد مسودة`, text: "لا تؤثر على الأرصدة حتى ترحيلها.", href: "/journal?status=draft", tone: "blue" });
-
-  const quick = [
-    ctx.can(PERMISSIONS.journalCreate) && { href: "/journal/new", label: "قيد يومية جديد" },
-    ctx.can(PERMISSIONS.folioManage) && { href: "/folios/new", label: "فتح فوليو" },
-    ctx.can(PERMISSIONS.paymentsReceipt) && { href: "/vouchers/new", label: "سند قبض / صرف" },
-  ].filter(Boolean) as { href: string; label: string }[];
 
   const invoiceSegments = [
     { label: "مصدرة", value: invIssued?.count ?? 0, color: CHART_COLORS.pending },
@@ -237,11 +242,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   return (
     <div className="space-y-6 pb-6">
       {/* العنوان + الإجراء الأساسي الوحيد + الإجراءات الثانوية */}
-      <PageHeader title={t.dashboard.title} actions={quick.map((q, i) => (
-        <Button key={q.href} asChild variant={i === 0 ? "default" : "outline"}>
-          <Link href={q.href}>{i === 0 && <Plus />}{q.label}</Link>
-        </Button>
-      ))} />
+      <PageHeader title={t.dashboard.title} />
 
       {/* الفترة: تبويب واحد نشط بمؤشر منزلق */}
       <FilterTabs active={range} items={RANGES.map((x) => ({ key: x.key, href: x.key === "month" ? "/" : `/?range=${x.key}`, label: x.label }))} />
@@ -264,7 +265,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {canFin && (
         <>
           {/* شريط الأرقام الرئيسية: بطاقة واحدة مقسّمة */}
-          <section className="stat-grid grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
+          {(show("kpis") || show("cash")) && <section className={cn("stat-grid grid grid-cols-2 gap-3 sm:gap-5", show("kpis") && show("cash") ? "xl:grid-cols-4" : show("kpis") ? "xl:grid-cols-3" : "xl:grid-cols-4")}>
+            {show("kpis") && <>
             <Kpi icon={TrendingUp} label="الإيرادات" sub={rangeLabel} value={revenue} currency={currency} href="/reports/income-statement"
               spark={{ values: chartData.map((d) => d.revenue), months, color: CHART_COLORS.revenue }} />
             <Kpi icon={TrendingDown} label="المصروفات" sub={rangeLabel} value={expenses} currency={currency} href="/reports/income-statement"
@@ -272,27 +274,28 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             <Kpi icon={Scale} label="صافي النتيجة" sub={rangeLabel} value={net} currency={currency} tone={net.isNegative() ? "neg" : undefined}
               href={canProfit ? "/reports/profitability" : "/reports/income-statement"}
               spark={{ values: chartData.map((d) => d.revenue - d.expenses), months, color: CHART_COLORS.net }} />
-            <Kpi icon={Wallet} label="النقدية والبنوك" sub="الرصيد الحالي" value={cashBalance} currency={currency} tone={cashBalance.isNegative() ? "neg" : undefined} href="/reports/daily-cash" />
-          </section>
+            </>}
+            {show("cash") && <Kpi icon={Wallet} label="النقدية والبنوك" sub="الرصيد الحالي" value={cashBalance} currency={currency} tone={cashBalance.isNegative() ? "neg" : undefined} href="/reports/daily-cash" />}
+          </section>}
 
           {/* الأداء + ما يحتاج انتباهك */}
-          <div className="grid gap-5 xl:grid-cols-12">
-            <Card2 className="xl:col-span-8" title="الإيرادات والمصروفات" note="آخر 6 أشهر" currency={currency} link={{ href: "/reports/income-statement", label: t.nav.incomeStatement }}>
+          {(show("chart") || show("recent")) && <div className="grid gap-5 xl:grid-cols-12">
+            {show("chart") && <Card2 className={show("recent") ? "xl:col-span-8" : "xl:col-span-12"} title="الإيرادات والمصروفات" note="آخر 6 أشهر" currency={currency} link={{ href: "/reports/income-statement", label: t.nav.incomeStatement }}>
               <IncomeExpenseChart data={chartData} labels={{ revenue: r.revenue, expenses: r.expenses, net: "صافي النتيجة" }} />
-            </Card2>
+            </Card2>}
 
-            <Card2 className="xl:col-span-4" title="آخر القيود المرحّلة" currency={currency} link={ctx.can(PERMISSIONS.journalView) ? { href: "/journal", label: t.nav.journal } : undefined}>
+            {show("recent") && <Card2 className={show("chart") ? "xl:col-span-4" : "xl:col-span-12"} title="آخر القيود المرحّلة" currency={currency} link={ctx.can(PERMISSIONS.journalView) ? { href: "/journal", label: t.nav.journal } : undefined}>
               {!ctx.can(PERMISSIONS.journalView) ? <NoAccess text={t.errors.permission_denied} /> : recentEntries.length === 0 ? (
                 <p className="py-6 text-[16.5px] text-muted-foreground">لم يُرحَّل أي قيد بعد.</p>
               ) : (
                 <RecentEntries today={today} sources={t.journal.sources}
                   entries={recentEntries.map((e) => ({ ...e, total: recentTotal.get(e.id) ?? "0" }))} />
               )}
-            </Card2>
-          </div>
+            </Card2>}
+          </div>}
 
           {/* الفواتير والذمم */}
-          <div className="grid gap-5 md:grid-cols-2">
+          {show("aging") && <div className="grid gap-5 md:grid-cols-2">
             <Card2 title="حالة الفواتير" note={canInvoices ? `${invoiceTotal} فاتورة` : undefined} link={canInvoices ? { href: "/invoices", label: t.nav.invoices } : undefined}>
               {canInvoices ? (
                 <DonutChart segments={invoiceSegments} centerTitle="الفواتير" centerValue={String(invoiceTotal)}
@@ -304,11 +307,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 <StripedBars rows={agingRows} emptyTitle="لا توجد ذمم مدينة قائمة" emptyHint="تظهر هنا الفواتير الآجلة غير المسددة حسب تاريخ استحقاقها." />
               ) : <NoAccess text={t.errors.permission_denied} />}
             </Card2>
-          </div>
+          </div>}
 
           {/* الأرصدة والمطابقة + الأقسام والغرف */}
-          <div className="grid gap-5 xl:grid-cols-5">
-            <Card2 className="xl:col-span-3 xl:self-start" title="الأرصدة ومطابقتها مع الأستاذ" currency={currency} note={unreconciled.length ? `${unreconciled.length} فرق` : "مطابقة"} noteTone={unreconciled.length ? "neg" : "pos"}>
+          {(show("controls") || show("profit") || show("rooms")) && <div className="grid gap-5 xl:grid-cols-5">
+            {show("controls") && <Card2 className={show("profit") || show("rooms") ? "xl:col-span-3 xl:self-start" : "xl:col-span-5"} title="الأرصدة ومطابقتها مع الأستاذ" currency={currency} note={unreconciled.length ? `${unreconciled.length} فرق` : "مطابقة"} noteTone={unreconciled.length ? "neg" : "pos"}>
               <ul className="mb-3 divide-y divide-line text-[16.5px]" id="reconciliation">
                 {BALANCE_ROWS.map((b) => {
                   const row = reconRows.find((x) => x.control === b.control);
@@ -338,9 +341,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   </p>
                 ) : null;
               })()}
-            </Card2>
-            <div className="flex min-w-0 flex-col gap-5 xl:col-span-2">
-              <Card2 title="الإيرادات حسب القسم" note={rangeLabel} currency={currency} link={canProfit ? { href: "/reports/profitability", label: t.nav.profitability } : undefined}>
+            </Card2>}
+            {(show("profit") || show("rooms")) && <div className={cn("flex min-w-0 flex-col gap-5", show("controls") ? "xl:col-span-2" : "xl:col-span-5")}>
+              {show("profit") && <Card2 title="الإيرادات حسب القسم" note={rangeLabel} currency={currency} link={canProfit ? { href: "/reports/profitability", label: t.nav.profitability } : undefined}>
                 {!canProfit ? <NoAccess text={t.errors.permission_denied} /> : deptSegments.length === 0 ? (
                   <p className="py-6 text-[16.5px] text-muted-foreground">لا توجد إيرادات مرحّلة في هذه الفترة.</p>
                 ) : (
@@ -356,8 +359,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                     </p>
                   </>
                 )}
-              </Card2>
-              <Card2 className="flex flex-1 flex-col" title="الغرف" note={rangeLabel} currency={currency} link={{ href: "/reports/rooms", label: t.nav.roomStats }}>
+              </Card2>}
+              {show("rooms") && <Card2 className="flex flex-1 flex-col" title="الغرف" note={rangeLabel} currency={currency} link={{ href: "/reports/rooms", label: t.nav.roomStats }}>
                 <dl className="mb-5 grid grid-cols-2 gap-x-6 gap-y-5">
                   <Figure label="نسبة الإشغال" value={pct(rangeRooms.occupancy)} />
                   <Figure label="متوسط سعر الغرفة" value={rangeRooms.adr ? formatAmount(rangeRooms.adr) : ""} />
@@ -367,9 +370,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 <p className="mt-auto border-t border-line pt-3 text-[15.5px] text-muted-foreground">
                   {totalRooms > 0 ? `${totalRooms} غرفة متاحة للبيع، و${openFolios?.count ?? 0} فوليو مفتوح` : "حدّد عدد الغرف في إعدادات الفندق لحساب الإشغال."}
                 </p>
-              </Card2>
-            </div>
-          </div>
+              </Card2>}
+            </div>}
+          </div>}
         </>
       )}
     </div>

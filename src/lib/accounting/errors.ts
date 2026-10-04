@@ -16,6 +16,7 @@ export type AccountingErrorKey =
   | "already_reversed"
   | "reversal_of_reversal"
   | "permission_denied"
+  | "approval_required"
   | "duplicate_code"
   | "type_mismatch"
   | "parent_postable"
@@ -70,6 +71,7 @@ const PATTERNS: [RegExp, AccountingErrorKey][] = [
   [/immutable|cannot be (deleted|modified)/i, "posted_immutable"],
   [/already reversed/i, "already_reversed"],
   [/cannot itself be reversed/i, "reversal_of_reversal"],
+  [/Approval required/i, "approval_required"],
   [/Permission denied|row-level security/i, "permission_denied"],
   // قيود فريدة لها رسالة دقيقة في MESSAGES (رقم هوية النزيل، رقم الغرفة...) تُستثنى من «الرمز مستخدم»
   [/guests_identity_uq|rooms_hotel_id_room_number_key|floors_hotel_id_name_key/i, "unknown"],
@@ -96,6 +98,12 @@ const ACCOUNT_TYPES_AR: Record<string, string> = {
 };
 const typesAr = (s: string) =>
   s.replace(/[{}"]/g, "").split(",").map((x) => ACCOUNT_TYPES_AR[x.trim()] ?? x.trim()).join(" أو ");
+
+/** رقم من رسالة قاعدة البيانات بمنزلتين عشريتين وفاصل آلاف، وبدون أصفار زائدة للنسب */
+const num = (v: string) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n.toLocaleString("en-US", { maximumFractionDigits: 2 }) : v;
+};
 
 const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
   // الموارد البشرية
@@ -191,6 +199,23 @@ const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
   [/Check-in opens on the arrival date \((\S+)\)/i, (m) => `التسكين يبدأ من تاريخ الوصول (${m[1]})`],
   [/This stay has already ended; update the dates first/i, "انتهت فترة هذا الحجز؛ عدّل التواريخ أولًا"],
   [/Assign a room before check-in/i, "خصّص غرفة قبل التسكين"],
+  // الصلاحيات والموافقات
+  [/allowance (\S+) is above your limit of (\S+)/i, (m) => `الخصم ${num(m[1]!)} أعلى من حدك المسموح ${num(m[2]!)}، ويحتاج موافقة المدير`],
+  [/refund (\S+) is above your limit of (\S+)/i, (m) => `الاسترداد ${num(m[1]!)} أعلى من حدك المسموح ${num(m[2]!)}، ويحتاج موافقة المدير`],
+  [/rate discount (\S+) percent is above your limit of (\S+) percent/i, (m) => `تخفيض السعر ${num(m[1]!)} بالمئة أعلى من حدك المسموح ${num(m[2]!)} بالمئة، ويحتاج موافقة المدير`],
+  [/You cannot change your own access/i, "لا يمكنك تعديل صلاحياتك بنفسك، يعدّلها مدير آخر"],
+  [/You cannot grant permissions you do not have/i, "لا يمكنك منح صلاحية لا تملكها أنت"],
+  [/You cannot manage a user who has permissions you do not have/i, "لا يمكنك إدارة موظف يملك صلاحيات ليست عندك"],
+  [/must keep at least one active user who manages users/i, "يجب أن يبقى في الفندق موظف نشط واحد على الأقل يدير المستخدمين"],
+  [/A permission cannot be both granted and denied/i, "لا تُمنح الصلاحية وتُمنع في الوقت نفسه"],
+  [/You cannot approve your own request/i, "لا يمكنك الموافقة على طلبك أنت"],
+  [/This request was already handled/i, "تم البت في هذا الطلب من قبل"],
+  [/Only your own pending requests can be withdrawn/i, "يمكنك سحب طلباتك المعلقة فقط"],
+  [/Not authenticated/i, "انتهت الجلسة، سجّل الدخول مرة أخرى"],
+  [/Approval request not found/i, "طلب الموافقة غير موجود"],
+  [/Only the approver can record the outcome/i, "يسجل نتيجة التنفيذ من وافق على الطلب فقط"],
+  [/User is not a member of this hotel/i, "هذا المستخدم ليس موظفًا في هذا الفندق"],
+  [/^Unknown role$/i, "دور غير معروف"],
   [/Handed over keys must be between 1 and 9/i, "عدد ما يُسلَّم للنزيل من بطاقات أو مفاتيح بين 1 و9"],
   [/Room (\S+) is not clean yet/i, (m) => `الغرفة ${m[1]} لم تُنظَّف بعد`],
   [/Charges are posted for in-house guests only/i, "تُرحَّل الليالي للنزلاء المقيمين فقط"],

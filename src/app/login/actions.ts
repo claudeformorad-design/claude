@@ -26,7 +26,7 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
     const msg = err instanceof Error ? err.message : undefined;
     return { error: "generic", message: msg };
   }
-  redirect("/");
+  redirect("/?home=1");
 }
 
 export async function signUpAction(_prev: AuthState, formData: FormData): Promise<AuthState> {

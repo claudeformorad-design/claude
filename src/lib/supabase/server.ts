@@ -5,13 +5,15 @@ import { connection } from "next/server";
 import type { Database } from "./database.types";
 import { isSupabaseConfigured, supabaseEnv } from "./env";
 import { createLocalSupabaseClient } from "./local-client";
+import { currentLocalUserId } from "./local-auth";
 
 /** عميل Supabase للخادم (Server Components / Server Actions) — يعمل بالعميل المحلي إن لم تكن Supabase مهيأة */
 export async function createClient() {
   if (!isSupabaseConfigured()) {
     // يجعل الصفحة ديناميكية (لا تُولَّد وقت البناء): البيانات تُقرأ من القاعدة المحلية عند كل طلب
     await connection();
-    return createLocalSupabaseClient() as unknown as ReturnType<typeof createServerClient<Database>>;
+    // المستخدم من جلسة الدخول المحلية (أو مالك النظام في وضع المستخدم الواحد)
+    return createLocalSupabaseClient(await currentLocalUserId()) as unknown as ReturnType<typeof createServerClient<Database>>;
   }
 
   const cookieStore = await cookies();

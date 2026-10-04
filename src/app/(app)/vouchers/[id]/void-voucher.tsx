@@ -7,10 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { voidVoucherAction } from "../actions";
+import { requestVoucherVoidAction } from "../../approvals/actions";
 import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
+import type { ActionResult } from "@/services/errors";
 
-export function VoidVoucher({ id, t }: { id: string; t: Pick<Dictionary, "vouchers" | "errors"> }) {
+/** request: الموظف بلا صلاحية الإلغاء يرسل طلبًا للمدير بدل التنفيذ */
+export function VoidVoucher({ id, t, request = false }: { id: string; t: Pick<Dictionary, "vouchers" | "errors">; request?: boolean }) {
   const router = useRouter();
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -21,17 +24,17 @@ export function VoidVoucher({ id, t }: { id: string; t: Pick<Dictionary, "vouche
       <div className="flex flex-wrap gap-2">
         <Input className="w-80" placeholder={t.vouchers.voidReason} value={reason} onChange={(e) => setReason(e.target.value)} />
         <Button
-          variant="destructive"
+          variant={request ? "outline" : "destructive"}
           loading={pending} disabled={pending || !reason.trim()}
           onClick={() =>
             start(async () => {
-              const r = await callAction(voidVoucherAction(id, reason));
-              if (r.ok) { toast("تم إلغاء السند"); router.refresh(); }
+              const r = await callAction<ActionResult<unknown>>(request ? requestVoucherVoidAction(id, reason) : voidVoucherAction(id, reason));
+              if (r.ok) { toast(request ? "أُرسل طلب الإلغاء للمدير" : "تم إلغاء السند"); setReason(""); router.refresh(); }
               else setError(actionErrorText(t.errors, r));
             })
           }
         >
-          {t.vouchers.void}
+          {request ? "طلب إلغاء السند" : t.vouchers.void}
         </Button>
       </div>
     </div>

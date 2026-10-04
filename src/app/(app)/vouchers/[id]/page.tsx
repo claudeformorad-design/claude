@@ -77,8 +77,8 @@ export default async function VoucherPage({ params }: { params: Promise<{ id: st
         </Card>
       )}
 
-      {v.status === "posted" && ctx.can(PERMISSIONS.paymentsVoid) && (
-        <VoidVoucher id={v.id} t={{ vouchers: t.vouchers, errors: t.errors }} />
+      {v.status === "posted" && (
+        <VoidVoucher id={v.id} t={{ vouchers: t.vouchers, errors: t.errors }} request={!ctx.can(PERMISSIONS.paymentsVoid)} />
       )}
     </>
   );

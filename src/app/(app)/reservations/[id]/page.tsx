@@ -19,6 +19,7 @@ import { listPaymentMethods } from "@/services/revenue-settings.service";
 import { latestRates, listExchangeRates } from "@/services/cashier.service";
 import { getI18n } from "@/i18n/server";
 import { ActionButton } from "../../_pms/action-button";
+import { requestReservationCancelAction } from "../../approvals/actions";
 import { cancelReservationAction, cancelSeriesAction, confirmReservationAction, noShowAction } from "../../_pms/actions";
 import { AssignRoom } from "./assign-room";
 import { StayPanel } from "./stay-panel";
@@ -108,6 +109,9 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
             )}
             {canCancel && (
               <ActionButton variant="destructive" label="إلغاء الحجز" done="أُلغي الحجز" errors={t.errors} reasonLabel="سبب الإلغاء" run={cancelReservationAction.bind(null, r.id)} />
+            )}
+            {canManage && !canCancel && (
+              <ActionButton label="طلب إلغاء" done="أُرسل طلب الإلغاء للمدير" errors={t.errors} reasonLabel="سبب الإلغاء" run={requestReservationCancelAction.bind(null, r.id)} />
             )}
           </div>
         }

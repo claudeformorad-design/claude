@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
-import { CalendarCheck, LogOut, Menu, Search, Settings } from "lucide-react";
+import { CalendarCheck, LogOut, Menu, Plus, Search, Settings } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import Link from "@/components/link";
 import { cn } from "@/lib/utils";
+import { Popover } from "@/components/ui/popover";
 import { isActivePath, navGroups, type NavAccess, type NavLabels } from "./nav-config";
 import { SearchBox } from "./search-box";
 import { AssistantLauncher } from "@/components/assistant/launcher";
@@ -23,7 +24,10 @@ export function TopBar({
   signOut,
   demo = false,
   assistant = false,
+  quickActions = [],
 }: {
+  /** الإجراءات السريعة لدور المستخدم، مفلترة بصلاحياته */
+  quickActions?: { href: string; label: string }[];
   demo?: boolean;
   /** زر المساعد الذكي يظهر فقط حين يُضبط مفتاح مزود الذكاء الاصطناعي على الخادم */
   assistant?: boolean;
@@ -43,6 +47,8 @@ export function TopBar({
 
   const iconBtn = "flex size-10 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-slate-600 transition-colors duration-200 hover:text-ink";
   const group = current ? groups.find((g) => g.items.includes(current)) : undefined;
+  // الروابط الثابتة في الرأس تظهر فقط لمن يملك فتح صفحتها
+  const reachable = new Set(groups.flatMap((g) => g.items.map((i) => i.href)));
 
   return (
     <header className="no-print relative flex h-[72px] shrink-0 items-center gap-3 px-4 md:px-10">
@@ -79,12 +85,17 @@ export function TopBar({
         <button type="button" onClick={() => setSearchOpen((v) => !v)} className={cn(iconBtn, "md:hidden")} title="بحث" aria-label="بحث">
           <Search className="size-[18px] stroke-[1.75]" />
         </button>
-        <Link href="/periods" className={cn(iconBtn, "hidden sm:flex")} title={labels.periods} aria-label={labels.periods}>
-          <CalendarCheck className="size-[18px] stroke-[1.75]" />
-        </Link>
-        <Link href="/settings/hotel" className={iconBtn} title={labels.hotelSettings} aria-label={labels.hotelSettings}>
-          <Settings className="size-[18px] stroke-[1.75]" />
-        </Link>
+        {quickActions.length > 0 && <QuickActions actions={quickActions} />}
+        {reachable.has("/periods") && (
+          <Link href="/periods" className={cn(iconBtn, "hidden sm:flex")} title={labels.periods} aria-label={labels.periods}>
+            <CalendarCheck className="size-[18px] stroke-[1.75]" />
+          </Link>
+        )}
+        {reachable.has("/settings/hotel") && (
+          <Link href="/settings/hotel" className={iconBtn} title={labels.hotelSettings} aria-label={labels.hotelSettings}>
+            <Settings className="size-[18px] stroke-[1.75]" />
+          </Link>
+        )}
         <Link href="/" title={`${userName || userEmail}، ${roleLabel}`} aria-label="الرئيسية" className="md:hidden">
           <BrandMark className="size-10" />
         </Link>
@@ -99,6 +110,27 @@ export function TopBar({
         {drawerOpen && <MobileDrawer groups={groups} pathname={pathname} hotelName={hotelName} signOut={signOut} onClose={() => setDrawerOpen(false)} />}
       </AnimatePresence>
     </header>
+  );
+}
+
+function QuickActions({ actions }: { actions: { href: string; label: string }[] }) {
+  const [open, setOpen] = useState(false);
+  const btn = useRef<HTMLButtonElement | null>(null);
+  return (
+    <>
+      <button ref={btn} type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-label="جديد"
+        className="flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-ink px-3 text-[16px] font-medium text-white transition-opacity hover:opacity-90">
+        <Plus className="size-[18px] stroke-[2]" /><span className="hidden sm:inline">جديد</span>
+      </button>
+      <Popover open={open} anchor={btn} onClose={() => setOpen(false)} width={230}>
+        <div className="p-1.5">
+          {actions.map((a) => (
+            <Link key={a.href} href={a.href} onClick={() => setOpen(false)}
+              className="flex h-10 items-center rounded-lg px-3 text-[16px] text-ink transition-colors hover:bg-subtle">{a.label}</Link>
+          ))}
+        </div>
+      </Popover>
+    </>
   );
 }
 

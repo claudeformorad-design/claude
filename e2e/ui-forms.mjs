@@ -187,12 +187,12 @@ await step("control account blocked in manual journal (UI message)", async () =>
   if (!alerts.some((a) => a.length > 0)) throw new Error("no error shown");
 });
 await step("add user + custom role", async () => {
-  await go("/settings/users?role=new");
-  await page.locator("input[placeholder='رمز الدور']").fill("night_audit");
-  await page.locator("input[placeholder='الاسم']").fill("مدقق ليلي");
-  await page.locator("input[placeholder='Name']").fill("Night auditor");
+  await go("/settings/users/roles/new");
+  await page.fill("#role_code", "night_audit");
+  await page.fill("#role_name", "مدقق ليلي");
+  await page.fill("#role_name_en", "Night auditor");
   await page.getByLabel("عرض الفوليو").check();
-  await page.getByRole("button", { name: "حفظ" }).last().click();
+  await page.getByRole("button", { name: "حفظ الدور" }).click();
   await page.waitForURL(/settings\/users$/, { timeout: 10000 }); await bodyHas("مدقق ليلي");
 });
 await step("tax return + aging + profitability show data", async () => {

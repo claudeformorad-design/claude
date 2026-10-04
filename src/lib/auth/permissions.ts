@@ -2,6 +2,7 @@
 export const PERMISSIONS = {
   hotelManage: "settings.hotel.manage",
   usersManage: "settings.users.manage",
+  approvalsDecide: "approvals.decide",
   departmentsManage: "settings.departments.manage",
   currenciesManage: "settings.currencies.manage",
   accountsView: "coa.accounts.view",

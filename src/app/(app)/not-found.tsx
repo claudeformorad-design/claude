@@ -11,7 +11,7 @@ export default function NotFound() {
         ربما الرابط غير صحيح، أو المستند يخص فندقًا آخر.
       </p>
       <Button asChild variant="outline" className="mt-2">
-        <Link href="/">لوحة التحكم</Link>
+        <Link href="/">الصفحة الرئيسية</Link>
       </Button>
     </div>
   );

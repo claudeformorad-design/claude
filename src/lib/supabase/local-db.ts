@@ -45,6 +45,15 @@ async function bootstrap(): Promise<LocalDb> {
     create schema if not exists local_meta;
     create table if not exists local_meta.applied_migrations (name text primary key, applied_at timestamptz not null default now());
     create table if not exists local_meta.settings (key text primary key, value text not null);
+    -- تسجيل الدخول المحلي: بيانات الدخول والجلسات، خارج مخطط Supabase ولا تصلها سياسات المستخدمين
+    create table if not exists local_meta.credentials (
+      user_id uuid primary key, username text not null unique, password_hash text not null,
+      must_change boolean not null default false, created_at timestamptz not null default now(), updated_at timestamptz not null default now()
+    );
+    create table if not exists local_meta.sessions (
+      token_hash text primary key, user_id uuid not null, created_at timestamptz not null default now(),
+      last_seen timestamptz not null default now(), user_agent text
+    );
   `);
   const applied = new Set(
     (await db.query<{ name: string }>("select name from local_meta.applied_migrations")).rows.map((r) => r.name),
@@ -86,16 +95,30 @@ export function getLocalDb(): Promise<LocalDb> {
 }
 
 /**
- * تنفيذ عملية داخل معاملة واحدة بصلاحيات المستخدم المحلي (role authenticated + auth.uid())
+ * تنفيذ عملية داخل معاملة واحدة بصلاحيات مستخدم الطلب (role authenticated + auth.uid())
  * حتى تُطبَّق سياسات RLS والصلاحيات تمامًا كما في Supabase. العمليات تُسلسل (اتصال واحد).
+ * لا تُنفَّذ أي عملية بلا مستخدم: auth.uid() الفارغ يعني سياق النظام، فلا يُسمح به لطلبات الواجهة أبدًا.
  */
-export function withUserTransaction<T>(fn: (tx: Transaction, userId: string) => Promise<T>): Promise<T> {
+export function withUserTransaction<T>(fn: (tx: Transaction, userId: string) => Promise<T>, userId: string): Promise<T> {
+  if (!userId) return Promise.reject(Object.assign(new Error("Not authenticated"), { code: "PGRST301" }));
   const run = async () => {
-    const { db, userId } = await getLocalDb();
+    const { db } = await getLocalDb();
     return db.transaction(async (tx) => {
       await tx.query("select set_config('request.jwt.claim.sub', $1, true), set_config('role', 'authenticated', true)", [userId]);
       return fn(tx, userId);
     });
+  };
+  const prev = g.__hotelLocalQueue ?? Promise.resolve();
+  const next = prev.then(run, run);
+  g.__hotelLocalQueue = next.catch(() => undefined);
+  return next;
+}
+
+/** معاملة بصلاحية المالك لعمليات تسجيل الدخول المحلي (خارج سياق أي مستخدم) */
+export function ownerTransaction<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
+  const run = async () => {
+    const { db } = await getLocalDb();
+    return db.transaction(fn);
   };
   const prev = g.__hotelLocalQueue ?? Promise.resolve();
   const next = prev.then(run, run);
@@ -157,14 +180,14 @@ export function isDemoDataActive(): boolean {
   return existsSync(/*turbopackIgnore: true*/ DEMO_BACKUP_DIR);
 }
 
-export async function loadDemoData(hotelId: string, sql: string): Promise<void> {
+export async function loadDemoData(hotelId: string, sql: string, userId: string): Promise<void> {
   if (isDemoDataActive()) throw new Error("Demo data is already loaded");
   await withClosedDb(() => cpSync(/*turbopackIgnore: true*/ LOCAL_DATA_DIR, DEMO_BACKUP_DIR, { recursive: true }));
   try {
     await withUserTransaction(async (tx) => {
       await tx.query("select set_config('demo.hotel_id', $1, true)", [hotelId]);
       await tx.exec(sql);
-    });
+    }, userId);
   } catch (e) {
     await removeDemoData();
     throw e;

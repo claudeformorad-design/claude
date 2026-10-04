@@ -5,6 +5,7 @@ import { forbidden, redirect } from "next/navigation";
 import { createClient, type SupabaseServerClient } from "@/lib/supabase/server";
 import type { HotelRow, UserProfileRow } from "@/lib/supabase/database.types";
 import type { Permission } from "./permissions";
+import { type AccessInterface, EMPTY_INTERFACE } from "./access-catalog";
 
 const HOTEL_COOKIE = "hotel_id";
 
@@ -19,6 +20,8 @@ export interface AppContext {
   hotels: Pick<HotelRow, "id" | "name_ar" | "name_en">[];
   permissions: ReadonlySet<string>;
   can: (permission: Permission) => boolean;
+  /** واجهة المستخدم حسب دوره وإعداداته: الصفحة الأولى، الإجراءات السريعة، ما يُخفى من اللوحة، والحدود */
+  ui: AccessInterface;
 }
 
 /**
@@ -47,7 +50,10 @@ export const getAppContext = cache(async (): Promise<AppContext | { user: Sessio
   const preferred = cookieHotel ?? profile?.default_hotel_id;
   const hotel = hotels.find((h) => h.id === preferred) ?? hotels[0]!;
 
-  const { data: perms } = early && hotel.id === cookieHotel ? early : await permsFor(hotel.id);
+  const [{ data: perms }, { data: ui }] = await Promise.all([
+    early && hotel.id === cookieHotel ? early : permsFor(hotel.id),
+    supabase.rpc("my_interface", { p_hotel_id: hotel.id }),
+  ]);
   const permissions = new Set<string>(perms ?? []);
 
   return {
@@ -58,6 +64,7 @@ export const getAppContext = cache(async (): Promise<AppContext | { user: Sessio
     hotels: hotels.map(({ id, name_ar, name_en }) => ({ id, name_ar, name_en })),
     permissions,
     can: (permission: Permission) => permissions.has(permission),
+    ui: { ...EMPTY_INTERFACE, ...((ui ?? {}) as Partial<AccessInterface>) },
   };
 });
 

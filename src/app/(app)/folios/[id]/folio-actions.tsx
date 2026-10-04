@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { cancelFolioAction, checkoutAction, folioAction } from "../actions";
 import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
+import { ApprovalRequest, type ApprovalInput } from "@/components/approval-request";
 
 type Kind = "charge" | "payment" | "deposit" | "allowance" | "refund" | "depositRefund" | "transfer" | "void";
 
@@ -41,11 +42,13 @@ export function FolioActions(p: FolioActionsProps) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  // العملية التي تحتاج موافقة المدير (تتجاوز الحد، أو بلا صلاحية الخصم أو الإلغاء)
+  const [approval, setApproval] = useState<{ request: ApprovalInput; message: string } | null>(null);
 
   const kinds = ([
     p.can.manage && "charge", p.can.manage && "payment", p.can.manage && "deposit",
-    p.can.allowance && "allowance", p.can.manage && "refund", p.can.manage && "depositRefund",
-    p.can.manage && "transfer", p.can.void && "void",
+    (p.can.allowance || p.can.manage) && "allowance", p.can.manage && "refund", p.can.manage && "depositRefund",
+    p.can.manage && "transfer", (p.can.void || p.can.manage) && "void",
   ].filter(Boolean) as Kind[]);
   const [kind, setKind] = useState<Kind | null>(kinds[0] ?? null);
 
@@ -66,16 +69,27 @@ export function FolioActions(p: FolioActionsProps) {
   const fmt = (v: Parameters<typeof formatMoney>[0]) => formatMoney(v, { locale: p.locale, decimals: p.decimals });
   const fail = (r: { error: string; message?: string }) => setError(actionErrorText(t.errors, r));
 
+  /** الخصم والإلغاء بلا صلاحيتهما يذهبان للمدير طلبًا بدل التنفيذ */
+  const needsApproval = (kind === "allowance" && !p.can.allowance) || (kind === "void" && !p.can.void);
   const submit = (v: FormValues) =>
     start(async () => {
       setError(null);
+      setApproval(null);
+      const request: ApprovalInput = { kind: "folio_action", payload: { folio_id: p.folioId, action: { ...v, kind } } };
+      if (needsApproval) {
+        setApproval({ request, message: "هذه العملية خارج صلاحيتك. أرسلها للمدير ليوافق عليها وتُنفّذ باسمه." });
+        return;
+      }
       const r = await callAction(folioAction(p.folioId, { ...v, kind }));
       if (r.ok) {
         toast("تم التسجيل على الفوليو");
         reset({ quantity: "1", customer_id: p.defaultCustomerId ?? "" });
         router.refresh();
+      } else if (r.error === "approval_required") {
+        setApproval({ request, message: r.message ?? actionErrorText(t.errors, r) });
       } else fail(r);
     });
+  const sent = () => { setApproval(null); reset({ quantity: "1", customer_id: p.defaultCustomerId ?? "" }); };
 
   const checkout = () => {
     if (!confirm(t.folio.checkoutConfirm)) return;
@@ -110,9 +124,10 @@ export function FolioActions(p: FolioActionsProps) {
   return (
     <div className="space-y-4">
       {error && <Alert variant="destructive">{error}</Alert>}
+      {approval && <ApprovalRequest request={approval.request} message={approval.message} onSent={sent} />}
       <div className="flex flex-wrap gap-1">
         {kinds.map((k) => (
-          <Button key={k} size="sm" variant={k === kind ? "default" : "outline"} onClick={() => { setKind(k); setError(null); }}>
+          <Button key={k} size="sm" variant={k === kind ? "default" : "outline"} onClick={() => { setKind(k); setError(null); setApproval(null); }}>
             {t.folio.actions[k]}
           </Button>
         ))}
@@ -174,7 +189,7 @@ export function FolioActions(p: FolioActionsProps) {
             </>
           )}
           <div className="md:col-span-4">
-            <Button type="submit" loading={pending}>{t.common.save}</Button>
+            <Button type="submit" loading={pending}>{needsApproval ? "طلب موافقة المدير" : t.common.save}</Button>
           </div>
         </form>
       )}
