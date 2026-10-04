@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import * as React from "react";
 import { Check, Search } from "lucide-react";
@@ -91,12 +92,12 @@ function OptionList({ options, value, onChoose }: { options: Opt[]; value: strin
       {options.length > 8 && (
         <div className="relative mb-1.5 shrink-0">
           <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-          <input autoFocus value={query} placeholder="بحث" onChange={(e) => { setQuery(e.target.value); setActive(0); }}
+          <input autoFocus value={query} placeholder={tr("بحث")} onChange={(e) => { setQuery(e.target.value); setActive(0); }}
             className="h-9 w-full rounded-lg bg-subtle ps-9 pe-3 text-[15.5px] text-ink outline-none placeholder:text-slate-400" />
         </div>
       )}
       <div ref={listRef} className="min-h-0 overflow-y-auto overscroll-contain">
-        {shown.length === 0 && <p className="px-3 py-2.5 text-[15px] text-slate-400">لا نتائج</p>}
+        {shown.length === 0 && <p className="px-3 py-2.5 text-[15px] text-slate-400">{tr("لا نتائج")}</p>}
         {shown.map((o, i) => {
           const isSel = o.value === value;
           return (

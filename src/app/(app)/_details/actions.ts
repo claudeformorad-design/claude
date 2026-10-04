@@ -1,4 +1,5 @@
 "use server";
+import { tr } from "@/i18n/tr";
 
 import { z } from "zod";
 import { getAppContext, type AppContext } from "@/lib/auth/context";
@@ -49,7 +50,7 @@ const blank = (n: number): DetailCell[] => Array.from({ length: n }, () => text(
 type Account = { code: string; name: string };
 async function accountsOf(ctx: AppContext, ids: string[]) {
   if (!ids.length) return new Map<string, Account>();
-  const { data, error } = await ctx.supabase.from("chart_of_accounts").select("id, code, name_ar").in("id", [...new Set(ids)]);
+  const { data, error } = await ctx.supabase.from("chart_of_accounts").select("id, code, name_ar, name_en").in("id", [...new Set(ids)]);
   raise(error);
   return new Map((data ?? []).map((a) => [a.id as string, { code: a.code as string, name: a.name_ar as string }]));
 }
@@ -73,52 +74,52 @@ async function build(ctx: AppContext, { kind, id, from, to }: z.infer<typeof inp
   switch (kind) {
     case "journal": {
       const d = await getJournalEntry(ctx.supabase, h, id);
-      if (!d) return { columns: [], rows: [], empty: "القيد غير موجود" };
+      if (!d) return { columns: [], rows: [], empty: tr("القيد غير موجود") };
       const accounts = await accountsOf(ctx, d.lines.map((l) => l.account_id));
       const dr = d.lines.reduce((a, l) => a.plus(toMoney(l.base_debit)), toMoney(0));
       const cr = d.lines.reduce((a, l) => a.plus(toMoney(l.base_credit)), toMoney(0));
       return {
-        columns: ["الرمز", "الحساب", "البيان", "مدين", "دائن"],
+        columns: [tr("الرمز"), tr("الحساب"), tr("البيان"), tr("مدين"), tr("دائن")],
         rows: d.lines.map((l) => [...accountCells(accounts.get(l.account_id)), text(l.description, "muted"), money(l.base_debit, true), money(l.base_credit, true)]),
-        totals: [text("الإجمالي"), ...blank(2), money(dr.toFixed()), money(cr.toFixed())],
-        link: { href: `/journal/${id}`, label: "فتح القيد" },
+        totals: [text(tr("الإجمالي")), ...blank(2), money(dr.toFixed()), money(cr.toFixed())],
+        link: { href: `/journal/${id}`, label: tr("فتح القيد") },
       };
     }
     case "invoice": {
       const d = await getInvoice(ctx.supabase, h, id);
-      if (!d) return { columns: [], rows: [], empty: "الفاتورة غير موجودة" };
+      if (!d) return { columns: [], rows: [], empty: tr("الفاتورة غير موجودة") };
       return {
         facts: [
-          { label: "الصافي", value: formatMoney(d.invoice.subtotal), amount: true },
-          { label: "الضريبة", value: formatMoney(d.invoice.tax_total), amount: true },
-          { label: "المدفوع", value: formatMoney(d.invoice.amount_paid), amount: true },
-          { label: "المتبقي", value: formatMoney(d.invoice.amount_due), amount: true },
+          { label: tr("الصافي"), value: formatMoney(d.invoice.subtotal), amount: true },
+          { label: tr("الضريبة"), value: formatMoney(d.invoice.tax_total), amount: true },
+          { label: tr("المدفوع"), value: formatMoney(d.invoice.amount_paid), amount: true },
+          { label: tr("المتبقي"), value: formatMoney(d.invoice.amount_due), amount: true },
         ],
-        columns: ["البيان", "الكمية", "سعر الوحدة", "الضريبة", "الإجمالي"],
+        columns: [tr("البيان"), tr("الكمية"), tr("سعر الوحدة"), tr("الضريبة"), tr("الإجمالي")],
         rows: d.items.map((i) => [text(i.description), qty(i.quantity), money(i.unit_price), money(i.tax_amount, true), money(i.total_amount)]),
-        totals: [text("الإجمالي"), ...blank(2), money(d.invoice.tax_total), money(d.invoice.total)],
-        link: { href: `/invoices/${id}`, label: "فتح الفاتورة" },
+        totals: [text(tr("الإجمالي")), ...blank(2), money(d.invoice.tax_total), money(d.invoice.total)],
+        link: { href: `/invoices/${id}`, label: tr("فتح الفاتورة") },
       };
     }
     case "voucher": {
       const d = await getVoucher(ctx.supabase, h, id);
-      if (!d) return { columns: [], rows: [], empty: "السند غير موجود" };
+      if (!d) return { columns: [], rows: [], empty: tr("السند غير موجود") };
       return {
-        facts: [{ label: "البيان", value: plainText(d.voucher.description) }, ...(d.voucher.reference ? [{ label: "المرجع", value: d.voucher.reference }] : [])],
-        columns: ["مخصص للفاتورة", "المبلغ"],
+        facts: [{ label: tr("البيان"), value: plainText(d.voucher.description) }, ...(d.voucher.reference ? [{ label: tr("المرجع"), value: d.voucher.reference }] : [])],
+        columns: [tr("مخصص للفاتورة"), tr("المبلغ")],
         rows: d.allocations.map((a) => [code(a.invoice_number, `/invoices/${a.invoice_id}`), money(a.amount)]),
-        empty: "لم يُخصص السند لفواتير",
-        link: { href: `/vouchers/${id}`, label: "فتح السند" },
+        empty: tr("لم يُخصص السند لفواتير"),
+        link: { href: `/vouchers/${id}`, label: tr("فتح السند") },
       };
     }
     case "bill": {
       const d = await getBill(ctx.supabase, h, id);
-      if (!d) return { columns: [], rows: [], empty: "الفاتورة غير موجودة" };
+      if (!d) return { columns: [], rows: [], empty: tr("الفاتورة غير موجودة") };
       const accounts = await accountsOf(ctx, d.lines.map((l) => l.account_id));
       return {
-        columns: ["البيان", "الرمز", "الحساب", "الكمية", "سعر الوحدة", "الضريبة", "الصافي"],
+        columns: [tr("البيان"), tr("الرمز"), tr("الحساب"), tr("الكمية"), tr("سعر الوحدة"), tr("الضريبة"), tr("الصافي")],
         rows: d.lines.map((l) => [text(l.description), ...accountCells(accounts.get(l.account_id), "muted"), qty(l.quantity), money(l.unit_price), money(l.tax_amount, true), money(l.net_amount)]),
-        link: { href: `/bills/${id}`, label: "فتح فاتورة المورد" },
+        link: { href: `/bills/${id}`, label: tr("فتح فاتورة المورد") },
       };
     }
     case "purchase-order": {
@@ -129,39 +130,39 @@ async function build(ctx: AppContext, { kind, id, from, to }: z.infer<typeof inp
       const accounts = await accountsOf(ctx, lines.map((l) => l.account_id));
       const sum = lines.reduce((a, l) => a.plus(toMoney(l.quantity).times(toMoney(l.unit_price))), toMoney(0));
       return {
-        columns: ["البيان", "الرمز", "الحساب", "الكمية", "سعر الوحدة", "المبلغ"],
+        columns: [tr("البيان"), tr("الرمز"), tr("الحساب"), tr("الكمية"), tr("سعر الوحدة"), tr("المبلغ")],
         rows: lines.map((l) => [text(l.description), ...accountCells(accounts.get(l.account_id), "muted"), qty(l.quantity), money(l.unit_price), money(toMoney(l.quantity).times(toMoney(l.unit_price)).toFixed())]),
-        totals: [text("الإجمالي"), ...blank(4), money(sum.toFixed())],
+        totals: [text(tr("الإجمالي")), ...blank(4), money(sum.toFixed())],
       };
     }
     case "folio": {
       const d = await getFolio(ctx.supabase, h, id);
-      if (!d) return { columns: [], rows: [], empty: "الفوليو غير موجود" };
+      if (!d) return { columns: [], rows: [], empty: tr("الفوليو غير موجود") };
       return {
-        facts: [{ label: "الرصيد", value: formatMoney(d.balance), amount: true }, { label: "العربون المتاح", value: formatMoney(d.deposits), amount: true }],
-        columns: ["التاريخ", "النوع", "البيان", "المبلغ"],
+        facts: [{ label: tr("الرصيد"), value: formatMoney(d.balance), amount: true }, { label: tr("العربون المتاح"), value: formatMoney(d.deposits), amount: true }],
+        columns: [tr("التاريخ"), tr("النوع"), tr("البيان"), tr("المبلغ")],
         rows: d.transactions.map((x) => [
           date(x.business_date), text(t.folio.txnTypes[x.txn_type] ?? x.txn_type, "muted"), text(x.description),
           money(toMoney(x.total_amount).times(x.direction).toFixed()),
         ]),
-        empty: "لا حركات بعد",
-        link: { href: `/folios/${id}`, label: "فتح الفوليو" },
+        empty: tr("لا حركات بعد"),
+        link: { href: `/folios/${id}`, label: tr("فتح الفوليو") },
       };
     }
     case "reservation": {
       const d = await getReservation(ctx.supabase, h, id);
-      if (!d) return { columns: [], rows: [], empty: "الحجز غير موجود" };
+      if (!d) return { columns: [], rows: [], empty: tr("الحجز غير موجود") };
       const total = d.nights.reduce((a, n) => a.plus(toMoney(n.amount)), toMoney(0));
       return {
         facts: [
-          ...(d.customer ? [{ label: "الشركة", value: d.customer.name_ar }] : []),
-          ...(d.group ? [{ label: "المجموعة", value: d.group.name }] : []),
-          ...(d.notes ? [{ label: "ملاحظات", value: plainText(d.notes) }] : []),
+          ...(d.customer ? [{ label: tr("الشركة"), value: d.customer.name_ar }] : []),
+          ...(d.group ? [{ label: tr("المجموعة"), value: d.group.name }] : []),
+          ...(d.notes ? [{ label: tr("ملاحظات"), value: plainText(d.notes) }] : []),
         ],
-        columns: ["الليلة", "الموسم", "السعر", "الخصم", "المبلغ"],
+        columns: [tr("الليلة"), tr("الموسم"), tr("السعر"), tr("الخصم"), tr("المبلغ")],
         rows: d.nights.map((n) => [date(n.stay_date), text(n.season_name ?? "", "muted"), money(n.rate), money(n.discount, true), money(n.amount)]),
-        totals: [text("الإجمالي"), ...blank(3), money(total.toFixed())],
-        link: { href: `/reservations/${id}`, label: "فتح الحجز" },
+        totals: [text(tr("الإجمالي")), ...blank(3), money(total.toFixed())],
+        link: { href: `/reservations/${id}`, label: tr("فتح الحجز") },
       };
     }
     case "customer": {
@@ -171,13 +172,13 @@ async function build(ctx: AppContext, { kind, id, from, to }: z.infer<typeof inp
       raise(error);
       const due = (data ?? []).reduce((a, i) => a.plus(toMoney(i.amount_due)), toMoney(0));
       return {
-        facts: [{ label: "المستحق عليه", value: formatMoney(due.toFixed()), amount: true }],
-        columns: ["الفاتورة", "التاريخ", "الاستحقاق", "الإجمالي", "المتبقي"],
+        facts: [{ label: tr("المستحق عليه"), value: formatMoney(due.toFixed()), amount: true }],
+        columns: [tr("الفاتورة"), tr("التاريخ"), tr("الاستحقاق"), tr("الإجمالي"), tr("المتبقي")],
         rows: (data ?? []).map((i) => [
           code(i.invoice_number, `/invoices/${i.id}`), date(i.issue_date), date(i.due_date), money(i.total), money(i.amount_due, true),
         ]),
-        empty: "لا فواتير لهذا العميل",
-        link: { href: `/invoices?customer=${id}`, label: "كل فواتير العميل" },
+        empty: tr("لا فواتير لهذا العميل"),
+        link: { href: `/invoices?customer=${id}`, label: tr("كل فواتير العميل") },
       };
     }
     case "vendor": {
@@ -188,13 +189,13 @@ async function build(ctx: AppContext, { kind, id, from, to }: z.infer<typeof inp
       const rest = (b: { total: string; amount_paid: string }) => toMoney(b.total).minus(toMoney(b.amount_paid));
       const due = (data ?? []).reduce((a, b) => a.plus(rest(b)), toMoney(0));
       return {
-        facts: [{ label: "المستحق له", value: formatMoney(due.toFixed()), amount: true }],
-        columns: ["الفاتورة", "التاريخ", "الاستحقاق", "الإجمالي", "المتبقي"],
+        facts: [{ label: tr("المستحق له"), value: formatMoney(due.toFixed()), amount: true }],
+        columns: [tr("الفاتورة"), tr("التاريخ"), tr("الاستحقاق"), tr("الإجمالي"), tr("المتبقي")],
         rows: (data ?? []).map((b) => [
           code(b.bill_number, `/bills/${b.id}`), date(b.bill_date), date(b.due_date), money(b.total), money(rest(b).toFixed(), true),
         ]),
-        empty: "لا فواتير لهذا المورد",
-        link: { href: `/bills?vendor=${id}`, label: "كل فواتير المورد" },
+        empty: tr("لا فواتير لهذا المورد"),
+        link: { href: `/bills?vendor=${id}`, label: tr("كل فواتير المورد") },
       };
     }
     case "account": {
@@ -212,13 +213,13 @@ async function build(ctx: AppContext, { kind, id, from, to }: z.infer<typeof inp
       const dr = lines.reduce((a, l) => a.plus(toMoney(l.base_debit)), toMoney(0));
       const cr = lines.reduce((a, l) => a.plus(toMoney(l.base_credit)), toMoney(0));
       return {
-        columns: ["التاريخ", "القيد", "البيان", "مدين", "دائن"],
+        columns: [tr("التاريخ"), tr("القيد"), tr("البيان"), tr("مدين"), tr("دائن")],
         rows: lines.map((l) => [
           date(l.journal_entries.entry_date), code(l.journal_entries.entry_number, `/journal/${l.journal_entries.id}`),
           text(l.description || l.journal_entries.description), money(l.base_debit, true), money(l.base_credit, true),
         ]),
-        totals: lines.length > 1 ? [text("الإجمالي"), ...blank(2), money(dr.toFixed()), money(cr.toFixed())] : undefined,
-        empty: "لا حركات على الحساب في الفترة",
+        totals: lines.length > 1 ? [text(tr("الإجمالي")), ...blank(2), money(dr.toFixed()), money(cr.toFixed())] : undefined,
+        empty: tr("لا حركات على الحساب في الفترة"),
       };
     }
   }

@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import Link from "@/components/link";
 import { cn } from "@/lib/utils";
 
@@ -18,9 +19,9 @@ function tintOf(name: string): string {
 
 function initials(name: string): string {
   const words = name.replace(/[()«»"]/g, "").trim().split(/\s+/).filter(Boolean);
-  const w = words.filter((x) => !["شركة", "مؤسسة", "مجموعة", "وفد", "فريق", "ال"].includes(x));
+  const w = words.filter((x) => !["شركة", "مؤسسة", "مجموعة", "وفد", "فريق", "ال", "Company", "Hotel", "The", "Group"].includes(x));
   const pick = (w.length ? w : words).slice(0, 2);
-  return pick.map((x) => x.replace(/^ال/, "")[0] ?? "").join("") || "؟";
+  return pick.map((x) => x.replace(/^ال/, "")[0] ?? "").join("") || tr("؟");
 }
 
 export function Avatar({ name, className }: { name: string; className?: string }) {

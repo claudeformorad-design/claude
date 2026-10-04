@@ -503,3 +503,8 @@ tbody.rows-animate > tr:hover > td { background-color: #fbfaf8; }
 }
 @keyframes assistant-shimmer { from { background-position: 100% 0; } to { background-position: -150% 0; } }
 @media (prefers-reduced-motion: reduce) { .assistant-mark-thinking, .assistant-shimmer { animation: none; } }
+
+/* الواجهة الإنجليزية: خط Inter للنص اللاتيني، والأسهم الاتجاهية تنعكس مع الاتجاه من اليسار لليمين */
+html[lang="en"] body { font-family: var(--font-digits), var(--font-thmanyah), ui-sans-serif, system-ui, sans-serif; }
+html[dir="ltr"] .lucide-chevron-left, html[dir="ltr"] .lucide-chevron-right,
+html[dir="ltr"] .lucide-arrow-left, html[dir="ltr"] .lucide-arrow-right { transform: scaleX(-1); }

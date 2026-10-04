@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { RouteDialog } from "@/components/ui/dialog";
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
@@ -15,7 +16,7 @@ import { Stat, StatGrid } from "@/components/ui/stat";
 import { cookies } from "next/headers";
 import { AccountsTree } from "./accounts-tree";
 
-export const metadata = { title: "دليل الحسابات" };
+export const metadata = { get title() { return tr("دليل الحسابات"); } };
 
 const TYPE_ORDER = ["asset", "liability", "equity", "revenue", "expense"] as const;
 const TYPE_ICON = { asset: Landmark, liability: HandCoins, equity: PieChart, revenue: TrendingUp, expense: TrendingDown } as const;
@@ -72,7 +73,7 @@ export default async function AccountsPage({
       <StatGrid className="lg:grid-cols-5">
         {TYPE_ORDER.map((ty) => (
           <Stat key={ty} icon={TYPE_ICON[ty]} tone={ty === "asset" ? "ink" : ty === "revenue" ? "teal" : ty === "expense" ? "clay" : "neutral"}
-            label={t.accounts.types[ty]} value={<span className="num">{accounts.filter((x) => x.account_type === ty && x.is_postable).length}</span>} hint="حساب تفصيلي" />
+            label={t.accounts.types[ty]} value={<span className="num">{accounts.filter((x) => x.account_type === ty && x.is_postable).length}</span>} hint={tr("حساب تفصيلي")} />
         ))}
       </StatGrid>
       <div className="grid gap-6">

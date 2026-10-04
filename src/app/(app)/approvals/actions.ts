@@ -1,4 +1,5 @@
 "use server";
+import { tr } from "@/i18n/tr";
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -19,8 +20,8 @@ const FOLIO_PERMISSION: Record<FolioAction["kind"], Permission> = {
   depositRefund: PERMISSIONS.folioManage, transfer: PERMISSIONS.folioManage, allowance: PERMISSIONS.folioAllowance, void: PERMISSIONS.folioVoid,
 };
 const FOLIO_LABEL: Record<FolioAction["kind"], string> = {
-  charge: "رسم", payment: "دفعة", deposit: "عربون", refund: "استرداد", depositRefund: "رد عربون", transfer: "تحويل رصيد",
-  allowance: "خصم", void: "إلغاء حركة",
+  get charge() { return tr("رسم"); }, get payment() { return tr("دفعة"); }, get deposit() { return tr("عربون"); }, get refund() { return tr("استرداد"); }, get depositRefund() { return tr("رد عربون"); }, get transfer() { return tr("تحويل رصيد"); },
+  get allowance() { return tr("خصم"); }, get void() { return tr("إلغاء حركة"); },
 };
 
 const requestSchema = z.discriminatedUnion("kind", [
@@ -42,21 +43,21 @@ async function describe(ctx: AppContext, r: Request): Promise<{ summary: string;
     if (!data) throw Object.assign(new Error("Folio not found or inactive"), {});
     const a = r.payload.action;
     const amount = "amount" in a ? String(a.amount) : "unit_price" in a ? String(a.unit_price) : null;
-    const reason = "reason" in a && a.reason ? `، السبب: ${a.reason}` : "";
-    return { summary: `${FOLIO_LABEL[a.kind]}${amount ? ` ${money(amount)}` : ""} على الفوليو ${data.folio_number} للنزيل ${data.guest_name}${reason}`, amount };
+    const reason = "reason" in a && a.reason ? tr("، السبب: {0}", a.reason) : "";
+    return { summary: tr("{0}{1} على الفوليو {2} للنزيل {3}{4}", FOLIO_LABEL[a.kind], amount ? ` ${money(amount)}` : "", data.folio_number, data.guest_name, reason), amount };
   }
   if (r.kind === "reservation_cancel") {
     const { data, error } = await ctx.supabase.from("reservations").select("confirmation_number, total_amount::text").eq("id", r.payload.reservation_id).maybeSingle();
     raise(error);
     if (!data) throw new Error("Reservation not found");
     const row = data as unknown as { confirmation_number: string; total_amount: string };
-    return { summary: `إلغاء الحجز ${row.confirmation_number}، السبب: ${r.payload.reason}`, amount: row.total_amount };
+    return { summary: tr("إلغاء الحجز {0}، السبب: {1}", row.confirmation_number, r.payload.reason), amount: row.total_amount };
   }
   const { data, error } = await ctx.supabase.from("payments").select("voucher_number, amount::text").eq("id", r.payload.voucher_id).maybeSingle();
   raise(error);
   if (!data) throw new Error("Voucher not found");
   const row = data as unknown as { voucher_number: string; amount: string };
-  return { summary: `إلغاء السند ${row.voucher_number} بمبلغ ${money(row.amount)}، السبب: ${r.payload.reason}`, amount: row.amount };
+  return { summary: tr("إلغاء السند {0} بمبلغ {1}، السبب: {2}", row.voucher_number, money(row.amount), r.payload.reason), amount: row.amount };
 }
 
 /** الموظف يرسل طلب موافقة لعملية تتجاوز صلاحيته أو حده */
@@ -94,19 +95,19 @@ async function execute(ctx: AppContext, kind: string, payload: unknown): Promise
     if (!ctx.can(FOLIO_PERMISSION[r.payload.action.kind])) throw new Error("Permission denied: approver");
     await runFolioAction(ctx.supabase, r.payload.folio_id, r.payload.action);
     revalidatePath(`/folios/${r.payload.folio_id}`);
-    return "نُفّذت العملية على الفوليو";
+    return tr("نُفّذت العملية على الفوليو");
   }
   if (r.kind === "reservation_cancel") {
     if (!ctx.can(PERMISSIONS.pmsCancel)) throw new Error("Permission denied: approver");
     const { error } = await ctx.supabase.rpc("cancel_reservation", { p_reservation_id: r.payload.reservation_id, p_reason: r.payload.reason });
     raise(error);
     revalidatePath(`/reservations/${r.payload.reservation_id}`);
-    return "أُلغي الحجز";
+    return tr("أُلغي الحجز");
   }
   if (!ctx.can(PERMISSIONS.paymentsVoid)) throw new Error("Permission denied: approver");
   await voidVoucher(ctx.supabase, r.payload.voucher_id, r.payload.reason);
   revalidatePath(`/vouchers/${r.payload.voucher_id}`);
-  return "أُلغي السند";
+  return tr("أُلغي السند");
 }
 
 export async function decideApprovalAction(id: string, approve: boolean, note?: string): Promise<ActionResult<string>> {
@@ -117,7 +118,7 @@ export async function decideApprovalAction(id: string, approve: boolean, note?: 
     raise(error);
     if (!req) throw new Error("Approval request not found");
     raise((await ctx.supabase.rpc("decide_approval", { p_request_id: id, p_approve: approve, p_note: note?.trim() || null })).error);
-    if (!approve) return "رُفض الطلب";
+    if (!approve) return tr("رُفض الطلب");
     // التنفيذ بعد الموافقة؛ فشله يُسجَّل على الطلب ولا يضيع
     const outcome = await toActionResult(() => execute(ctx, req.kind, req.payload));
     const ok = outcome.ok;

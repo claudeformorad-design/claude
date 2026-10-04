@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -17,17 +18,15 @@ export function RatePlanSelect({ reservationId, current, plans, errors }: {
   const [value, setValue] = useState(current ?? "");
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <NativeSelect aria-label="خطة السعر" className="min-w-44 flex-1" value={value} onChange={(e) => setValue(e.target.value)}>
-        <option value="">السعر القياسي</option>
+      <NativeSelect aria-label={tr("خطة السعر")} className="min-w-44 flex-1" value={value} onChange={(e) => setValue(e.target.value)}>
+        <option value="">{tr("السعر القياسي")}</option>
         {plans.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
       </NativeSelect>
       <Button type="button" size="sm" variant="outline" loading={pending} disabled={value === (current ?? "")}
         onClick={() => start(async () => {
           const r = await callAction(setReservationRatePlanAction(reservationId, value));
-          if (r.ok) { toast("أُعيد تسعير الليالي بالخطة"); router.refresh(); } else toast(actionErrorText(errors, r), "error");
-        })}>
-        تطبيق
-      </Button>
+          if (r.ok) { toast(tr("أُعيد تسعير الليالي بالخطة")); router.refresh(); } else toast(actionErrorText(errors, r), "error");
+        })}>{tr("تطبيق")}</Button>
     </div>
   );
 }

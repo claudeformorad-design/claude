@@ -1,7 +1,8 @@
 /** هيكل تحميل لامع يظهر فورًا أثناء جلب بيانات الصفحة */
+import { tr } from "@/i18n/tr";
 export default function Loading() {
   return (
-    <div className="animate-fade space-y-6" aria-busy="true" aria-label="جارٍ التحميل">
+    <div className="animate-fade space-y-6" aria-busy="true" aria-label={tr("جارٍ التحميل")}>
       <div className="space-y-3">
         <div className="skeleton h-4 w-56 rounded" />
         <div className="skeleton h-9 w-80 rounded-[20px]" />

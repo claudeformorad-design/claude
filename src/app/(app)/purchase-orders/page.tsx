@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
@@ -26,9 +27,9 @@ export default async function PurchaseOrdersPage() {
       <PageHeader title={t.nav.purchaseOrders}
         actions={<Button asChild><Link href="/purchase-orders/new"><Plus />{t.payables.newPo}</Link></Button>} />
       <StatGrid className="lg:grid-cols-3">
-        <Stat icon={ShoppingCart} tone="ink" label="أوامر الشراء" value={<span className="num">{pos.length}</span>} />
-        <Stat icon={PackageOpen} tone="clay" label="مفتوحة بانتظار الفوترة" value={<span className="num">{pos.filter((p) => p.status === "open").length}</span>} />
-        <Stat icon={PackageCheck} tone="teal" label="مكتملة" value={<span className="num">{pos.filter((p) => p.status !== "open").length}</span>} />
+        <Stat icon={ShoppingCart} tone="ink" label={tr("أوامر الشراء")} value={<span className="num">{pos.length}</span>} />
+        <Stat icon={PackageOpen} tone="clay" label={tr("مفتوحة بانتظار الفوترة")} value={<span className="num">{pos.filter((p) => p.status === "open").length}</span>} />
+        <Stat icon={PackageCheck} tone="teal" label={tr("مكتملة")} value={<span className="num">{pos.filter((p) => p.status !== "open").length}</span>} />
       </StatGrid>
       <Card className="overflow-hidden">
         <Table>
@@ -37,7 +38,7 @@ export default async function PurchaseOrdersPage() {
             <TableHead>{t.common.status}</TableHead><TableHead />
           </TableRow></TableHeader>
           <TableBody>
-            {pos.length === 0 && <TableRow><TableCell colSpan={5} className="py-8"><EmptyState title="لا توجد أوامر شراء" description="أنشئ أمر شراء للمورد ثم حوّله إلى فاتورة عند الاستلام." actionHref="/purchase-orders/new" actionLabel="أمر شراء جديد" icon={ShoppingCart} /></TableCell></TableRow>}
+            {pos.length === 0 && <TableRow><TableCell colSpan={5} className="py-8"><EmptyState title={tr("لا توجد أوامر شراء")} description={tr("أنشئ أمر شراء للمورد ثم حوّله إلى فاتورة عند الاستلام.")} actionHref="/purchase-orders/new" actionLabel={tr("أمر شراء جديد")} icon={ShoppingCart} /></TableCell></TableRow>}
             {pos.map((p) => (
               <ExpandableRow kind="purchase-order" id={p.id} colSpan={5} key={p.id}>
                 <TableCell className="font-semibold"><ExpandMark /><span className="num">{p.po_number}</span></TableCell><TableCell className="num">{p.order_date}</TableCell>

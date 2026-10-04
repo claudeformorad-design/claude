@@ -1,3 +1,4 @@
+import { currentLocale, tr } from "@/i18n/tr";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { SIDEBAR_COOKIE } from "@/components/layout/nav-config";
@@ -24,11 +25,11 @@ import { EDITION } from "@/lib/edition";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requireAppContext();
   const { t } = await getI18n();
-  const hotelName = ctx.hotel.name_ar || ctx.hotel.name_en || "";
+  const hotelName = (currentLocale() === "en" && ctx.hotel.name_en) || ctx.hotel.name_ar || ctx.hotel.name_en || "";
   // وصف الدور من الصلاحيات الفعلية (بدون افتراض)
   const sidebarExpanded = (await cookies()).get(SIDEBAR_COOKIE)?.value === "1";
-  const roleLabel = ctx.can(PERMISSIONS.hotelManage) ? "مدير الفندق" : ctx.can(PERMISSIONS.journalCreate) ? "محاسب"
-    : ctx.can(PERMISSIONS.pmsManage) ? "موظف استقبال" : "مستخدم";
+  const roleLabel = ctx.can(PERMISSIONS.hotelManage) ? tr("مدير الفندق") : ctx.can(PERMISSIONS.journalCreate) ? tr("محاسب")
+    : ctx.can(PERMISSIONS.pmsManage) ? tr("موظف استقبال") : tr("مستخدم");
 
   // التثبيت المحلي بعدة مستخدمين: زر خروج، وإلزام تغيير كلمة المرور المؤقتة قبل أي صفحة
   const localMulti = !isSupabaseConfigured() && (await getAuthMode()) === "multi";
@@ -66,7 +67,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             labels={t.nav}
             access={access}
             hotelName={hotelName}
-            userName={ctx.profile?.full_name ?? ""}
+            userName={tr(ctx.profile?.full_name ?? "")}
             userEmail={login ?? (isSupabaseConfigured() ? ctx.user.email ?? "" : "")}
             roleLabel={roleLabel}
             signOut={signOut}

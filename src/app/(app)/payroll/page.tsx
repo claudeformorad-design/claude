@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -22,14 +23,14 @@ export default async function PayrollPage() {
       <PageHeader title={t.nav.payroll}
         actions={
           <div className="flex gap-2">
-            {ctx.can(PERMISSIONS.hrView) && <Button asChild variant="outline"><Link href="/hr/payroll">مسيّر الموظفين</Link></Button>}
+            {ctx.can(PERMISSIONS.hrView) && <Button asChild variant="outline"><Link href="/hr/payroll">{tr("مسيّر الموظفين")}</Link></Button>}
             <Button asChild><Link href="/payroll/new"><Plus />{t.payables.newPayroll}</Link></Button>
           </div>
         } />
       <StatGrid className="lg:grid-cols-3">
-        <Stat icon={UserCog} tone="ink" label="مسيّرات مرحّلة" value={<span className="num">{runs.length}</span>} hint={runs[0] ? `آخرها ${runs[0].period_month.slice(0, 7)}` : undefined} />
-        <Stat currency={ctx.hotel.base_currency} icon={Banknote} tone="teal" label="إجمالي آخر مسيّر" value={runs[0] ? <Money value={runs[0].total_gross} locale={locale} /> : ""} />
-        <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="clay" label="صافي آخر مسيّر" value={runs[0] ? <Money value={runs[0].total_net} locale={locale} /> : ""} />
+        <Stat icon={UserCog} tone="ink" label={tr("مسيّرات مرحّلة")} value={<span className="num">{runs.length}</span>} hint={runs[0] ? tr("آخرها {0}", runs[0].period_month.slice(0, 7)) : undefined} />
+        <Stat currency={ctx.hotel.base_currency} icon={Banknote} tone="teal" label={tr("إجمالي آخر مسيّر")} value={runs[0] ? <Money value={runs[0].total_gross} locale={locale} /> : ""} />
+        <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="clay" label={tr("صافي آخر مسيّر")} value={runs[0] ? <Money value={runs[0].total_net} locale={locale} /> : ""} />
       </StatGrid>
       <Card className="overflow-hidden">
         <Table>
@@ -38,7 +39,7 @@ export default async function PayrollPage() {
             <TableHead className="text-end">{t.payables.gross}</TableHead><TableHead className="text-end">{t.payables.net}</TableHead><TableHead />
           </TableRow></TableHeader>
           <TableBody>
-            {runs.length === 0 && <TableRow><TableCell colSpan={6} className="py-8"><EmptyState title="لم يُرحَّل أي مسيّر رواتب" description="رحّل مسيّر الشهر ليُسجَّل مصروف الرواتب والتأمينات والمستحقات تلقائيًا." actionHref="/payroll/new" actionLabel="مسيّر جديد" icon={UserCog} /></TableCell></TableRow>}
+            {runs.length === 0 && <TableRow><TableCell colSpan={6} className="py-8"><EmptyState title={tr("لم يُرحَّل أي مسيّر رواتب")} description={tr("رحّل مسيّر الشهر ليُسجَّل مصروف الرواتب والتأمينات والمستحقات تلقائيًا.")} actionHref="/payroll/new" actionLabel={tr("مسيّر جديد")} icon={UserCog} /></TableCell></TableRow>}
             {runs.map((r) => (
               <TableRow key={r.id}>
                 <TableCell className="num">{r.run_number}</TableCell><TableCell className="num">{r.period_month.slice(0, 7)}</TableCell>

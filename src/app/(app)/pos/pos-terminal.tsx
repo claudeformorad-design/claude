@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -54,7 +55,7 @@ export function PosTerminal({ outletId, items, guests, methods, errors, canViewI
       reservation_id: mode === "room" ? guest : null, payment_method_id: mode === "paid" ? method : null, note,
     }));
     if (r.ok) {
-      toast(mode === "room" ? "رُحّل الطلب على الغرفة" : "تم الدفع وصدرت الفاتورة");
+      toast(mode === "room" ? tr("رُحّل الطلب على الغرفة") : tr("تم الدفع وصدرت الفاتورة"));
       setLast({ number: r.data.order_number, total: Number(r.data.total), invoice: r.data.invoice_id });
       setCart({}); setNote("");
       router.refresh();
@@ -69,12 +70,12 @@ export function PosTerminal({ outletId, items, guests, methods, errors, canViewI
             {[null, ...categories].map((c) => (
               <button key={c ?? "all"} type="button" onClick={() => setCat(c)}
                 className={cn("h-9 rounded-md border px-3 text-[15.5px] font-medium", cat === c ? "border-ink bg-ink text-white" : "border-line bg-white text-slate-700 hover:border-line-strong")}>
-                {c ?? "الكل"}
+                {c ?? tr("الكل")}
               </button>
             ))}
           </div>
         )}
-        {shown.length === 0 && <p className="rounded-lg border border-dashed border-line p-8 text-center text-slate-500">لا أصناف في هذه النقطة بعد</p>}
+        {shown.length === 0 && <p className="rounded-lg border border-dashed border-line p-8 text-center text-slate-500">{tr("لا أصناف في هذه النقطة بعد")}</p>}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-4">
           {shown.map((i) => (
             <button key={i.id} type="button" onClick={() => add(i.id, 1)}
@@ -91,58 +92,54 @@ export function PosTerminal({ outletId, items, guests, methods, errors, canViewI
       </div>
 
       <Card className="h-fit xl:sticky xl:top-0">
-        <CardHeader><CardTitle className="justify-between"><span>الطلب</span>{lines.length > 0 && <button type="button" onClick={() => setCart({})} className="font-medium text-urgent">تفريغ</button>}</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="justify-between"><span>{tr("الطلب")}</span>{lines.length > 0 && <button type="button" onClick={() => setCart({})} className="font-medium text-urgent">{tr("تفريغ")}</button>}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          {lines.length === 0 ? <p className="text-[15.5px] text-slate-500">اختر الأصناف من القائمة.</p> : (
+          {lines.length === 0 ? <p className="text-[15.5px] text-slate-500">{tr("اختر الأصناف من القائمة.")}</p> : (
             <ul className="divide-y divide-line">
               {lines.map((l) => (
                 <li key={l.id} className="flex items-center gap-3 py-2">
                   <span className="min-w-0 flex-1"><span className="block truncate font-medium text-ink">{l.name}</span><span className="num text-[14px] text-slate-500">{money(l.price)}</span></span>
                   <span className="flex items-center gap-1">
-                    <Button type="button" size="sm" variant="outline" aria-label="إنقاص" onClick={() => add(l.id, -1)}><Minus className="size-3.5" /></Button>
+                    <Button type="button" size="sm" variant="outline" aria-label={tr("إنقاص")} onClick={() => add(l.id, -1)}><Minus className="size-3.5" /></Button>
                     <span className="num w-7 text-center font-bold">{l.qty}</span>
-                    <Button type="button" size="sm" variant="outline" aria-label="زيادة" onClick={() => add(l.id, 1)}><Plus className="size-3.5" /></Button>
+                    <Button type="button" size="sm" variant="outline" aria-label={tr("زيادة")} onClick={() => add(l.id, 1)}><Plus className="size-3.5" /></Button>
                   </span>
                   <span className="num w-20 text-end font-semibold">{money(l.price * l.qty)}</span>
                 </li>
               ))}
             </ul>
           )}
-          <div className="flex items-center justify-between rounded-lg bg-panel p-3"><span className="text-slate-600">المجموع</span><span className="num text-[22px] font-bold text-ink">{money(subtotal)}</span></div>
+          <div className="flex items-center justify-between rounded-lg bg-panel p-3"><span className="text-slate-600">{tr("المجموع")}</span><span className="num text-[22px] font-bold text-ink">{money(subtotal)}</span></div>
 
           <div className="grid grid-cols-2 gap-2">
             <button type="button" onClick={() => setMode("room")} disabled={!guests.length}
               className={cn("flex h-11 items-center justify-center gap-2 rounded-md border text-[15.5px] font-medium disabled:opacity-40", mode === "room" ? "border-ink bg-ink text-white" : "border-line bg-white text-slate-700")}>
-              <BedDouble className="size-4" />على الغرفة
-            </button>
+              <BedDouble className="size-4" />{tr("على الغرفة")}</button>
             <button type="button" onClick={() => setMode("paid")}
               className={cn("flex h-11 items-center justify-center gap-2 rounded-md border text-[15.5px] font-medium", mode === "paid" ? "border-ink bg-ink text-white" : "border-line bg-white text-slate-700")}>
-              <Wallet className="size-4" />دفع فوري
-            </button>
+              <Wallet className="size-4" />{tr("دفع فوري")}</button>
           </div>
           {mode === "room" ? (
             <div className="field-group space-y-1.5">
-              <Label htmlFor="pos_guest">النزيل</Label>
+              <Label htmlFor="pos_guest">{tr("النزيل")}</Label>
               <NativeSelect id="pos_guest" value={guest} onChange={(e) => setGuest(e.target.value)}>
                 {guests.map((g) => <option key={g.reservation_id} value={g.reservation_id}>{g.label}</option>)}
               </NativeSelect>
             </div>
           ) : (
             <div className="field-group space-y-1.5">
-              <Label htmlFor="pos_method">طريقة الدفع</Label>
+              <Label htmlFor="pos_method">{tr("طريقة الدفع")}</Label>
               <NativeSelect id="pos_method" value={method} onChange={(e) => setMethod(e.target.value)}>
                 {methods.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
               </NativeSelect>
             </div>
           )}
-          <div className="field-group space-y-1.5"><Label htmlFor="pos_note">ملاحظة، مثل رقم الطاولة</Label><Input id="pos_note" value={note} onChange={(e) => setNote(e.target.value)} /></div>
+          <div className="field-group space-y-1.5"><Label htmlFor="pos_note">{tr("ملاحظة، مثل رقم الطاولة")}</Label><Input id="pos_note" value={note} onChange={(e) => setNote(e.target.value)} /></div>
           <Button type="button" className="w-full" size="default" loading={pending} disabled={!lines.length || (mode === "room" ? !guest : !method)} onClick={settle}>
-            {mode === "room" ? "ترحيل على الغرفة" : "دفع وإصدار الفاتورة"}
+            {mode === "room" ? tr("ترحيل على الغرفة") : tr("دفع وإصدار الفاتورة")}
           </Button>
           {last && (
-            <div className="rounded-md bg-success/10 px-3 py-2 text-[15px] text-success">
-              الطلب <b className="num">{last.number}</b> بمبلغ <span className="num">{money(last.total)}</span> شامل الضريبة
-              {last.invoice && canViewInvoices && <Link href={`/invoices/${last.invoice}`} className="ms-2 inline-flex items-center gap-1 font-medium"><ReceiptText className="size-4" />الفاتورة</Link>}
+            <div className="rounded-md bg-success/10 px-3 py-2 text-[15px] text-success">{tr("الطلب")}{" "}<b className="num">{last.number}</b>{" "}{tr("بمبلغ")}{" "}<span className="num">{money(last.total)}</span>{" "}{tr("شامل الضريبة")}{last.invoice && canViewInvoices && <Link href={`/invoices/${last.invoice}`} className="ms-2 inline-flex items-center gap-1 font-medium"><ReceiptText className="size-4" />{tr("الفاتورة")}</Link>}
             </div>
           )}
         </CardContent>

@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { formatMoney, MoneyDecimal } from "@/lib/accounting/money";
 import type { HotelRow } from "@/lib/supabase/database.types";
 import { plainText } from "@/lib/text";
@@ -13,7 +14,7 @@ export type PlainReport = {
 };
 
 /** عنوان عمود الرمز حين يحمل التقرير رموزًا، ويظهر قبل عمود الاسم */
-export const CODE_COLUMN = "الرمز";
+export const codeColumn = () => tr("الرمز");
 export const hasCodes = (rows: { code?: string }[]) => rows.some((r) => !!r.code);
 
 /** بيانات رأس المستند: الفندق وبياناته النظامية ووقت الإعداد */
@@ -47,7 +48,7 @@ export function toPlainReport(table: ReportTable, locale: string): PlainReport {
 export function docMeta(hotel: HotelRow, generatedAt: string, preparedBy?: string): DocMeta {
   return {
     hotelName: hotel.name_ar,
-    legal: [hotel.legal_name, hotel.tax_number && `الرقم الضريبي ${hotel.tax_number}`, hotel.commercial_registration && `السجل التجاري ${hotel.commercial_registration}`]
+    legal: [hotel.legal_name, hotel.tax_number && tr("الرقم الضريبي {0}", hotel.tax_number), hotel.commercial_registration && tr("السجل التجاري {0}", hotel.commercial_registration)]
       .filter((x): x is string => !!x),
     contact: [hotel.address, hotel.phone, hotel.email].filter((x): x is string => !!x),
     logoUrl: hotel.logo_url,

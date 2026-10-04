@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import * as React from "react";
 import { AlertCircle, Bookmark, Check, Copy, RotateCcw } from "lucide-react";
@@ -60,8 +61,8 @@ function Answer({ msg, question, conversationId, streaming, canRetry, onRetry }:
   };
   const save = async () => {
     const r = await callAction(saveAnswerAction({ conversationId, question, content: msg.content }));
-    if (r.ok) { setSaved(true); toast("حُفظت الإجابة في المحفوظات"); }
-    else toast("تعذّر حفظ الإجابة", "error");
+    if (r.ok) { setSaved(true); toast(tr("حُفظت الإجابة في المحفوظات")); }
+    else toast(tr("تعذّر حفظ الإجابة"), "error");
   };
 
   if (msg.error) {
@@ -69,7 +70,7 @@ function Answer({ msg, question, conversationId, streaming, canRetry, onRetry }:
       <div className="flex items-start gap-3 rounded-xl bg-urgent-tint px-4 py-3 text-[15.5px] text-urgent">
         <AlertCircle className="mt-1 size-[18px] shrink-0" />
         <p className="flex-1 leading-relaxed">{msg.content}</p>
-        {canRetry && <button type="button" onClick={onRetry} className="shrink-0 rounded-md px-2 py-0.5 font-medium hover:bg-white/60">إعادة المحاولة</button>}
+        {canRetry && <button type="button" onClick={onRetry} className="shrink-0 rounded-md px-2 py-0.5 font-medium hover:bg-white/60">{tr("إعادة المحاولة")}</button>}
       </div>
     );
   }
@@ -82,14 +83,14 @@ function Answer({ msg, question, conversationId, streaming, canRetry, onRetry }:
         <Markdown text={msg.content} />
         {!streaming && (
           <div className={cn("mt-2 -ms-1.5 flex items-center gap-0.5 transition-opacity", canRetry ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-within:opacity-100")}>
-            <button type="button" onClick={copy} className={tool} title="نسخ" aria-label="نسخ">
+            <button type="button" onClick={copy} className={tool} title={tr("نسخ")} aria-label={tr("نسخ")}>
               {copied ? <Check className="size-4 text-success" /> : <Copy className="size-4" />}
             </button>
-            <button type="button" onClick={save} disabled={saved} className={tool} title="حفظ في المحفوظات" aria-label="حفظ في المحفوظات">
+            <button type="button" onClick={save} disabled={saved} className={tool} title={tr("حفظ في المحفوظات")} aria-label={tr("حفظ في المحفوظات")}>
               <Bookmark className={cn("size-4", saved && "fill-current text-ink")} />
             </button>
             {canRetry && (
-              <button type="button" onClick={onRetry} className={tool} title="إعادة توليد الرد" aria-label="إعادة توليد الرد">
+              <button type="button" onClick={onRetry} className={tool} title={tr("إعادة توليد الرد")} aria-label={tr("إعادة توليد الرد")}>
                 <RotateCcw className="size-4" />
               </button>
             )}

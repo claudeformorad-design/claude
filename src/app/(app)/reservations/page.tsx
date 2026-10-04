@@ -1,3 +1,5 @@
+import { localNameOf } from "@/lib/local-name";
+import { tr } from "@/i18n/tr";
 import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import Link from "@/components/link";
 import { CalendarCheck, CalendarDays, Hourglass, Plus, Repeat, Search, Users, Wallet } from "lucide-react";
@@ -60,36 +62,36 @@ export default async function ReservationsPage({ searchParams }: {
   return (
     <>
       <PageHeader
-        title={sp.group ? "حجوزات المجموعة" : sp.series ? "الحجز المتكرر" : t.nav.reservations}
+        title={sp.group ? tr("حجوزات المجموعة") : sp.series ? tr("الحجز المتكرر") : t.nav.reservations}
         actions={canManage && (
           <>
-            <Button asChild variant="outline"><Link href="/reservations/new?kind=group"><Users />مجموعة</Link></Button>
-            <Button asChild variant="outline"><Link href="/reservations/new?kind=series"><Repeat />متكرر</Link></Button>
-            <Button asChild><Link href="/reservations/new"><Plus />حجز جديد</Link></Button>
+            <Button asChild variant="outline"><Link href="/reservations/new?kind=group"><Users />{tr("مجموعة")}</Link></Button>
+            <Button asChild variant="outline"><Link href="/reservations/new?kind=series"><Repeat />{tr("متكرر")}</Link></Button>
+            <Button asChild><Link href="/reservations/new"><Plus />{tr("حجز جديد")}</Link></Button>
           </>
         )}
       />
       {(sp.group || sp.series) && (
         <Properties items={[
-          [sp.group ? "المجموعة" : "السلسلة", `${scoped.length} حجز مرتبط`],
-          ["العودة", <Link key="all" href="/reservations" className="text-action">كل الحجوزات</Link>],
+          [sp.group ? tr("المجموعة") : tr("السلسلة"), tr("{0} حجز مرتبط", scoped.length)],
+          [tr("العودة"), <Link key="all" href="/reservations" className="text-action">{tr("كل الحجوزات")}</Link>],
         ]} />
       )}
       <StatGrid>
-        <Stat icon={CalendarDays} tone="ink" label="حجوزات قادمة وقائمة" value={<span className="num">{upcoming.length}</span>} />
-        <Stat icon={CalendarCheck} tone="teal" label="وصول اليوم" value={<span className="num">{scoped.filter(is.arrivals).length}</span>} />
-        <Stat icon={Hourglass} tone="clay" label="مبدئية بانتظار التأكيد" value={<span className="num">{scoped.filter(is.tentative).length}</span>} />
-        <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="neutral" label="قيمة الحجوزات القادمة" value={<Money value={upcoming.reduce((a, r) => a.plus(toMoney(r.total_amount)), ZERO)} locale={locale} />} />
+        <Stat icon={CalendarDays} tone="ink" label={tr("حجوزات قادمة وقائمة")} value={<span className="num">{upcoming.length}</span>} />
+        <Stat icon={CalendarCheck} tone="teal" label={tr("وصول اليوم")} value={<span className="num">{scoped.filter(is.arrivals).length}</span>} />
+        <Stat icon={Hourglass} tone="clay" label={tr("مبدئية بانتظار التأكيد")} value={<span className="num">{scoped.filter(is.tentative).length}</span>} />
+        <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="neutral" label={tr("قيمة الحجوزات القادمة")} value={<Money value={upcoming.reduce((a, r) => a.plus(toMoney(r.total_amount)), ZERO)} locale={locale} />} />
       </StatGrid>
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <FilterTabs active={tab} items={[
-          { key: "upcoming", href: qs({}), label: "القادمة", count: upcoming.length },
-          { key: "arrivals", href: qs({ tab: "arrivals" }), label: "وصول اليوم", count: scoped.filter(is.arrivals).length },
-          { key: "inhouse", href: qs({ tab: "inhouse" }), label: "المقيمون", count: scoped.filter(is.inhouse).length },
-          { key: "tentative", href: qs({ tab: "tentative" }), label: "المبدئية", count: scoped.filter(is.tentative).length },
-          { key: "closed", href: qs({ tab: "closed" }), label: "المنتهية والملغاة" },
-          { key: "all", href: qs({ tab: "all" }), label: "الكل", count: scoped.length },
+          { key: "upcoming", href: qs({}), label: tr("القادمة"), count: upcoming.length },
+          { key: "arrivals", href: qs({ tab: "arrivals" }), label: tr("وصول اليوم"), count: scoped.filter(is.arrivals).length },
+          { key: "inhouse", href: qs({ tab: "inhouse" }), label: tr("المقيمون"), count: scoped.filter(is.inhouse).length },
+          { key: "tentative", href: qs({ tab: "tentative" }), label: tr("المبدئية"), count: scoped.filter(is.tentative).length },
+          { key: "closed", href: qs({ tab: "closed" }), label: tr("المنتهية والملغاة") },
+          { key: "all", href: qs({ tab: "all" }), label: tr("الكل"), count: scoped.length },
         ]} />
         <form className="flex gap-2" action="/reservations">
           {sp.group && <input type="hidden" name="group" value={sp.group} />}
@@ -97,7 +99,7 @@ export default async function ReservationsPage({ searchParams }: {
           {tab !== "upcoming" && <input type="hidden" name="tab" value={tab} />}
           <div className="relative">
             <Search className="pointer-events-none absolute start-3 top-1/2 size-[18px] -translate-y-1/2 text-slate-400" />
-            <Input name="q" defaultValue={q ?? ""} placeholder="رقم الحجز أو النزيل أو الغرفة" className="w-72 ps-10" />
+            <Input name="q" defaultValue={q ?? ""} placeholder={tr("رقم الحجز أو النزيل أو الغرفة")} className="w-72 ps-10" />
           </div>
         </form>
       </div>
@@ -106,23 +108,23 @@ export default async function ReservationsPage({ searchParams }: {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>رقم الحجز</TableHead><TableHead>النزيل</TableHead><TableHead>الغرفة</TableHead><TableHead>النوع</TableHead>
-              <TableHead>الإقامة</TableHead><TableHead>المدة</TableHead><TableHead>الحالة</TableHead><TableHead className="text-end">المبلغ</TableHead>
+              <TableHead>{tr("رقم الحجز")}</TableHead><TableHead>{tr("النزيل")}</TableHead><TableHead>{tr("الغرفة")}</TableHead><TableHead>{tr("النوع")}</TableHead>
+              <TableHead>{tr("الإقامة")}</TableHead><TableHead>{tr("المدة")}</TableHead><TableHead>{tr("الحالة")}</TableHead><TableHead className="text-end">{tr("المبلغ")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {list.length === 0 && (
-              <TableRow><TableCell colSpan={8}><EmptyState icon={CalendarDays} title={q ? "لا توجد نتائج" : "لا توجد حجوزات هنا"}
-                description="الحجوزات الجديدة تظهر هنا مع حالتها ومبلغها المثبّت." actionHref={canManage ? "/reservations/new" : undefined} actionLabel="حجز جديد" /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={8}><EmptyState icon={CalendarDays} title={q ? tr("لا توجد نتائج") : tr("لا توجد حجوزات هنا")}
+                description={tr("الحجوزات الجديدة تظهر هنا مع حالتها ومبلغها المثبّت.")} actionHref={canManage ? "/reservations/new" : undefined} actionLabel={tr("حجز جديد")} /></TableCell></TableRow>
             )}
             {shown.rows.map((r) => (
               <ExpandableRow kind="reservation" id={r.id} colSpan={8} key={r.id} className={r.status === "cancelled" || r.status === "no_show" ? "opacity-60" : ""}>
                 <TableCell className="whitespace-nowrap"><ExpandMark /><Link href={`/reservations/${r.id}`} className="num font-semibold text-ink">{r.confirmation_number}</Link></TableCell>
                 <TableCell className="cell-fluid"><Link href={`/guests/${r.guest_id}`} className="block truncate font-medium text-ink transition-colors hover:text-action">{r.guest?.full_name}</Link></TableCell>
-                <TableCell className="whitespace-nowrap">{r.room ? <span className="num font-semibold">{r.room.room_number}</span> : <span className="text-slate-400">غير مخصصة</span>}</TableCell>
-                <TableCell className="whitespace-nowrap text-slate-600">{r.room_type?.name_ar}</TableCell>
+                <TableCell className="whitespace-nowrap">{r.room ? <span className="num font-semibold">{r.room.room_number}</span> : <span className="text-slate-400">{tr("غير مخصصة")}</span>}</TableCell>
+                <TableCell className="whitespace-nowrap text-slate-600">{localNameOf(r.room_type)}</TableCell>
                 <TableCell className="whitespace-nowrap">
-                  {r.booking_mode === "hourly" ? <span className="num">{shortDate(r.arrival_date)}</span> : <>من <span className="num">{shortDate(r.arrival_date)}</span> إلى <span className="num">{shortDate(r.departure_date)}</span></>}
+                  {r.booking_mode === "hourly" ? <span className="num">{shortDate(r.arrival_date)}</span> : <>{tr("من")}{" "}<span className="num">{shortDate(r.arrival_date)}</span>{" "}{tr("إلى")}{" "}<span className="num">{shortDate(r.departure_date)}</span></>}
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-slate-600">{r.booking_mode === "hourly" ? timeRange(r.starts_at, r.ends_at) : nightsText(nightsBetween(r.arrival_date, r.departure_date))}</TableCell>
                 <TableCell><Badge variant={RESERVATION_STATUS[r.status].variant}>{RESERVATION_STATUS[r.status].label}</Badge></TableCell>

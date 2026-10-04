@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { ClipboardCheck } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
     getHrSettings(ctx.supabase, ctx.hotel.id),
     attendanceOn(ctx.supabase, ctx.hotel.id, day),
   ]);
-  const shiftName = new Map(shifts.map((s) => [s.id, `${s.name} من ${hhmm(s.start_time)} إلى ${hhmm(s.end_time)}`]));
+  const shiftName = new Map(shifts.map((s) => [s.id, tr("{0} من {1} إلى {2}", s.name, hhmm(s.start_time), hhmm(s.end_time))]));
   const weekend = settings.weekend_days.includes(new Date(`${day}T00:00:00Z`).getUTCDay());
   const byEmployee = new Map(info.attendance.map((a) => [a.employee_id, a]));
   const rows: SheetRow[] = employees
@@ -36,7 +37,7 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
       const off = rostered ? !shiftId : weekend;
       const leave = info.onLeave.get(e.id) ?? null;
       return {
-        employee_id: e.id, name: e.full_name, shift: shiftId ? shiftName.get(shiftId) ?? null : off ? "راحة" : null, leave,
+        employee_id: e.id, name: e.full_name, shift: shiftId ? shiftName.get(shiftId) ?? null : off ? tr("راحة") : null, leave,
         status: a?.status ?? (leave ? "leave" : off ? "off" : "present"),
         check_in: hhmm(a?.check_in), check_out: hhmm(a?.check_out), notes: a?.notes ?? "",
         late: a?.late_minutes ?? 0, overtime: a?.overtime_minutes ?? 0,
@@ -47,12 +48,12 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
     <>
       <PageHeader title={t.nav.attendance} actions={
         <form className="flex items-center gap-2">
-          <Input type="date" name="date" defaultValue={day} aria-label="اليوم" className="w-52" />
-          <Button type="submit" variant="outline">عرض</Button>
+          <Input type="date" name="date" defaultValue={day} aria-label={tr("اليوم")} className="w-52" />
+          <Button type="submit" variant="outline">{tr("عرض")}</Button>
         </form>
       } />
       {rows.length === 0
-        ? <EmptyState icon={ClipboardCheck} title="لا موظفين في هذا اليوم" description="أضف الموظفين من صفحة الموظفين أولًا." actionHref="/hr" actionLabel="الموظفون" />
+        ? <EmptyState icon={ClipboardCheck} title={tr("لا موظفين في هذا اليوم")} description={tr("أضف الموظفين من صفحة الموظفين أولًا.")} actionHref="/hr" actionLabel={tr("الموظفون")} />
         : <AttendanceSheet key={day} day={day} rows={rows} canEdit={ctx.can(PERMISSIONS.hrManage)} errors={t.errors} />}
     </>
   );

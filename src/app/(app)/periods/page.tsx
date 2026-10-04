@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,17 +25,17 @@ export default async function PeriodsPage() {
   return (
     <>
       <PageHeader title={t.nav.periods}
-        actions={can && latest && nextStart && <PeriodButton op="newYear" id={latest.id} startDate={nextStart} label={`${a.newYear} من ${nextStart}`} errorLabels={errs} />} />
+        actions={can && latest && nextStart && <PeriodButton op="newYear" id={latest.id} startDate={nextStart} label={tr("{0} من {1}", a.newYear, nextStart)} errorLabels={errs} />} />
       <StatGrid className="lg:grid-cols-3">
-        <Stat icon={CalendarCheck} tone="ink" label="سنوات مالية" value={<span className="num">{(years.data ?? []).length}</span>} hint={`${(years.data ?? []).filter((y) => y.status === "open").length} مفتوحة`} />
-        <Stat icon={LockOpen} tone="teal" label="فترات مفتوحة للترحيل" value={<span className="num">{(periods.data ?? []).filter((p) => p.status === "open").length}</span>} />
-        <Stat icon={Lock} tone="clay" label="فترات مقفلة" value={<span className="num">{(periods.data ?? []).filter((p) => p.status !== "open").length}</span>} />
+        <Stat icon={CalendarCheck} tone="ink" label={tr("سنوات مالية")} value={<span className="num">{(years.data ?? []).length}</span>} hint={tr("{0} مفتوحة", (years.data ?? []).filter((y) => y.status === "open").length)} />
+        <Stat icon={LockOpen} tone="teal" label={tr("فترات مفتوحة للترحيل")} value={<span className="num">{(periods.data ?? []).filter((p) => p.status === "open").length}</span>} />
+        <Stat icon={Lock} tone="clay" label={tr("فترات مقفلة")} value={<span className="num">{(periods.data ?? []).filter((p) => p.status !== "open").length}</span>} />
       </StatGrid>
       <div className="space-y-6">
         {(years.data ?? []).map((y) => (
           <Card key={y.id} className="overflow-hidden">
             <CardHeader className="flex-row items-center justify-between">
-              <CardTitle>{a.fiscalYear} {y.name} <span className="font-normal text-slate-500">من <span className="num">{y.start_date}</span> إلى <span className="num">{y.end_date}</span></span></CardTitle>
+              <CardTitle>{a.fiscalYear} {y.name} <span className="font-normal text-slate-500">{tr("من")}{" "}<span className="num">{y.start_date}</span>{" "}{tr("إلى")}{" "}<span className="num">{y.end_date}</span></span></CardTitle>
               <div className="flex items-center gap-2">
                 <Badge variant={y.status === "open" ? "success" : "secondary"}>{y.status === "open" ? t.folio.statuses.open : t.folio.statuses.closed}</Badge>
                 {can && y.status === "open" && <PeriodButton op="closeYear" id={y.id} label={a.closeYear} confirmText={a.closeYearConfirm} variant="destructive" errorLabels={errs} />}

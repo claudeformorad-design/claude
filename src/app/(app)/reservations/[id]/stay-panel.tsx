@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -93,7 +94,7 @@ export function StayPanel({
   const approx = (methodId: string, amount: string) => {
     const m = methodOf(methodId);
     if (!m?.currency || !m.rate || !amount || Number.isNaN(Number(amount))) return null;
-    return `يعادل ${money(Number(amount) * m.rate)} ${baseCurrency} بسعر ${m.rate}`;
+    return tr("يعادل {0} {1} بسعر {2}", money(Number(amount) * m.rate), baseCurrency, m.rate);
   };
   const payMethod = methodOf(pay.method);
   const payForeign = !!payMethod?.currency;
@@ -108,9 +109,9 @@ export function StayPanel({
       {status === "checked_in" && (
         <Card className="border-ink/20">
           <CardHeader>
-            <CardTitle><LogOut className="size-5" />تسجيل المغادرة</CardTitle>
+            <CardTitle><LogOut className="size-5" />{tr("تسجيل المغادرة")}</CardTitle>
             <CardDescription>
-              {departure > today ? "مغادرة مبكرة: تُحتسب الليالي حتى اليوم وتُحرَّر البقية." : "تُرحَّل الليالي المتبقية، ويُطبَّق العربون، وتصدر الفاتورة الضريبية."}
+              {departure > today ? tr("مغادرة مبكرة: تُحتسب الليالي حتى اليوم وتُحرَّر البقية.") : tr("تُرحَّل الليالي المتبقية، ويُطبَّق العربون، وتصدر الفاتورة الضريبية.")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -119,54 +120,50 @@ export function StayPanel({
             )}
             {!bill ? (
               <Button type="button" variant="dark" loading={busy === "prep"} disabled={pending}
-                onClick={() => run("prep", () => prepareCheckOutAction(reservationId), "تم ترحيل الليالي وتجهيز الفاتورة", (d) => {
+                onClick={() => run("prep", () => prepareCheckOutAction(reservationId), tr("تم ترحيل الليالي وتجهيز الفاتورة"), (d) => {
                   const b = toBill(d);
                   setBill(b);
                   setPay((p) => ({ ...p, amount: b.due > 0 ? String(b.due) : "" }));
                   router.refresh();
                 })}>
-                <ReceiptText className="size-4" />تجهيز الفاتورة
-              </Button>
+                <ReceiptText className="size-4" />{tr("تجهيز الفاتورة")}</Button>
             ) : (
               <AnimatePresence>
                 <m.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                   <dl className={cn("grid gap-3 rounded-lg border border-line bg-panel p-4 text-center", bill.company > 0 ? "grid-cols-4" : "grid-cols-3")}>
-                    <div><dt className="text-[14px] text-slate-500">الرصيد</dt><dd className="num text-[20px] font-bold text-ink">{money(bill.balance)}</dd></div>
-                    <div><dt className="text-[14px] text-slate-500">العربون</dt><dd className="num text-[20px] font-bold text-success">{money(bill.deposits)}</dd></div>
-                    {bill.company > 0 && <div><dt className="text-[14px] text-slate-500">على الشركة</dt><dd className="num text-[20px] font-bold text-sky">{money(bill.company)}</dd></div>}
-                    <div><dt className="text-[14px] text-slate-500">على النزيل</dt><dd className={cn("num text-[20px] font-bold", bill.due > 0 ? "text-urgent" : "text-ink")}>{money(bill.due)}</dd></div>
+                    <div><dt className="text-[14px] text-slate-500">{tr("الرصيد")}</dt><dd className="num text-[20px] font-bold text-ink">{money(bill.balance)}</dd></div>
+                    <div><dt className="text-[14px] text-slate-500">{tr("العربون")}</dt><dd className="num text-[20px] font-bold text-success">{money(bill.deposits)}</dd></div>
+                    {bill.company > 0 && <div><dt className="text-[14px] text-slate-500">{tr("على الشركة")}</dt><dd className="num text-[20px] font-bold text-sky">{money(bill.company)}</dd></div>}
+                    <div><dt className="text-[14px] text-slate-500">{tr("على النزيل")}</dt><dd className={cn("num text-[20px] font-bold", bill.due > 0 ? "text-urgent" : "text-ink")}>{money(bill.due)}</dd></div>
                   </dl>
                   {bill.company > 0 && (
                     <p className="rounded-md bg-accent1-tint/70 px-3 py-2 text-[15px] text-sky">
-                      {billTo === "company_all" ? "كل الفاتورة" : "رسوم الإقامة"} تُحوَّل آجلًا على {customer?.label ?? "الشركة"} عند المغادرة، وتصدر الفاتورة باسمها.
-                    </p>
+                      {billTo === "company_all" ? tr("كل الفاتورة") : tr("رسوم الإقامة")}{" "}{tr("تُحوَّل آجلًا على")}{" "}{customer?.label ?? tr("الشركة")}{" "}{tr("عند المغادرة، وتصدر الفاتورة باسمها.")}</p>
                   )}
                   {credit && (
                     <div className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-amber-tint px-3 py-2 text-[15px] text-amber">
-                      <span>{credit.kind === "refund" ? "الباقي للنزيل" : "عربون زائد عن الرصيد"}: <b className="num">{money(credit.amount)}</b></span>
+                      <span>{credit.kind === "refund" ? tr("الباقي للنزيل") : tr("عربون زائد عن الرصيد")}: <b className="num">{money(credit.amount)}</b></span>
                       {baseCash && (
                         <Button type="button" size="sm" variant="outline" loading={busy === "change"} disabled={pending}
                           onClick={() => run("change", () => payStayAction(reservationId, { method: baseCash.id, amount: String(credit.amount), kind: credit.kind }),
-                            "تم إرجاع المبلغ للنزيل", (d) => { setBill(toBill(d)); router.refresh(); })}>
-                          إرجاعه نقدًا
-                        </Button>
+                            tr("تم إرجاع المبلغ للنزيل"), (d) => { setBill(toBill(d)); router.refresh(); })}>{tr("إرجاعه نقدًا")}</Button>
                       )}
                     </div>
                   )}
                   {bill.due > 0 && (
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className={field}>
-                        <Label htmlFor="pay_method">طريقة التحصيل</Label>
+                        <Label htmlFor="pay_method">{tr("طريقة التحصيل")}</Label>
                         <NativeSelect id="pay_method" value={pay.method} onChange={(e) => {
                           const m = methodOf(e.target.value);
                           setPay({ method: e.target.value, amount: m?.currency && m.rate ? (Math.ceil((bill.due / m.rate) * 100) / 100).toString() : String(bill.due) });
                         }}>
                           {cashMethods.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
-                          {customer && methods.filter((m) => m.kind === "city_ledger").map((m) => <option key={m.id} value={m.id}>{m.label} على {customer.label}</option>)}
+                          {customer && methods.filter((m) => m.kind === "city_ledger").map((m) => <option key={m.id} value={m.id}>{m.label}{" "}{tr("على")}{" "}{customer.label}</option>)}
                         </NativeSelect>
                       </div>
                       <div className={field}>
-                        <Label htmlFor="pay_amount">المبلغ{payForeign ? ` بعملة ${payMethod!.currency}` : ""}</Label>
+                        <Label htmlFor="pay_amount">{tr("المبلغ")}{payForeign ? tr(" بعملة {0}", payMethod!.currency) : ""}</Label>
                         <Input id="pay_amount" inputMode="decimal" dir="ltr" value={pay.amount} onChange={(e) => setPay({ ...pay, amount: e.target.value })} />
                         {approx(pay.method, pay.amount) && <p className="num text-[13.5px] text-slate-500">{approx(pay.method, pay.amount)}</p>}
                       </div>
@@ -174,23 +171,22 @@ export function StayPanel({
                   )}
                   {bill.due > 0 && (payForeign || (pay.amount && Number(pay.amount) < bill.due)) ? (
                     <Button type="button" variant="outline" className="w-full" loading={busy === "part"} disabled={pending || !pay.amount}
-                      onClick={() => run("part", () => payStayAction(reservationId, { method: pay.method, amount: pay.amount }), "تم تسجيل الدفعة", (d) => {
+                      onClick={() => run("part", () => payStayAction(reservationId, { method: pay.method, amount: pay.amount }), tr("تم تسجيل الدفعة"), (d) => {
                         const b = toBill(d);
                         setBill(b);
                         setPay({ method: cashMethods.find((m) => !m.currency)?.id ?? pay.method, amount: b.due > 0 ? String(b.due) : "" });
                         router.refresh();
-                      })}>
-                      تسجيل الدفعة{payForeign ? " بالعملة الأجنبية" : " الجزئية"}
+                      })}>{tr("تسجيل الدفعة")}{payForeign ? tr(" بالعملة الأجنبية") : tr(" الجزئية")}
                     </Button>
                   ) : (
                     <Button type="button" className="w-full" loading={busy === "out"} disabled={pending || !!credit}
                       onClick={() => run("out", () => settleAndCheckOutAction(reservationId, {
                         method: pay.method, amount: bill.due > 0 ? pay.amount : "",
                         customer_id: methodOf(pay.method)?.kind === "city_ledger" ? customer?.id : undefined,
-                      }), "تمت المغادرة وصدرت الفاتورة", (inv) => {
+                      }), tr("تمت المغادرة وصدرت الفاتورة"), (inv) => {
                         if (inv && canViewInvoices) router.push(`/invoices/${inv}`); else router.refresh();
                       })}>
-                      {bill.due > 0 ? "تحصيل وتسجيل المغادرة" : "تسجيل المغادرة وإصدار الفاتورة"}
+                      {bill.due > 0 ? tr("تحصيل وتسجيل المغادرة") : tr("تسجيل المغادرة وإصدار الفاتورة")}
                     </Button>
                   )}
                 </m.div>
@@ -203,24 +199,23 @@ export function StayPanel({
       {canCheckIn && (status === "tentative" || status === "confirmed") && (
         <Card className="border-action/30">
           <CardHeader>
-            <CardTitle><KeyRound className="size-5" />تسجيل الوصول</CardTitle>
-            <CardDescription>{hourly ? `بدء الجلسة وفتح فوليو الحجز، وتسليم ${words.one} للنزيل.` : `غرفة نظيفة في الخدمة، وتسليم ${words.one} للنزيل، ويُفتح فوليو الحجز أو يُستخدم فوليو العربون.`}</CardDescription>
+            <CardTitle><KeyRound className="size-5" />{tr("تسجيل الوصول")}</CardTitle>
+            <CardDescription>{hourly ? tr("بدء الجلسة وفتح فوليو الحجز، وتسليم {0} للنزيل.", words.one) : tr("غرفة نظيفة في الخدمة، وتسليم {0} للنزيل، ويُفتح فوليو الحجز أو يُستخدم فوليو العربون.", words.one)}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap items-end gap-3">
             {!hourly && (
               <div className={cn(field, "min-w-56 flex-1")}>
-                <Label htmlFor="checkin_room">الغرفة</Label>
+                <Label htmlFor="checkin_room">{tr("الغرفة")}</Label>
                 <NativeSelect id="checkin_room" value={room} onChange={(e) => setRoom(e.target.value)}>
-                  {!room && <option value="">اختر غرفة</option>}
-                  {checkInRooms.map((r) => <option key={r.id} value={r.id}>{r.label}{r.note ? `، ${r.note}` : ""}</option>)}
+                  {!room && <option value="">{tr("اختر غرفة")}</option>}
+                  {checkInRooms.map((r) => <option key={r.id} value={r.id}>{r.label}{r.note ? tr("، {0}", r.note) : ""}</option>)}
                 </NativeSelect>
               </div>
             )}
             <HandoverFields access={roomAccess} keys={keys} onKeys={setKeys} confirmed={handed} onConfirmed={setHanded} idPrefix="checkin" />
             <Button type="button" loading={busy === "in"} disabled={pending || (!hourly && !room) || !handed || !validKeys(keys)}
               onClick={() => run("in", () => checkInAction(reservationId, hourly ? null : room, Number(keys)), words.done)}>
-              <KeyRound className="size-4" />إتمام التسكين
-            </Button>
+              <KeyRound className="size-4" />{tr("إتمام التسكين")}</Button>
           </CardContent>
         </Card>
       )}
@@ -229,49 +224,46 @@ export function StayPanel({
         <Card>
           <CardHeader>
             <CardTitle className="justify-between">
-              <span className="flex items-center gap-2"><BedDouble className="size-5" />أثناء الإقامة</span>
+              <span className="flex items-center gap-2"><BedDouble className="size-5" />{tr("أثناء الإقامة")}</span>
               {keysIssued != null && <span className="text-[15px] font-medium text-slate-500">{words.issued} <span className="num text-ink">{keysIssued}</span></span>}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-panel p-3">
-              <p className="text-[15.5px] text-slate-600">ترحيل الليالي المستحقة حتى اليوم على الفوليو، ويتم تلقائيًا عند المغادرة.</p>
+              <p className="text-[15.5px] text-slate-600">{tr("ترحيل الليالي المستحقة حتى اليوم على الفوليو، ويتم تلقائيًا عند المغادرة.")}</p>
               <Button type="button" variant="outline" size="sm" loading={busy === "post"} disabled={pending}
-                onClick={() => run("post", () => postChargesAction(reservationId), "تم ترحيل الليالي")}>ترحيل الليالي</Button>
+                onClick={() => run("post", () => postChargesAction(reservationId), tr("تم ترحيل الليالي"))}>{tr("ترحيل الليالي")}</Button>
             </div>
             {!hourly && (
               <div className="flex flex-wrap items-end gap-3">
                 <div className={cn(field, "w-52")}>
-                  <Label htmlFor="new_departure">تاريخ المغادرة</Label>
+                  <Label htmlFor="new_departure">{tr("تاريخ المغادرة")}</Label>
                   <Input id="new_departure" type="date" dir="ltr" min={today > arrival ? today : arrival} value={newDeparture} onChange={(e) => setNewDeparture(e.target.value)} />
                 </div>
                 <Button type="button" variant="outline" loading={busy === "dep"} disabled={pending || newDeparture === departure}
-                  onClick={() => run("dep", () => changeDepartureAction(reservationId, newDeparture), newDeparture > departure ? "تم تمديد الإقامة" : "تم تقصير الإقامة")}>
-                  <CalendarPlus className="size-4" />{newDeparture >= departure ? "تمديد" : "تقصير"}
+                  onClick={() => run("dep", () => changeDepartureAction(reservationId, newDeparture), newDeparture > departure ? tr("تم تمديد الإقامة") : tr("تم تقصير الإقامة"))}>
+                  <CalendarPlus className="size-4" />{newDeparture >= departure ? tr("تمديد") : tr("تقصير")}
                 </Button>
               </div>
             )}
             {!hourly && moveRooms.length > 0 && (
               <div className="flex flex-wrap items-end gap-3">
                 <div className={cn(field, "w-52")}>
-                  <Label htmlFor="move_room">نقل إلى غرفة</Label>
+                  <Label htmlFor="move_room">{tr("نقل إلى غرفة")}</Label>
                   <NativeSelect id="move_room" value={move.room} onChange={(e) => setMove({ ...move, room: e.target.value })}>
-                    <option value="">اختر</option>
+                    <option value="">{tr("اختر")}</option>
                     {moveRooms.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
                   </NativeSelect>
                 </div>
                 <div className={cn(field, "min-w-48 flex-1")}>
-                  <Label htmlFor="move_reason">السبب</Label>
-                  <Input id="move_reason" value={move.reason} onChange={(e) => setMove({ ...move, reason: e.target.value })} placeholder="مثل: عطل في التكييف، ترقية" />
+                  <Label htmlFor="move_reason">{tr("السبب")}</Label>
+                  <Input id="move_reason" value={move.reason} onChange={(e) => setMove({ ...move, reason: e.target.value })} placeholder={tr("مثل: عطل في التكييف، ترقية")} />
                 </div>
                 <label className="flex h-11 cursor-pointer items-center gap-2.5 rounded-md border border-line px-3 text-[15.5px] text-ink">
-                  <input type="checkbox" className="size-4" checked={move.handed} onChange={(e) => setMove({ ...move, handed: e.target.checked })} />
-                  سلّمتُ {words.one} للغرفة الجديدة واستلمتُ السابقة
-                </label>
+                  <input type="checkbox" className="size-4" checked={move.handed} onChange={(e) => setMove({ ...move, handed: e.target.checked })} />{tr("سلّمتُ")}{" "}{words.one}{" "}{tr("للغرفة الجديدة واستلمتُ السابقة")}</label>
                 <Button type="button" variant="outline" loading={busy === "move"} disabled={pending || !move.room || !move.reason.trim() || !move.handed}
-                  onClick={() => run("move", () => moveRoomAction(reservationId, move.room, move.reason.trim()), "تم نقل النزيل", () => { setMove({ room: "", reason: "", handed: false }); router.refresh(); })}>
-                  <DoorOpen className="size-4" />نقل
-                </Button>
+                  onClick={() => run("move", () => moveRoomAction(reservationId, move.room, move.reason.trim()), tr("تم نقل النزيل"), () => { setMove({ room: "", reason: "", handed: false }); router.refresh(); })}>
+                  <DoorOpen className="size-4" />{tr("نقل")}</Button>
               </div>
             )}
           </CardContent>
@@ -282,35 +274,33 @@ export function StayPanel({
         <Card>
           <CardHeader>
             <CardTitle className="justify-between">
-              <span className="flex items-center gap-2"><Wallet className="size-5" />الفوليو والعربون</span>
-              {folio && canViewFolio && <Link href={`/folios/${folio.id}`} className="text-[15px] font-medium text-action">فتح الفوليو {folio.number}</Link>}
+              <span className="flex items-center gap-2"><Wallet className="size-5" />{tr("الفوليو والعربون")}</span>
+              {folio && canViewFolio && <Link href={`/folios/${folio.id}`} className="text-[15px] font-medium text-action">{tr("فتح الفوليو")}{" "}{folio.number}</Link>}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {folio ? (
               <dl className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-panel p-3"><dt className="text-[14px] text-slate-500">رصيد الفوليو</dt><dd className="num text-[20px] font-bold text-ink">{money(folio.balance)}</dd></div>
-                <div className="rounded-lg bg-panel p-3"><dt className="text-[14px] text-slate-500">عربون متاح</dt><dd className="num text-[20px] font-bold text-success">{money(folio.deposits)}</dd></div>
+                <div className="rounded-lg bg-panel p-3"><dt className="text-[14px] text-slate-500">{tr("رصيد الفوليو")}</dt><dd className="num text-[20px] font-bold text-ink">{money(folio.balance)}</dd></div>
+                <div className="rounded-lg bg-panel p-3"><dt className="text-[14px] text-slate-500">{tr("عربون متاح")}</dt><dd className="num text-[20px] font-bold text-success">{money(folio.deposits)}</dd></div>
               </dl>
-            ) : <p className="text-[15.5px] text-slate-500">لم يُفتح فوليو بعد؛ يُفتح عند أول عربون أو عند التسكين.</p>}
+            ) : <p className="text-[15.5px] text-slate-500">{tr("لم يُفتح فوليو بعد؛ يُفتح عند أول عربون أو عند التسكين.")}</p>}
             {active && cashMethods.length > 0 && (
               <div className="grid gap-3 sm:grid-cols-[1fr_120px_1fr_auto] sm:items-end">
                 <div className={field}>
-                  <Label htmlFor="dep_method">عربون جديد</Label>
+                  <Label htmlFor="dep_method">{tr("عربون جديد")}</Label>
                   <NativeSelect id="dep_method" value={dep.method} onChange={(e) => setDep({ ...dep, method: e.target.value })}>
                     {cashMethods.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
                   </NativeSelect>
                 </div>
                 <div className={field}>
-                  <Label htmlFor="dep_amount">المبلغ{methodOf(dep.method)?.currency ? ` بعملة ${methodOf(dep.method)!.currency}` : ""}</Label>
+                  <Label htmlFor="dep_amount">{tr("المبلغ")}{methodOf(dep.method)?.currency ? tr(" بعملة {0}", methodOf(dep.method)!.currency) : ""}</Label>
                   <Input id="dep_amount" inputMode="decimal" dir="ltr" value={dep.amount} onChange={(e) => setDep({ ...dep, amount: e.target.value })} />
                   {approx(dep.method, dep.amount) && <p className="num text-[13px] text-slate-500">{approx(dep.method, dep.amount)}</p>}
                 </div>
-                <div className={field}><Label htmlFor="dep_ref">المرجع</Label><Input id="dep_ref" value={dep.reference} onChange={(e) => setDep({ ...dep, reference: e.target.value })} placeholder="رقم الإيصال أو الحوالة" /></div>
+                <div className={field}><Label htmlFor="dep_ref">{tr("المرجع")}</Label><Input id="dep_ref" value={dep.reference} onChange={(e) => setDep({ ...dep, reference: e.target.value })} placeholder={tr("رقم الإيصال أو الحوالة")} /></div>
                 <Button type="button" variant="outline" loading={busy === "dep_add"} disabled={pending || !dep.amount}
-                  onClick={() => run("dep_add", () => recordDepositAction(reservationId, dep), "تم تسجيل العربون", () => { setDep({ ...dep, amount: "", reference: "" }); router.refresh(); })}>
-                  تسجيل
-                </Button>
+                  onClick={() => run("dep_add", () => recordDepositAction(reservationId, dep), tr("تم تسجيل العربون"), () => { setDep({ ...dep, amount: "", reference: "" }); router.refresh(); })}>{tr("تسجيل")}</Button>
               </div>
             )}
           </CardContent>

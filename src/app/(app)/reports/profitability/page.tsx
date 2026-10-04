@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { ExportButtons } from "@/components/reports/export-buttons";
 import { CodeName } from "@/components/ui/code-text";
 import { PageHeader } from "@/components/layout/page-header";
@@ -57,7 +58,7 @@ export default async function ProfitabilityPage({ searchParams }: { searchParams
         <Stat currency={ctx.hotel.base_currency} icon={Package} tone="clay" label={p.cos} value={<Money value={total.costOfSales} locale={locale} />} />
         <Stat currency={ctx.hotel.base_currency} icon={Receipt} tone="neutral" label={p.opex} value={<Money value={total.operatingExpenses} locale={locale} />} />
         <Stat currency={ctx.hotel.base_currency} icon={PieChart} tone="ink" label={p.net} value={<Money value={total.netProfit} locale={locale} />}
-          valueClassName={total.netProfit.isNegative() ? "text-urgent" : "text-success"} hint={total.margin ? `هامش ${total.margin.toFixed(1)}%` : undefined} />
+          valueClassName={total.netProfit.isNegative() ? "text-urgent" : "text-success"} hint={total.margin ? tr("هامش {0}%", total.margin.toFixed(1)) : undefined} />
       </StatGrid>
       <Card className="overflow-hidden">
         <Table>

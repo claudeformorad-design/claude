@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -25,7 +26,7 @@ export function CreditNoteForm({ invoiceId, t }: { invoiceId: string; t: Pick<Di
         <Input className="w-72" placeholder={t.folio.reason} value={reason} onChange={(e) => setReason(e.target.value)} />
         <Button variant="outline" loading={pending} disabled={pending || !amount || !reason} onClick={() => start(async () => {
           const r = await callAction(creditNoteAction(invoiceId, amount, reason));
-          if (r.ok) { toast("تم إصدار الإشعار الدائن"); setAmount(""); setReason(""); router.refresh(); } else setError(actionErrorText(t.errors, r));
+          if (r.ok) { toast(tr("تم إصدار الإشعار الدائن")); setAmount(""); setReason(""); router.refresh(); } else setError(actionErrorText(t.errors, r));
         })}>{t.payables.creditNote}</Button>
       </div>
     </div>

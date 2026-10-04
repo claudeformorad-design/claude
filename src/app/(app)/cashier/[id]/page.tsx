@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { FormDialog } from "@/components/ui/dialog";
 import { forbidden, notFound } from "next/navigation";
 import Link from "@/components/link";
@@ -31,14 +32,14 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
   return (
     <>
       <PageHeader
-        title={`الوردية ${s.shift_number}`}
+        title={tr("الوردية {0}", s.shift_number)}
         actions={
           <div className="flex items-center gap-2">
-            {s.status === "open" ? <Badge variant="success" className="text-[16px]">مفتوحة</Badge> : <Badge variant="secondary" className="text-[16px]">مغلقة</Badge>}
-            <Button asChild variant="outline" size="sm" className="print:hidden"><Link href="/cashier">الصندوق</Link></Button>
-            <PrintButton label="طباعة" />
+            {s.status === "open" ? <Badge variant="success" className="text-[16px]">{tr("مفتوحة")}</Badge> : <Badge variant="secondary" className="text-[16px]">{tr("مغلقة")}</Badge>}
+            <Button asChild variant="outline" size="sm" className="print:hidden"><Link href="/cashier">{tr("الصندوق")}</Link></Button>
+            <PrintButton label={tr("طباعة")} />
             {canClose && (
-              <FormDialog label="إغلاق الوردية" title="إغلاق الوردية" description="عُدّ النقد في كل صندوق بعملته" variant="dark" size="sm" icon={false} className="print:hidden">
+              <FormDialog label={tr("إغلاق الوردية")} title={tr("إغلاق الوردية")} description={tr("عُدّ النقد في كل صندوق بعملته")} variant="dark" size="sm" icon={false} className="print:hidden">
                 <CloseShiftForm shiftId={s.id} errors={t.errors} supervisor={!s.is_mine}
                   lines={report.methods.map((m) => ({ payment_method_id: m.payment_method_id, name: m.name, kind: m.kind, currency_code: m.currency_code, expected: Number(m.expected) }))} />
               </FormDialog>
@@ -47,9 +48,9 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
         }
       />
       <Properties items={[
-        ["الكاشير", s.user_name],
-        ["فُتحت", <span key="o" className="num">{formatDateTime(s.opened_at, ctx.hotel.timezone)}</span>],
-        ["أُغلقت", s.closed_at && <span className="num">{formatDateTime(s.closed_at, ctx.hotel.timezone)}</span>],
+        [tr("الكاشير"), s.user_name],
+        [tr("فُتحت"), <span key="o" className="num">{formatDateTime(s.opened_at, ctx.hotel.timezone)}</span>],
+        [tr("أُغلقت"), s.closed_at && <span className="num">{formatDateTime(s.closed_at, ctx.hotel.timezone)}</span>],
       ]} />
       <div className={`grid items-start gap-6 ${s.status === "closed" ? "xl:grid-cols-[minmax(0,1fr)_380px]" : ""}`}>
         <div className="space-y-6">
@@ -58,14 +59,14 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
         <div className="space-y-6">
           {s.status === "closed" && (
             <Card>
-              <CardHeader><CardTitle>نتيجة الإغلاق</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{tr("نتيجة الإغلاق")}</CardTitle></CardHeader>
               <CardContent className="space-y-3 text-[16px]">
                 <div className="flex items-center justify-between rounded-lg bg-panel p-3">
-                  <span className="text-slate-600">{diffBase < 0 ? "عجز" : diffBase > 0 ? "زيادة" : "الفرق"}</span>
+                  <span className="text-slate-600">{diffBase < 0 ? tr("عجز") : diffBase > 0 ? tr("زيادة") : tr("الفرق")}</span>
                   <Money value={Math.abs(diffBase)} locale={locale} className={diffBase < 0 ? "text-[20px] font-bold text-urgent" : "text-[20px] font-bold text-ink"} />
                 </div>
                 {s.over_short_entry_id && ctx.can(PERMISSIONS.journalView) && (
-                  <Link href={`/journal/${s.over_short_entry_id}`} className="block text-action">عرض قيد الفروقات</Link>
+                  <Link href={`/journal/${s.over_short_entry_id}`} className="block text-action">{tr("عرض قيد الفروقات")}</Link>
                 )}
                 {s.closing_note && <p className="text-slate-600">{s.closing_note}</p>}
               </CardContent>

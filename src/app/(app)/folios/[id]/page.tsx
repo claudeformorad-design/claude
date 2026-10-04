@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import Link from "@/components/link";
 import { CodeTag, DocText } from "@/components/ui/code-text";
 import { notFound } from "next/navigation";
@@ -45,7 +46,7 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
 
   const effective = transactions.filter((x) => x.direction === 1 && !x.voided_by_id);
   const summary = (x: (typeof transactions)[number]) =>
-    `${t.folio.txnTypes[x.txn_type]}، ${plainText(x.description)}، ${formatMoney(x.total_amount, { locale })}`;
+    tr("{0}، {1}، {2}", t.folio.txnTypes[x.txn_type], plainText(x.description), formatMoney(x.total_amount, { locale }));
 
   return (
     <>
@@ -55,7 +56,7 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
           <div className="flex items-center gap-2">
             {detail.invoiceId && <Button asChild variant="outline"><Link href={`/invoices/${detail.invoiceId}`}>{t.folio.invoice}</Link></Button>}
             <Badge variant={isOpen ? "success" : "secondary"}>{t.folio.statuses[folio.status]}</Badge>
-            <PrintLink href={`/print/folio/${folio.id}`} label="طباعة كشف الحساب" />
+            <PrintLink href={`/print/folio/${folio.id}`} label={tr("طباعة كشف الحساب")} />
           </div>
         }
       />
@@ -63,8 +64,8 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
       <StatGrid>
         <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="ink" label={t.folio.balance} value={<Money value={detail.balance} locale={locale} />} />
         <Stat currency={ctx.hotel.base_currency} icon={HandCoins} tone="teal" label={t.folio.deposits} value={<Money value={detail.deposits} locale={locale} />} />
-        <Stat icon={CalendarRange} tone="clay" label="الإقامة" value={folio.arrival_date ? <span>من <span className="num">{folio.arrival_date}</span> إلى <span className="num">{folio.departure_date ?? ""}</span></span> : ""} hint={t.folio.types[folio.folio_type]} />
-        <Stat icon={UserRound} tone="neutral" label="النزيل" value={folio.guest_name} hint={folio.room_number ? `${t.folio.room} ${folio.room_number}` : undefined} />
+        <Stat icon={CalendarRange} tone="clay" label={tr("الإقامة")} value={folio.arrival_date ? <span>{tr("من")}{" "}<span className="num">{folio.arrival_date}</span>{" "}{tr("إلى")}{" "}<span className="num">{folio.departure_date ?? ""}</span></span> : ""} hint={t.folio.types[folio.folio_type]} />
+        <Stat icon={UserRound} tone="neutral" label={tr("النزيل")} value={folio.guest_name} hint={folio.room_number ? `${t.folio.room} ${folio.room_number}` : undefined} />
       </StatGrid>
 
       {isOpen && (

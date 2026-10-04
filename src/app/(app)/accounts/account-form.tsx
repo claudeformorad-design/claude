@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -71,7 +72,7 @@ export function AccountForm({
     setServerError(null);
     startTransition(async () => {
       const result = await callAction(saveAccountAction(form.getValues()));
-      if (result.ok) { toast("تم حفظ الحساب"); router.push("/accounts"); }
+      if (result.ok) { toast(tr("تم حفظ الحساب")); router.push("/accounts"); }
       else setServerError(actionErrorText(t.errors, result));
     });
   };

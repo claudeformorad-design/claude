@@ -1,3 +1,5 @@
+import { localNameOf } from "@/lib/local-name";
+import { tr } from "@/i18n/tr";
 import { FormDialog, RouteDialog } from "@/components/ui/dialog";
 import { CodeTag } from "@/components/ui/code-text";
 import Link from "@/components/link";
@@ -30,54 +32,54 @@ export default async function RatePlansPage({ searchParams }: { searchParams: Pr
   const typeName = new Map(types.map((x) => [x.id, x.name_ar]));
   const companyName = new Map(companies.map((c) => [c.id, c.label]));
 
-  const planHint = "مثال: مع الإفطار = 0% و25 لكل شخص، وسعر الشركة = خصم 15% لشركة محددة";
+  const planHint = tr("مثال: مع الإفطار = 0% و25 لكل شخص، وسعر الشركة = خصم 15% لشركة محددة");
   const planForm = (e?: (typeof plans)[number]) => (
-    <SimpleForm key={e?.id ?? "new"} columns={2} submitLabel="حفظ الخطة" errors={t.errors} action={saveRatePlanAction} onDone="/rate-plans"
+    <SimpleForm key={e?.id ?? "new"} columns={2} submitLabel={tr("حفظ الخطة")} errors={t.errors} action={saveRatePlanAction} onDone="/rate-plans"
       initial={{
         id: e?.id ?? "", code: e?.code ?? "", name_ar: e?.name_ar ?? "", adjust_pct: e ? String(Number(e.adjust_pct)) : "0",
         per_night: e ? String(Number(e.per_night)) : "0", per_person: e?.per_person ?? false, includes_breakfast: e?.includes_breakfast ?? false,
         customer_id: e?.customer_id ?? "", room_type_id: e?.room_type_id ?? "", description: e?.description ?? "", is_active: e?.is_active ?? true,
       }}
       fields={[
-        { name: "code", label: "الرمز", ltr: true }, { name: "name_ar", label: "الاسم" },
-        { name: "adjust_pct", label: "نسبة التعديل %، والسالب خصم", type: "number" },
-        { name: "per_night", label: "إضافة لكل ليلة", type: "number" },
-        { name: "per_person", label: "الإضافة لكل شخص بالغ", checkbox: true },
-        { name: "includes_breakfast", label: "تشمل الإفطار", checkbox: true },
-        { name: "customer_id", label: "لشركة محددة", options: companies, optional: true },
-        { name: "room_type_id", label: "لنوع غرفة محدد", options: types.filter((x) => x.booking_mode === "nightly").map((x) => ({ id: x.id, label: x.name_ar })), optional: true },
-        ...(e ? [{ name: "is_active", label: "مفعّلة", checkbox: true as const }] : []),
+        { name: "code", label: tr("الرمز"), ltr: true }, { name: "name_ar", label: tr("الاسم") },
+        { name: "adjust_pct", label: tr("نسبة التعديل %، والسالب خصم"), type: "number" },
+        { name: "per_night", label: tr("إضافة لكل ليلة"), type: "number" },
+        { name: "per_person", label: tr("الإضافة لكل شخص بالغ"), checkbox: true },
+        { name: "includes_breakfast", label: tr("تشمل الإفطار"), checkbox: true },
+        { name: "customer_id", label: tr("لشركة محددة"), options: companies, optional: true },
+        { name: "room_type_id", label: tr("لنوع غرفة محدد"), options: types.filter((x) => x.booking_mode === "nightly").map((x) => ({ id: x.id, label: localNameOf(x) })), optional: true },
+        ...(e ? [{ name: "is_active", label: tr("مفعّلة"), checkbox: true as const }] : []),
       ]} />
   );
 
   return (
     <>
-      <PageHeader title="خطط الأسعار"
-        actions={canManage && <FormDialog label="خطة جديدة" title="خطة جديدة" description={planHint}>{planForm()}</FormDialog>} />
+      <PageHeader title={tr("خطط الأسعار")}
+        actions={canManage && <FormDialog label={tr("خطة جديدة")} title={tr("خطة جديدة")} description={planHint}>{planForm()}</FormDialog>} />
       <div className="grid gap-6">
         <Card className="overflow-hidden">
           <Table>
-            <TableHeader><TableRow><TableHead>الخطة</TableHead><TableHead className="text-end">التعديل</TableHead><TableHead className="text-end">إضافة لكل ليلة</TableHead><TableHead>النطاق</TableHead><TableHead /></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>{tr("الخطة")}</TableHead><TableHead className="text-end">{tr("التعديل")}</TableHead><TableHead className="text-end">{tr("إضافة لكل ليلة")}</TableHead><TableHead>{tr("النطاق")}</TableHead><TableHead /></TableRow></TableHeader>
             <TableBody>
-              {plans.length === 0 && <TableRow><TableCell colSpan={5} className="py-10 text-center text-slate-500">لا خطط بعد، والحجوزات تُسعَّر بالسعر القياسي</TableCell></TableRow>}
+              {plans.length === 0 && <TableRow><TableCell colSpan={5} className="py-10 text-center text-slate-500">{tr("لا خطط بعد، والحجوزات تُسعَّر بالسعر القياسي")}</TableCell></TableRow>}
               {plans.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="cell-fluid">
-                    <span className="text-ink">{p.name_ar}</span><CodeTag>{p.code}</CodeTag>
-                    {p.includes_breakfast && <Badge variant="info" className="ms-2">يشمل الإفطار</Badge>}
-                    {!p.is_active && <Badge variant="secondary" className="ms-2">موقوفة</Badge>}
+                    <span className="text-ink">{localNameOf(p)}</span><CodeTag>{p.code}</CodeTag>
+                    {p.includes_breakfast && <Badge variant="info" className="ms-2">{tr("يشمل الإفطار")}</Badge>}
+                    {!p.is_active && <Badge variant="secondary" className="ms-2">{tr("موقوفة")}</Badge>}
                   </TableCell>
                   <TableCell className="num text-end">{Number(p.adjust_pct) === 0 ? "" : `${Number(p.adjust_pct) > 0 ? "+" : ""}${Number(p.adjust_pct)}%`}</TableCell>
-                  <TableCell className="whitespace-nowrap text-end"><Money value={p.per_night} locale={locale} blankZero />{Number(p.per_night) > 0 && <span className="ms-1.5 text-slate-500">{p.per_person ? "لكل شخص" : "لكل غرفة"}</span>}</TableCell>
-                  <TableCell>{[p.customer_id && companyName.get(p.customer_id), p.room_type_id && typeName.get(p.room_type_id)].filter(Boolean).join("، ") || "الكل"}</TableCell>
-                  <TableCell className="text-end">{canManage && <Link href={`/rate-plans?edit=${p.id}`} className="text-action">تعديل</Link>}</TableCell>
+                  <TableCell className="whitespace-nowrap text-end"><Money value={p.per_night} locale={locale} blankZero />{Number(p.per_night) > 0 && <span className="ms-1.5 text-slate-500">{p.per_person ? tr("لكل شخص") : tr("لكل غرفة")}</span>}</TableCell>
+                  <TableCell>{[p.customer_id && companyName.get(p.customer_id), p.room_type_id && typeName.get(p.room_type_id)].filter(Boolean).join(tr("، ")) || tr("الكل")}</TableCell>
+                  <TableCell className="text-end">{canManage && <Link href={`/rate-plans?edit=${p.id}`} className="text-action">{tr("تعديل")}</Link>}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </Card>
         {canManage && edit && (
-          <RouteDialog key={edit.id} closeHref="/rate-plans" title={`تعديل ${edit.name_ar}`} description={planHint}>{planForm(edit)}</RouteDialog>
+          <RouteDialog key={edit.id} closeHref="/rate-plans" title={tr("تعديل {0}", edit.name_ar)} description={planHint}>{planForm(edit)}</RouteDialog>
         )}
       </div>
     </>

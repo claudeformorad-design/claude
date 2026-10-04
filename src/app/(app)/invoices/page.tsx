@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
@@ -52,21 +53,21 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
         )}
       />
       <StatGrid>
-        <Stat icon={FileText} tone="ink" label="فواتير في القائمة" value={<span className="num">{invoices.length}</span>} />
-        <Stat currency={ctx.hotel.base_currency} icon={Receipt} tone="teal" label="إجمالي المفوتر" value={<Money value={totalInvoiced} locale={locale} />} />
-        <Stat currency={ctx.hotel.base_currency} icon={Hourglass} tone="clay" label="المتبقي للتحصيل" value={<Money value={totalOutstanding} locale={locale} />} />
-        <Stat icon={AlarmClock} tone="neutral" label="متأخرة السداد" value={<span className="num">{overdue.length}</span>}
-          hint={overdue.length ? <>بقيمة <Money value={overdue.reduce((a, i) => a.plus(outstanding(i)), ZERO)} locale={locale} /></> : "لا يوجد تأخير"} />
+        <Stat icon={FileText} tone="ink" label={tr("فواتير في القائمة")} value={<span className="num">{invoices.length}</span>} />
+        <Stat currency={ctx.hotel.base_currency} icon={Receipt} tone="teal" label={tr("إجمالي المفوتر")} value={<Money value={totalInvoiced} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Hourglass} tone="clay" label={tr("المتبقي للتحصيل")} value={<Money value={totalOutstanding} locale={locale} />} />
+        <Stat icon={AlarmClock} tone="neutral" label={tr("متأخرة السداد")} value={<span className="num">{overdue.length}</span>}
+          hint={overdue.length ? <>{tr("بقيمة")}{" "}<Money value={overdue.reduce((a, i) => a.plus(outstanding(i)), ZERO)} locale={locale} /></> : tr("لا يوجد تأخير")} />
       </StatGrid>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <FilterTabs active={sp.status ?? "all"} items={[
-          { key: "all", href: qs(), label: "الكل" },
+          { key: "all", href: qs(), label: tr("الكل") },
           ...(["issued", "partially_paid", "paid"] as const).map((k) => ({ key: k, href: qs(k), label: t.invoices.statuses[k] })),
         ]} />
         <form className="flex items-center gap-2">
           {sp.status && <input type="hidden" name="status" value={sp.status} />}
-          <Input name="q" defaultValue={sp.q} placeholder="ابحث برقم الفاتورة أو الاسم" className="w-64 bg-white" />
+          <Input name="q" defaultValue={sp.q} placeholder={tr("ابحث برقم الفاتورة أو الاسم")} className="w-64 bg-white" />
           <Button type="submit" variant="outline">{t.common.apply}</Button>
         </form>
       </div>
@@ -88,10 +89,10 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
               <TableRow>
                 <TableCell colSpan={7} className="py-8">
                   <EmptyState
-                    title="لا توجد فواتير ضريبية صادرة"
-                    description="لم يتم إصدار أي فاتورة ضريبية بعد. يمكنك إصدار فاتورة مباشرة للنزلاء أو الشركات."
+                    title={tr("لا توجد فواتير ضريبية صادرة")}
+                    description={tr("لم يتم إصدار أي فاتورة ضريبية بعد. يمكنك إصدار فاتورة مباشرة للنزلاء أو الشركات.")}
                     actionHref="/invoices/new"
-                    actionLabel="إصدار فاتورة جديدة"
+                    actionLabel={tr("إصدار فاتورة جديدة")}
                     icon={FileText}
                   />
                 </TableCell>

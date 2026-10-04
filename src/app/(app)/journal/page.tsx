@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import { CurrencyTag } from "@/components/ui/currency-tag";
 import { DocText } from "@/components/ui/code-text";
@@ -68,21 +69,21 @@ export default async function JournalPage({
       />
 
       <StatGrid>
-        <Stat icon={BookOpen} tone="ink" label="قيود في القائمة" value={<span className="num">{entries.length}</span>} />
-        <Stat icon={CheckCircle2} tone="teal" label={t.journal.status.posted} value={<span className="num">{posted}</span>} hint="تؤثر على الأرصدة" />
-        <Stat icon={FilePen} tone="clay" label="مسودات" value={<span className="num">{drafts}</span>} hint="لا تؤثر حتى الترحيل" />
-        <Stat icon={Undo2} tone="neutral" label="قيود معكوسة" value={<span className="num">{reversed}</span>} />
+        <Stat icon={BookOpen} tone="ink" label={tr("قيود في القائمة")} value={<span className="num">{entries.length}</span>} />
+        <Stat icon={CheckCircle2} tone="teal" label={t.journal.status.posted} value={<span className="num">{posted}</span>} hint={tr("تؤثر على الأرصدة")} />
+        <Stat icon={FilePen} tone="clay" label={tr("مسودات")} value={<span className="num">{drafts}</span>} hint={tr("لا تؤثر حتى الترحيل")} />
+        <Stat icon={Undo2} tone="neutral" label={tr("قيود معكوسة")} value={<span className="num">{reversed}</span>} />
       </StatGrid>
 
       <FilterTabs className="mb-4" active={status ?? "all"} items={[
-        { key: "all", href: qs(), label: "الكل" },
+        { key: "all", href: qs(), label: tr("الكل") },
         { key: "posted", href: qs("posted"), label: t.journal.status.posted },
         { key: "draft", href: qs("draft"), label: t.journal.status.draft },
       ]} />
 
       <form className="toolbar">
         {status && <input type="hidden" name="status" value={status} />}
-        <Input name="q" defaultValue={sp.q} placeholder="ابحث بالوصف أو رقم القيد" className="w-64" />
+        <Input name="q" defaultValue={sp.q} placeholder={tr("ابحث بالوصف أو رقم القيد")} className="w-64" />
         <Input type="date" name="from" defaultValue={sp.from} dir="ltr" className="w-52" aria-label={t.common.from} />
         <Input type="date" name="to" defaultValue={sp.to} dir="ltr" className="w-52" aria-label={t.common.to} />
         <Button type="submit" variant="outline">{t.common.apply}</Button>
@@ -105,10 +106,10 @@ export default async function JournalPage({
               <TableRow>
                 <TableCell colSpan={6} className="py-8">
                   <EmptyState
-                    title="دفتر القيود فارغ"
-                    description="لم يتم إدخال أي قيود محاسبية بعد. يمكنك إنشاء قيد جديد كبدء لميزانيتك الفندقية."
+                    title={tr("دفتر القيود فارغ")}
+                    description={tr("لم يتم إدخال أي قيود محاسبية بعد. يمكنك إنشاء قيد جديد كبدء لميزانيتك الفندقية.")}
                     actionHref="/journal/new"
-                    actionLabel="تسجيل قيد جديد"
+                    actionLabel={tr("تسجيل قيد جديد")}
                     icon={BookOpen}
                   />
                 </TableCell>

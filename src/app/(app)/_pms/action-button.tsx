@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -70,7 +71,7 @@ export function ActionButton({
             <div className="flex gap-2">
               <Button type="submit" size="sm" variant={variant === "destructive" ? "destructive" : "default"} loading={pending}
                 disabled={reasonRequired && !reason.trim()}>{label}</Button>
-              <Button type="button" size="sm" variant="ghost" onClick={() => setAsking(false)}>تراجع</Button>
+              <Button type="button" size="sm" variant="ghost" onClick={() => setAsking(false)}>{tr("تراجع")}</Button>
             </div>
           </m.form>
         )}

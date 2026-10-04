@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { amountInArabicWords, integerToArabicWords } from "./tafqeet";
+import { amountInArabicWords, amountInEnglishWords, integerToArabicWords, integerToEnglishWords } from "./tafqeet";
 
 describe("integerToArabicWords", () => {
   it.each([
@@ -15,4 +15,10 @@ describe("amountInArabicWords", () => {
   it("with fraction", () => expect(amountInArabicWords("120.50", "SAR")).toBe("فقط مائة وعشرون ريال سعودي وخمسون هللة لا غير"));
   it("thousands separator in input", () => expect(amountInArabicWords("1,000.00", "USD")).toBe("فقط ألف دولار أمريكي لا غير"));
   it("unknown currency uses the given name", () => expect(amountInArabicWords("3", "XYZ", 2, "عملة")).toBe("فقط ثلاثة عملة لا غير"));
+});
+
+describe("amountInEnglishWords", () => {
+  it("whole", () => expect(amountInEnglishWords("5250", "YER")).toBe("Only five thousand two hundred fifty Yemeni rials"));
+  it("fraction", () => expect(amountInEnglishWords("120.50", "SAR")).toBe("Only one hundred twenty Saudi riyals and fifty halalas"));
+  it("millions", () => expect(integerToEnglishWords(2_000_015)).toBe("two million fifteen"));
 });

@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { DocText } from "@/components/ui/code-text";
 import { currencyName } from "@/lib/currency-name";
 import Link from "@/components/link";
@@ -140,7 +141,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
               <ul className="space-y-1 text-sm">
                 {detail.allocations.map((a) => (
                   <li key={a.payment_id} className={a.voucher_status === "voided" ? "text-muted-foreground line-through" : ""}>
-                    <Link href={`/vouchers/${a.payment_id}`} className="num text-primary">{a.voucher_number}</Link> بمبلغ {m(a.amount)}
+                    <Link href={`/vouchers/${a.payment_id}`} className="num text-primary">{a.voucher_number}</Link>{" "}{tr("بمبلغ")}{" "}{m(a.amount)}
                   </li>
                 ))}
               </ul>
@@ -151,7 +152,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
               <p className="mb-2 text-sm font-semibold">{t.payables.creditNote}</p>
               <ul className="space-y-1 text-sm">
                 {(creditNotes.data ?? []).map((c) => (
-                  <li key={c.id}><span className="num">{c.credit_note_number}</span> بتاريخ <span className="num">{c.issue_date}</span> بمبلغ {m(c.total)}، {c.reason}</li>
+                  <li key={c.id}><span className="num">{c.credit_note_number}</span>{" "}{tr("بتاريخ")}{" "}<span className="num">{c.issue_date}</span>{" "}{tr("بمبلغ")}{" "}{m(c.total)}{tr("،")}{" "}{c.reason}</li>
                 ))}
               </ul>
             </div>

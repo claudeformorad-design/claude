@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -22,16 +23,16 @@ export function AssignRoom({ reservationId, current, rooms, allowNone, errors }:
   const save = () =>
     start(async () => {
       const r = await callAction(assignRoomAction(reservationId, room || null));
-      if (r.ok) { toast(room ? "تم تخصيص الغرفة" : "أُلغي تخصيص الغرفة"); router.refresh(); }
+      if (r.ok) { toast(room ? tr("تم تخصيص الغرفة") : tr("أُلغي تخصيص الغرفة")); router.refresh(); }
       else toast(actionErrorText(errors, r), "error");
     });
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <NativeSelect value={room} onChange={(e) => setRoom(e.target.value)} className="w-56" aria-label="الغرفة">
-        {allowNone && <option value="">بدون تخصيص</option>}
-        {rooms.map((r) => <option key={r.id} value={r.id}>{r.label}{r.busy ? "، محجوزة في الفترة" : ""}</option>)}
+      <NativeSelect value={room} onChange={(e) => setRoom(e.target.value)} className="w-56" aria-label={tr("الغرفة")}>
+        {allowNone && <option value="">{tr("بدون تخصيص")}</option>}
+        {rooms.map((r) => <option key={r.id} value={r.id}>{r.label}{r.busy ? tr("، محجوزة في الفترة") : ""}</option>)}
       </NativeSelect>
-      <Button type="button" variant="outline" size="sm" loading={pending} disabled={(room || null) === current} onClick={save}>حفظ الغرفة</Button>
+      <Button type="button" variant="outline" size="sm" loading={pending} disabled={(room || null) === current} onClick={save}>{tr("حفظ الغرفة")}</Button>
     </div>
   );
 }

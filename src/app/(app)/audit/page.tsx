@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,14 +13,14 @@ import { History, Pencil, PlusCircle, Trash2 } from "lucide-react";
 import { Stat, StatGrid } from "@/components/ui/stat";
 import { EntityCell } from "@/components/ui/entity";
 
-const ACTION_AR: Record<string, string> = { INSERT: "إضافة", UPDATE: "تعديل", DELETE: "حذف" };
+const ACTION_AR: Record<string, string> = { get INSERT() { return tr("إضافة"); }, get UPDATE() { return tr("تعديل"); }, get DELETE() { return tr("حذف"); } };
 const TABLE_AR: Record<string, string> = {
-  journal_entries: "القيود", journal_entry_lines: "أسطر القيود", chart_of_accounts: "دليل الحسابات", accounting_periods: "الفترات",
-  fiscal_years: "السنوات المالية", guest_folios: "الفوليو", folio_transactions: "حركات الفوليو", invoices: "الفواتير", payments: "السندات",
-  customers: "العملاء", vendors: "الموردون", vendor_bills: "فواتير الموردين", purchase_orders: "أوامر الشراء", payroll_runs: "الرواتب",
-  fixed_assets: "الأصول الثابتة", inventory_items: "أصناف المخزون", inventory_movements: "حركات المخزون", hotels: "بيانات الفندق",
-  departments: "الأقسام", charge_codes: "رموز الإيراد", tax_rates: "الضرائب", payment_methods: "طرق الدفع", hotel_members: "المستخدمون", cashier_shifts: "ورديات الكاشير",
-  user_hotel_roles: "أدوار المستخدمين", roles: "الأدوار", bank_statement_lines: "كشوف البنك",
+  get journal_entries() { return tr("القيود"); }, get journal_entry_lines() { return tr("أسطر القيود"); }, get chart_of_accounts() { return tr("دليل الحسابات"); }, get accounting_periods() { return tr("الفترات"); },
+  get fiscal_years() { return tr("السنوات المالية"); }, get guest_folios() { return tr("الفوليو"); }, get folio_transactions() { return tr("حركات الفوليو"); }, get invoices() { return tr("الفواتير"); }, get payments() { return tr("السندات"); },
+  get customers() { return tr("العملاء"); }, get vendors() { return tr("الموردون"); }, get vendor_bills() { return tr("فواتير الموردين"); }, get purchase_orders() { return tr("أوامر الشراء"); }, get payroll_runs() { return tr("الرواتب"); },
+  get fixed_assets() { return tr("الأصول الثابتة"); }, get inventory_items() { return tr("أصناف المخزون"); }, get inventory_movements() { return tr("حركات المخزون"); }, get hotels() { return tr("بيانات الفندق"); },
+  get departments() { return tr("الأقسام"); }, get charge_codes() { return tr("رموز الإيراد"); }, get tax_rates() { return tr("الضرائب"); }, get payment_methods() { return tr("طرق الدفع"); }, get hotel_members() { return tr("المستخدمون"); }, get cashier_shifts() { return tr("ورديات الكاشير"); },
+  get user_hotel_roles() { return tr("أدوار المستخدمين"); }, get roles() { return tr("الأدوار"); }, get bank_statement_lines() { return tr("كشوف البنك"); },
 };
 
 export default async function AuditPage({ searchParams }: { searchParams: Promise<{ table?: string; page?: string }> }) {
@@ -36,13 +37,13 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
     <>
       <PageHeader title={t.nav.audit} />
       <StatGrid>
-        <Stat icon={History} tone="ink" label="أحداث في الصفحة" value={<span className="num">{rows.length}</span>} />
-        <Stat icon={PlusCircle} tone="teal" label="إضافات" value={<span className="num">{rows.filter((r) => r.action === "INSERT").length}</span>} />
-        <Stat icon={Pencil} tone="clay" label="تعديلات" value={<span className="num">{rows.filter((r) => r.action === "UPDATE").length}</span>} />
-        <Stat icon={Trash2} tone="neutral" label="حذف" value={<span className="num">{rows.filter((r) => r.action === "DELETE").length}</span>} />
+        <Stat icon={History} tone="ink" label={tr("أحداث في الصفحة")} value={<span className="num">{rows.length}</span>} />
+        <Stat icon={PlusCircle} tone="teal" label={tr("إضافات")} value={<span className="num">{rows.filter((r) => r.action === "INSERT").length}</span>} />
+        <Stat icon={Pencil} tone="clay" label={tr("تعديلات")} value={<span className="num">{rows.filter((r) => r.action === "UPDATE").length}</span>} />
+        <Stat icon={Trash2} tone="neutral" label={tr("حذف")} value={<span className="num">{rows.filter((r) => r.action === "DELETE").length}</span>} />
       </StatGrid>
       <form className="toolbar">
-        <Input name="table" defaultValue={sp.table} placeholder="اسم الجدول" dir="ltr" className="w-72" />
+        <Input name="table" defaultValue={sp.table} placeholder={tr("اسم الجدول")} dir="ltr" className="w-72" />
         <Button type="submit" variant="outline">{t.common.apply}</Button>
       </form>
       <Card className="overflow-hidden">
@@ -54,7 +55,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
             {rows.map((r) => (
               <TableRow key={r.id}>
                 <TableCell className="num whitespace-nowrap">{formatDateTime(r.occurred_at, ctx.hotel.timezone, true)}</TableCell>
-                <TableCell>{r.actor_name ? <EntityCell name={r.actor_name} /> : <span className="text-slate-400">النظام</span>}</TableCell>
+                <TableCell>{r.actor_name ? <EntityCell name={r.actor_name} /> : <span className="text-slate-400">{tr("النظام")}</span>}</TableCell>
                 <TableCell className="whitespace-nowrap font-medium">{TABLE_AR[r.table_name ?? ""] ?? r.table_name}</TableCell>
                 <TableCell><Badge variant={r.action === "DELETE" ? "destructive" : r.action === "INSERT" ? "success" : "warning"}>{ACTION_AR[r.action ?? ""] ?? r.action}</Badge></TableCell>
                 <TableCell className="max-w-md">
@@ -71,8 +72,8 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
         </Table>
       </Card>
       <div className="mt-4 flex gap-2">
-        {page > 0 && <Button asChild variant="outline"><a href={`?page=${page - 1}${sp.table ? `&table=${sp.table}` : ""}`}>السابق</a></Button>}
-        {(data ?? []).length === 100 && <Button asChild variant="outline"><a href={`?page=${page + 1}${sp.table ? `&table=${sp.table}` : ""}`}>التالي</a></Button>}
+        {page > 0 && <Button asChild variant="outline"><a href={`?page=${page - 1}${sp.table ? `&table=${sp.table}` : ""}`}>{tr("السابق")}</a></Button>}
+        {(data ?? []).length === 100 && <Button asChild variant="outline"><a href={`?page=${page + 1}${sp.table ? `&table=${sp.table}` : ""}`}>{tr("التالي")}</a></Button>}
       </div>
     </>
   );

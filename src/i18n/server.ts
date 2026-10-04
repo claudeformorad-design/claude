@@ -1,12 +1,15 @@
 import "server-only";
+import "./locale-server";
 import type { Locale } from "./config";
-import { ar, type Dictionary } from "./dictionaries/ar";
+import type { Dictionary } from "./dictionaries/ar";
+import { dict } from "./dict";
+import { currentLocale } from "./tr";
 
-/** اللغة العربية هي اللغة الدائمة للنظام بالكامل */
+/** قاموس لغة الطلب الحالي (من كوكي اللغة) */
 export function getDictionary(): Dictionary {
-  return ar;
+  return dict();
 }
 
 export async function getI18n(): Promise<{ locale: Locale; t: Dictionary }> {
-  return { locale: "ar", t: ar };
+  return { locale: currentLocale(), t: dict() };
 }

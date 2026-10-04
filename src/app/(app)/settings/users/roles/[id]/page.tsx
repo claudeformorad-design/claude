@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { notFound } from "next/navigation";
 import Link from "@/components/link";
 import { ChevronRight } from "lucide-react";
@@ -31,14 +32,14 @@ export default async function RolePage({ params }: { params: Promise<{ id: strin
 
   return (
     <>
-      <Link href="/settings/users" className="mb-3 inline-flex items-center gap-1 text-[15.5px] text-slate-500 hover:text-ink"><ChevronRight className="size-4" />المستخدمون والصلاحيات</Link>
-      <PageHeader title={isNew ? "دور جديد" : role!.name_ar} />
+      <Link href="/settings/users" className="mb-3 inline-flex items-center gap-1 text-[15.5px] text-slate-500 hover:text-ink"><ChevronRight className="size-4" />{tr("المستخدمون والصلاحيات")}</Link>
+      <PageHeader title={isNew ? tr("دور جديد") : role!.label} />
       <div className="space-y-6">
         {role && (
           <Card>
             <CardHeader>
-              <CardTitle>الواجهة والحدود</CardTitle>
-              <CardDescription>ما يراه كل من يحمل هذا الدور في هذا الفندق عند دخوله.</CardDescription>
+              <CardTitle>{tr("الواجهة والحدود")}</CardTitle>
+              <CardDescription>{tr("ما يراه كل من يحمل هذا الدور في هذا الفندق عند دخوله.")}</CardDescription>
             </CardHeader>
             <CardContent>
               <RoleSettingsEditor roleId={role.id} homeOptions={data.homeOptions} quickOptions={data.quickOptions}
@@ -51,10 +52,10 @@ export default async function RolePage({ params }: { params: Promise<{ id: strin
         )}
         <Card>
           <CardHeader>
-            <CardTitle>الصلاحيات</CardTitle>
+            <CardTitle>{tr("الصلاحيات")}</CardTitle>
             <CardDescription>{role?.is_system
-              ? "صلاحيات الأدوار الأساسية ثابتة. لتغييرها أنشئ دورًا خاصًا، أو امنح وامنع لكل موظف من صفحته."
-              : "لا يمكنك إضافة صلاحية لا تملكها أنت، ولا تعديل دور تحمله بنفسك."}</CardDescription>
+              ? tr("صلاحيات الأدوار الأساسية ثابتة. لتغييرها أنشئ دورًا خاصًا، أو امنح وامنع لكل موظف من صفحته.")
+              : tr("لا يمكنك إضافة صلاحية لا تملكها أنت، ولا تعديل دور تحمله بنفسك.")}</CardDescription>
           </CardHeader>
           <CardContent>
             {role?.is_system ? (
@@ -65,7 +66,7 @@ export default async function RolePage({ params }: { params: Promise<{ id: strin
                     <ul className="divide-y divide-line">{(items ?? []).map((p) => <li key={p.code} className="px-4 py-2.5 text-[15.5px] text-ink">{p.label}</li>)}</ul>
                   </div>
                 ))}
-                {grouped.length === 0 && <p className="text-slate-500">لا صلاحيات لهذا الدور في هذه النسخة.</p>}
+                {grouped.length === 0 && <p className="text-slate-500">{tr("لا صلاحيات لهذا الدور في هذه النسخة.")}</p>}
               </div>
             ) : (
               <RolePermissionsEditor key={id} permissions={data.permissions} held={[...ctx.permissions]}

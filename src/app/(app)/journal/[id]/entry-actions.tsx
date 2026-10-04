@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -34,7 +35,7 @@ export function EntryActions({
   const [error, setError] = useState<string | null>(null);
   const [reversalDate, setReversalDate] = useState(today);
 
-  const run = <T,>(fn: () => Promise<ActionResult<T>>, onOk: (data: T) => void, done = "تمت العملية بنجاح") => {
+  const run = <T,>(fn: () => Promise<ActionResult<T>>, onOk: (data: T) => void, done = tr("تمت العملية بنجاح")) => {
     setError(null);
     startTransition(async () => {
       const result = await callAction(fn());
@@ -53,7 +54,7 @@ export function EntryActions({
           </Button>
         )}
         {status === "draft" && canPost && (
-          <Button loading={pending} onClick={() => run(() => postJournalEntryAction(entryId), () => router.refresh(), "تم ترحيل القيد")}>
+          <Button loading={pending} onClick={() => run(() => postJournalEntryAction(entryId), () => router.refresh(), tr("تم ترحيل القيد"))}>
             {t.journal.post}
           </Button>
         )}

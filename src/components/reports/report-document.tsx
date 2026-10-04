@@ -1,4 +1,5 @@
-import { CODE_COLUMN, hasCodes, type DocMeta, type PlainReport } from "@/lib/export/plain-report";
+import { tr } from "@/i18n/tr";
+import { codeColumn, hasCodes, type DocMeta, type PlainReport } from "@/lib/export/plain-report";
 import { DocHeader, PageStyle, Signatures } from "./doc-header";
 import { cn } from "@/lib/utils";
 
@@ -26,7 +27,7 @@ export function ReportDocument({ report, meta }: { report: PlainReport; meta: Do
         <table className="report-doc-table w-full border-separate border-spacing-0 text-[13px]">
           <thead>
             <tr>
-              {codes && <th className="w-24 bg-ink px-3.5 py-3 text-start font-bold text-white">{CODE_COLUMN}</th>}
+              {codes && <th className="w-24 bg-ink px-3.5 py-3 text-start font-bold text-white">{codeColumn()}</th>}
               {report.columns.map((c, i) => (
                 <th key={c} className={cn("bg-ink px-3.5 py-3 font-bold text-white", i === 0 ? "text-start" : "text-end")}>{c}</th>
               ))}
@@ -64,7 +65,7 @@ export function ReportDocument({ report, meta }: { report: PlainReport; meta: Do
           <p className={cn("mt-6 inline-block rounded-lg px-4 py-2 text-[13px] font-semibold",
             report.note.ok ? "bg-success/10 text-success" : "bg-urgent-tint text-urgent")}>{report.note.text}</p>
         )}
-        <Signatures names={["المحاسب", "المدير المالي"]} />
+        <Signatures names={[tr("المحاسب"), tr("المدير المالي")]} />
       </div>
     </article>
   );

@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -68,7 +69,7 @@ export function JournalForm({
       setServerError(null);
       startTransition(async () => {
         const result = await callAction(saveJournalEntryAction(values, { entryId, post }));
-        if (result.ok) { toast("تم حفظ القيد"); router.push(`/journal/${result.data}`); }
+        if (result.ok) { toast(tr("تم حفظ القيد")); router.push(`/journal/${result.data}`); }
         else setServerError(actionErrorText(t.errors, result));
       });
     });

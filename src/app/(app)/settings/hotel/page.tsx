@@ -1,3 +1,5 @@
+import { localNameOf } from "@/lib/local-name";
+import { tr } from "@/i18n/tr";
 import { forbidden } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +40,7 @@ export default async function HotelSettingsPage() {
       <PageHeader title={t.nav.hotelSettings} />
       <div className="space-y-6">
         <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
-          <Card><CardHeader><CardTitle>{h.name_ar}</CardTitle></CardHeader><CardContent>
+          <Card><CardHeader><CardTitle>{localNameOf(h)}</CardTitle></CardHeader><CardContent>
             {ctx.can(PERMISSIONS.hotelManage) ? (
               <SimpleForm columns={2} submitLabel={t.common.save} errors={t.errors} action={saveHotelAction}
                 initial={{
@@ -59,7 +61,7 @@ export default async function HotelSettingsPage() {
                 ]} />
             ) : <p className="text-muted-foreground">{t.errors.permission_denied}</p>}
             <p className="mt-4 text-sm text-muted-foreground">{a.baseCurrency}: <strong className="num">{h.base_currency}</strong>
-              {autoRooms && <>، {a.totalRooms}: <strong className="num">{h.total_rooms ?? 0}</strong> من الغرف المسجّلة</>}</p>
+              {autoRooms && <>{tr("،")}{" "}{a.totalRooms}: <strong className="num">{h.total_rooms ?? 0}</strong>{" "}{tr("من الغرف المسجّلة")}</>}</p>
           </CardContent></Card>
           <Card className="overflow-hidden"><CardHeader><CardTitle>{a.departments}</CardTitle></CardHeader>
             <Table>
@@ -76,7 +78,7 @@ export default async function HotelSettingsPage() {
                 <SimpleForm columns={2} submitLabel={a.addDepartment} errors={t.errors} action={saveDepartmentAction}
                   initial={{ code: "", name_ar: "", name_en: "", kind: "revenue_center" }}
                   fields={[{ name: "code", label: t.customers.code, ltr: true }, { name: "name_ar", label: t.customers.name },
-                    { name: "name_en", label: `${t.customers.name} بالإنجليزية`, ltr: true },
+                    { name: "name_en", label: tr("{0} بالإنجليزية", t.customers.name), ltr: true },
                     { name: "kind", label: t.vouchers.type, options: (["revenue_center", "cost_center", "service_center"] as const).map((k) => ({ id: k, label: a.kinds[k] })) }]} />
               </CardContent>
             )}

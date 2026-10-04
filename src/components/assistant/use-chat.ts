@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import * as React from "react";
 import { getConversationAction } from "@/app/assistant/actions";
@@ -8,12 +9,12 @@ export type ChatMsg = { id: string; role: "user" | "assistant"; content: string;
 export type PageInfo = { path: string; title?: string; text?: string };
 
 export const TOOL_LABEL: Record<string, string> = {
-  system_guide: "يقرأ دليل النظام",
-  hotel_snapshot: "يقرأ حالة الفندق الآن",
-  run_report: "يشغّل التقرير",
-  search_records: "يبحث في السجلات",
-  record_details: "يفتح السجل",
-  audit_trail: "يراجع سجل التدقيق",
+  get system_guide() { return tr("يقرأ دليل النظام"); },
+  get hotel_snapshot() { return tr("يقرأ حالة الفندق الآن"); },
+  get run_report() { return tr("يشغّل التقرير"); },
+  get search_records() { return tr("يبحث في السجلات"); },
+  get record_details() { return tr("يفتح السجل"); },
+  get audit_trail() { return tr("يراجع سجل التدقيق"); },
 };
 
 let seq = 0;
@@ -59,7 +60,7 @@ export function useChat(onSaved?: (c: { id: string; title: string }) => void) {
 
   const run = React.useCallback(async (payload: { question?: string; retry?: boolean }, page?: PageInfo) => {
     setBusy(true);
-    setStatus("يفكر");
+    setStatus(tr("يفكر"));
     const ctrl = new AbortController();
     abort.current = ctrl;
     const append = (text: string, error = false) => setMessages((all) => {
@@ -76,7 +77,7 @@ export function useChat(onSaved?: (c: { id: string; title: string }) => void) {
         body: JSON.stringify({ conversationId: idRef.current ?? undefined, ...payload, page }),
         signal: ctrl.signal,
       });
-      if (!res.ok || !res.body) throw new Error(res.status === 503 ? "المساعد غير مفعّل على الخادم." : "تعذّر الوصول إلى المساعد، حاول مرة أخرى.");
+      if (!res.ok || !res.body) throw new Error(res.status === 503 ? tr("المساعد غير مفعّل على الخادم.") : tr("تعذّر الوصول إلى المساعد، حاول مرة أخرى."));
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -105,15 +106,15 @@ export function useChat(onSaved?: (c: { id: string; title: string }) => void) {
               return [...all.slice(0, -1), { ...last, content: last.content + sep + text }];
             });
           } else if (ev.type === "tool") {
-            setStatus(TOOL_LABEL[ev.name ?? ""] ?? "يقرأ البيانات");
+            setStatus(TOOL_LABEL[ev.name ?? ""] ?? tr("يقرأ البيانات"));
             afterTool = true;
           } else if (ev.type === "error") {
-            append(ev.message ?? "حدث خطأ", true);
+            append(ev.message ?? tr("حدث خطأ"), true);
           }
         }
       }
     } catch (e) {
-      if (!(e instanceof DOMException && e.name === "AbortError")) append(e instanceof Error ? e.message : "حدث خطأ", true);
+      if (!(e instanceof DOMException && e.name === "AbortError")) append(e instanceof Error ? e.message : tr("حدث خطأ"), true);
     } finally {
       setBusy(false);
       setStatus(null);

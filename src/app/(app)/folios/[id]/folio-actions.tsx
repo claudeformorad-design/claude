@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -77,12 +78,12 @@ export function FolioActions(p: FolioActionsProps) {
       setApproval(null);
       const request: ApprovalInput = { kind: "folio_action", payload: { folio_id: p.folioId, action: { ...v, kind } } };
       if (needsApproval) {
-        setApproval({ request, message: "هذه العملية خارج صلاحيتك. أرسلها للمدير ليوافق عليها وتُنفّذ باسمه." });
+        setApproval({ request, message: tr("هذه العملية خارج صلاحيتك. أرسلها للمدير ليوافق عليها وتُنفّذ باسمه.") });
         return;
       }
       const r = await callAction(folioAction(p.folioId, { ...v, kind }));
       if (r.ok) {
-        toast("تم التسجيل على الفوليو");
+        toast(tr("تم التسجيل على الفوليو"));
         reset({ quantity: "1", customer_id: p.defaultCustomerId ?? "" });
         router.refresh();
       } else if (r.error === "approval_required") {
@@ -96,7 +97,7 @@ export function FolioActions(p: FolioActionsProps) {
     start(async () => {
       setError(null);
       const r = await callAction(checkoutAction(p.folioId));
-      if (r.ok) { toast("تمت المغادرة وإصدار الفاتورة"); router.push(`/invoices/${r.data}`); }
+      if (r.ok) { toast(tr("تمت المغادرة وإصدار الفاتورة")); router.push(`/invoices/${r.data}`); }
       else fail(r);
     });
   };
@@ -104,7 +105,7 @@ export function FolioActions(p: FolioActionsProps) {
   const cancel = () =>
     start(async () => {
       const r = await callAction(cancelFolioAction(p.folioId));
-      if (r.ok) { toast("تم إلغاء الفوليو"); router.push("/folios"); }
+      if (r.ok) { toast(tr("تم إلغاء الفوليو")); router.push("/folios"); }
       else fail(r);
     });
 
@@ -145,7 +146,7 @@ export function FolioActions(p: FolioActionsProps) {
                     if (cc?.price) setValue("unit_price", toMoney(cc.price).toFixed());
                   },
                 })}>
-                  <option value="">اختر</option>
+                  <option value="">{tr("اختر")}</option>
                   {p.chargeCodes.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
                 </NativeSelect>
               ), "charge_code_id")}
@@ -154,7 +155,7 @@ export function FolioActions(p: FolioActionsProps) {
               {row(t.common.description, input("description"), "description")}
               {preview && (
                 <p className="text-sm text-muted-foreground md:col-span-4">
-                  {t.folio.taxPreview}: {t.folio.net} <span className="num">{fmt(preview.net)}</span> و{t.folio.tax}{" "}
+                  {t.folio.taxPreview}: {t.folio.net} <span className="num">{fmt(preview.net)}</span>{" "}{tr("و")}{t.folio.tax}{" "}
                   <span className="num">{fmt(preview.taxTotal)}</span> = <strong className="num">{fmt(preview.total)}</strong>
                 </p>
               )}
@@ -189,7 +190,7 @@ export function FolioActions(p: FolioActionsProps) {
             </>
           )}
           <div className="md:col-span-4">
-            <Button type="submit" loading={pending}>{needsApproval ? "طلب موافقة المدير" : t.common.save}</Button>
+            <Button type="submit" loading={pending}>{needsApproval ? tr("طلب موافقة المدير") : t.common.save}</Button>
           </div>
         </form>
       )}

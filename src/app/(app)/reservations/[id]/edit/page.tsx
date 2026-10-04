@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { notFound, redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { requireAppContext } from "@/lib/auth/context";
@@ -22,7 +23,7 @@ export default async function EditReservationPage({ params }: { params: Promise<
 
   return (
     <>
-      <PageHeader title={`تعديل الحجز ${r.confirmation_number}`} />
+      <PageHeader title={tr("تعديل الحجز {0}", r.confirmation_number)} />
       <ReservationForm mode="edit" reservationId={r.id} roomTypes={data.roomTypes.filter((x) => x.mode === r.booking_mode)} rooms={data.roomOptions}
         guests={data.guestOptions} companies={data.companies} today={todayInTimeZone(ctx.hotel.timezone)}
         canOverride={ctx.can(PERMISSIONS.pmsRatesOverride)} canOverbook={ctx.can(PERMISSIONS.pmsOverbook)} errors={t.errors}

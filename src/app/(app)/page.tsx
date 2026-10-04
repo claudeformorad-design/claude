@@ -1,3 +1,5 @@
+import { tr } from "@/i18n/tr";
+import { localName } from "@/lib/local-name";
 import { redirect } from "next/navigation";
 import Link from "@/components/link";
 import { CHART_COLORS } from "@/components/dashboard/chart-colors";
@@ -45,27 +47,27 @@ import { getI18n } from "@/i18n/server";
 
 type Range = "today" | "7d" | "month" | "fy";
 const RANGES: { key: Range; label: string }[] = [
-  { key: "today", label: "اليوم" },
-  { key: "7d", label: "آخر 7 أيام" },
-  { key: "month", label: "هذا الشهر" },
-  { key: "fy", label: "السنة المالية" },
+  { key: "today", get label() { return tr("اليوم"); } },
+  { key: "7d", get label() { return tr("آخر 7 أيام"); } },
+  { key: "month", get label() { return tr("هذا الشهر"); } },
+  { key: "fy", get label() { return tr("السنة المالية"); } },
 ];
 
 const CONTROL_LABELS: Record<LedgerControl, { title: string; sub: string; href: string }> = {
-  guest_ledger: { title: "ذمم النزلاء", sub: "الأستاذ ↔ أرصدة الفوليوهات", href: "/folios?status=open" },
-  guest_deposits: { title: "ودائع النزلاء", sub: "الأستاذ ↔ ودائع الفوليو", href: "/folios" },
-  accounts_receivable: { title: "الذمم المدينة", sub: "الأستاذ ↔ الفواتير − أرصدة العملاء الدائنة", href: "/reports/aging" },
-  accounts_payable: { title: "الذمم الدائنة", sub: "الأستاذ ↔ فواتير الموردين", href: "/reports/aging?kind=payable" },
-  inventory: { title: "المخزون", sub: "الأستاذ ↔ قيمة الأصناف + مفوتر لم يُستلم", href: "/inventory" },
-  trial_balance: { title: "ميزان المراجعة", sub: "مجموع المدين ↔ مجموع الدائن", href: "/reports/trial-balance" },
+  guest_ledger: { get title() { return tr("ذمم النزلاء"); }, get sub() { return tr("الأستاذ ↔ أرصدة الفوليوهات"); }, href: "/folios?status=open" },
+  guest_deposits: { get title() { return tr("ودائع النزلاء"); }, get sub() { return tr("الأستاذ ↔ ودائع الفوليو"); }, href: "/folios" },
+  accounts_receivable: { get title() { return tr("الذمم المدينة"); }, get sub() { return tr("الأستاذ ↔ الفواتير − أرصدة العملاء الدائنة"); }, href: "/reports/aging" },
+  accounts_payable: { get title() { return tr("الذمم الدائنة"); }, get sub() { return tr("الأستاذ ↔ فواتير الموردين"); }, href: "/reports/aging?kind=payable" },
+  inventory: { get title() { return tr("المخزون"); }, get sub() { return tr("الأستاذ ↔ قيمة الأصناف + مفوتر لم يُستلم"); }, href: "/inventory" },
+  trial_balance: { get title() { return tr("ميزان المراجعة"); }, get sub() { return tr("مجموع المدين ↔ مجموع الدائن"); }, href: "/reports/trial-balance" },
 };
 
 const BUCKET_META: Record<AgingBucket, { label: string; color: string }> = {
-  current: { label: "غير مستحقة بعد", color: CHART_COLORS.paid },
-  "1_30": { label: "متأخرة من 1 إلى 30 يومًا", color: CHART_COLORS.overdue[0] },
-  "31_60": { label: "متأخرة من 31 إلى 60 يومًا", color: CHART_COLORS.overdue[1] },
-  "61_90": { label: "متأخرة من 61 إلى 90 يومًا", color: CHART_COLORS.overdue[2] },
-  over_90: { label: "متأخرة أكثر من 90 يومًا", color: CHART_COLORS.overdue[3] },
+  current: { get label() { return tr("غير مستحقة بعد"); }, color: CHART_COLORS.paid },
+  "1_30": { get label() { return tr("متأخرة من 1 إلى 30 يومًا"); }, color: CHART_COLORS.overdue[0] },
+  "31_60": { get label() { return tr("متأخرة من 31 إلى 60 يومًا"); }, color: CHART_COLORS.overdue[1] },
+  "61_90": { get label() { return tr("متأخرة من 61 إلى 90 يومًا"); }, color: CHART_COLORS.overdue[2] },
+  over_90: { get label() { return tr("متأخرة أكثر من 90 يومًا"); }, color: CHART_COLORS.overdue[3] },
 };
 
 
@@ -88,7 +90,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   if (!dashboard) {
     const first = home ?? pages.find((h) => h !== "/");
     if (first) redirect(first);
-    return <EmptyState title="لا توجد صفحات متاحة لحسابك" description="اطلب من مدير النظام منحك صلاحيات العمل." />;
+    return <EmptyState title={tr("لا توجد صفحات متاحة لحسابك")} description={tr("اطلب من مدير النظام منحك صلاحيات العمل.")} />;
   }
   const show = (section: string) => !ctx.ui.dashboard_hidden.includes(section);
   const { supabase, hotel } = ctx;
@@ -187,7 +189,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const totalRooms = hotel.total_rooms ?? 0;
 
   // ---- الأقسام ----
-  const deptName = new Map(departments.map((d) => [d.id, d.name_ar || d.name_en]));
+  const deptName = new Map(departments.map((d) => [d.id, localName(d)]));
   const deptSummary = deptRows?.data ? summarizeProfitability(deptRows.data as never).departments : [];
   const deptLabel = (id: string | null) => (id ? deptName.get(id) ?? "" : t.profitability.unassigned);
   const deptSegments = deptSummary
@@ -214,17 +216,17 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // ---- تنبيهات تحتاج إجراء (حقيقية فقط) ----
   const draftCount = drafts?.count ?? 0;
   const alerts: { title: string; text: string; href: string; tone: "red" | "amber" | "blue" }[] = [];
-  if (period && !period.data) alerts.push({ title: "لا توجد فترة محاسبية لليوم", text: "لن يُقبل ترحيل أي قيد بتاريخ اليوم.", href: "/periods", tone: "red" });
-  else if (period?.data?.status === "closed") alerts.push({ title: "الفترة الحالية مقفلة", text: `${period.data.name}، الترحيل يتطلب صلاحية خاصة.`, href: "/periods", tone: "amber" });
-  if (unreconciled.length > 0) alerts.push({ title: "فرق في المطابقة", text: `${unreconciled.length} من حسابات المراقبة لا تطابق دفاترها.`, href: show("controls") ? "#reconciliation" : "/reports/trial-balance", tone: "red" });
-  if (canFin && cashBalance.isNegative()) alerts.push({ title: "رصيد النقدية سالب", text: "راجع السندات والمدفوعات أو سجّل التمويل.", href: "/reports/daily-cash", tone: "red" });
-  if (canFin && totalRooms <= 0) alerts.push({ title: "عدد الغرف غير محدد", text: "مطلوب لحساب الإشغال وRevPAR.", href: "/settings/hotel", tone: "amber" });
-  if (draftCount > 0) alerts.push({ title: `${draftCount} قيد مسودة`, text: "لا تؤثر على الأرصدة حتى ترحيلها.", href: "/journal?status=draft", tone: "blue" });
+  if (period && !period.data) alerts.push({ title: tr("لا توجد فترة محاسبية لليوم"), text: tr("لن يُقبل ترحيل أي قيد بتاريخ اليوم."), href: "/periods", tone: "red" });
+  else if (period?.data?.status === "closed") alerts.push({ title: tr("الفترة الحالية مقفلة"), text: tr("{0}، الترحيل يتطلب صلاحية خاصة.", period.data.name), href: "/periods", tone: "amber" });
+  if (unreconciled.length > 0) alerts.push({ title: tr("فرق في المطابقة"), text: tr("{0} من حسابات المراقبة لا تطابق دفاترها.", unreconciled.length), href: show("controls") ? "#reconciliation" : "/reports/trial-balance", tone: "red" });
+  if (canFin && cashBalance.isNegative()) alerts.push({ title: tr("رصيد النقدية سالب"), text: tr("راجع السندات والمدفوعات أو سجّل التمويل."), href: "/reports/daily-cash", tone: "red" });
+  if (canFin && totalRooms <= 0) alerts.push({ title: tr("عدد الغرف غير محدد"), text: tr("مطلوب لحساب الإشغال وRevPAR."), href: "/settings/hotel", tone: "amber" });
+  if (draftCount > 0) alerts.push({ title: tr("{0} قيد مسودة", draftCount), text: tr("لا تؤثر على الأرصدة حتى ترحيلها."), href: "/journal?status=draft", tone: "blue" });
 
   const invoiceSegments = [
-    { label: "مصدرة", value: invIssued?.count ?? 0, color: CHART_COLORS.pending },
-    { label: "مدفوعة جزئيًا", value: invPartial?.count ?? 0, color: CHART_COLORS.partial },
-    { label: "مدفوعة", value: invPaid?.count ?? 0, color: CHART_COLORS.paid },
+    { label: tr("مصدرة"), value: invIssued?.count ?? 0, color: CHART_COLORS.pending },
+    { label: tr("مدفوعة جزئيًا"), value: invPartial?.count ?? 0, color: CHART_COLORS.partial },
+    { label: tr("مدفوعة"), value: invPaid?.count ?? 0, color: CHART_COLORS.paid },
   ];
   const invoiceTotal = invoiceSegments.reduce((s, x) => s + x.value, 0);
 
@@ -232,11 +234,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   const deptTotal = deptSummary.filter((d) => d.revenue.gt(0)).reduce((a2, d) => a2.plus(d.revenue), ZERO);
   const BALANCE_ROWS: { control: LedgerControl; label: string }[] = [
-    { control: "guest_ledger", label: "ذمم النزلاء المقيمين" },
-    { control: "guest_deposits", label: "ودائع النزلاء" },
-    { control: "accounts_receivable", label: "الذمم المدينة" },
-    { control: "accounts_payable", label: "الذمم الدائنة" },
-    { control: "inventory", label: "المخزون" },
+    { control: "guest_ledger", label: tr("ذمم النزلاء المقيمين") },
+    { control: "guest_deposits", label: tr("ودائع النزلاء") },
+    { control: "accounts_receivable", label: tr("الذمم المدينة") },
+    { control: "accounts_payable", label: tr("الذمم الدائنة") },
+    { control: "inventory", label: tr("المخزون") },
   ];
 
   return (
@@ -252,7 +254,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <section className="surface px-6 py-2">
           {alerts.map((a) => (
             <Link key={a.title} href={a.href} className="group flex items-center gap-3 py-2.5">
-              <Badge variant={a.tone === "red" ? "destructive" : a.tone === "amber" ? "warning" : "info"}>{a.tone === "red" ? "عاجل" : a.tone === "amber" ? "تنبيه" : "للعلم"}</Badge>
+              <Badge variant={a.tone === "red" ? "destructive" : a.tone === "amber" ? "warning" : "info"}>{a.tone === "red" ? tr("عاجل") : a.tone === "amber" ? tr("تنبيه") : tr("للعلم")}</Badge>
               <span className="text-[16.5px] font-medium text-ink transition-colors group-hover:text-action">{a.title}</span>
               <span className="hidden text-[16.5px] text-muted-foreground sm:inline">{a.text}</span>
             </Link>
@@ -267,26 +269,26 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           {/* شريط الأرقام الرئيسية: بطاقة واحدة مقسّمة */}
           {(show("kpis") || show("cash")) && <section className={cn("stat-grid grid grid-cols-2 gap-3 sm:gap-5", show("kpis") && show("cash") ? "xl:grid-cols-4" : show("kpis") ? "xl:grid-cols-3" : "xl:grid-cols-4")}>
             {show("kpis") && <>
-            <Kpi icon={TrendingUp} label="الإيرادات" sub={rangeLabel} value={revenue} currency={currency} href="/reports/income-statement"
+            <Kpi icon={TrendingUp} label={tr("الإيرادات")} sub={rangeLabel} value={revenue} currency={currency} href="/reports/income-statement"
               spark={{ values: chartData.map((d) => d.revenue), months, color: CHART_COLORS.revenue }} />
-            <Kpi icon={TrendingDown} label="المصروفات" sub={rangeLabel} value={expenses} currency={currency} href="/reports/income-statement"
+            <Kpi icon={TrendingDown} label={tr("المصروفات")} sub={rangeLabel} value={expenses} currency={currency} href="/reports/income-statement"
               spark={{ values: chartData.map((d) => d.expenses), months, color: CHART_COLORS.expenses }} />
-            <Kpi icon={Scale} label="صافي النتيجة" sub={rangeLabel} value={net} currency={currency} tone={net.isNegative() ? "neg" : undefined}
+            <Kpi icon={Scale} label={tr("صافي النتيجة")} sub={rangeLabel} value={net} currency={currency} tone={net.isNegative() ? "neg" : undefined}
               href={canProfit ? "/reports/profitability" : "/reports/income-statement"}
               spark={{ values: chartData.map((d) => d.revenue - d.expenses), months, color: CHART_COLORS.net }} />
             </>}
-            {show("cash") && <Kpi icon={Wallet} label="النقدية والبنوك" sub="الرصيد الحالي" value={cashBalance} currency={currency} tone={cashBalance.isNegative() ? "neg" : undefined} href="/reports/daily-cash" />}
+            {show("cash") && <Kpi icon={Wallet} label={tr("النقدية والبنوك")} sub={tr("الرصيد الحالي")} value={cashBalance} currency={currency} tone={cashBalance.isNegative() ? "neg" : undefined} href="/reports/daily-cash" />}
           </section>}
 
           {/* الأداء + ما يحتاج انتباهك */}
           {(show("chart") || show("recent")) && <div className="grid gap-5 xl:grid-cols-12">
-            {show("chart") && <Card2 className={show("recent") ? "xl:col-span-8" : "xl:col-span-12"} title="الإيرادات والمصروفات" note="آخر 6 أشهر" currency={currency} link={{ href: "/reports/income-statement", label: t.nav.incomeStatement }}>
-              <IncomeExpenseChart data={chartData} labels={{ revenue: r.revenue, expenses: r.expenses, net: "صافي النتيجة" }} />
+            {show("chart") && <Card2 className={show("recent") ? "xl:col-span-8" : "xl:col-span-12"} title={tr("الإيرادات والمصروفات")} note={tr("آخر 6 أشهر")} currency={currency} link={{ href: "/reports/income-statement", label: t.nav.incomeStatement }}>
+              <IncomeExpenseChart data={chartData} labels={{ revenue: r.revenue, expenses: r.expenses, net: tr("صافي النتيجة") }} />
             </Card2>}
 
-            {show("recent") && <Card2 className={show("chart") ? "xl:col-span-4" : "xl:col-span-12"} title="آخر القيود المرحّلة" currency={currency} link={ctx.can(PERMISSIONS.journalView) ? { href: "/journal", label: t.nav.journal } : undefined}>
+            {show("recent") && <Card2 className={show("chart") ? "xl:col-span-4" : "xl:col-span-12"} title={tr("آخر القيود المرحّلة")} currency={currency} link={ctx.can(PERMISSIONS.journalView) ? { href: "/journal", label: t.nav.journal } : undefined}>
               {!ctx.can(PERMISSIONS.journalView) ? <NoAccess text={t.errors.permission_denied} /> : recentEntries.length === 0 ? (
-                <p className="py-6 text-[16.5px] text-muted-foreground">لم يُرحَّل أي قيد بعد.</p>
+                <p className="py-6 text-[16.5px] text-muted-foreground">{tr("لم يُرحَّل أي قيد بعد.")}</p>
               ) : (
                 <RecentEntries today={today} sources={t.journal.sources}
                   entries={recentEntries.map((e) => ({ ...e, total: recentTotal.get(e.id) ?? "0" }))} />
@@ -296,22 +298,22 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
           {/* الفواتير والذمم */}
           {show("aging") && <div className="grid gap-5 md:grid-cols-2">
-            <Card2 title="حالة الفواتير" note={canInvoices ? `${invoiceTotal} فاتورة` : undefined} link={canInvoices ? { href: "/invoices", label: t.nav.invoices } : undefined}>
+            <Card2 title={tr("حالة الفواتير")} note={canInvoices ? tr("{0} فاتورة", invoiceTotal) : undefined} link={canInvoices ? { href: "/invoices", label: t.nav.invoices } : undefined}>
               {canInvoices ? (
-                <DonutChart segments={invoiceSegments} centerTitle="الفواتير" centerValue={String(invoiceTotal)}
-                  emptyTitle="لم تُصدر أي فاتورة بعد" emptyHint="تُصدر الفواتير عند مغادرة النزيل أو كفاتورة آجلة لعميل." />
+                <DonutChart segments={invoiceSegments} centerTitle={tr("الفواتير")} centerValue={String(invoiceTotal)}
+                  emptyTitle={tr("لم تُصدر أي فاتورة بعد")} emptyHint={tr("تُصدر الفواتير عند مغادرة النزيل أو كفاتورة آجلة لعميل.")} />
               ) : <NoAccess text={t.errors.permission_denied} />}
             </Card2>
-            <Card2 title="أعمار الذمم المدينة" note={canAging ? formatAmount(agingTotal) : undefined} currency={currency} link={canAging ? { href: "/reports/aging", label: t.nav.aging } : undefined}>
+            <Card2 title={tr("أعمار الذمم المدينة")} note={canAging ? formatAmount(agingTotal) : undefined} currency={currency} link={canAging ? { href: "/reports/aging", label: t.nav.aging } : undefined}>
               {canAging ? (
-                <StripedBars rows={agingRows} emptyTitle="لا توجد ذمم مدينة قائمة" emptyHint="تظهر هنا الفواتير الآجلة غير المسددة حسب تاريخ استحقاقها." />
+                <StripedBars rows={agingRows} emptyTitle={tr("لا توجد ذمم مدينة قائمة")} emptyHint={tr("تظهر هنا الفواتير الآجلة غير المسددة حسب تاريخ استحقاقها.")} />
               ) : <NoAccess text={t.errors.permission_denied} />}
             </Card2>
           </div>}
 
           {/* الأرصدة والمطابقة + الأقسام والغرف */}
           {(show("controls") || show("profit") || show("rooms")) && <div className="grid gap-5 xl:grid-cols-5">
-            {show("controls") && <Card2 className={show("profit") || show("rooms") ? "xl:col-span-3 xl:self-start" : "xl:col-span-5"} title="الأرصدة ومطابقتها مع الأستاذ" currency={currency} note={unreconciled.length ? `${unreconciled.length} فرق` : "مطابقة"} noteTone={unreconciled.length ? "neg" : "pos"}>
+            {show("controls") && <Card2 className={show("profit") || show("rooms") ? "xl:col-span-3 xl:self-start" : "xl:col-span-5"} title={tr("الأرصدة ومطابقتها مع الأستاذ")} currency={currency} note={unreconciled.length ? tr("{0} فرق", unreconciled.length) : tr("مطابقة")} noteTone={unreconciled.length ? "neg" : "pos"}>
               <ul className="mb-3 divide-y divide-line text-[16.5px]" id="reconciliation">
                 {BALANCE_ROWS.map((b) => {
                   const row = reconRows.find((x) => x.control === b.control);
@@ -321,13 +323,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                       <Link href={CONTROL_LABELS[b.control].href} className="min-w-0 flex-1 truncate text-ink hover:text-action">{b.label}</Link>
                       <Money value={bal(b.control)} locale="ar" className="font-semibold text-ink" />
                       <span className={cn("w-24 text-end", ok ? "text-success" : "text-urgent")}>
-                        {ok ? "مطابق" : <>فرق <Money value={row!.diff} locale="ar" /></>}
+                        {ok ? tr("مطابق") : <>{tr("فرق")}{" "}<Money value={row!.diff} locale="ar" /></>}
                       </span>
                     </li>
                   );
                 })}
                 <li className="flex items-center gap-4 py-3">
-                  <Link href="/journal?status=draft" className="min-w-0 flex-1 truncate text-ink hover:text-action">قيود مسودة غير مرحّلة</Link>
+                  <Link href="/journal?status=draft" className="min-w-0 flex-1 truncate text-ink hover:text-action">{tr("قيود مسودة غير مرحّلة")}</Link>
                   <span className="num font-semibold text-ink">{draftCount}</span>
                   <span className="w-24" />
                 </li>
@@ -335,40 +337,37 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               {(() => {
                 const tb = reconRows.find((x) => x.control === "trial_balance");
                 return tb ? (
-                  <p className="mt-auto border-t border-line pt-3 text-[15.5px] text-muted-foreground">
-                    ميزان المراجعة: مدين <span className="num text-ink"><Money value={tb.gl_balance} locale="ar" /></span>، دائن <span className="num text-ink"><Money value={tb.subledger_balance} locale="ar" /></span>
-                    <span className={tb.diff.isZero() ? "text-success" : "text-urgent"}>، {tb.diff.isZero() ? "متوازن" : "غير متوازن"}</span>
+                  <p className="mt-auto border-t border-line pt-3 text-[15.5px] text-muted-foreground">{tr("ميزان المراجعة: مدين")}{" "}<span className="num text-ink"><Money value={tb.gl_balance} locale="ar" /></span>{tr("، دائن")}{" "}<span className="num text-ink"><Money value={tb.subledger_balance} locale="ar" /></span>
+                    <span className={tb.diff.isZero() ? "text-success" : "text-urgent"}>{tr("،")}{" "}{tb.diff.isZero() ? tr("متوازن") : tr("غير متوازن")}</span>
                   </p>
                 ) : null;
               })()}
             </Card2>}
             {(show("profit") || show("rooms")) && <div className={cn("flex min-w-0 flex-col gap-5", show("controls") ? "xl:col-span-2" : "xl:col-span-5")}>
-              {show("profit") && <Card2 title="الإيرادات حسب القسم" note={rangeLabel} currency={currency} link={canProfit ? { href: "/reports/profitability", label: t.nav.profitability } : undefined}>
+              {show("profit") && <Card2 title={tr("الإيرادات حسب القسم")} note={rangeLabel} currency={currency} link={canProfit ? { href: "/reports/profitability", label: t.nav.profitability } : undefined}>
                 {!canProfit ? <NoAccess text={t.errors.permission_denied} /> : deptSegments.length === 0 ? (
-                  <p className="py-6 text-[16.5px] text-muted-foreground">لا توجد إيرادات مرحّلة في هذه الفترة.</p>
+                  <p className="py-6 text-[16.5px] text-muted-foreground">{tr("لا توجد إيرادات مرحّلة في هذه الفترة.")}</p>
                 ) : (
                   <>
                     <StripedBars rows={deptSegments.map((d) => ({ label: d.label, count: 0, amount: d.value, amountText: d.display, color: CHART_COLORS.revenue }))} emptyTitle="" emptyHint="" />
-                    <p className="mt-4 border-t border-line pt-3 text-[15.5px] text-muted-foreground">
-                      المجموع <span className="num text-ink">{formatAmount(deptTotal)}</span> من إيراد الفترة <span className="num text-ink">{formatAmount(revenue)}</span>
+                    <p className="mt-4 border-t border-line pt-3 text-[15.5px] text-muted-foreground">{tr("المجموع")}{" "}<span className="num text-ink">{formatAmount(deptTotal)}</span>{" "}{tr("من إيراد الفترة")}{" "}<span className="num text-ink">{formatAmount(revenue)}</span>
                       {negativeDepts.length > 0 && (
-                        <span className="block text-amber">
-                          تسويات صافية سالبة: {negativeDepts.map((d) => `${deptLabel(d.departmentId)} ${formatAmount(d.revenue)}`).join("، ")}
+                        <span className="block text-amber">{tr("تسويات صافية سالبة:")}{" "}{negativeDepts.map((d) => `${deptLabel(d.departmentId)} ${formatAmount(d.revenue)}`).join(tr("، "))}
                         </span>
                       )}
                     </p>
                   </>
                 )}
               </Card2>}
-              {show("rooms") && <Card2 className="flex flex-1 flex-col" title="الغرف" note={rangeLabel} currency={currency} link={{ href: "/reports/rooms", label: t.nav.roomStats }}>
+              {show("rooms") && <Card2 className="flex flex-1 flex-col" title={tr("الغرف")} note={rangeLabel} currency={currency} link={{ href: "/reports/rooms", label: t.nav.roomStats }}>
                 <dl className="mb-5 grid grid-cols-2 gap-x-6 gap-y-5">
-                  <Figure label="نسبة الإشغال" value={pct(rangeRooms.occupancy)} />
-                  <Figure label="متوسط سعر الغرفة" value={rangeRooms.adr ? formatAmount(rangeRooms.adr) : ""} />
+                  <Figure label={tr("نسبة الإشغال")} value={pct(rangeRooms.occupancy)} />
+                  <Figure label={tr("متوسط سعر الغرفة")} value={rangeRooms.adr ? formatAmount(rangeRooms.adr) : ""} />
                   <Figure label="RevPAR" value={rangeRooms.revpar ? formatAmount(rangeRooms.revpar) : ""} />
-                  <Figure label="الليالي المباعة" value={`${rangeRooms.roomNightsSold.toString()} / ${rangeRooms.roomNightsAvailable.toString()}`} />
+                  <Figure label={tr("الليالي المباعة")} value={`${rangeRooms.roomNightsSold.toString()} / ${rangeRooms.roomNightsAvailable.toString()}`} />
                 </dl>
                 <p className="mt-auto border-t border-line pt-3 text-[15.5px] text-muted-foreground">
-                  {totalRooms > 0 ? `${totalRooms} غرفة متاحة للبيع، و${openFolios?.count ?? 0} فوليو مفتوح` : "حدّد عدد الغرف في إعدادات الفندق لحساب الإشغال."}
+                  {totalRooms > 0 ? tr("{0} غرفة متاحة للبيع، و{1} فوليو مفتوح", totalRooms, openFolios?.count ?? 0) : tr("حدّد عدد الغرف في إعدادات الفندق لحساب الإشغال.")}
                 </p>
               </Card2>}
             </div>}
@@ -411,8 +410,7 @@ function Card2({
       </header>
       <div className="min-w-0 flex-1">{children}</div>
       {link && (
-        <Link href={link.href} className="mt-5 inline-flex w-fit items-center rounded-md text-[15.5px] text-slate-500 transition-colors hover:text-ink">
-          عرض {link.label}
+        <Link href={link.href} className="mt-5 inline-flex w-fit items-center rounded-md text-[15.5px] text-slate-500 transition-colors hover:text-ink">{tr("عرض")}{" "}{link.label}
         </Link>
       )}
     </section>
@@ -445,7 +443,7 @@ function Kpi({
       </p>
       <p className="mt-1 truncate text-[16.5px] text-slate-600">{sub}</p>
       <div className="mt-3">
-        {spark ? <Sparkline values={spark.values} months={spark.months} color={spark.color} /> : <p className="flex h-10 items-end text-[15px] text-slate-500">رصيد الصندوق والبنوك في الأستاذ</p>}
+        {spark ? <Sparkline values={spark.values} months={spark.months} color={spark.color} /> : <p className="flex h-10 items-end text-[15px] text-slate-500">{tr("رصيد الصندوق والبنوك في الأستاذ")}</p>}
       </div>
     </Link>
   );

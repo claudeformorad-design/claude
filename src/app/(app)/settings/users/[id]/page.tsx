@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { notFound, redirect } from "next/navigation";
 import Link from "@/components/link";
 import { ChevronRight } from "lucide-react";
@@ -31,21 +32,21 @@ export default async function MemberAccessPage({ params }: { params: Promise<{ i
   const member = (members.data ?? []).find((m) => m.user_id === id);
   const local = !isSupabaseConfigured();
   const username = local ? (await usernamesOf([id])).get(id) : member?.email;
-  const name = member?.full_name || username || "موظف";
+  const name = member?.full_name || username || tr("موظف");
   // لا يدير المدير من يملك صلاحيات ليست عنده
   const above = a.effective.filter((c) => !ctx.permissions.has(c));
 
   return (
     <>
-      <Link href="/settings/users" className="mb-3 inline-flex items-center gap-1 text-[15.5px] text-slate-500 hover:text-ink"><ChevronRight className="size-4" />المستخدمون والصلاحيات</Link>
+      <Link href="/settings/users" className="mb-3 inline-flex items-center gap-1 text-[15.5px] text-slate-500 hover:text-ink"><ChevronRight className="size-4" />{tr("المستخدمون والصلاحيات")}</Link>
       <PageHeader title={name} />
       {username && <p className="-mt-5 mb-6 text-[16px] text-slate-500" dir="ltr">{username}</p>}
       {above.length > 0 ? (
-        <Alert variant="warning">هذا الموظف يملك صلاحيات ليست عندك، فلا يمكنك تعديل حسابه. يعدّله مدير يملك صلاحياته كلها.</Alert>
+        <Alert variant="warning">{tr("هذا الموظف يملك صلاحيات ليست عندك، فلا يمكنك تعديل حسابه. يعدّله مدير يملك صلاحياته كلها.")}</Alert>
       ) : (
         <Card><CardContent className="pt-6">
           <MemberAccessEditor userId={id} name={name} local={local && (await getAuthMode()) === "multi"}
-            roles={data.roles.map((r) => ({ id: r.id, label: r.name_ar }))} permissions={data.permissions} rolePermissions={data.rolePermissions}
+            roles={data.roles.map((r) => ({ id: r.id, label: r.label }))} permissions={data.permissions} rolePermissions={data.rolePermissions}
             homeOptions={data.homeOptions}
             initial={{ role_ids: a.role_ids, grants: a.grants, denies: a.denies, home_path: a.home_path, limits: a.limits ?? {}, is_active: a.is_active }} />
         </CardContent></Card>

@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import { ExportButtons } from "@/components/reports/export-buttons";
 import { PageHeader } from "@/components/layout/page-header";
@@ -62,11 +63,11 @@ export default async function TrialBalancePage({
       </form>
 
       <StatGrid>
-        <Stat currency={ctx.hotel.base_currency} icon={Plus} tone="teal" label="إجمالي المدين الختامي" value={<Money value={tb.totals.closingDebit} locale={locale} />} />
-        <Stat currency={ctx.hotel.base_currency} icon={Minus} tone="clay" label="إجمالي الدائن الختامي" value={<Money value={tb.totals.closingCredit} locale={locale} />} />
-        <Stat icon={ListChecks} tone="neutral" label="حسابات بحركة" value={<span className="num">{tb.rows.length}</span>} />
-        <Stat icon={tb.isBalanced ? CheckCircle2 : TriangleAlert} tone={tb.isBalanced ? "ink" : "clay"} label="حالة الميزان"
-          value={tb.isBalanced ? "متوازن" : "غير متوازن"} valueClassName={tb.isBalanced ? "text-success" : "text-urgent"}
+        <Stat currency={ctx.hotel.base_currency} icon={Plus} tone="teal" label={tr("إجمالي المدين الختامي")} value={<Money value={tb.totals.closingDebit} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Minus} tone="clay" label={tr("إجمالي الدائن الختامي")} value={<Money value={tb.totals.closingCredit} locale={locale} />} />
+        <Stat icon={ListChecks} tone="neutral" label={tr("حسابات بحركة")} value={<span className="num">{tb.rows.length}</span>} />
+        <Stat icon={tb.isBalanced ? CheckCircle2 : TriangleAlert} tone={tb.isBalanced ? "ink" : "clay"} label={tr("حالة الميزان")}
+          value={tb.isBalanced ? tr("متوازن") : tr("غير متوازن")} valueClassName={tb.isBalanced ? "text-success" : "text-urgent"}
           hint={tb.isBalanced ? t.trialBalance.balancedNote : t.trialBalance.unbalancedNote} />
       </StatGrid>
 

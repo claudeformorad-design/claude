@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import type { Field } from "../_assets/simple-form";
 import type { HrEmployeeRow } from "@/lib/supabase/database.types";
 import { CONTRACT_TYPES } from "@/lib/hr/labels";
@@ -7,51 +8,51 @@ type Option = { id: string; label: string };
 /** نموذج الموظف: البيانات الوظيفية والشخصية والعقد والراتب الأساسي */
 export function employeeFields(departments: Option[], shifts: Option[]): Field[] {
   return [
-    { name: "full_name", label: "الاسم الكامل" },
-    { name: "code", label: "الرمز، ويُولَّد تلقائيًا إن تُرك فارغًا", ltr: true },
-    { name: "job_title", label: "المسمى الوظيفي" },
-    { name: "department_id", label: "القسم", options: departments },
-    { name: "hire_date", label: "تاريخ التعيين", type: "date" },
-    { name: "basic_salary", label: "الراتب الأساسي الشهري", type: "number" },
-    { name: "contract_type", label: "نوع العقد", options: Object.entries(CONTRACT_TYPES).map(([id, label]) => ({ id, label })) },
-    { name: "contract_end", label: "نهاية العقد", type: "date" },
-    { name: "shift_id", label: "الوردية الافتراضية", options: shifts, optional: true },
-    { name: "phone", label: "الجوال", ltr: true },
-    { name: "nationality", label: "الجنسية" },
-    { name: "id_number", label: "رقم الهوية أو الإقامة", ltr: true },
-    { name: "id_expiry", label: "انتهاء الهوية", type: "date" },
-    { name: "birth_date", label: "تاريخ الميلاد", type: "date" },
-    { name: "email", label: "البريد الإلكتروني", ltr: true },
-    { name: "notes", label: "ملاحظات" },
+    { name: "full_name", label: tr("الاسم الكامل") },
+    { name: "code", label: tr("الرمز، ويُولَّد تلقائيًا إن تُرك فارغًا"), ltr: true },
+    { name: "job_title", label: tr("المسمى الوظيفي") },
+    { name: "department_id", label: tr("القسم"), options: departments },
+    { name: "hire_date", label: tr("تاريخ التعيين"), type: "date" },
+    { name: "basic_salary", label: tr("الراتب الأساسي الشهري"), type: "number" },
+    { name: "contract_type", label: tr("نوع العقد"), options: Object.entries(CONTRACT_TYPES).map(([id, label]) => ({ id, label })) },
+    { name: "contract_end", label: tr("نهاية العقد"), type: "date" },
+    { name: "shift_id", label: tr("الوردية الافتراضية"), options: shifts, optional: true },
+    { name: "phone", label: tr("الجوال"), ltr: true },
+    { name: "nationality", label: tr("الجنسية") },
+    { name: "id_number", label: tr("رقم الهوية أو الإقامة"), ltr: true },
+    { name: "id_expiry", label: tr("انتهاء الهوية"), type: "date" },
+    { name: "birth_date", label: tr("تاريخ الميلاد"), type: "date" },
+    { name: "email", label: tr("البريد الإلكتروني"), ltr: true },
+    { name: "notes", label: tr("ملاحظات") },
   ];
 }
 
-const who = (employees?: Option[]): Field[] => (employees ? [{ name: "employee_id", label: "الموظف", options: employees }] : []);
+const who = (employees?: Option[]): Field[] => (employees ? [{ name: "employee_id", label: tr("الموظف"), options: employees }] : []);
 
 export const leaveFields = (types: Option[], employees?: Option[]): Field[] => [
   ...who(employees),
-  { name: "leave_type_id", label: "نوع الإجازة", options: types },
-  { name: "start_date", label: "من", type: "date" },
-  { name: "end_date", label: "إلى", type: "date" },
-  { name: "reason", label: "السبب أو الملاحظة" },
-  { name: "approve", label: "اعتمادها مباشرة", checkbox: true },
+  { name: "leave_type_id", label: tr("نوع الإجازة"), options: types },
+  { name: "start_date", label: tr("من"), type: "date" },
+  { name: "end_date", label: tr("إلى"), type: "date" },
+  { name: "reason", label: tr("السبب أو الملاحظة") },
+  { name: "approve", label: tr("اعتمادها مباشرة"), checkbox: true },
 ];
 
 export const advanceFields = (methods: Option[], employees?: Option[]): Field[] => [
   ...who(employees),
-  { name: "advance_date", label: "تاريخ الصرف", type: "date" },
-  { name: "amount", label: "المبلغ", type: "number" },
-  { name: "installments", label: "عدد الأقساط الشهرية", type: "number" },
-  { name: "payment_method_id", label: "يُصرف من", options: methods },
-  { name: "notes", label: "ملاحظات" },
+  { name: "advance_date", label: tr("تاريخ الصرف"), type: "date" },
+  { name: "amount", label: tr("المبلغ"), type: "number" },
+  { name: "installments", label: tr("عدد الأقساط الشهرية"), type: "number" },
+  { name: "payment_method_id", label: tr("يُصرف من"), options: methods },
+  { name: "notes", label: tr("ملاحظات") },
 ];
 
 export const penaltyFields = (employees?: Option[]): Field[] => [
   ...who(employees),
-  { name: "penalty_date", label: "التاريخ", type: "date" },
-  { name: "amount", label: "مبلغ الخصم", type: "number" },
-  { name: "reason", label: "السبب" },
-  { name: "approve", label: "اعتماده مباشرة", checkbox: true },
+  { name: "penalty_date", label: tr("التاريخ"), type: "date" },
+  { name: "amount", label: tr("مبلغ الخصم"), type: "number" },
+  { name: "reason", label: tr("السبب") },
+  { name: "approve", label: tr("اعتماده مباشرة"), checkbox: true },
 ];
 
 export function employeeInitial(e?: HrEmployeeRow, defaults: { department_id?: string; today?: string } = {}): Record<string, string> {

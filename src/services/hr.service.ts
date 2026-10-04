@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import "server-only";
 import type { SupabaseServerClient } from "@/lib/supabase/server";
 import type {
@@ -32,7 +33,7 @@ export type SettlementQuote = {
   leave_amount: number; advances_open: number; advances_recovered: number; net: number; advances_left: number;
 };
 
-const EMP_EMBED = "*, department:departments(code, name_ar), shift:hr_shifts(name)";
+const EMP_EMBED = "*, department:departments(code, name_ar, name_en), shift:hr_shifts(name)";
 const WHO = "employee:hr_employees(full_name, code)";
 
 export async function getHrSettings(supabase: SupabaseServerClient, hotelId: string): Promise<HrSettingsRow> {
@@ -41,22 +42,26 @@ export async function getHrSettings(supabase: SupabaseServerClient, hotelId: str
   return data as HrSettingsRow;
 }
 
+/** أسماء البنود الافتراضية المزروعة بالعربية تظهر مترجمة في الواجهة الإنجليزية؛ ما يكتبه المستخدم يبقى كما هو */
+const seedName = <T extends { name: string }>(r: T): T => ({ ...r, name: tr(r.name) });
+const leaveTypeName = <T extends { leave_type: { name: string } | null }>(l: T): T => (l.leave_type ? { ...l, leave_type: { ...l.leave_type, name: tr(l.leave_type.name) } } : l);
+
 export async function listLeaveTypes(supabase: SupabaseServerClient, hotelId: string): Promise<HrLeaveTypeRow[]> {
   const { data, error } = await supabase.from("hr_leave_types").select("*").eq("hotel_id", hotelId).order("sort_order").order("name");
   raise(error);
-  return (data ?? []) as HrLeaveTypeRow[];
+  return ((data ?? []) as HrLeaveTypeRow[]).map(seedName);
 }
 
 export async function listPayComponents(supabase: SupabaseServerClient, hotelId: string): Promise<HrPayComponentRow[]> {
   const { data, error } = await supabase.from("hr_pay_components").select("*").eq("hotel_id", hotelId).order("kind").order("sort_order").order("name");
   raise(error);
-  return (data ?? []) as HrPayComponentRow[];
+  return ((data ?? []) as HrPayComponentRow[]).map(seedName);
 }
 
 export async function listShifts(supabase: SupabaseServerClient, hotelId: string): Promise<HrShiftRow[]> {
   const { data, error } = await supabase.from("hr_shifts").select("*").eq("hotel_id", hotelId).order("start_time");
   raise(error);
-  return (data ?? []) as HrShiftRow[];
+  return ((data ?? []) as HrShiftRow[]).map(seedName);
 }
 
 export async function listEmployees(supabase: SupabaseServerClient, hotelId: string, opts: { includeTerminated?: boolean } = {}): Promise<EmployeeListItem[]> {
@@ -87,7 +92,7 @@ export async function getEmployee(supabase: SupabaseServerClient, hotelId: strin
     employee: data as unknown as EmployeeListItem,
     components: components.filter((c) => c.is_active).map((c) => ({ ...c, override: value.get(c.id) ?? null })),
     balances: (balances.data ?? []) as LeaveBalance[],
-    leaves: (leaves.data ?? []) as unknown as LeaveListItem[],
+    leaves: ((leaves.data ?? []) as unknown as LeaveListItem[]).map(leaveTypeName),
     advances: (advances.data ?? []) as HrAdvanceRow[],
     penalties: (penalties.data ?? []) as HrPenaltyRow[],
     settlement: (settlement.data as HrSettlementRow | null) ?? null,
@@ -104,7 +109,7 @@ export async function attendanceOn(supabase: SupabaseServerClient, hotelId: stri
   for (const r of [att, leaves, roster]) raise(r.error);
   return {
     attendance: (att.data ?? []) as HrAttendanceRow[],
-    onLeave: new Map(((leaves.data ?? []) as unknown as { employee_id: string; leave_type: { name: string } | null }[]).map((l) => [l.employee_id, l.leave_type?.name ?? "إجازة"])),
+    onLeave: new Map(((leaves.data ?? []) as unknown as { employee_id: string; leave_type: { name: string } | null }[]).map((l) => [l.employee_id, l.leave_type?.name ? tr(l.leave_type.name) : tr("إجازة")])),
     roster: new Map(((roster.data ?? []) as HrRosterRow[]).map((r) => [r.employee_id, r.shift_id])),
   };
 }
@@ -120,7 +125,7 @@ export async function listLeaves(supabase: SupabaseServerClient, hotelId: string
   if (status) q = q.eq("status", status);
   const { data, error } = await q.order("start_date", { ascending: false }).limit(300);
   raise(error);
-  return (data ?? []) as unknown as LeaveListItem[];
+  return ((data ?? []) as unknown as LeaveListItem[]).map(leaveTypeName);
 }
 
 export async function listAdvances(supabase: SupabaseServerClient, hotelId: string): Promise<AdvanceListItem[]> {

@@ -1,3 +1,5 @@
+import { localNameOf } from "@/lib/local-name";
+import { tr } from "@/i18n/tr";
 import Link from "@/components/link";
 import { CalendarRange, Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -64,7 +66,7 @@ export default async function TapeChartPage({ searchParams }: { searchParams: Pr
     const to = r.booking_mode === "hourly" ? addDays(r.arrival_date, 1) : r.departure_date > end ? end : r.departure_date;
     const st = RESERVATION_STATUS[r.status];
     return (
-      <Link href={`/reservations/${r.id}`} title={`${r.confirmation_number}، ${r.guest?.full_name ?? ""}، ${st.label}`}
+      <Link href={`/reservations/${r.id}`} title={tr("{0}، {1}، {2}", r.confirmation_number, r.guest?.full_name ?? "", st.label)}
         style={{ gridColumn: `${col(from)} / ${col(to)}`, gridRow: 1 }}
         className={cn("z-[1] m-1 flex min-w-0 items-center gap-1.5 overflow-hidden rounded-md border px-2 text-[14px] font-medium transition-[filter] hover:brightness-95",
           BAR[r.status] ?? BAR.confirmed, r.arrival_date < start && "rounded-s-none", r.departure_date > end && r.booking_mode === "nightly" && "rounded-e-none")}>
@@ -77,16 +79,16 @@ export default async function TapeChartPage({ searchParams }: { searchParams: Pr
     <>
       <PageHeader
         title={t.nav.tapeChart}
-        actions={canCreate && <Button asChild><Link href="/reservations/new"><Plus />حجز جديد</Link></Button>}
+        actions={canCreate && <Button asChild><Link href="/reservations/new"><Plus />{tr("حجز جديد")}</Link></Button>}
       />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Button asChild variant="outline" size="sm"><Link href={nav(addDays(start, -span))}>السابق</Link></Button>
-          <Button asChild variant="outline" size="sm"><Link href={nav(addDays(today, -1))}>اليوم</Link></Button>
-          <Button asChild variant="outline" size="sm"><Link href={nav(addDays(start, span))}>التالي</Link></Button>
-          <span className="ms-2 text-[16px] font-medium text-ink">من {dayLabel(start, { day: "numeric", month: "long" })} إلى {dayLabel(addDays(end, -1), { day: "numeric", month: "long", year: "numeric" })}</span>
+          <Button asChild variant="outline" size="sm"><Link href={nav(addDays(start, -span))}>{tr("السابق")}</Link></Button>
+          <Button asChild variant="outline" size="sm"><Link href={nav(addDays(today, -1))}>{tr("اليوم")}</Link></Button>
+          <Button asChild variant="outline" size="sm"><Link href={nav(addDays(start, span))}>{tr("التالي")}</Link></Button>
+          <span className="ms-2 text-[16px] font-medium text-ink">{tr("من")}{" "}{dayLabel(start, { day: "numeric", month: "long" })}{" "}{tr("إلى")}{" "}{dayLabel(addDays(end, -1), { day: "numeric", month: "long", year: "numeric" })}</span>
         </div>
-        <FilterTabs active={String(span)} items={[7, 14, 30].map((n) => ({ key: String(n), href: `/tape-chart?start=${start}${n !== 14 ? `&days=${n}` : ""}`, label: `${n} يومًا` }))} />
+        <FilterTabs active={String(span)} items={[7, 14, 30].map((n) => ({ key: String(n), href: `/tape-chart?start=${start}${n !== 14 ? `&days=${n}` : ""}`, label: tr("{0} يومًا", n) }))} />
       </div>
       <div className="mb-4 flex flex-wrap gap-4 text-[14.5px] text-slate-600">
         {(["confirmed", "tentative", "checked_in", "checked_out"] as const).map((s) => (
@@ -95,14 +97,14 @@ export default async function TapeChartPage({ searchParams }: { searchParams: Pr
       </div>
 
       {rooms.length === 0 ? (
-        <Card><EmptyState icon={CalendarRange} title="لا توجد غرف بعد" description="أضف أنواع الغرف والغرف ليظهر جدول الإشغال."
-          actionHref={ctx.can(PERMISSIONS.pmsSetup) ? "/room-setup" : undefined} actionLabel="إعداد الغرف" /></Card>
+        <Card><EmptyState icon={CalendarRange} title={tr("لا توجد غرف بعد")} description={tr("أضف أنواع الغرف والغرف ليظهر جدول الإشغال.")}
+          actionHref={ctx.can(PERMISSIONS.pmsSetup) ? "/room-setup" : undefined} actionLabel={tr("إعداد الغرف")} /></Card>
       ) : (
         <Card className="overflow-x-auto">
           <div className="min-w-max" style={{ minWidth: "100%" }}>
             {/* رأس الأيام */}
             <div className="sticky top-0 z-[2] grid bg-thead text-thead-text" style={{ gridTemplateColumns: cols }}>
-              <div className="px-4 py-3 font-bold">الغرفة</div>
+              <div className="px-4 py-3 font-bold">{tr("الغرفة")}</div>
               {days.map((d) => (
                 <div key={d} className={cn("border-s border-white/10 px-1 py-2 text-center", weekend.has(new Date(`${d}T00:00:00Z`).getUTCDay()) && "bg-white/10", d === today && "bg-action")}>
                   <span className="block text-[12.5px] opacity-80">{dayLabel(d, { weekday: "short" })}</span>
@@ -119,7 +121,7 @@ export default async function TapeChartPage({ searchParams }: { searchParams: Pr
                 <section key={type.id}>
                   {/* رأس النوع: الشاغر في كل ليلة */}
                   <div className="grid border-b border-line bg-group-row" style={{ gridTemplateColumns: cols }}>
-                    <div className="px-4 py-2 font-bold text-ink">{type.name_ar}<span className="ms-2 font-normal text-slate-500">{type.booking_mode === "hourly" ? "بالساعة" : `${typeRooms.length} غرف`}</span></div>
+                    <div className="px-4 py-2 font-bold text-ink">{localNameOf(type)}<span className="ms-2 font-normal text-slate-500">{type.booking_mode === "hourly" ? tr("بالساعة") : tr("{0} غرف", typeRooms.length)}</span></div>
                     {days.map((d) => {
                       const a = avail.get(`${type.id}|${d}`);
                       return (
@@ -136,12 +138,12 @@ export default async function TapeChartPage({ searchParams }: { searchParams: Pr
                       <div key={room.id} className="grid h-12 border-b border-line" style={{ gridTemplateColumns: cols }}>
                         <div style={{ gridColumn: 1, gridRow: 1 }} className="flex items-center gap-2 px-4">
                           <span className="num font-bold text-ink">{room.room_number}</span>
-                          {room.service_status === "out_of_service" && <span className="rounded bg-urgent-tint px-1.5 text-urgent">خارج الخدمة</span>}
-                          {room.housekeeping_status === "dirty" && room.service_status === "in_service" && <span className="rounded bg-amber-tint px-1.5 text-amber">تنظيف</span>}
+                          {room.service_status === "out_of_service" && <span className="rounded bg-urgent-tint px-1.5 text-urgent">{tr("خارج الخدمة")}</span>}
+                          {room.housekeeping_status === "dirty" && room.service_status === "in_service" && <span className="rounded bg-amber-tint px-1.5 text-amber">{tr("تنظيف")}</span>}
                         </div>
                         {days.map((d, i) => (
                           canCreate && room.service_status === "in_service" && d >= today ? (
-                            <Link key={d} style={{ gridColumn: i + 2, gridRow: 1 }} aria-label={`حجز الغرفة ${room.room_number} يوم ${d}`}
+                            <Link key={d} style={{ gridColumn: i + 2, gridRow: 1 }} aria-label={tr("حجز الغرفة {0} يوم {1}", room.room_number, d)}
                               href={`/reservations/new?type=${type.id}&room=${room.id}&arrival=${d}&departure=${addDays(d, 1)}`}
                               className={cn("border-s border-line/70 transition-colors hover:bg-accent1-tint/50", weekend.has(new Date(`${d}T00:00:00Z`).getUTCDay()) && "bg-panel/60")} />
                           ) : (
@@ -158,8 +160,7 @@ export default async function TapeChartPage({ searchParams }: { searchParams: Pr
                                 style={{ gridColumn: `${col(day)} / ${col(addDays(day, 1))}`, gridRow: 1 }}
                                 title={same.map((r) => `${timeRange(r.starts_at, r.ends_at)} ${r.guest?.full_name ?? ""}`).join("\n")}
                                 className="z-[1] m-1 flex items-center justify-center rounded-md border border-action/40 bg-accent1-tint text-[13.5px] font-semibold text-ink">
-                                <span className="num">{same.length}</span>&nbsp;حجوزات
-                              </Link>
+                                <span className="num">{same.length}</span>{tr("&nbsp;حجوزات")}</Link>
                             );
                           })
                         )}
@@ -168,7 +169,7 @@ export default async function TapeChartPage({ searchParams }: { searchParams: Pr
                   })}
                   {lanes(unassigned).map((lane, i) => (
                     <div key={i} className="grid h-12 border-b border-dashed border-line bg-panel/40" style={{ gridTemplateColumns: cols }}>
-                      <div style={{ gridColumn: 1, gridRow: 1 }} className="flex items-center px-4 text-[14px] text-slate-500">{i === 0 ? "غير مخصصة" : ""}</div>
+                      <div style={{ gridColumn: 1, gridRow: 1 }} className="flex items-center px-4 text-[14px] text-slate-500">{i === 0 ? tr("غير مخصصة") : ""}</div>
                       {lane.map((r) => <Bar key={r.id} r={r} />)}
                     </div>
                   ))}

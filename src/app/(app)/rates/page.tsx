@@ -1,3 +1,5 @@
+import { localNameOf } from "@/lib/local-name";
+import { tr } from "@/i18n/tr";
 import Link from "@/components/link";
 import { BadgePercent, CalendarRange, Plus, Sun, Tags } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -61,28 +63,28 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
         title={t.nav.rates}
         actions={canManage && (
           <>
-            <Button asChild variant="outline"><Link href="/rates?rule=new"><BadgePercent />عرض لحظة أخيرة</Link></Button>
-            <Button asChild><Link href="/rates?season=new"><Plus />موسم جديد</Link></Button>
+            <Button asChild variant="outline"><Link href="/rates?rule=new"><BadgePercent />{tr("عرض لحظة أخيرة")}</Link></Button>
+            <Button asChild><Link href="/rates?season=new"><Plus />{tr("موسم جديد")}</Link></Button>
           </>
         )}
       />
       <StatGrid>
-        <Stat icon={Tags} tone="ink" label="أنواع ليلية بأسعار" value={<span className="num">{nightly.length}</span>} />
-        <Stat icon={CalendarRange} tone="teal" label="المواسم الفعّالة" value={<span className="num">{seasons.filter((s) => s.is_active).length}</span>} hint={activeSeason ? `الآن: ${activeSeason.name}` : "لا موسم اليوم"} />
-        <Stat icon={BadgePercent} tone="clay" label="عروض اللحظة الأخيرة" value={<span className="num">{rules.filter((r) => r.is_active).length}</span>} />
-        <Stat icon={Sun} tone="neutral" label="ليالي نهاية الأسبوع" value={ctx.hotel.weekend_nights.map((d) => WEEKDAYS[d]).join(" و")}
-          hint={ctx.can(PERMISSIONS.hotelManage) ? <Link href="/settings/hotel" className="text-action">تعديل من الإعدادات</Link> : undefined} />
+        <Stat icon={Tags} tone="ink" label={tr("أنواع ليلية بأسعار")} value={<span className="num">{nightly.length}</span>} />
+        <Stat icon={CalendarRange} tone="teal" label={tr("المواسم الفعّالة")} value={<span className="num">{seasons.filter((s) => s.is_active).length}</span>} hint={activeSeason ? tr("الآن: {0}", activeSeason.name) : tr("لا موسم اليوم")} />
+        <Stat icon={BadgePercent} tone="clay" label={tr("عروض اللحظة الأخيرة")} value={<span className="num">{rules.filter((r) => r.is_active).length}</span>} />
+        <Stat icon={Sun} tone="neutral" label={tr("ليالي نهاية الأسبوع")} value={ctx.hotel.weekend_nights.map((d) => WEEKDAYS[d]).join(tr(" و"))}
+          hint={ctx.can(PERMISSIONS.hotelManage) ? <Link href="/settings/hotel" className="text-action">{tr("تعديل من الإعدادات")}</Link> : undefined} />
       </StatGrid>
 
       {(editingSeason !== undefined || editingRule !== undefined) && (
         <div className="mb-6 grid gap-6 xl:grid-cols-2">
           {editingSeason !== undefined && (
             <Card>
-              <CardHeader><CardTitle>{editingSeason ? `تعديل ${editingSeason.name}` : "موسم جديد"}</CardTitle>
-                <CardDescription>موسم فعّال واحد لكل يوم؛ لا تتداخل فترات المواسم الفعّالة.</CardDescription></CardHeader>
+              <CardHeader><CardTitle>{editingSeason ? tr("تعديل {0}", editingSeason.name) : tr("موسم جديد")}</CardTitle>
+                <CardDescription>{tr("موسم فعّال واحد لكل يوم؛ لا تتداخل فترات المواسم الفعّالة.")}</CardDescription></CardHeader>
               <CardContent>
                 <SeasonForm key={editingSeason?.id ?? "new"} errors={t.errors}
-                  types={nightly.map((x) => ({ id: x.id, label: x.name_ar, base: formatMoney(x.base_rate, { locale }) }))}
+                  types={nightly.map((x) => ({ id: x.id, label: localNameOf(x), base: formatMoney(x.base_rate, { locale }) }))}
                   initial={{
                     ...(editingSeason ? { id: editingSeason.id } : {}),
                     name: editingSeason?.name ?? "", date_from: editingSeason?.date_from ?? today, date_to: editingSeason?.date_to ?? addDays(today, 30),
@@ -95,22 +97,22 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
           )}
           {editingRule !== undefined && (
             <Card className="h-fit">
-              <CardHeader><CardTitle>{editingRule ? `تعديل ${editingRule.name}` : "عرض لحظة أخيرة"}</CardTitle>
-                <CardDescription>خصم تلقائي على الحجز الذي يصل خلال عدد أيام من تاريخ الحجز، والصفر يعني نفس اليوم، للأسعار العادية فقط.</CardDescription></CardHeader>
+              <CardHeader><CardTitle>{editingRule ? tr("تعديل {0}", editingRule.name) : tr("عرض لحظة أخيرة")}</CardTitle>
+                <CardDescription>{tr("خصم تلقائي على الحجز الذي يصل خلال عدد أيام من تاريخ الحجز، والصفر يعني نفس اليوم، للأسعار العادية فقط.")}</CardDescription></CardHeader>
               <CardContent>
                 <SimpleForm key={editingRule?.id ?? "new"} columns={2} submitLabel={t.common.save} errors={t.errors} action={saveLastMinuteAction} onDone="/rates"
                   initial={{
                     ...(editingRule ? { id: editingRule.id } : {}),
-                    name: editingRule?.name ?? "عرض الليلة", room_type_id: editingRule?.room_type_id ?? "",
+                    name: editingRule?.name ?? tr("عرض الليلة"), room_type_id: editingRule?.room_type_id ?? "",
                     days_before: String(editingRule?.days_before ?? 1), discount_pct: editingRule ? String(Number(editingRule.discount_pct)) : "15",
                     is_active: editingRule?.is_active ?? true,
                   }}
                   fields={[
-                    { name: "name", label: "اسم العرض" },
-                    { name: "room_type_id", label: "النوع، اتركه فارغًا لكل الأنواع", optional: true, options: nightly.map((x) => ({ id: x.id, label: x.name_ar })) },
-                    { name: "days_before", label: "الوصول خلال أيام", type: "number" },
-                    { name: "discount_pct", label: "نسبة الخصم %", type: "number" },
-                    { name: "is_active", label: "فعّال", checkbox: true },
+                    { name: "name", label: tr("اسم العرض") },
+                    { name: "room_type_id", label: tr("النوع، اتركه فارغًا لكل الأنواع"), optional: true, options: nightly.map((x) => ({ id: x.id, label: localNameOf(x) })) },
+                    { name: "days_before", label: tr("الوصول خلال أيام"), type: "number" },
+                    { name: "discount_pct", label: tr("نسبة الخصم %"), type: "number" },
+                    { name: "is_active", label: tr("فعّال"), checkbox: true },
                   ]} />
               </CardContent>
             </Card>
@@ -120,19 +122,19 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
 
       <Card className="mb-6 overflow-hidden">
         <CardHeader className="flex-row items-center justify-between">
-          <div className="space-y-1"><CardTitle>تقويم الأسعار</CardTitle><CardDescription>السعر الفعلي لكل ليلة بعد المواسم ونهاية الأسبوع.</CardDescription></div>
+          <div className="space-y-1"><CardTitle>{tr("تقويم الأسعار")}</CardTitle><CardDescription>{tr("السعر الفعلي لكل ليلة بعد المواسم ونهاية الأسبوع.")}</CardDescription></div>
           <div className="flex gap-2">
-            <Button asChild variant="outline" size="sm"><Link href={`/rates?start=${addDays(start, -DAYS)}`}>السابق</Link></Button>
-            {start !== today && <Button asChild variant="outline" size="sm"><Link href="/rates">اليوم</Link></Button>}
-            <Button asChild variant="outline" size="sm"><Link href={`/rates?start=${addDays(start, DAYS)}`}>التالي</Link></Button>
+            <Button asChild variant="outline" size="sm"><Link href={`/rates?start=${addDays(start, -DAYS)}`}>{tr("السابق")}</Link></Button>
+            {start !== today && <Button asChild variant="outline" size="sm"><Link href="/rates">{tr("اليوم")}</Link></Button>}
+            <Button asChild variant="outline" size="sm"><Link href={`/rates?start=${addDays(start, DAYS)}`}>{tr("التالي")}</Link></Button>
           </div>
         </CardHeader>
-        {nightly.length === 0 ? <CardContent><p className="text-slate-500">لا توجد أنواع غرف ليلية.</p></CardContent> : (
+        {nightly.length === 0 ? <CardContent><p className="text-slate-500">{tr("لا توجد أنواع غرف ليلية.")}</p></CardContent> : (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-[15px]">
               <thead>
                 <tr className="bg-thead text-thead-text">
-                  <th className="sticky start-0 z-10 bg-thead px-4 py-3 text-start font-bold">النوع</th>
+                  <th className="sticky start-0 z-10 bg-thead px-4 py-3 text-start font-bold">{tr("النوع")}</th>
                   {days.map((d) => (
                     <th key={d} className={cn("min-w-[62px] px-1 py-3 text-center font-medium", weekend.has(new Date(`${d}T00:00:00Z`).getUTCDay()) && "bg-white/10")}>
                       <span className="block text-[13px] opacity-75">{dayLabel(d, { weekday: "short" })}</span>
@@ -144,7 +146,7 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
               <tbody>
                 {calendar.map(({ type, lines }) => (
                   <tr key={type.id} className="border-b border-line">
-                    <td className="sticky start-0 z-10 whitespace-nowrap bg-white px-4 py-3 font-medium">{type.name_ar}</td>
+                    <td className="sticky start-0 z-10 whitespace-nowrap bg-white px-4 py-3 font-medium">{localNameOf(type)}</td>
                     {days.map((d) => {
                       const l = lines.find((x) => x.date === d);
                       return (
@@ -163,27 +165,27 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
 
       <div className="grid items-start gap-6 xl:grid-cols-2">
         <Card className="overflow-hidden">
-          <CardHeader><CardTitle>المواسم</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{tr("المواسم")}</CardTitle></CardHeader>
           <Table>
-            <TableHeader><TableRow><TableHead>الموسم</TableHead><TableHead>الفترة</TableHead><TableHead>الأسعار</TableHead><TableHead /></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>{tr("الموسم")}</TableHead><TableHead>{tr("الفترة")}</TableHead><TableHead>{tr("الأسعار")}</TableHead><TableHead /></TableRow></TableHeader>
             <TableBody>
               {seasons.length === 0 && (
-                <TableRow><TableCell colSpan={4}><EmptyState icon={CalendarRange} title="لا توجد مواسم"
-                  description="مثال: من 1 سبتمبر إلى 30 سبتمبر الليلة 500، ومن 1 أكتوبر الليلة 400." actionHref={canManage ? "/rates?season=new" : undefined} actionLabel="موسم جديد" /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={4}><EmptyState icon={CalendarRange} title={tr("لا توجد مواسم")}
+                  description={tr("مثال: من 1 سبتمبر إلى 30 سبتمبر الليلة 500، ومن 1 أكتوبر الليلة 400.")} actionHref={canManage ? "/rates?season=new" : undefined} actionLabel={tr("موسم جديد")} /></TableCell></TableRow>
               )}
               {seasons.map((s) => (
                 <TableRow key={s.id} className={s.is_active ? "" : "opacity-50"}>
-                  <TableCell className="cell-fluid font-medium">{s.name}{!s.is_active && <Badge variant="secondary" className="ms-2">موقوف</Badge>}</TableCell>
-                  <TableCell className="whitespace-nowrap">من <span className="num">{s.date_from}</span> إلى <span className="num">{s.date_to}</span></TableCell>
+                  <TableCell className="cell-fluid font-medium">{s.name}{!s.is_active && <Badge variant="secondary" className="ms-2">{tr("موقوف")}</Badge>}</TableCell>
+                  <TableCell className="whitespace-nowrap">{tr("من")}{" "}<span className="num">{s.date_from}</span>{" "}{tr("إلى")}{" "}<span className="num">{s.date_to}</span></TableCell>
                   <TableCell className="text-[14.5px] text-slate-600">
                     {s.prices.map((p) => <span key={p.room_type_id} className="block">{typeName.get(p.room_type_id)}: <span className="num font-semibold text-ink">{formatMoney(p.nightly_rate, { locale })}</span></span>)}
-                    {s.adjust_pct && <span className="block">البقية: <span className="num">{Number(s.adjust_pct) > 0 ? "+" : ""}{Number(s.adjust_pct)}%</span></span>}
+                    {s.adjust_pct && <span className="block">{tr("البقية:")}{" "}<span className="num">{Number(s.adjust_pct) > 0 ? "+" : ""}{Number(s.adjust_pct)}%</span></span>}
                   </TableCell>
                   <TableCell className="text-end">
                     {canManage && (
                       <div className="flex justify-end gap-1">
                         <Button asChild variant="ghost" size="sm"><Link href={`/rates?season=${s.id}`}>{t.common.edit}</Link></Button>
-                        <ActionButton variant="ghost" label="حذف" done="حُذف الموسم" errors={t.errors} confirmText={`حذف ${s.name}؟ الحجوزات القائمة تحتفظ بأسعارها.`} run={deleteSeasonAction.bind(null, s.id)} />
+                        <ActionButton variant="ghost" label={tr("حذف")} done={tr("حُذف الموسم")} errors={t.errors} confirmText={tr("حذف {0}؟ الحجوزات القائمة تحتفظ بأسعارها.", s.name)} run={deleteSeasonAction.bind(null, s.id)} />
                       </div>
                     )}
                   </TableCell>
@@ -195,21 +197,21 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
 
         <div className="space-y-6">
           <Card className="overflow-hidden">
-            <CardHeader><CardTitle>عروض اللحظة الأخيرة</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{tr("عروض اللحظة الأخيرة")}</CardTitle></CardHeader>
             <Table>
-              <TableHeader><TableRow><TableHead>العرض</TableHead><TableHead>الشرط</TableHead><TableHead>الخصم</TableHead><TableHead /></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>{tr("العرض")}</TableHead><TableHead>{tr("الشرط")}</TableHead><TableHead>{tr("الخصم")}</TableHead><TableHead /></TableRow></TableHeader>
               <TableBody>
-                {rules.length === 0 && <TableRow><TableCell colSpan={4} className="py-8 text-center text-slate-500">لا توجد عروض. مثال: خصم 20% لمن يصل غدًا أو اليوم.</TableCell></TableRow>}
+                {rules.length === 0 && <TableRow><TableCell colSpan={4} className="py-8 text-center text-slate-500">{tr("لا توجد عروض. مثال: خصم 20% لمن يصل غدًا أو اليوم.")}</TableCell></TableRow>}
                 {rules.map((r) => (
                   <TableRow key={r.id} className={r.is_active ? "" : "opacity-50"}>
-                    <TableCell className="cell-fluid font-medium">{r.name}<span className="block text-[13.5px] text-slate-500">{r.room_type_id ? typeName.get(r.room_type_id) : "كل الأنواع"}</span></TableCell>
-                    <TableCell>{r.days_before === 0 ? "الوصول نفس اليوم" : `الوصول خلال ${r.days_before} ${r.days_before === 1 ? "يوم" : "أيام"}`}</TableCell>
+                    <TableCell className="cell-fluid font-medium">{r.name}<span className="block text-[13.5px] text-slate-500">{r.room_type_id ? typeName.get(r.room_type_id) : tr("كل الأنواع")}</span></TableCell>
+                    <TableCell>{r.days_before === 0 ? tr("الوصول نفس اليوم") : tr("الوصول خلال {0} {1}", r.days_before, r.days_before === 1 ? tr("يوم") : tr("أيام"))}</TableCell>
                     <TableCell><Badge variant="info"><span className="num">{Number(r.discount_pct)}%</span></Badge></TableCell>
                     <TableCell className="text-end">
                       {canManage && (
                         <div className="flex justify-end gap-1">
                           <Button asChild variant="ghost" size="sm"><Link href={`/rates?rule=${r.id}`}>{t.common.edit}</Link></Button>
-                          <ActionButton variant="ghost" label="حذف" done="حُذف العرض" errors={t.errors} confirmText={`حذف ${r.name}؟`} run={deleteLastMinuteAction.bind(null, r.id)} />
+                          <ActionButton variant="ghost" label={tr("حذف")} done={tr("حُذف العرض")} errors={t.errors} confirmText={tr("حذف {0}؟", r.name)} run={deleteLastMinuteAction.bind(null, r.id)} />
                         </div>
                       )}
                     </TableCell>
@@ -219,21 +221,21 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
             </Table>
           </Card>
           <Card className="overflow-hidden">
-            <CardHeader><CardTitle>الأسعار الأساسية</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{tr("الأسعار الأساسية")}</CardTitle></CardHeader>
             <Table>
-              <TableHeader><TableRow><TableHead>النوع</TableHead><TableHead className="text-end">الليلة / الساعة</TableHead><TableHead className="text-end">نهاية الأسبوع</TableHead><TableHead>حجز زائد</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>{tr("النوع")}</TableHead><TableHead className="text-end">{tr("الليلة / الساعة")}</TableHead><TableHead className="text-end">{tr("نهاية الأسبوع")}</TableHead><TableHead>{tr("حجز زائد")}</TableHead></TableRow></TableHeader>
               <TableBody>
                 {types.filter((x) => x.is_active).map((x) => (
                   <TableRow key={x.id}>
-                    <TableCell className="cell-fluid font-medium">{x.name_ar}{x.booking_mode === "hourly" && <Badge variant="info" className="ms-2">بالساعة</Badge>}</TableCell>
+                    <TableCell className="cell-fluid font-medium">{localNameOf(x)}{x.booking_mode === "hourly" && <Badge variant="info" className="ms-2">{tr("بالساعة")}</Badge>}</TableCell>
                     <TableCell className="text-end font-semibold"><Money value={x.base_rate} locale={locale} /></TableCell>
                     <TableCell className="text-end">{x.weekend_rate ? <Money value={x.weekend_rate} locale={locale} /> : ""}</TableCell>
-                    <TableCell className="num">{x.booking_mode === "nightly" && x.overbooking_limit ? `حتى ${x.overbooking_limit}` : ""}</TableCell>
+                    <TableCell className="num">{x.booking_mode === "nightly" && x.overbooking_limit ? tr("حتى {0}", x.overbooking_limit) : ""}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-            {ctx.can(PERMISSIONS.pmsSetup) && <CardContent className="border-t border-line pt-4"><Link href="/room-setup" className="text-[15.5px] text-action">تعديل الأسعار الأساسية من إعداد الغرف</Link></CardContent>}
+            {ctx.can(PERMISSIONS.pmsSetup) && <CardContent className="border-t border-line pt-4"><Link href="/room-setup" className="text-[15.5px] text-action">{tr("تعديل الأسعار الأساسية من إعداد الغرف")}</Link></CardContent>}
           </Card>
         </div>
       </div>

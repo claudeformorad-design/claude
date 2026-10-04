@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { PageHeader } from "@/components/layout/page-header";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
@@ -44,10 +45,10 @@ export default async function AssetsPage() {
     <>
       <PageHeader title={t.nav.fixedAssets} />
       <StatGrid>
-        <Stat icon={Building2} tone="ink" label="أصول فعّالة" value={<span className="num">{active.length}</span>} hint={`${assets.length - active.length} مستبعد`} />
-        <Stat currency={ctx.hotel.base_currency} icon={Coins} tone="teal" label="التكلفة" value={<Money value={active.reduce((s, x) => s.plus(toMoney(x.cost)), ZERO)} locale={locale} />} />
-        <Stat currency={ctx.hotel.base_currency} icon={TrendingDown} tone="clay" label="مجمع الإهلاك" value={<Money value={active.reduce((s, x) => s.plus(toMoney(x.accumulated_depreciation)), ZERO)} locale={locale} />} />
-        <Stat currency={ctx.hotel.base_currency} icon={Scale} tone="neutral" label="صافي القيمة الدفترية" value={<Money value={active.reduce((s, x) => s.plus(toMoney(x.cost)).minus(toMoney(x.accumulated_depreciation)), ZERO)} locale={locale} />} />
+        <Stat icon={Building2} tone="ink" label={tr("أصول فعّالة")} value={<span className="num">{active.length}</span>} hint={tr("{0} مستبعد", assets.length - active.length)} />
+        <Stat currency={ctx.hotel.base_currency} icon={Coins} tone="teal" label={tr("التكلفة")} value={<Money value={active.reduce((s, x) => s.plus(toMoney(x.cost)), ZERO)} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={TrendingDown} tone="clay" label={tr("مجمع الإهلاك")} value={<Money value={active.reduce((s, x) => s.plus(toMoney(x.accumulated_depreciation)), ZERO)} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Scale} tone="neutral" label={tr("صافي القيمة الدفترية")} value={<Money value={active.reduce((s, x) => s.plus(toMoney(x.cost)).minus(toMoney(x.accumulated_depreciation)), ZERO)} locale={locale} />} />
       </StatGrid>
       {can && (
         <div className="mb-6 grid gap-6 xl:grid-cols-[2fr_1fr]">
@@ -77,13 +78,13 @@ export default async function AssetsPage() {
             <TableHead className="text-end">{a.nbv}</TableHead><TableHead>{t.common.status}</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {assets.length === 0 && <TableRow><TableCell colSpan={7} className="py-8"><EmptyState title="سجل الأصول فارغ" description="سجّل الأصول الثابتة مثل الأجهزة والأثاث والمركبات ليُحسب إهلاكها الشهري تلقائيًا." icon={Building2} /></TableCell></TableRow>}
+            {assets.length === 0 && <TableRow><TableCell colSpan={7} className="py-8"><EmptyState title={tr("سجل الأصول فارغ")} description={tr("سجّل الأصول الثابتة مثل الأجهزة والأثاث والمركبات ليُحسب إهلاكها الشهري تلقائيًا.")} icon={Building2} /></TableCell></TableRow>}
             {assets.map((x) => (
               <TableRow key={x.id}>
                 <TableCell className="num font-semibold">{x.asset_number}</TableCell>
                 <TableCell>
                   <p className="font-medium">{x.name}</p>
-                  <p className="text-[15.5px] text-slate-500">{x.category}، {x.useful_life_months} شهرًا</p>
+                  <p className="text-[15.5px] text-slate-500">{x.category}{tr("،")}{" "}{x.useful_life_months}{" "}{tr("شهرًا")}</p>
                   {can && x.status !== "disposed" && (
                     <details className="mt-1 text-sm"><summary className="cursor-pointer text-[15.5px] font-medium text-accent2">{a.dispose}</summary>
                       <div className="mt-2">

@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -27,14 +28,14 @@ export function VendorForm({ t, initial }: { t: Pick<Dictionary, "customers" | "
       className="space-y-3"
       onSubmit={handleSubmit((v) => start(async () => {
         const r = await callAction(saveVendorAction(v));
-        if (r.ok) { toast("تم حفظ المورد"); router.push("/vendors"); }
+        if (r.ok) { toast(tr("تم حفظ المورد")); router.push("/vendors"); }
         else setError(actionErrorText(t.errors, r));
       }))}
     >
       {error && <Alert variant="destructive">{error}</Alert>}
       {f("code", t.customers.code)}
       {f("name_ar", t.customers.name, "rtl")}
-      {f("name_en", `${t.customers.name} بالإنجليزية`)}
+      {f("name_en", tr("{0} بالإنجليزية", t.customers.name))}
       <div className="grid grid-cols-2 gap-3">
         {f("tax_number", t.customers.taxNumber)}
         {f("payment_terms_days", t.customers.paymentTerms)}

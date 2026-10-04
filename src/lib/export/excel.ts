@@ -1,9 +1,10 @@
+import { tr } from "@/i18n/tr";
 import ExcelJS from "exceljs";
 import { MoneyDecimal } from "@/lib/accounting/money";
 import { plainText } from "@/lib/text";
 import type { HotelRow } from "@/lib/supabase/database.types";
 import type { ReportTable } from "@/services/report-tables";
-import { CODE_COLUMN, hasCodes } from "./plain-report";
+import { codeColumn, hasCodes } from "./plain-report";
 
 /**
  * ملف Excel بهوية النظام: شريط عنوان داكن باسم الفندق، عنوان التقرير وفترته، رأس جدول داكن،
@@ -32,7 +33,7 @@ export async function reportWorkbook(table: ReportTable, opts: {
   // عمود الرمز مستقل قبل الاسم حين يحمل التقرير رموزًا، ويمتد عليه عنوان القسم والإجمالي
   const codes = hasCodes(table.rows);
   const lead = codes ? 1 : 0;
-  const columns = codes ? [CODE_COLUMN, ...table.columns] : table.columns;
+  const columns = codes ? [codeColumn(), ...table.columns] : table.columns;
   const cols = columns.length;
   const headerRow = 6;
   const ws = wb.addWorksheet(table.title.replace(/[\\/?*[\]:]/g, " ").slice(0, 31), {
@@ -43,7 +44,7 @@ export async function reportWorkbook(table: ReportTable, opts: {
       printTitlesRow: `${headerRow}:${headerRow}`,
     },
     headerFooter: {
-      oddFooter: `&L&8&K6B6964${hotel.name_ar}&R&8&K6B6964صفحة &P من &N`,
+      oddFooter: tr("&L&8&K6B6964{0}&R&8&K6B6964صفحة &P من &N", hotel.name_ar),
     },
   });
 
@@ -73,7 +74,7 @@ export async function reportWorkbook(table: ReportTable, opts: {
   h.alignment = { vertical: "middle", readingOrder: dir };
 
   // 2: بيانات الفندق النظامية
-  const legal = [hotel.legal_name, hotel.tax_number && `الرقم الضريبي ${hotel.tax_number}`, hotel.commercial_registration && `السجل التجاري ${hotel.commercial_registration}`]
+  const legal = [hotel.legal_name, hotel.tax_number && tr("الرقم الضريبي {0}", hotel.tax_number), hotel.commercial_registration && tr("السجل التجاري {0}", hotel.commercial_registration)]
     .filter(Boolean).join("   ");
   const l = band(2, legal ? 20 : 8);
   l.value = legal && pad(legal);
@@ -88,7 +89,7 @@ export async function reportWorkbook(table: ReportTable, opts: {
 
   // 4: الفترة وتاريخ الإعداد
   const meta = band(4, 20);
-  meta.value = pad([table.subtitle, `أُعدّ في ${opts.generatedAt}`, opts.preparedBy && `بواسطة ${opts.preparedBy}`].filter(Boolean).join("   "));
+  meta.value = pad([table.subtitle, tr("أُعدّ في {0}", opts.generatedAt), opts.preparedBy && tr("بواسطة {0}", opts.preparedBy)].filter(Boolean).join("   "));
   meta.font = { name: FONT, size: 10, color: { argb: INK_SOFT } };
   meta.alignment = { vertical: "top", readingOrder: dir };
 

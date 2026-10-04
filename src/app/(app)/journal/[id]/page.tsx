@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import Link from "@/components/link";
 import { DocText } from "@/components/ui/code-text";
 import { notFound } from "next/navigation";
@@ -89,14 +90,14 @@ export default async function JournalEntryPage({ params }: { params: Promise<{ i
           <TableHeader>
             <TableRow>
               <TableHead className="w-10">#</TableHead>
-              <TableHead>الرمز</TableHead>
+              <TableHead>{tr("الرمز")}</TableHead>
               <TableHead>{t.journal.account}</TableHead>
               <TableHead>{t.journal.department}</TableHead>
               <TableHead>{t.common.description}</TableHead>
               <TableHead className="text-end">{t.journal.debit}</TableHead>
               <TableHead className="text-end">{t.journal.credit}</TableHead>
-              {isForeign && <TableHead className="text-end">{t.journal.debit} بالعملة الأساسية</TableHead>}
-              {isForeign && <TableHead className="text-end">{t.journal.credit} بالعملة الأساسية</TableHead>}
+              {isForeign && <TableHead className="text-end">{t.journal.debit}{" "}{tr("بالعملة الأساسية")}</TableHead>}
+              {isForeign && <TableHead className="text-end">{t.journal.credit}{" "}{tr("بالعملة الأساسية")}</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>

@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import { RouteDialog } from "@/components/ui/dialog";
 import Link from "@/components/link";
@@ -37,9 +38,9 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
       <PageHeader title={t.nav.vendors}
         actions={can && <Button asChild><Link href="/vendors?new=1"><Plus />{t.payables.newVendor}</Link></Button>} />
       <StatGrid className="lg:grid-cols-3">
-        <Stat icon={Truck} tone="ink" label="الموردون" value={<span className="num">{vendors.length}</span>} />
-        <Stat icon={BadgeCheck} tone="teal" label="فعّالون" value={<span className="num">{vendors.filter((v) => v.is_active).length}</span>} />
-        <Stat icon={CalendarClock} tone="clay" label="متوسط مدة السداد" value={<span className="num">{vendors.length ? Math.round(vendors.reduce((a, v) => a + v.payment_terms_days, 0) / vendors.length) : 0} يومًا</span>} />
+        <Stat icon={Truck} tone="ink" label={tr("الموردون")} value={<span className="num">{vendors.length}</span>} />
+        <Stat icon={BadgeCheck} tone="teal" label={tr("فعّالون")} value={<span className="num">{vendors.filter((v) => v.is_active).length}</span>} />
+        <Stat icon={CalendarClock} tone="clay" label={tr("متوسط مدة السداد")} value={<span className="num">{vendors.length ? Math.round(vendors.reduce((a, v) => a + v.payment_terms_days, 0) / vendors.length) : 0}{" "}{tr("يومًا")}</span>} />
       </StatGrid>
       <div className="grid gap-6">
         <Card className="overflow-hidden">
@@ -54,10 +55,10 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
                 <TableRow>
                   <TableCell colSpan={6} className="py-8">
                     <EmptyState
-                      title="سجل الموردين فارغ"
-                      description="لم يتم تسجيل أي موردين بعد. يمكنك إضافة الموردين المعتمدين للفندق لإصدار فواتير الشراء وأوامر التوريد."
+                      title={tr("سجل الموردين فارغ")}
+                      description={tr("لم يتم تسجيل أي موردين بعد. يمكنك إضافة الموردين المعتمدين للفندق لإصدار فواتير الشراء وأوامر التوريد.")}
                       actionHref="/vendors?new=1"
-                      actionLabel="إضافة مورد جديد"
+                      actionLabel={tr("إضافة مورد جديد")}
                       icon={Truck}
                     />
                   </TableCell>
@@ -68,7 +69,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
                   <TableCell className="text-slate-600"><ExpandMark /><span className="num">{v.code}</span></TableCell>
                   <TableCell><EntityCell name={(locale === "en" && v.name_en) || v.name_ar} sub={v.phone ?? v.email ?? undefined} href={`/bills?vendor=${v.id}`} /></TableCell>
                   <TableCell className="num">{v.tax_number ?? ""}</TableCell>
-                  <TableCell><span className="num">{v.payment_terms_days}</span> <span className="text-slate-500">يومًا</span></TableCell>
+                  <TableCell><span className="num">{v.payment_terms_days}</span> <span className="text-slate-500">{tr("يومًا")}</span></TableCell>
                   <TableCell><Badge variant={v.is_active ? "success" : "secondary"}>{v.is_active ? t.common.active : t.common.inactive}</Badge></TableCell>
                   {can && <TableCell className="text-end"><Button asChild variant="ghost" size="sm"><Link href={`/vendors?edit=${v.id}`}>{t.common.edit}</Link></Button></TableCell>}
                 </ExpandableRow>
@@ -77,7 +78,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
           </Table>
         </Card>
         {initial && (
-          <RouteDialog key={initial.id ?? "new"} closeHref="/vendors" title={initial.id ? `تعديل ${initial.name_ar}` : t.payables.newVendor}>
+          <RouteDialog key={initial.id ?? "new"} closeHref="/vendors" title={initial.id ? tr("تعديل {0}", initial.name_ar) : t.payables.newVendor}>
             <VendorForm t={{ customers: t.customers, common: t.common, errors: t.errors }} initial={initial} />
           </RouteDialog>
         )}

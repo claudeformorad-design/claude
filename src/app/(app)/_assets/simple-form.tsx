@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -44,7 +45,7 @@ export function SimpleForm({
       onSubmit={handleSubmit((v) => start(async () => {
         setError(null);
         const r = await callAction(action(v));
-        if (r.ok) { toast("تم الحفظ بنجاح"); closeDialog?.(); if (onDone) router.push(onDone); else { reset(initial); router.refresh(); } }
+        if (r.ok) { toast(tr("تم الحفظ بنجاح")); closeDialog?.(); if (onDone) router.push(onDone); else { reset(initial); router.refresh(); } }
         else setError(actionErrorText(errors, r));
       }))}
     >
@@ -54,7 +55,7 @@ export function SimpleForm({
           <label key={f.name} className="flex items-center gap-2 self-end text-sm"><input type="checkbox" className="size-4" {...register(f.name)} />{f.label}</label>
         ) : "options" in f ? (
           <div key={f.name} className="field-group space-y-1.5"><Label htmlFor={f.name}>{f.label}</Label>
-            <NativeSelect id={f.name} {...register(f.name)}><option value="">{f.optional ? "بدون" : "اختر"}</option>{f.options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}</NativeSelect></div>
+            <NativeSelect id={f.name} {...register(f.name)}><option value="">{f.optional ? tr("بدون") : tr("اختر")}</option>{f.options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}</NativeSelect></div>
         ) : (
           <div key={f.name} className="field-group space-y-1.5"><Label htmlFor={f.name}>{f.label}</Label>
             <Input id={f.name} type={f.type === "number" ? "text" : (f.type ?? "text")} inputMode={f.type === "number" ? "decimal" : undefined}

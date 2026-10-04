@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/layout/page-header";
@@ -26,44 +27,44 @@ export default async function GuestRegisterPage({ searchParams }: { searchParams
   return (
     <>
       <PageHeader
-        title="كشف النزلاء"
+        title={tr("كشف النزلاء")}
         actions={
           <div className="flex items-center gap-2">
             <form className="flex items-center gap-2 print:hidden">
-              <Input type="date" name="date" defaultValue={date} aria-label="التاريخ" className="w-52" />
-              <Button type="submit" variant="outline">عرض</Button>
+              <Input type="date" name="date" defaultValue={date} aria-label={tr("التاريخ")} className="w-52" />
+              <Button type="submit" variant="outline">{tr("عرض")}</Button>
             </form>
-            <PrintButton label="طباعة الكشف" />
+            <PrintButton label={tr("طباعة الكشف")} />
           </div>
         }
       />
       <Properties items={[
-        ["الفندق", ctx.hotel.name_ar],
-        ["الليلة", dayLabel(date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })],
-        ["الحجوزات", <span key="r" className="num">{rows.length}</span>],
-        ["الأشخاص", <span key="p" className="num">{persons}</span>],
+        [tr("الفندق"), ctx.hotel.name_ar],
+        [tr("الليلة"), dayLabel(date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })],
+        [tr("الحجوزات"), <span key="r" className="num">{rows.length}</span>],
+        [tr("الأشخاص"), <span key="p" className="num">{persons}</span>],
       ]} />
       <Card className="overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>#</TableHead><TableHead>الغرفة</TableHead><TableHead>الاسم</TableHead><TableHead>الجنسية</TableHead>
-              <TableHead>نوع الهوية</TableHead><TableHead>رقم الهوية</TableHead><TableHead>الجوال</TableHead>
-              <TableHead>الأشخاص</TableHead><TableHead>الوصول</TableHead><TableHead>المغادرة</TableHead><TableHead>الجهة</TableHead>
+              <TableHead>#</TableHead><TableHead>{tr("الغرفة")}</TableHead><TableHead>{tr("الاسم")}</TableHead><TableHead>{tr("الجنسية")}</TableHead>
+              <TableHead>{tr("نوع الهوية")}</TableHead><TableHead>{tr("رقم الهوية")}</TableHead><TableHead>{tr("الجوال")}</TableHead>
+              <TableHead>{tr("الأشخاص")}</TableHead><TableHead>{tr("الوصول")}</TableHead><TableHead>{tr("المغادرة")}</TableHead><TableHead>{tr("الجهة")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.length === 0 && <TableRow><TableCell colSpan={11} className="py-10 text-center text-slate-500">لا نزلاء مقيمون في هذه الليلة</TableCell></TableRow>}
+            {rows.length === 0 && <TableRow><TableCell colSpan={11} className="py-10 text-center text-slate-500">{tr("لا نزلاء مقيمون في هذه الليلة")}</TableCell></TableRow>}
             {rows.map((r, i) => (
               <TableRow key={r.reservation_id}>
                 <TableCell className="num">{i + 1}</TableCell>
                 <TableCell className="num font-bold">{r.room_number ?? ""}</TableCell>
                 <TableCell className="font-medium text-ink">{r.full_name}</TableCell>
                 <TableCell>{r.nationality ?? ""}</TableCell>
-                <TableCell>{r.id_type ? ID_TYPES[r.id_type] : <span className="text-urgent">غير مسجلة</span>}</TableCell>
+                <TableCell>{r.id_type ? ID_TYPES[r.id_type] : <span className="text-urgent">{tr("غير مسجلة")}</span>}</TableCell>
                 <TableCell className="num" dir="ltr">{r.id_number ?? ""}</TableCell>
                 <TableCell className="num" dir="ltr">{r.phone ?? ""}</TableCell>
-                <TableCell className="num">{r.adults}{r.children ? ` بالغ و${r.children} طفل` : ""}</TableCell>
+                <TableCell className="num">{r.adults}{r.children ? tr(" بالغ و{0} طفل", r.children) : ""}</TableCell>
                 <TableCell className="num whitespace-nowrap">{r.arrival_date}</TableCell>
                 <TableCell className="num whitespace-nowrap">{r.departure_date}</TableCell>
                 <TableCell>{r.company ?? ""}</TableCell>
@@ -72,7 +73,7 @@ export default async function GuestRegisterPage({ searchParams }: { searchParams
           </TableBody>
         </Table>
       </Card>
-      <p className="mt-6 hidden text-[13px] print:block">توقيع موظف الاستقبال: ____________________ &nbsp;&nbsp;&nbsp; الختم:</p>
+      <p className="mt-6 hidden text-[13px] print:block">{tr("توقيع موظف الاستقبال: ____________________ &nbsp;&nbsp;&nbsp; الختم:")}</p>
     </>
   );
 }

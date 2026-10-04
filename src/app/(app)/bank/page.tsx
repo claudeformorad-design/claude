@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { PageHeader } from "@/components/layout/page-header";
 import { DocText } from "@/components/ui/code-text";
 import { Money } from "@/components/money";
@@ -49,9 +50,9 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
         <>
           <StatGrid>
             <Stat currency={ctx.hotel.base_currency} icon={Landmark} tone="ink" label={t.payables.glBalance} value={<Money value={glBalance} locale={locale} />} />
-            <Stat currency={ctx.hotel.base_currency} icon={FileText} tone="teal" label={t.payables.statementTotal} value={<Money value={sumMoney(lines.map((l) => l.amount))} locale={locale} />} hint={`${lines.length} سطر في الكشف`} />
-            <Stat currency={ctx.hotel.base_currency} icon={Link2Off} tone="clay" label={t.payables.unmatchedLedger} value={<Money value={sumMoney(unmatchedLedger.map(net))} locale={locale} />} hint={`${unmatchedLedger.length} حركة`} />
-            <Stat icon={CheckCircle2} tone="neutral" label="أسطر مطابقة" value={<span className="num">{lines.filter((l) => l.matched_line_id).length} / {lines.length}</span>} />
+            <Stat currency={ctx.hotel.base_currency} icon={FileText} tone="teal" label={t.payables.statementTotal} value={<Money value={sumMoney(lines.map((l) => l.amount))} locale={locale} />} hint={tr("{0} سطر في الكشف", lines.length)} />
+            <Stat currency={ctx.hotel.base_currency} icon={Link2Off} tone="clay" label={t.payables.unmatchedLedger} value={<Money value={sumMoney(unmatchedLedger.map(net))} locale={locale} />} hint={tr("{0} حركة", unmatchedLedger.length)} />
+            <Stat icon={CheckCircle2} tone="neutral" label={tr("أسطر مطابقة")} value={<span className="num">{lines.filter((l) => l.matched_line_id).length} / {lines.length}</span>} />
           </StatGrid>
           <Card className="mb-4"><CardContent className="p-4"><AddBankLine t={tt} accountId={accountId} today={todayInTimeZone(ctx.hotel.timezone)} /></CardContent></Card>
           <Card className="overflow-hidden">
@@ -61,7 +62,7 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
                 <TableHead className="text-end">{t.folio.amount}</TableHead><TableHead>{t.common.status}</TableHead><TableHead />
               </TableRow></TableHeader>
               <TableBody>
-                {lines.length === 0 && <TableRow><TableCell colSpan={6} className="py-8"><EmptyState title="كشف الحساب فارغ" description="أضف أسطر كشف البنك من النموذج أعلاه، ثم طابقها مع حركات الأستاذ يدويًا أو تلقائيًا." icon={Landmark} /></TableCell></TableRow>}
+                {lines.length === 0 && <TableRow><TableCell colSpan={6} className="py-8"><EmptyState title={tr("كشف الحساب فارغ")} description={tr("أضف أسطر كشف البنك من النموذج أعلاه، ثم طابقها مع حركات الأستاذ يدويًا أو تلقائيًا.")} icon={Landmark} /></TableCell></TableRow>}
                 {lines.map((l) => (
                   <TableRow key={l.id}>
                     <TableCell className="num">{l.txn_date}</TableCell><TableCell><DocText text={l.description} /></TableCell><TableCell className="num">{l.reference ?? ""}</TableCell>

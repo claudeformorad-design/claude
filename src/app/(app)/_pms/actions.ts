@@ -1,4 +1,5 @@
 "use server";
+import { tr } from "@/i18n/tr";
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -195,7 +196,7 @@ export async function createReservationAction(input: unknown): Promise<ActionRes
         p_adults: v.adults, p_children: v.children, p_customer_id: v.customer_id, p_status: v.status, p_source: v.source, p_notes: v.notes,
       });
       raise(error);
-      return { href: `/reservations?group=${data}`, message: `تم حجز ${v.group_rooms} غرف للمجموعة` };
+      return { href: `/reservations?group=${data}`, message: tr("تم حجز {0} غرف للمجموعة", v.group_rooms) };
     }
 
     if (v.kind === "series") {
@@ -207,8 +208,8 @@ export async function createReservationAction(input: unknown): Promise<ActionRes
       });
       raise(error);
       const s = data!;
-      const skipped = s.skipped.length ? `، تُخطي ${s.skipped.length} موعد متعارض${s.waitlisted ? ` وأُضيف لقائمة الانتظار` : ""}` : "";
-      return { href: `/reservations?series=${s.series_id}`, message: `تم حجز ${s.created} موعدًا${skipped}` };
+      const skipped = s.skipped.length ? tr("، تُخطي {0} موعد متعارض{1}", s.skipped.length, s.waitlisted ? tr(" وأُضيف لقائمة الانتظار") : "") : "";
+      return { href: `/reservations?series=${s.series_id}`, message: tr("تم حجز {0} موعدًا{1}", s.created, skipped) };
     }
 
     const { data, error } = await ctx.supabase.rpc("create_reservation", {
@@ -220,7 +221,7 @@ export async function createReservationAction(input: unknown): Promise<ActionRes
       p_special_requests: v.special_requests, p_notes: v.notes, p_tentative_until: v.status === "tentative" ? v.tentative_until : null,
     });
     raise(error);
-    return { href: `/reservations/${data}`, message: "تم إنشاء الحجز" };
+    return { href: `/reservations/${data}`, message: tr("تم إنشاء الحجز") };
   });
   if (r.ok) refreshPms();
   return r;
@@ -346,10 +347,10 @@ export async function payStayAction(reservationId: string, input: unknown): Prom
     const pay = (await methodCurrency(ctx, p.data.method))
       ? await ctx.supabase.rpc("post_folio_foreign_money", { p_folio_id: folio, p_txn_type: p.data.kind, p_payment_method_id: p.data.method, p_foreign_amount: p.data.amount })
       : p.data.kind === "refund"
-        ? await ctx.supabase.rpc("post_folio_refund", { p_folio_id: folio, p_payment_method_id: p.data.method, p_amount: p.data.amount, p_description: "إرجاع الباقي للنزيل" })
+        ? await ctx.supabase.rpc("post_folio_refund", { p_folio_id: folio, p_payment_method_id: p.data.method, p_amount: p.data.amount, p_description: tr("إرجاع الباقي للنزيل") })
         : p.data.kind === "deposit_refund"
-          ? await ctx.supabase.rpc("refund_folio_deposit", { p_folio_id: folio, p_payment_method_id: p.data.method, p_amount: p.data.amount, p_description: "استرداد باقي العربون" })
-          : await ctx.supabase.rpc("post_folio_payment", { p_folio_id: folio, p_payment_method_id: p.data.method, p_amount: p.data.amount, p_description: "تحصيل عند المغادرة" });
+          ? await ctx.supabase.rpc("refund_folio_deposit", { p_folio_id: folio, p_payment_method_id: p.data.method, p_amount: p.data.amount, p_description: tr("استرداد باقي العربون") })
+          : await ctx.supabase.rpc("post_folio_payment", { p_folio_id: folio, p_payment_method_id: p.data.method, p_amount: p.data.amount, p_description: tr("تحصيل عند المغادرة") });
     raise(pay.error);
     const next = await ctx.supabase.rpc("prepare_check_out", { p_reservation_id: reservationId });
     raise(next.error);
@@ -410,7 +411,7 @@ export async function settleAndCheckOutAction(reservationId: string, input: unkn
           })
         : await ctx.supabase.rpc("post_folio_payment", {
             p_folio_id: prep.data!.folio_id, p_payment_method_id: p.data.method!, p_amount: amount.toFixed(),
-            p_description: "تحصيل عند المغادرة", p_customer_id: p.data.customer_id || null,
+            p_description: tr("تحصيل عند المغادرة"), p_customer_id: p.data.customer_id || null,
           });
       raise(pay.error);
     }

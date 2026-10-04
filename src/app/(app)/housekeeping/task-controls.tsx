@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -21,11 +22,11 @@ export function TaskControls({ taskId, status, assignee, errors }: { taskId: str
   if (status === "done" || status === "cancelled") return null;
   return (
     <div className="flex flex-wrap items-center justify-end gap-2">
-      <Input aria-label="العامل" className="h-9 w-32" placeholder="العامل" value={name} onChange={(e) => setName(e.target.value)}
-        onBlur={() => { if (name.trim() !== (assignee ?? "")) act({ assignee: name }, "تم الإسناد"); }} />
-      {status === "pending" && <Button type="button" size="sm" variant="outline" disabled={pending} onClick={() => act({ status: "in_progress", assignee: name }, "بدأت المهمة")}><Play className="size-3.5" />بدء</Button>}
-      <Button type="button" size="sm" disabled={pending} onClick={() => act({ status: "done", assignee: name }, "أُنجزت المهمة")}><Check className="size-3.5" />تم</Button>
-      <Button type="button" size="sm" variant="ghost" aria-label="إلغاء المهمة" disabled={pending} onClick={() => act({ status: "cancelled" }, "أُلغيت المهمة")}><X className="size-3.5" /></Button>
+      <Input aria-label={tr("العامل")} className="h-9 w-32" placeholder={tr("العامل")} value={name} onChange={(e) => setName(e.target.value)}
+        onBlur={() => { if (name.trim() !== (assignee ?? "")) act({ assignee: name }, tr("تم الإسناد")); }} />
+      {status === "pending" && <Button type="button" size="sm" variant="outline" disabled={pending} onClick={() => act({ status: "in_progress", assignee: name }, tr("بدأت المهمة"))}><Play className="size-3.5" />{tr("بدء")}</Button>}
+      <Button type="button" size="sm" disabled={pending} onClick={() => act({ status: "done", assignee: name }, tr("أُنجزت المهمة"))}><Check className="size-3.5" />{tr("تم")}</Button>
+      <Button type="button" size="sm" variant="ghost" aria-label={tr("إلغاء المهمة")} disabled={pending} onClick={() => act({ status: "cancelled" }, tr("أُلغيت المهمة"))}><X className="size-3.5" /></Button>
     </div>
   );
 }
@@ -36,9 +37,8 @@ export function GenerateButton({ date, errors }: { date: string; errors: Record<
   return (
     <Button type="button" loading={pending} onClick={() => start(async () => {
       const r = await callAction(generateHousekeepingAction(date));
-      if (r.ok) { toast(r.data ? `أُنشئت ${r.data} مهمة` : "لا مهام جديدة"); router.refresh(); } else toast(actionErrorText(errors, r), "error");
+      if (r.ok) { toast(r.data ? tr("أُنشئت {0} مهمة", r.data) : tr("لا مهام جديدة")); router.refresh(); } else toast(actionErrorText(errors, r), "error");
     })}>
-      <ListChecks />توليد مهام اليوم
-    </Button>
+      <ListChecks />{tr("توليد مهام اليوم")}</Button>
   );
 }

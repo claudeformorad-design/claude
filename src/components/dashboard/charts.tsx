@@ -1,4 +1,5 @@
 "use client";
+import { tr, trList, currentLocale } from "@/i18n/tr";
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, animate, useInView } from "motion/react";
@@ -22,7 +23,7 @@ const compact = (v: number) => {
   return fmt(v);
 };
 
-const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+const MONTHS = trList(["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]);
 function monthLabel(m: string, short = false): string {
   const [y, mo] = m.split("-");
   const name = MONTHS[parseInt(mo ?? "1", 10) - 1] ?? m;
@@ -185,7 +186,7 @@ export function IncomeExpenseChart({
   const [shown, setShown] = useState<Record<SeriesKey, boolean>>({ revenue: true, expenses: true, net: true });
   const [boxRef, W] = useWidth<HTMLDivElement>(560);
   if (!data.some((d) => d.revenue !== 0 || d.expenses !== 0)) {
-    return <EmptyChart title="لا توجد حركات مرحّلة بعد" hint="يُرسم المخطط من القيود المرحّلة في الأستاذ العام تلقائيًا." />;
+    return <EmptyChart title={tr("لا توجد حركات مرحّلة بعد")} hint={tr("يُرسم المخطط من القيود المرحّلة في الأستاذ العام تلقائيًا.")} />;
   }
   const rows = data.map((d) => ({ ...d, net: d.revenue - d.expenses }));
   const H = 260, padT = 16, padB = 30, axisW = 44;
@@ -195,7 +196,9 @@ export function IncomeExpenseChart({
   const y = (v: number) => padT + ((scale.hi - v) / (scale.hi - scale.lo)) * plotH;
   const band = plotW / rows.length;
   // RTL: الشهر الأحدث يسارًا كما يُقرأ المحور الزمني في الواجهة العربية
-  const cx = (i: number) => W - axisW - band * (i + 0.5);
+  // LTR: الأقدم يسارًا والمحور يسارًا
+  const ltr = currentLocale() === "en";
+  const cx = (i: number) => (ltr ? axisW + band * (i + 0.5) : W - axisW - band * (i + 0.5));
   const barW = Math.min(22, band * 0.28);
   const gap = 2;
   const y0 = y(0);
@@ -226,8 +229,8 @@ export function IncomeExpenseChart({
         <svg viewBox={`0 0 ${W} ${H}`} className="h-[260px] w-full overflow-visible" role="img" aria-label={`${labels.revenue} / ${labels.expenses} / ${labels.net}`}>
           {scale.ticks.map((v, k) => (
             <g key={k}>
-              <line x1={0} x2={W - axisW} y1={y(v)} y2={y(v)} stroke={v === 0 ? "#cfccc3" : GRID} strokeDasharray={v === 0 ? undefined : "3 5"} />
-              <text x={W - axisW + 8} y={y(v) + 4} fill={AXIS_TEXT} fontSize="14" textAnchor="start">{compact(v)}</text>
+              <line x1={ltr ? axisW : 0} x2={ltr ? W : W - axisW} y1={y(v)} y2={y(v)} stroke={v === 0 ? "#cfccc3" : GRID} strokeDasharray={v === 0 ? undefined : "3 5"} />
+              <text x={ltr ? axisW - 8 : W - axisW + 8} y={y(v) + 4} fill={AXIS_TEXT} fontSize="14" textAnchor={ltr ? "end" : "start"}>{compact(v)}</text>
             </g>
           ))}
           {rows.map((d, i) => (
@@ -271,7 +274,7 @@ export function IncomeExpenseChart({
               <TipRow color={CHART_COLORS.expenses} label={labels.expenses} value={fmt(h.expenses, 2)} />
               <div className="mt-1.5 border-t border-line pt-1.5">
                 <TipRow color={CHART_COLORS.net} label={labels.net} value={fmt(h.net, 2)} strong />
-                {h.revenue > 0 && <TipRow label="هامش الربح" value={`${fmt((h.net / h.revenue) * 100, 1)}%`} />}
+                {h.revenue > 0 && <TipRow label={tr("هامش الربح")} value={`${fmt((h.net / h.revenue) * 100, 1)}%`} />}
               </div>
             </Tooltip>
           )}
@@ -401,9 +404,9 @@ export function StripedBars({
             {hover === i && r.amount > 0 && (
               <Tooltip style={{ top: -8, left: 0, transform: "translateY(-100%)" }}>
                 <p className="mb-1 font-semibold">{r.label}</p>
-                <TipRow label="المبلغ" value={r.amountText} strong />
-                {r.count > 0 && <TipRow label="عدد المستندات" value={fmt(r.count)} />}
-                <TipRow label="الحصة" value={`${fmt((r.amount / total) * 100, 1)}%`} />
+                <TipRow label={tr("المبلغ")} value={r.amountText} strong />
+                {r.count > 0 && <TipRow label={tr("عدد المستندات")} value={fmt(r.count)} />}
+                <TipRow label={tr("الحصة")} value={`${fmt((r.amount / total) * 100, 1)}%`} />
               </Tooltip>
             )}
           </AnimatePresence>

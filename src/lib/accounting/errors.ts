@@ -1,3 +1,4 @@
+import { currentLocale } from "@/i18n/tr";
 import { plainText } from "@/lib/text";
 
 /**
@@ -371,7 +372,10 @@ export function describeDatabaseError(message: string | null | undefined): strin
   if (!message) return null;
   for (const [pattern, text] of MESSAGES) {
     const m = message.match(pattern);
-    if (m) return plainText(typeof text === "string" ? text : text(m));
+    if (!m) continue;
+    // الواجهة الإنجليزية: رسالة قاعدة البيانات نفسها مكتوبة بالإنجليزية لقواعد العمل
+    if (currentLocale() === "en") return message.charAt(0).toUpperCase() + message.slice(1);
+    return plainText(typeof text === "string" ? text : text(m));
   }
   return null;
 }

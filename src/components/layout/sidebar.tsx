@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -77,7 +78,7 @@ export function Sidebar({
         {expanded && (
           <span className="min-w-0 leading-tight">
             <span className="block truncate text-[18.5px] font-bold text-ink">{hotelName}</span>
-            <span className="block text-[15px] text-slate-500">النظام المحاسبي الفندقي</span>
+            <span className="block text-[15px] text-slate-500">{tr("النظام المحاسبي الفندقي")}</span>
           </span>
         )}
       </Link>
@@ -141,7 +142,7 @@ export function Sidebar({
       <div className={cn("mt-3 flex gap-2 border-t border-line pt-3", expanded ? "px-4" : "flex-col items-center")}>
         {signOut && (
           <form action={signOut} className={expanded ? "" : "contents"}>
-            <button type="submit" title="تسجيل الخروج" aria-label="تسجيل الخروج"
+            <button type="submit" title={tr("تسجيل الخروج")} aria-label={tr("تسجيل الخروج")}
               className="flex size-10 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-urgent-tint hover:text-urgent">
               <LogOut className="size-[18px] stroke-[1.9]" />
             </button>
@@ -150,15 +151,15 @@ export function Sidebar({
         <button
           type="button"
           onClick={toggle}
-          aria-label={expanded ? "طي القائمة" : "توسيع القائمة"}
-          title={expanded ? "طي القائمة" : "توسيع القائمة"}
+          aria-label={expanded ? tr("طي القائمة") : tr("توسيع القائمة")}
+          title={expanded ? tr("طي القائمة") : tr("توسيع القائمة")}
           className={cn(
             "flex h-10 items-center justify-center gap-2.5 rounded-lg text-[16.5px] font-medium text-slate-600 transition-colors duration-200 hover:bg-subtle hover:text-ink",
             expanded ? "flex-1 px-3" : "size-10",
           )}
         >
           {expanded ? <PanelRightClose className="size-[18px] stroke-[1.9]" /> : <PanelRightOpen className="size-[18px] stroke-[1.9]" />}
-          {expanded && <span>طي القائمة</span>}
+          {expanded && <span>{tr("طي القائمة")}</span>}
         </button>
       </div>
     </m.aside>

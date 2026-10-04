@@ -1,4 +1,5 @@
 "use server";
+import { tr } from "@/i18n/tr";
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -22,7 +23,7 @@ export async function createHotelAction(_prev: OnboardingState, formData: FormDa
   if (!parsed.success) return { error: "validation" };
   // الأقسام المختارة (المحاسبة و/أو إدارة الفندق) — قسم واحد على الأقل
   const modules = MODULES.filter((m) => formData.getAll("modules").includes(m));
-  if (modules.length === 0) return { error: "اختر قسمًا واحدًا على الأقل: المحاسبة أو إدارة الفندق" };
+  if (modules.length === 0) return { error: tr("اختر قسمًا واحدًا على الأقل: المحاسبة أو إدارة الفندق") };
 
   const supabase = await createClient();
   const { data: hotelId, error } = await supabase.rpc("create_hotel", {

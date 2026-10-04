@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { Calculator, Users, Wallet } from "lucide-react";
 import Link from "@/components/link";
 import { PageHeader } from "@/components/layout/page-header";
@@ -27,13 +28,13 @@ const net = (l: PayrollLine) => l.basic + l.allowances + l.overtime - l.deductio
 function why(l: PayrollLine): string {
   const d = l.details;
   return [
-    d.days < d.month_days && `${d.days} يومًا من ${d.month_days}`,
-    d.absent_days > 0 && `غياب ${d.absent_days} يوم`,
-    d.late > 0 && `تأخير ${minutesText(d.late_minutes)}`,
-    d.unpaid_leave_days > 0 && `بدون راتب ${d.unpaid_leave_days} يوم`,
-    d.penalties > 0 && "جزاء",
-    d.overtime_minutes > 0 && `إضافي ${minutesText(d.overtime_minutes)}`,
-  ].filter(Boolean).join("، ");
+    d.days < d.month_days && tr("{0} يومًا من {1}", d.days, d.month_days),
+    d.absent_days > 0 && tr("غياب {0} يوم", d.absent_days),
+    d.late > 0 && tr("تأخير {0}", minutesText(d.late_minutes)),
+    d.unpaid_leave_days > 0 && tr("بدون راتب {0} يوم", d.unpaid_leave_days),
+    d.penalties > 0 && tr("جزاء"),
+    d.overtime_minutes > 0 && tr("إضافي {0}", minutesText(d.overtime_minutes)),
+  ].filter(Boolean).join(tr("، "));
 }
 
 /** مسيّر الموظفين: يُحسب من بياناتهم لشهر، ويُرحَّل مرة واحدة بقيد الرواتب وخصم السلف ومخصص نهاية الخدمة */
@@ -68,44 +69,41 @@ export default async function HrPayrollPage({ searchParams }: { searchParams: Pr
       <PageHeader title={t.nav.hrPayroll} actions={
         <div className="flex flex-wrap items-center gap-2">
           <form className="flex items-center gap-2">
-            <Input type="month" name="month" defaultValue={month} aria-label="الشهر" className="w-48" />
-            <Button type="submit" variant="outline">عرض</Button>
+            <Input type="month" name="month" defaultValue={month} aria-label={tr("الشهر")} className="w-48" />
+            <Button type="submit" variant="outline">{tr("عرض")}</Button>
           </form>
           {canRun && (
-            <ActionButton variant="default" size="default" label="ترحيل المسيّر" done="رُحّل المسيّر وقيوده" errors={t.errors}
-              confirmText={`ترحيل مسيّر ${month}؟ يُقيَّد صافي الرواتب مستحقًا، وتُخصم أقساط السلف والجزاءات، ويُسوّى مخصص نهاية الخدمة.`}
+            <ActionButton variant="default" size="default" label={tr("ترحيل المسيّر")} done={tr("رُحّل المسيّر وقيوده")} errors={t.errors}
+              confirmText={tr("ترحيل مسيّر {0}؟ يُقيَّد صافي الرواتب مستحقًا، وتُخصم أقساط السلف والجزاءات، ويُسوّى مخصص نهاية الخدمة.", month)}
               run={runPayrollAction.bind(null, month)} />
           )}
         </div>
       } />
 
       {run.data ? (
-        <Alert variant="success" className="mb-6">
-          مسيّر هذا الشهر مرحّل برقم <span className="num">{run.data.run_number}</span> بتاريخ <span className="num">{run.data.posting_date}</span>
-          {run.data.journal_entry_id && <>، <Link href={`/journal/${run.data.journal_entry_id}`} className="text-action">عرض القيد</Link></>}
-          {!run.data.from_hr && "، وأُدخل يدويًا من صفحة الرواتب"}
+        <Alert variant="success" className="mb-6">{tr("مسيّر هذا الشهر مرحّل برقم")}{" "}<span className="num">{run.data.run_number}</span>{" "}{tr("بتاريخ")}{" "}<span className="num">{run.data.posting_date}</span>
+          {run.data.journal_entry_id && <>{tr("،")}{" "}<Link href={`/journal/${run.data.journal_entry_id}`} className="text-action">{tr("عرض القيد")}</Link></>}
+          {!run.data.from_hr && tr("، وأُدخل يدويًا من صفحة الرواتب")}
         </Alert>
       ) : lines.length > 0 && (
-        <p className="mb-6 text-[16px] leading-relaxed text-slate-600">
-          معاينة محسوبة من الحضور والإجازات والجزاءات والسلف حتى الآن. تتغير بتغير البيانات حتى تُرحّل، وبعد الترحيل لا تتكرر لنفس الشهر.
-        </p>
+        <p className="mb-6 text-[16px] leading-relaxed text-slate-600">{tr("معاينة محسوبة من الحضور والإجازات والجزاءات والسلف حتى الآن. تتغير بتغير البيانات حتى تُرحّل، وبعد الترحيل لا تتكرر لنفس الشهر.")}</p>
       )}
 
       <StatGrid className="lg:grid-cols-3">
-        <Stat icon={Users} tone="ink" label="الموظفون في المسيّر" value={<span className="num">{lines.length}</span>} />
-        <Stat currency={ctx.hotel.base_currency} icon={Calculator} tone="teal" label="إجمالي المستحق" value={<Money value={sum((l) => l.basic + l.allowances + l.overtime)} locale={locale} />} />
-        <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="clay" label="صافي الرواتب" value={<Money value={sum(net)} locale={locale} />} />
+        <Stat icon={Users} tone="ink" label={tr("الموظفون في المسيّر")} value={<span className="num">{lines.length}</span>} />
+        <Stat currency={ctx.hotel.base_currency} icon={Calculator} tone="teal" label={tr("إجمالي المستحق")} value={<Money value={sum((l) => l.basic + l.allowances + l.overtime)} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="clay" label={tr("صافي الرواتب")} value={<Money value={sum(net)} locale={locale} />} />
       </StatGrid>
 
       <Card className="overflow-hidden">
         <Table>
           <TableHeader><TableRow>
-            <TableHead>الموظف</TableHead><TableHead className="text-end">الأساسي</TableHead><TableHead className="text-end">البدلات</TableHead>
-            <TableHead className="text-end">الإضافي</TableHead><TableHead className="text-end">الخصومات</TableHead><TableHead className="text-end">التأمين</TableHead>
-            <TableHead className="text-end">السلفة</TableHead><TableHead className="text-end">الصافي</TableHead>
+            <TableHead>{tr("الموظف")}</TableHead><TableHead className="text-end">{tr("الأساسي")}</TableHead><TableHead className="text-end">{tr("البدلات")}</TableHead>
+            <TableHead className="text-end">{tr("الإضافي")}</TableHead><TableHead className="text-end">{tr("الخصومات")}</TableHead><TableHead className="text-end">{tr("التأمين")}</TableHead>
+            <TableHead className="text-end">{tr("السلفة")}</TableHead><TableHead className="text-end">{tr("الصافي")}</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {lines.length === 0 && <TableRow><TableCell colSpan={8}><EmptyState icon={Calculator} title="لا موظفين في هذا الشهر" description="يظهر المسيّر بعد إضافة الموظفين النشطين." actionHref="/hr" actionLabel="الموظفون" /></TableCell></TableRow>}
+            {lines.length === 0 && <TableRow><TableCell colSpan={8}><EmptyState icon={Calculator} title={tr("لا موظفين في هذا الشهر")} description={tr("يظهر المسيّر بعد إضافة الموظفين النشطين.")} actionHref="/hr" actionLabel={tr("الموظفون")} /></TableCell></TableRow>}
             {lines.map((l) => (
               <TableRow key={l.employee_id ?? l.employee_code}>
                 <TableCell className="cell-fluid"><EntityCell name={l.employee_name} sub={why(l) || undefined} href={l.employee_id ? `/hr/${l.employee_id}` : undefined} /></TableCell>
@@ -122,7 +120,7 @@ export default async function HrPayrollPage({ searchParams }: { searchParams: Pr
           {lines.length > 0 && (
             <TableFooter>
               <TableRow>
-                <TableCell>الإجمالي{run.data && <Badge variant="success" className="ms-2">مرحّل</Badge>}</TableCell>
+                <TableCell>{tr("الإجمالي")}{run.data && <Badge variant="success" className="ms-2">{tr("مرحّل")}</Badge>}</TableCell>
                 <TableCell className="text-end"><Money value={sum((l) => l.basic)} locale={locale} /></TableCell>
                 <TableCell className="text-end"><Money value={sum((l) => l.allowances)} locale={locale} /></TableCell>
                 <TableCell className="text-end"><Money value={sum((l) => l.overtime)} locale={locale} /></TableCell>

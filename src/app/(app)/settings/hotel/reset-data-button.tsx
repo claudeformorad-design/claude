@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -33,11 +34,9 @@ export function ResetHotelDataButton() {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <AlertOctagon className="size-4 stroke-[1.75] text-urgent" />
-            <h4 className="text-[17.5px] font-semibold text-ink">تصفير وضع التجربة بالكامل</h4>
+            <h4 className="text-[17.5px] font-semibold text-ink">{tr("تصفير وضع التجربة بالكامل")}</h4>
           </div>
-          <p className="max-w-xl text-[16.5px] leading-relaxed text-muted-foreground">
-            يحذف قاعدة بيانات التجربة المحلية بالكامل، بالفندق وإعداداته وقيوده وفواتيره وكل حركاته، ويعيدك لشاشة إعداد فندق جديد. متاح في وضع التجربة فقط، ولا يمكن التراجع عنه.
-          </p>
+          <p className="max-w-xl text-[16.5px] leading-relaxed text-muted-foreground">{tr("يحذف قاعدة بيانات التجربة المحلية بالكامل، بالفندق وإعداداته وقيوده وفواتيره وكل حركاته، ويعيدك لشاشة إعداد فندق جديد. متاح في وضع التجربة فقط، ولا يمكن التراجع عنه.")}</p>
         </div>
 
         {!open ? (
@@ -47,9 +46,7 @@ export function ResetHotelDataButton() {
             onClick={() => setOpen(true)}
             className="shrink-0 bg-white text-urgent hover:bg-white"
           >
-            <RotateCcw className="size-3.5 me-1" />
-            تصفير بيانات النظام
-          </Button>
+            <RotateCcw className="size-3.5 me-1" />{tr("تصفير بيانات النظام")}</Button>
         ) : (
           <div className="flex flex-col items-end gap-2 shrink-0">
             <div className="flex items-center gap-2">
@@ -62,9 +59,7 @@ export function ResetHotelDataButton() {
                   setConfirmed(false);
                 }}
                 
-              >
-                إلغاء
-              </Button>
+              >{tr("إلغاء")}</Button>
               <Button
                 type="button"
                 variant="destructive"
@@ -75,13 +70,11 @@ export function ResetHotelDataButton() {
               >
                 {success ? (
                   <>
-                    <Check className="size-3.5 me-1" />
-                    تم التصفير بنجاح!
-                  </>
+                    <Check className="size-3.5 me-1" />{tr("تم التصفير بنجاح!")}</>
                 ) : isPending ? (
-                  "جاري التصفير..."
+                  tr("جاري التصفير...")
                 ) : (
-                  "تأكيد الحذف الكامل الآن"
+                  tr("تأكيد الحذف الكامل الآن")
                 )}
               </Button>
             </div>
@@ -91,10 +84,8 @@ export function ResetHotelDataButton() {
                 checked={confirmed}
                 onChange={(e) => setConfirmed(e.target.checked)}
                 className="size-3.5"
-              />
-              أنا متأكد من حذف جميع بيانات التجربة
-            </label>
-            {failed && <p className="text-[15.5px] text-urgent">تعذّر التصفير، أعد المحاولة، وإن تكرر فأعد تشغيل الخادم.</p>}
+              />{tr("أنا متأكد من حذف جميع بيانات التجربة")}</label>
+            {failed && <p className="text-[15.5px] text-urgent">{tr("تعذّر التصفير، أعد المحاولة، وإن تكرر فأعد تشغيل الخادم.")}</p>}
           </div>
         )}
       </div>

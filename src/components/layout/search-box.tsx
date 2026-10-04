@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -119,8 +120,8 @@ export function SearchBox({ groups, className, autoFocus = false, onDone }: {
             if (e.key === "ArrowUp") { e.preventDefault(); setIndex((i) => Math.max(i - 1, 0)); }
             if (e.key === "Enter") { e.preventDefault(); go(results[safeIndex]); }
           }}
-          placeholder="ابحث عن صفحة أو تقرير…"
-          aria-label="بحث"
+          placeholder={tr("ابحث عن صفحة أو تقرير…")}
+          aria-label={tr("بحث")}
           role="combobox"
           aria-controls={listId}
           aria-expanded={open}

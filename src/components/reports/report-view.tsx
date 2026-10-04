@@ -5,7 +5,7 @@ import { Alert } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
 import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CODE_COLUMN, hasCodes, type PlainReport } from "@/lib/export/plain-report";
+import { codeColumn, hasCodes, type PlainReport } from "@/lib/export/plain-report";
 import { cn } from "@/lib/utils";
 
 /**
@@ -37,7 +37,7 @@ export function ReportView({ report, from, to, actions }: {
       <Card className="overflow-hidden">
         <Table>
           <TableHeader><TableRow>
-            {codes && <TableHead className="w-28">{CODE_COLUMN}</TableHead>}
+            {codes && <TableHead className="w-28">{codeColumn()}</TableHead>}
             {report.columns.map((c, i) => <TableHead key={c} className={i > 0 ? "text-end" : ""}>{c}</TableHead>)}
           </TableRow></TableHeader>
           <TableBody>

@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -60,7 +61,7 @@ export function DirectInvoiceForm({
     start(async () => {
       setError(null);
       const r = await callAction(createDirectInvoiceAction(getValues()));
-      if (r.ok) { toast("تم إصدار الفاتورة"); router.push(`/invoices/${r.data}`); }
+      if (r.ok) { toast(tr("تم إصدار الفاتورة")); router.push(`/invoices/${r.data}`); }
       else setError(actionErrorText(t.errors, r));
     });
 
@@ -71,7 +72,7 @@ export function DirectInvoiceForm({
         <div className="field-group space-y-1.5">
           <Label htmlFor="customer_id">{t.invoices.customer}</Label>
           <NativeSelect id="customer_id" aria-invalid={!!formState.errors.customer_id} {...register("customer_id")}>
-            <option value="">اختر</option>
+            <option value="">{tr("اختر")}</option>
             {customers.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
           </NativeSelect>
         </div>

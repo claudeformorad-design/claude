@@ -6,7 +6,7 @@ import { raise } from "./errors";
 /** قراءات الصندوق والعملات: ورديات الكاشير وأسعار الصرف (الكتابة كلها عبر دوال قاعدة البيانات) */
 
 export async function listCurrencies(supabase: SupabaseServerClient): Promise<{ code: string; name_ar: string; symbol: string; decimals: number }[]> {
-  const { data, error } = await supabase.from("currencies").select("code, name_ar, symbol, decimals").eq("is_active", true).order("code");
+  const { data, error } = await supabase.from("currencies").select("code, name_ar, name_en, symbol, decimals").eq("is_active", true).order("code");
   raise(error);
   return (data ?? []) as { code: string; name_ar: string; symbol: string; decimals: number }[];
 }

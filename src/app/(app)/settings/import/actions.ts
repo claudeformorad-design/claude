@@ -1,4 +1,5 @@
 "use server";
+import { tr } from "@/i18n/tr";
 
 import { revalidatePath } from "next/cache";
 import { requireAppContext } from "@/lib/auth/context";
@@ -42,7 +43,7 @@ export async function runImportAction(formData: FormData): Promise<ActionResult<
     const sheet = await readSheet(x.file);
     const r = await toActionResult(async () => {
       const { check, rows } = await checkImport(x.ctx, x.def, sheet);
-      if (check.missingColumns.length || check.errors.length || !rows.length) throw new ImportFileError("صحّح أخطاء الملف أولًا، فلا يُستورد شيء ما دام فيه خطأ");
+      if (check.missingColumns.length || check.errors.length || !rows.length) throw new ImportFileError(tr("صحّح أخطاء الملف أولًا، فلا يُستورد شيء ما دام فيه خطأ"));
       return runImport(x.ctx, x.def, rows);
     });
     if (r.ok) for (const p of REFRESH[x.def.kind] ?? []) revalidatePath(p);

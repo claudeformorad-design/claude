@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -18,7 +19,7 @@ export function SalaryEditor({ employeeId, rows, errors }: { employeeId: string;
   const [pending, start] = useTransition();
   const save = () => start(async () => {
     const r = await callAction(saveEmployeeComponentsAction(employeeId, rows.map((x) => ({ component_id: x.id, value: values[x.id]?.trim() ?? "" }))));
-    if (r.ok) { toast("حُفظت بنود الراتب"); close?.(); router.refresh(); }
+    if (r.ok) { toast(tr("حُفظت بنود الراتب")); close?.(); router.refresh(); }
     else toast(actionErrorText(errors, r), "error");
   });
   return (
@@ -29,7 +30,7 @@ export function SalaryEditor({ employeeId, rows, errors }: { employeeId: string;
             <span className="min-w-0 flex-1">
               <span className="block text-[16px] font-medium text-ink">{r.name}</span>
               <span className="block text-[14.5px] text-slate-500">
-                {r.kind === "allowance" ? "بدل" : "خصم"}، {r.calc === "percent" ? "نسبة من الأساسي" : "مبلغ ثابت"}، الافتراضي <span className="num">{Number(r.default_value)}</span>{r.calc === "percent" ? "٪" : ""}
+                {r.kind === "allowance" ? tr("بدل") : tr("خصم")}{tr("،")}{" "}{r.calc === "percent" ? tr("نسبة من الأساسي") : tr("مبلغ ثابت")}{tr("، الافتراضي")}{" "}<span className="num">{Number(r.default_value)}</span>{r.calc === "percent" ? tr("٪") : ""}
               </span>
             </span>
             <input value={values[r.id] ?? ""} inputMode="decimal" dir="ltr" placeholder={String(Number(r.default_value))}
@@ -38,8 +39,8 @@ export function SalaryEditor({ employeeId, rows, errors }: { employeeId: string;
           </label>
         ))}
       </div>
-      <p className="text-[14.5px] text-slate-500">اترك الحقل فارغًا ليأخذ الموظف القيمة الافتراضية للبند من إعدادات الموارد البشرية.</p>
-      <Button onClick={save} loading={pending}>حفظ بنود الراتب</Button>
+      <p className="text-[14.5px] text-slate-500">{tr("اترك الحقل فارغًا ليأخذ الموظف القيمة الافتراضية للبند من إعدادات الموارد البشرية.")}</p>
+      <Button onClick={save} loading={pending}>{tr("حفظ بنود الراتب")}</Button>
     </div>
   );
 }

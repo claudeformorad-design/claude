@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -9,6 +10,7 @@ import { BrandMark } from "@/components/brand-mark";
 import Link from "@/components/link";
 import { cn } from "@/lib/utils";
 import { Popover } from "@/components/ui/popover";
+import { LanguageSwitch } from "@/components/language-switch";
 import { isActivePath, navGroups, type NavAccess, type NavLabels } from "./nav-config";
 import { SearchBox } from "./search-box";
 import { AssistantLauncher } from "@/components/assistant/launcher";
@@ -52,12 +54,12 @@ export function TopBar({
 
   return (
     <header className="no-print relative flex h-[72px] shrink-0 items-center gap-3 px-4 md:px-10">
-      <button type="button" onClick={() => setDrawerOpen(true)} className={cn(iconBtn, "md:hidden")} aria-label="القائمة">
+      <button type="button" onClick={() => setDrawerOpen(true)} className={cn(iconBtn, "md:hidden")} aria-label={tr("القائمة")}>
         <Menu className="size-[18px] stroke-[1.75]" />
       </button>
 
       {/* مسار التنقّل */}
-      <nav aria-label="المسار" className="flex min-w-0 flex-1 items-center gap-5 text-[16.5px] text-muted-foreground">
+      <nav aria-label={tr("المسار")} className="flex min-w-0 flex-1 items-center gap-5 text-[16.5px] text-muted-foreground">
         <span className="truncate md:hidden text-ink font-medium">{hotelName}</span>
         <span className="hidden truncate md:inline">{hotelName}</span>
         {group?.title && group.items.length > 1 && (
@@ -77,14 +79,13 @@ export function TopBar({
       <div className="flex items-center gap-2">
         {assistant && <AssistantLauncher />}
         {demo && (
-          <Link href="/settings/hotel" title="بيانات تجريبية مؤقتة، احذفها من الإعدادات"
-            className="flex h-8 items-center rounded-md bg-sky-tint px-3 text-[15.5px] font-medium text-sky">
-            بيانات تجريبية
-          </Link>
+          <Link href="/settings/hotel" title={tr("بيانات تجريبية مؤقتة، احذفها من الإعدادات")}
+            className="flex h-8 items-center rounded-md bg-sky-tint px-3 text-[15.5px] font-medium text-sky">{tr("بيانات تجريبية")}</Link>
         )}
-        <button type="button" onClick={() => setSearchOpen((v) => !v)} className={cn(iconBtn, "md:hidden")} title="بحث" aria-label="بحث">
+        <button type="button" onClick={() => setSearchOpen((v) => !v)} className={cn(iconBtn, "md:hidden")} title={tr("بحث")} aria-label={tr("بحث")}>
           <Search className="size-[18px] stroke-[1.75]" />
         </button>
+        <LanguageSwitch className="hidden sm:flex" />
         {quickActions.length > 0 && <QuickActions actions={quickActions} />}
         {reachable.has("/periods") && (
           <Link href="/periods" className={cn(iconBtn, "hidden sm:flex")} title={labels.periods} aria-label={labels.periods}>
@@ -96,7 +97,7 @@ export function TopBar({
             <Settings className="size-[18px] stroke-[1.75]" />
           </Link>
         )}
-        <Link href="/" title={`${userName || userEmail}، ${roleLabel}`} aria-label="الرئيسية" className="md:hidden">
+        <Link href="/" title={tr("{0}، {1}", userName || userEmail, roleLabel)} aria-label={tr("الرئيسية")} className="md:hidden">
           <BrandMark className="size-10" />
         </Link>
       </div>
@@ -118,9 +119,9 @@ function QuickActions({ actions }: { actions: { href: string; label: string }[] 
   const btn = useRef<HTMLButtonElement | null>(null);
   return (
     <>
-      <button ref={btn} type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-label="جديد"
+      <button ref={btn} type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-label={tr("جديد")}
         className="flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-ink px-3 text-[16px] font-medium text-white transition-opacity hover:opacity-90">
-        <Plus className="size-[18px] stroke-[2]" /><span className="hidden sm:inline">جديد</span>
+        <Plus className="size-[18px] stroke-[2]" /><span className="hidden sm:inline">{tr("جديد")}</span>
       </button>
       <Popover open={open} anchor={btn} onClose={() => setOpen(false)} width={230}>
         <div className="p-1.5">
@@ -165,12 +166,11 @@ function MobileDrawer({ groups, pathname, hotelName, signOut, onClose }: { group
             ))}
           </div>
         ))}
+        <LanguageSwitch className="mx-1 mt-2 w-[calc(100%-0.5rem)] justify-center" />
         {signOut && (
           <form action={signOut} className="mt-2 px-1">
             <button type="submit" className="flex h-10 w-full items-center gap-3 rounded-[10px] px-2 text-[16.5px] text-slate-500 hover:text-urgent">
-              <LogOut className="size-[18px] stroke-[1.75]" />
-              تسجيل الخروج
-            </button>
+              <LogOut className="size-[18px] stroke-[1.75]" />{tr("تسجيل الخروج")}</button>
           </form>
         )}
       </m.nav>

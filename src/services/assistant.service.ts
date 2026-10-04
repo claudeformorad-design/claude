@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import "server-only";
 import type { SupabaseServerClient } from "@/lib/supabase/server";
 import type {
@@ -19,7 +20,7 @@ const DEFAULT_SETTINGS: AssistantSettings = { instructions: "", open_mode: "pane
 /** عنوان المحادثة من أول سؤال: سطر واحد قصير */
 export function titleFrom(question: string): string {
   const t = question.replace(/\s+/g, " ").trim();
-  return (t.length > 60 ? `${t.slice(0, 58).trim()}…` : t) || "محادثة جديدة";
+  return (t.length > 60 ? `${t.slice(0, 58).trim()}…` : t) || tr("محادثة جديدة");
 }
 
 export async function listConversations(supabase: SupabaseServerClient, hotelId: string, q?: string): Promise<Conversation[]> {

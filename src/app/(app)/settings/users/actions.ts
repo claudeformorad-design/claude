@@ -1,4 +1,5 @@
 "use server";
+import { tr } from "@/i18n/tr";
 
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
@@ -31,10 +32,10 @@ export async function enableLoginAction(input: unknown): Promise<ActionResult<un
   const p = z.object({ username: z.string(), password: z.string().max(200), confirm: z.string().max(200) }).safeParse(input);
   if (!p.success) return fail;
   const username = normalizeUsername(p.data.username);
-  if (!USERNAME_RE.test(username)) return msg("اسم المستخدم من 3 إلى 32 حرفًا إنجليزيًا صغيرًا أو رقمًا");
-  if (p.data.password !== p.data.confirm) return msg("كلمتا المرور غير متطابقتين");
-  if (!strongPassword(p.data.password)) return msg("كلمة المرور 8 أحرف على الأقل، وفيها حرف ورقم");
-  if (await usernameTaken(username, ctx.user.id)) return msg("اسم المستخدم مستخدم لحساب آخر");
+  if (!USERNAME_RE.test(username)) return msg(tr("اسم المستخدم من 3 إلى 32 حرفًا إنجليزيًا صغيرًا أو رقمًا"));
+  if (p.data.password !== p.data.confirm) return msg(tr("كلمتا المرور غير متطابقتين"));
+  if (!strongPassword(p.data.password)) return msg(tr("كلمة المرور 8 أحرف على الأقل، وفيها حرف ورقم"));
+  if (await usernameTaken(username, ctx.user.id)) return msg(tr("اسم المستخدم مستخدم لحساب آخر"));
   await enableMultiUser(username, p.data.password, await userAgent());
   revalidatePath("/", "layout");
   return { ok: true, data: undefined };
@@ -59,12 +60,12 @@ export async function addEmployeeAction(input: unknown): Promise<ActionResult<st
     if (r.ok) revalidatePath("/settings/users");
     return r;
   }
-  if ((await getAuthMode()) !== "multi") return msg("فعّل تسجيل الدخول أولًا من أعلى الصفحة");
+  if ((await getAuthMode()) !== "multi") return msg(tr("فعّل تسجيل الدخول أولًا من أعلى الصفحة"));
   const username = normalizeUsername(v.username ?? "");
-  if (!v.full_name) return msg("اكتب اسم الموظف");
-  if (!USERNAME_RE.test(username)) return msg("اسم المستخدم من 3 إلى 32 حرفًا إنجليزيًا صغيرًا أو رقمًا");
-  if (!strongPassword(v.password ?? "")) return msg("كلمة المرور المؤقتة 8 أحرف على الأقل، وفيها حرف ورقم");
-  if (await usernameTaken(username)) return msg("اسم المستخدم مستخدم لحساب آخر");
+  if (!v.full_name) return msg(tr("اكتب اسم الموظف"));
+  if (!USERNAME_RE.test(username)) return msg(tr("اسم المستخدم من 3 إلى 32 حرفًا إنجليزيًا صغيرًا أو رقمًا"));
+  if (!strongPassword(v.password ?? "")) return msg(tr("كلمة المرور المؤقتة 8 أحرف على الأقل، وفيها حرف ورقم"));
+  if (await usernameTaken(username)) return msg(tr("اسم المستخدم مستخدم لحساب آخر"));
   const account = await createLocalAccount(v.full_name, username, v.password!);
   // الربط بالفندق يتم بهوية المدير، فتطبَّق حراسة قاعدة البيانات: لا يمنح دورًا أعلى من صلاحياته
   const r = await toActionResult(async () => {
@@ -104,11 +105,11 @@ export async function saveMemberAccessAction(userId: string, input: unknown): Pr
 
 /** يتحقق أن المنفّذ يدير هذا الموظف: ليس هو نفسه، وكل صلاحيات الموظف ضمن صلاحياته */
 async function canManage(ctx: Awaited<ReturnType<typeof requireAppContext>>, userId: string): Promise<string | null> {
-  if (userId === ctx.user.id) return "لا يمكنك إدارة حسابك من هنا";
+  if (userId === ctx.user.id) return tr("لا يمكنك إدارة حسابك من هنا");
   const { data, error } = await ctx.supabase.rpc("member_access", { p_hotel_id: ctx.hotel.id, p_user_id: userId });
-  if (error || !data) return "الموظف غير موجود في هذا الفندق";
+  if (error || !data) return tr("الموظف غير موجود في هذا الفندق");
   const effective = ((data as { effective?: string[] }).effective ?? []);
-  if (effective.some((c) => !ctx.permissions.has(c))) return "لا يمكنك إدارة موظف يملك صلاحيات ليست عندك";
+  if (effective.some((c) => !ctx.permissions.has(c))) return tr("لا يمكنك إدارة موظف يملك صلاحيات ليست عندك");
   return null;
 }
 
@@ -118,7 +119,7 @@ export async function resetPasswordAction(userId: string, password: string): Pro
   if (isSupabaseConfigured() || (await getAuthMode()) !== "multi" || !z.uuid().safeParse(userId).success) return fail;
   const denied = await canManage(ctx, userId);
   if (denied) return msg(denied);
-  if (!strongPassword(password)) return msg("كلمة المرور المؤقتة 8 أحرف على الأقل، وفيها حرف ورقم");
+  if (!strongPassword(password)) return msg(tr("كلمة المرور المؤقتة 8 أحرف على الأقل، وفيها حرف ورقم"));
   await setLocalPassword(userId, password, true);
   return { ok: true, data: undefined };
 }

@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
@@ -33,10 +34,10 @@ export default async function BillsPage({ searchParams }: { searchParams: Promis
       <PageHeader title={t.nav.bills}
         actions={ctx.can(PERMISSIONS.billsCreate) && <Button asChild><Link href="/bills/new"><Plus />{t.payables.newBill}</Link></Button>} />
       <StatGrid>
-        <Stat icon={FileSpreadsheet} tone="ink" label="فواتير الموردين" value={<span className="num">{bills.length}</span>} />
-        <Stat currency={ctx.hotel.base_currency} icon={Receipt} tone="teal" label="إجمالي المشتريات" value={<Money value={bills.reduce((a, b) => a.plus(toMoney(b.total)), ZERO)} locale={locale} />} />
-        <Stat currency={ctx.hotel.base_currency} icon={Hourglass} tone="clay" label="المستحق للموردين" value={<Money value={bills.reduce((a, b) => a.plus(toMoney(b.total).minus(toMoney(b.amount_paid))), ZERO)} locale={locale} />} />
-        <Stat icon={AlarmClock} tone="neutral" label="متأخرة السداد" value={<span className="num">{bills.filter((b) => b.due_date < today && toMoney(b.total).gt(toMoney(b.amount_paid))).length}</span>} />
+        <Stat icon={FileSpreadsheet} tone="ink" label={tr("فواتير الموردين")} value={<span className="num">{bills.length}</span>} />
+        <Stat currency={ctx.hotel.base_currency} icon={Receipt} tone="teal" label={tr("إجمالي المشتريات")} value={<Money value={bills.reduce((a, b) => a.plus(toMoney(b.total)), ZERO)} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Hourglass} tone="clay" label={tr("المستحق للموردين")} value={<Money value={bills.reduce((a, b) => a.plus(toMoney(b.total).minus(toMoney(b.amount_paid))), ZERO)} locale={locale} />} />
+        <Stat icon={AlarmClock} tone="neutral" label={tr("متأخرة السداد")} value={<span className="num">{bills.filter((b) => b.due_date < today && toMoney(b.total).gt(toMoney(b.amount_paid))).length}</span>} />
       </StatGrid>
       <Card className="overflow-hidden">
         <Table>
@@ -46,7 +47,7 @@ export default async function BillsPage({ searchParams }: { searchParams: Promis
             <TableHead className="text-end">{t.invoices.total}</TableHead><TableHead className="text-end">{t.invoices.outstanding}</TableHead><TableHead>{t.common.status}</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {bills.length === 0 && <TableRow><TableCell colSpan={7} className="py-8"><EmptyState title="لا توجد فواتير موردين" description="سجّل فواتير المشتريات والخدمات لتظهر هنا مع مستحقاتها ومواعيد سدادها." actionHref="/bills/new" actionLabel="فاتورة مورد جديدة" icon={FileSpreadsheet} /></TableCell></TableRow>}
+            {bills.length === 0 && <TableRow><TableCell colSpan={7} className="py-8"><EmptyState title={tr("لا توجد فواتير موردين")} description={tr("سجّل فواتير المشتريات والخدمات لتظهر هنا مع مستحقاتها ومواعيد سدادها.")} actionHref="/bills/new" actionLabel={tr("فاتورة مورد جديدة")} icon={FileSpreadsheet} /></TableCell></TableRow>}
             {shown.rows.map((b) => (
               <ExpandableRow kind="bill" id={b.id} colSpan={7} key={b.id}>
                 <TableCell><ExpandMark /><Link href={`/bills/${b.id}`} className="num font-semibold text-ink">{b.bill_number}</Link></TableCell>

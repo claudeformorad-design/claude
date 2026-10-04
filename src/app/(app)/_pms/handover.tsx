@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -16,8 +17,8 @@ import { checkInAction } from "./actions";
 /** كلمات ما يُسلَّم للنزيل حسب إعداد الفندق: بطاقة أو مفتاح */
 export function accessWords(access: RoomAccess) {
   return access === "key"
-    ? { one: "المفتاح", count: "عدد المفاتيح", confirm: "سلّمتُ المفتاح للنزيل", done: "تم التسكين وتسليم المفتاح", issued: "المفاتيح المسلّمة", collect: "استلم المفاتيح من النزيل عند المغادرة، وعددها" }
-    : { one: "البطاقة", count: "عدد البطاقات", confirm: "سلّمتُ البطاقة للنزيل", done: "تم التسكين وتسليم البطاقة", issued: "البطاقات المسلّمة", collect: "استلم البطاقات من النزيل عند المغادرة، وعددها" };
+    ? { one: tr("المفتاح"), count: tr("عدد المفاتيح"), confirm: tr("سلّمتُ المفتاح للنزيل"), done: tr("تم التسكين وتسليم المفتاح"), issued: tr("المفاتيح المسلّمة"), collect: tr("استلم المفاتيح من النزيل عند المغادرة، وعددها") }
+    : { one: tr("البطاقة"), count: tr("عدد البطاقات"), confirm: tr("سلّمتُ البطاقة للنزيل"), done: tr("تم التسكين وتسليم البطاقة"), issued: tr("البطاقات المسلّمة"), collect: tr("استلم البطاقات من النزيل عند المغادرة، وعددها") };
 }
 
 /** حقلا التسليم: العدد، وتأكيد أن الموظف سلّمها بيده للنزيل */
@@ -62,7 +63,7 @@ export function QuickCheckIn({ reservationId, roomId, access, errors }: {
 
   return (
     <div className="relative inline-flex flex-col">
-      <Button type="button" size="sm" onClick={() => setOpen((x) => !x)}><KeyRound className="size-4" />تسكين</Button>
+      <Button type="button" size="sm" onClick={() => setOpen((x) => !x)}><KeyRound className="size-4" />{tr("تسكين")}</Button>
       <AnimatePresence>
         {open && (
           <m.form
@@ -70,13 +71,13 @@ export function QuickCheckIn({ reservationId, roomId, access, errors }: {
             onSubmit={(e) => { e.preventDefault(); if (ready) submit(); }}
             className="absolute end-0 top-full z-30 mt-2 w-80 space-y-3 rounded-lg border border-line bg-white p-3 text-start shadow-lift"
           >
-            <p className="text-[15px] font-medium text-ink">تسليم {w.one}</p>
+            <p className="text-[15px] font-medium text-ink">{tr("تسليم")}{" "}{w.one}</p>
             <div className="flex flex-wrap items-end gap-2">
               <HandoverFields access={access} keys={keys} onKeys={setKeys} confirmed={confirmed} onConfirmed={setConfirmed} idPrefix={`quick_${reservationId}`} />
             </div>
             <div className="flex gap-2">
-              <Button type="submit" size="sm" loading={pending} disabled={!ready}>إتمام التسكين</Button>
-              <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(false)}>تراجع</Button>
+              <Button type="submit" size="sm" loading={pending} disabled={!ready}>{tr("إتمام التسكين")}</Button>
+              <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(false)}>{tr("تراجع")}</Button>
             </div>
           </m.form>
         )}

@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import Link from "@/components/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Money } from "@/components/money";
@@ -45,10 +46,10 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
       <PageHeader title={t.nav.stock}
         actions={can && <Button asChild variant="outline"><Link href="/inventory?new=1">{i.newItem}</Link></Button>} />
       <StatGrid>
-        <Stat icon={Boxes} tone="ink" label="الأصناف" value={<span className="num">{items.length}</span>} hint={`${items.filter((x) => x.is_active).length} فعّال`} />
-        <Stat currency={ctx.hotel.base_currency} icon={Coins} tone="teal" label="قيمة المخزون" value={<Money value={items.reduce((s, x) => s.plus(toMoney(x.stock_value)), ZERO)} locale={locale} />} />
-        <Stat icon={TriangleAlert} tone="clay" label="تحت حد إعادة الطلب" value={<span className="num">{lowCount}</span>} />
-        <Stat icon={PackageX} tone="neutral" label="نفدت كميتها" value={<span className="num">{items.filter((x) => x.is_active && toMoney(x.quantity_on_hand).lte(0)).length}</span>} />
+        <Stat icon={Boxes} tone="ink" label={tr("الأصناف")} value={<span className="num">{items.length}</span>} hint={tr("{0} فعّال", items.filter((x) => x.is_active).length)} />
+        <Stat currency={ctx.hotel.base_currency} icon={Coins} tone="teal" label={tr("قيمة المخزون")} value={<Money value={items.reduce((s, x) => s.plus(toMoney(x.stock_value)), ZERO)} locale={locale} />} />
+        <Stat icon={TriangleAlert} tone="clay" label={tr("تحت حد إعادة الطلب")} value={<span className="num">{lowCount}</span>} />
+        <Stat icon={PackageX} tone="neutral" label={tr("نفدت كميتها")} value={<span className="num">{items.filter((x) => x.is_active && toMoney(x.quantity_on_hand).lte(0)).length}</span>} />
       </StatGrid>
       {can && (edit || sp.new) && (
         <Card className="mb-6"><CardHeader><CardTitle>{edit ? t.common.edit : i.newItem}</CardTitle></CardHeader><CardContent>
@@ -59,7 +60,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
               reorder_level: edit ? toMoney(edit.reorder_level).toString() : "0", is_active: edit?.is_active ?? true,
             }}
             fields={[
-              { name: "sku", label: i.sku, ltr: true }, { name: "name_ar", label: i.name }, { name: "name_en", label: `${i.name} بالإنجليزية`, ltr: true },
+              { name: "sku", label: i.sku, ltr: true }, { name: "name_ar", label: i.name }, { name: "name_en", label: tr("{0} بالإنجليزية", i.name), ltr: true },
               { name: "unit", label: i.unit }, { name: "inventory_account_id", label: i.inventoryAccount, options: opt(postable.filter((a) => a.account_type === "asset" && a.code.startsWith("112"))) },
               { name: "expense_account_id", label: i.expenseAccount, options: opt(postable.filter((a) => a.account_type === "expense")) },
               { name: "reorder_level", label: i.reorder, type: "number" }, { name: "is_active", label: t.common.active, checkbox: true },
@@ -89,7 +90,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
             <TableHead className="text-end">{i.value}</TableHead><TableHead />{can && <TableHead />}
           </TableRow></TableHeader>
           <TableBody>
-            {items.length === 0 && <TableRow><TableCell colSpan={8} className="py-8"><EmptyState title="لا توجد أصناف مخزون" description="أضف أصناف المطبخ والمتجر والمستلزمات لتتبع كمياتها وتكلفتها المتوسطة." actionHref="/inventory?new=1" actionLabel={i.newItem} icon={Boxes} /></TableCell></TableRow>}
+            {items.length === 0 && <TableRow><TableCell colSpan={8} className="py-8"><EmptyState title={tr("لا توجد أصناف مخزون")} description={tr("أضف أصناف المطبخ والمتجر والمستلزمات لتتبع كمياتها وتكلفتها المتوسطة.")} actionHref="/inventory?new=1" actionLabel={i.newItem} icon={Boxes} /></TableCell></TableRow>}
             {items.map((x) => {
               const low = toMoney(x.quantity_on_hand).lte(toMoney(x.reorder_level)) && toMoney(x.reorder_level).gt(0);
               return (

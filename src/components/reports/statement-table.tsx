@@ -1,10 +1,11 @@
+import { tr } from "@/i18n/tr";
 import Link from "@/components/link";
 import { formatMoney, type Money } from "@/lib/accounting/money";
 import { cn } from "@/lib/utils";
 
 export type StatementRow = { date: string; number: string; label: string; description: string; debit: Money; credit: Money; balance: Money; href?: string };
 
-const KIND_LABEL: Record<string, string> = { invoice: "فاتورة", credit_note: "إشعار دائن", receipt: "سند قبض", refund: "سند صرف" };
+const KIND_LABEL: Record<string, string> = { get invoice() { return tr("فاتورة"); }, get credit_note() { return tr("إشعار دائن"); }, get receipt() { return tr("سند قبض"); }, get refund() { return tr("سند صرف"); } };
 export const statementKind = (k: string) => KIND_LABEL[k] ?? k;
 
 /**
@@ -21,14 +22,14 @@ export function StatementTable({ rows, opening, debit, credit, closing, decimals
       <table className="report-doc-table w-full border-separate border-spacing-0 text-[13px]">
         <thead>
           <tr>
-            {["التاريخ", "المستند", "البيان", "مدين", "دائن", "الرصيد"].map((h, i) => (
+            {[tr("التاريخ"), tr("المستند"), tr("البيان"), tr("مدين"), tr("دائن"), tr("الرصيد")].map((h, i) => (
               <th key={h} className={cn("bg-ink px-3.5 py-3 font-bold text-white", i < 3 ? "text-start" : "text-end")}>{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           <tr className="font-bold">
-            <td colSpan={5} className="bg-group-row px-3.5 py-2.5">الرصيد الافتتاحي</td>
+            <td colSpan={5} className="bg-group-row px-3.5 py-2.5">{tr("الرصيد الافتتاحي")}</td>
             <td className="num bg-group-row px-3.5 py-2.5 text-end">{m(opening, false)}</td>
           </tr>
           {rows.map((r, i) => (
@@ -44,15 +45,15 @@ export function StatementTable({ rows, opening, debit, credit, closing, decimals
               <td className={cn(cell, "num text-end font-semibold")}>{m(r.balance, false)}</td>
             </tr>
           ))}
-          {rows.length === 0 && <tr><td colSpan={6} className={cn(cell, "py-6 text-center text-slate-500")}>لا توجد حركات في هذه الفترة</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={6} className={cn(cell, "py-6 text-center text-slate-500")}>{tr("لا توجد حركات في هذه الفترة")}</td></tr>}
           <tr className="font-bold">
-            <td colSpan={3} className="border-t-2 border-ink px-3.5 py-3">مجموع الحركات</td>
+            <td colSpan={3} className="border-t-2 border-ink px-3.5 py-3">{tr("مجموع الحركات")}</td>
             <td className="num border-t-2 border-ink px-3.5 py-3 text-end">{m(debit, false)}</td>
             <td className="num border-t-2 border-ink px-3.5 py-3 text-end">{m(credit, false)}</td>
             <td className="border-t-2 border-ink px-3.5 py-3" />
           </tr>
           <tr className="font-bold text-white">
-            <td colSpan={5} className="bg-ink px-3.5 py-3.5 text-[14.5px]">{closing.isNegative() ? "الرصيد الختامي دائن للعميل" : "الرصيد الختامي المستحق"}</td>
+            <td colSpan={5} className="bg-ink px-3.5 py-3.5 text-[14.5px]">{closing.isNegative() ? tr("الرصيد الختامي دائن للعميل") : tr("الرصيد الختامي المستحق")}</td>
             <td className="num bg-ink px-3.5 py-3.5 text-end text-[14.5px]">{m(closing.abs(), false)}</td>
           </tr>
         </tbody>

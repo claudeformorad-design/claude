@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useEffect } from "react";
 import { Printer } from "lucide-react";
@@ -13,8 +14,8 @@ export function PrintToolbar() {
   }, []);
   return (
     <div className="mx-auto mb-6 flex max-w-[210mm] items-center justify-between gap-3 px-2 print:hidden">
-      <p className="text-[15px] text-slate-600">نسخة الطباعة</p>
-      <Button onClick={() => window.print()}><Printer />طباعة</Button>
+      <p className="text-[15px] text-slate-600">{tr("نسخة الطباعة")}</p>
+      <Button onClick={() => window.print()}><Printer />{tr("طباعة")}</Button>
     </div>
   );
 }

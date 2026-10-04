@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { Alert } from "@/components/ui/alert";
@@ -25,15 +26,15 @@ export function ApprovalRequest({ request, message, onSent }: { request: Approva
     start(async () => {
       setError(null);
       const r = await callAction(requestApprovalAction({ ...request, note: note.trim() || undefined }));
-      if (r.ok) { toast("أُرسل الطلب للمدير، وستجده في صفحة الموافقات"); onSent?.(); }
-      else setError(r.message ?? "تعذّر إرسال الطلب");
+      if (r.ok) { toast(tr("أُرسل الطلب للمدير، وستجده في صفحة الموافقات")); onSent?.(); }
+      else setError(r.message ?? tr("تعذّر إرسال الطلب"));
     });
   return (
     <Alert variant="warning" className="space-y-3">
       <p>{message}</p>
       <div className="flex flex-wrap items-center gap-2">
-        <Input value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder="ملاحظة للمدير" className="min-w-0 flex-1" aria-label="ملاحظة للمدير" />
-        <Button type="button" onClick={send} loading={pending}>إرسال طلب موافقة</Button>
+        <Input value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder={tr("ملاحظة للمدير")} className="min-w-0 flex-1" aria-label={tr("ملاحظة للمدير")} />
+        <Button type="button" onClick={send} loading={pending}>{tr("إرسال طلب موافقة")}</Button>
       </div>
       {error && <p className="text-urgent">{error}</p>}
     </Alert>

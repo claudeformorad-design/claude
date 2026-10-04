@@ -93,14 +93,15 @@ async function createSession(userId: string, userAgent: string | null): Promise<
   await setSessionCookie(token);
 }
 
-export type SignInResult = { ok: true; mustChange: boolean } | { ok: false; error: "invalid" | "locked" | "inactive" };
+export type SignInResult = { ok: true; mustChange: boolean; locale: "ar" | "en" } | { ok: false; error: "invalid" | "locked" | "inactive" };
 
 export async function signIn(usernameRaw: string, password: string, userAgent: string | null): Promise<SignInResult> {
   const username = normalizeUsername(usernameRaw);
   if (isLockedOut(username)) return { ok: false, error: "locked" };
-  const [cred] = await catalogQuery<{ user_id: string; password_hash: string; must_change: boolean; active: boolean }>(
+  const [cred] = await catalogQuery<{ user_id: string; password_hash: string; must_change: boolean; active: boolean; locale: string | null }>(
     `select c.user_id, c.password_hash, c.must_change,
-            exists (select 1 from public.hotel_members m where m.user_id = c.user_id and m.is_active) as active
+            exists (select 1 from public.hotel_members m where m.user_id = c.user_id and m.is_active) as active,
+            (select p.preferred_locale from public.users_profiles p where p.id = c.user_id) as locale
        from local_meta.credentials c where c.username = $1`, [username]);
   // نفس زمن التحقق تقريبًا حتى لو لم يوجد الاسم، فلا يُعرف من التوقيت أي الأسماء موجودة
   const valid = cred ? await verifyPassword(password, cred.password_hash) : (await hashPassword(password), false);
@@ -108,7 +109,7 @@ export async function signIn(usernameRaw: string, password: string, userAgent: s
   if (!cred.active) return { ok: false, error: "inactive" };
   attempts.delete(username);
   await createSession(cred.user_id, userAgent);
-  return { ok: true, mustChange: cred.must_change };
+  return { ok: true, mustChange: cred.must_change, locale: cred.locale === "en" ? "en" : "ar" };
 }
 
 export async function signOut(): Promise<void> {

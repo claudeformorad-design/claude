@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -13,7 +14,7 @@ export function ConvertToBill({ poId, vendorId, label, errors }: { poId: string;
   return (
     <Button size="sm" variant="outline" loading={pending} onClick={() => start(async () => {
       const r = await callAction(createBillAction({ vendor_id: vendorId, po_id: poId, bill_date: "", vendor_invoice_no: "", notes: "" }));
-      if (r.ok) { toast("تم تحويل أمر الشراء إلى فاتورة"); router.push(`/bills/${r.data}`); }
+      if (r.ok) { toast(tr("تم تحويل أمر الشراء إلى فاتورة")); router.push(`/bills/${r.data}`); }
       else alert(actionErrorText(errors, r));
     })}>{label}</Button>
   );

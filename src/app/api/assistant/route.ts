@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAppContext, type AppContext } from "@/lib/auth/context";
@@ -24,12 +25,12 @@ const HISTORY = 20;
 
 const friendly = (e: unknown) => {
   if (e instanceof ProviderError) {
-    if (e.status === 401 || e.status === 403) return "مفتاح مزود الذكاء الاصطناعي غير صالح أو بلا صلاحية، راجع إعداده على الخادم.";
-    if (e.status === 404) return "النموذج المحدد غير متاح لدى المزود، راجع قيمة AI_MODEL.";
-    if (e.status === 429) return "تجاوزت حد الاستخدام لدى المزود، حاول بعد قليل.";
-    return "تعذّر الحصول على رد من مزود الذكاء الاصطناعي، حاول مرة أخرى.";
+    if (e.status === 401 || e.status === 403) return tr("مفتاح مزود الذكاء الاصطناعي غير صالح أو بلا صلاحية، راجع إعداده على الخادم.");
+    if (e.status === 404) return tr("النموذج المحدد غير متاح لدى المزود، راجع قيمة AI_MODEL.");
+    if (e.status === 429) return tr("تجاوزت حد الاستخدام لدى المزود، حاول بعد قليل.");
+    return tr("تعذّر الحصول على رد من مزود الذكاء الاصطناعي، حاول مرة أخرى.");
   }
-  return "تعذّر الاتصال بمزود الذكاء الاصطناعي، تحقق من الاتصال وحاول مرة أخرى.";
+  return tr("تعذّر الاتصال بمزود الذكاء الاصطناعي، تحقق من الاتصال وحاول مرة أخرى.");
 };
 
 /**

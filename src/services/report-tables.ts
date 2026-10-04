@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import "server-only";
 import type { AppContext } from "@/lib/auth/context";
 import { PERMISSIONS, type Permission } from "@/lib/auth/permissions";
@@ -48,7 +49,7 @@ const head = (text: string, width: number): ReportRow => ({ kind: "section", cel
 
 export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary, locale: string, p: ReportParams): Promise<ReportTable> {
   const r = t.reports;
-  const period = `من ${p.from} إلى ${p.to}`;
+  const period = tr("من {0} إلى {1}", p.from, p.to);
   switch (key) {
     case "income-statement": {
       const is = await getIncomeStatement(ctx.supabase, ctx.hotel, p.from, p.to, locale);
@@ -132,7 +133,7 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
       const { parties, totals } = summarizeAging(await agingReport(ctx.supabase, ctx.hotel.id, kind, p.to));
       const rows = parties.map((x) => line(x.partyName, ...AGING_BUCKETS.map((b) => x.buckets[b]), x.total));
       rows.push(total(t.common.total, ...AGING_BUCKETS.map((b) => totals.buckets[b]), totals.total));
-      return { title: `${t.nav.aging}، ${kind === "receivable" ? t.payables.receivable : t.payables.payable}`, subtitle: `${r.asOf} ${p.to}`,
+      return { title: tr("{0}، {1}", t.nav.aging, kind === "receivable" ? t.payables.receivable : t.payables.payable), subtitle: `${r.asOf} ${p.to}`,
         columns: [t.vouchers.party, ...AGING_BUCKETS.map((b) => t.payables.buckets[b]), t.common.total], rows };
     }
     case "tax-return": {
@@ -146,7 +147,7 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
       });
       const sum = (k: "sales_base" | "sales_tax" | "purchases_base" | "purchases_tax") => sumMoney((data ?? []).map((x) => x[k]));
       rows.push(total(t.common.total, sum("sales_base"), sum("sales_tax"), sum("purchases_base"), sum("purchases_tax"), sum("sales_tax").minus(sum("purchases_tax"))));
-      return { title: t.nav.taxReturn, subtitle: `${period}، ${a.taxSubtitle}`,
+      return { title: t.nav.taxReturn, subtitle: tr("{0}، {1}", period, a.taxSubtitle),
         columns: [t.revenueSettings.taxes, a.salesBase, a.salesTax, a.purchasesBase, a.purchasesTax, a.netPayable], rows };
     }
     case "profitability": {

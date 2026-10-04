@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useMemo, useState } from "react";
 import { ChevronDown, Plus } from "lucide-react";
@@ -50,12 +51,12 @@ export function AccountsTree({ rows, canManage, density, labels }: {
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="flex items-baseline gap-2">
-          <span className="type-title text-[22px] text-ink">شجرة الحسابات</span>
-          <span className="num text-[16.5px] text-slate-500">{rows.length} حساب</span>
+          <span className="type-title text-[22px] text-ink">{tr("شجرة الحسابات")}</span>
+          <span className="num text-[16.5px] text-slate-500">{rows.length}{" "}{tr("حساب")}</span>
         </h2>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setCollapsed(new Set())}>توسيع الكل</Button>
-          <Button variant="ghost" size="sm" onClick={() => setCollapsed(new Set(headerIds))}>طي الكل</Button>
+          <Button variant="ghost" size="sm" onClick={() => setCollapsed(new Set())}>{tr("توسيع الكل")}</Button>
+          <Button variant="ghost" size="sm" onClick={() => setCollapsed(new Set(headerIds))}>{tr("طي الكل")}</Button>
           <DensityToggle initial={density} />
         </div>
       </div>
@@ -84,7 +85,7 @@ export function AccountsTree({ rows, canManage, density, labels }: {
                   ))}
                   <span className="relative flex items-center gap-2">
                     {!r.isPostable ? (
-                      <button type="button" onClick={() => flip(r.id)} aria-expanded={isOpen} aria-label={isOpen ? "طي" : "توسيع"}
+                      <button type="button" onClick={() => flip(r.id)} aria-expanded={isOpen} aria-label={isOpen ? tr("طي") : tr("توسيع")}
                         className="flex size-6 shrink-0 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-subtle hover:text-ink">
                         <ChevronDown className={cn("size-4 transition-transform duration-200", !isOpen && "rotate-90")} />
                       </button>
@@ -100,7 +101,7 @@ export function AccountsTree({ rows, canManage, density, labels }: {
                 {canManage && (
                   <TableCell className="whitespace-nowrap text-end">
                     {!r.isPostable && (
-                      <Button asChild variant="ghost" size="sm" aria-label="حساب فرعي جديد">
+                      <Button asChild variant="ghost" size="sm" aria-label={tr("حساب فرعي جديد")}>
                         <Link href={`/accounts?new=1&parent=${r.id}`}><Plus /></Link>
                       </Button>
                     )}

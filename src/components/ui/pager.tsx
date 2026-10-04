@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import Link from "@/components/link";
 import { cn } from "@/lib/utils";
 
@@ -30,16 +31,15 @@ export function Pager({ page, pages, total, basePath, params }: {
   const to = Math.min(page * PAGE_SIZE, total);
   const btn = "flex h-9 items-center gap-1 rounded-md border border-line bg-white px-3 text-[15.5px] font-medium text-ink transition-colors hover:bg-panel";
   return (
-    <nav className="mt-4 flex items-center justify-between gap-3" aria-label="الصفحات">
-      <p className="text-[15px] text-slate-600">
-        من <span className="num">{from}</span> إلى <span className="num">{to}</span> من أصل <span className="num">{total}</span>
+    <nav className="mt-4 flex items-center justify-between gap-3" aria-label={tr("الصفحات")}>
+      <p className="text-[15px] text-slate-600">{tr("من")}{" "}<span className="num">{from}</span>{" "}{tr("إلى")}{" "}<span className="num">{to}</span>{" "}{tr("من أصل")}{" "}<span className="num">{total}</span>
       </p>
       <div className="flex items-center gap-2">
-        {page > 1 ? <Link href={href(page - 1)} className={btn}>السابق</Link>
-          : <span className={cn(btn, "pointer-events-none opacity-40")}>السابق</span>}
-        <span className="px-1 text-[15px] text-slate-600">صفحة <span className="num">{page}</span> من <span className="num">{pages}</span></span>
-        {page < pages ? <Link href={href(page + 1)} className={btn}>التالي</Link>
-          : <span className={cn(btn, "pointer-events-none opacity-40")}>التالي</span>}
+        {page > 1 ? <Link href={href(page - 1)} className={btn}>{tr("السابق")}</Link>
+          : <span className={cn(btn, "pointer-events-none opacity-40")}>{tr("السابق")}</span>}
+        <span className="px-1 text-[15px] text-slate-600">{tr("صفحة")}{" "}<span className="num">{page}</span>{" "}{tr("من")}{" "}<span className="num">{pages}</span></span>
+        {page < pages ? <Link href={href(page + 1)} className={btn}>{tr("التالي")}</Link>
+          : <span className={cn(btn, "pointer-events-none opacity-40")}>{tr("التالي")}</span>}
       </div>
     </nav>
   );

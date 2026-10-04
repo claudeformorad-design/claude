@@ -1,3 +1,5 @@
+import { localName, localNameOf } from "@/lib/local-name";
+import { tr } from "@/i18n/tr";
 import { FormDialog } from "@/components/ui/dialog";
 import { CodeName } from "@/components/ui/code-text";
 import { Coins } from "lucide-react";
@@ -31,20 +33,20 @@ export default async function CurrenciesPage() {
   const current = latestRates(rates, today);
   const used = new Set(methods.filter((m) => m.currency_code && m.is_active).map((m) => m.currency_code!));
   const shown = foreign.filter((c) => used.has(c.code) || current.has(c.code));
-  const nameOf = new Map(currencies.map((c) => [c.code, c.name_ar]));
+  const nameOf = new Map(currencies.map((c) => [c.code, localName(c)]));
   const fmt = (v: string) => Number(v).toLocaleString("en-US", { maximumFractionDigits: 6 });
 
   return (
     <>
-      <PageHeader title="العملات وأسعار الصرف"
+      <PageHeader title={tr("العملات وأسعار الصرف")}
         actions={
-          <FormDialog label="تسجيل سعر صرف" title="تسجيل سعر صرف" description="تسجيل سعر لنفس اليوم يستبدله">
-            <SimpleForm columns={2} submitLabel="حفظ السعر" errors={t.errors} action={setExchangeRateAction}
+          <FormDialog label={tr("تسجيل سعر صرف")} title={tr("تسجيل سعر صرف")} description={tr("تسجيل سعر لنفس اليوم يستبدله")}>
+            <SimpleForm columns={2} submitLabel={tr("حفظ السعر")} errors={t.errors} action={setExchangeRateAction}
             initial={{ currency: [...used][0] ?? (foreign.find((c) => c.code === "USD") ?? foreign[0])?.code ?? "", rate: "", date: today }}
             fields={[
-              { name: "currency", label: "العملة", options: foreign.map((c) => ({ id: c.code, label: `${c.code} ${c.name_ar}` })) },
-              { name: "rate", label: `السعر بعملة ${base} لكل وحدة`, type: "number" },
-              { name: "date", label: "التاريخ", type: "date" },
+              { name: "currency", label: tr("العملة"), options: foreign.map((c) => ({ id: c.code, label: `${c.code} ${localNameOf(c)}` })) },
+              { name: "rate", label: tr("السعر بعملة {0} لكل وحدة", base), type: "number" },
+              { name: "date", label: tr("التاريخ"), type: "date" },
             ]} />
           </FormDialog>
         } />
@@ -52,21 +54,21 @@ export default async function CurrenciesPage() {
       <div className="space-y-6">
         <div className="space-y-6">
           <Card className="overflow-hidden">
-            <CardHeader><CardTitle>أسعار اليوم</CardTitle><CardDescription>تُستخدم لتحويل المقبوضات بالعملات الأجنبية وفروقات عدّ الصندوق</CardDescription></CardHeader>
+            <CardHeader><CardTitle>{tr("أسعار اليوم")}</CardTitle><CardDescription>{tr("تُستخدم لتحويل المقبوضات بالعملات الأجنبية وفروقات عدّ الصندوق")}</CardDescription></CardHeader>
             {shown.length === 0 ? (
-              <CardContent><EmptyState icon={Coins} title="لا توجد عملات أجنبية بعد" description="سجّل سعر صرف، ثم أضف طريقة دفع بعملتها من إعدادات الإيرادات مثل نقدًا دولار." /></CardContent>
+              <CardContent><EmptyState icon={Coins} title={tr("لا توجد عملات أجنبية بعد")} description={tr("سجّل سعر صرف، ثم أضف طريقة دفع بعملتها من إعدادات الإيرادات مثل نقدًا دولار.")} /></CardContent>
             ) : (
               <Table>
-                <TableHeader><TableRow><TableHead>العملة</TableHead><TableHead className="text-end">السعر الساري</TableHead><TableHead>منذ</TableHead><TableHead>طريقة دفع</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow><TableHead>{tr("العملة")}</TableHead><TableHead className="text-end">{tr("السعر الساري")}</TableHead><TableHead>{tr("منذ")}</TableHead><TableHead>{tr("طريقة دفع")}</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {shown.map((c) => {
                     const r = current.get(c.code);
                     return (
                       <TableRow key={c.code}>
-                        <TableCell><CodeName label={`${c.code} ${c.name_ar}`} /></TableCell>
-                        <TableCell className="num text-end text-[17px] font-semibold">{r ? fmt(r.rate) : <Badge variant="warning">بلا سعر</Badge>}</TableCell>
-                        <TableCell className="num">{r ? (r.date === today ? "اليوم" : r.date) : ""}</TableCell>
-                        <TableCell>{used.has(c.code) ? <Badge variant="success">مفعّلة</Badge> : <span className="text-slate-400"></span>}</TableCell>
+                        <TableCell><CodeName label={`${c.code} ${localNameOf(c)}`} /></TableCell>
+                        <TableCell className="num text-end text-[17px] font-semibold">{r ? fmt(r.rate) : <Badge variant="warning">{tr("بلا سعر")}</Badge>}</TableCell>
+                        <TableCell className="num">{r ? (r.date === today ? tr("اليوم") : r.date) : ""}</TableCell>
+                        <TableCell>{used.has(c.code) ? <Badge variant="success">{tr("مفعّلة")}</Badge> : <span className="text-slate-400"></span>}</TableCell>
                       </TableRow>
                     );
                   })}
@@ -76,11 +78,11 @@ export default async function CurrenciesPage() {
           </Card>
 
           <Card className="overflow-hidden">
-            <CardHeader><CardTitle>سجل الأسعار</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{tr("سجل الأسعار")}</CardTitle></CardHeader>
             <Table>
-              <TableHeader><TableRow><TableHead>التاريخ</TableHead><TableHead>العملة</TableHead><TableHead className="text-end">السعر</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>{tr("التاريخ")}</TableHead><TableHead>{tr("العملة")}</TableHead><TableHead className="text-end">{tr("السعر")}</TableHead></TableRow></TableHeader>
               <TableBody>
-                {rates.length === 0 && <TableRow><TableCell colSpan={3} className="py-8 text-center text-slate-500">لم تُسجَّل أسعار بعد</TableCell></TableRow>}
+                {rates.length === 0 && <TableRow><TableCell colSpan={3} className="py-8 text-center text-slate-500">{tr("لم تُسجَّل أسعار بعد")}</TableCell></TableRow>}
                 {rates.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="num">{r.rate_date}</TableCell>

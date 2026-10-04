@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -78,19 +79,19 @@ export function AssistantLauncher() {
 
   return (
     <>
-      <button ref={button} type="button" onClick={toggleChooser} aria-expanded={open || choosing} aria-haspopup="menu" title="المساعد، Ctrl J"
+      <button ref={button} type="button" onClick={toggleChooser} aria-expanded={open || choosing} aria-haspopup="menu" title={tr("المساعد، Ctrl J")}
         className={cn("group flex h-10 shrink-0 items-center gap-2 rounded-lg border border-line bg-white ps-2.5 pe-3 text-[16px] font-medium text-slate-700 transition-colors duration-200 hover:text-ink",
           (open || choosing) && "border-[#d4d1c8] text-ink")}>
         <AssistantMark thinking={chat.busy} className="size-[18px] text-ink" />
-        <span className="hidden lg:inline">المساعد</span>
+        <span className="hidden lg:inline">{tr("المساعد")}</span>
       </button>
 
       <Popover open={choosing} anchor={button} onClose={() => setChoosing(false)} width={320} maxHeight={320}>
-        <div role="menu" aria-label="طريقة فتح المساعد">
-          <p className="px-2.5 pt-1.5 pb-2 text-[14px] text-slate-500">كيف تفتح المساعد؟</p>
+        <div role="menu" aria-label={tr("طريقة فتح المساعد")}>
+          <p className="px-2.5 pt-1.5 pb-2 text-[14px] text-slate-500">{tr("كيف تفتح المساعد؟")}</p>
           {([
-            { key: "panel", icon: PanelLeft, title: "لوحة جانبية", hint: "بجانب الصفحة التي تعمل عليها، ويفهم ما تراه" },
-            { key: "page", icon: Maximize2, title: "صفحة كاملة", hint: "مساحة واسعة بمحادثاتك وتقاريرك وأدواتك" },
+            { key: "panel", icon: PanelLeft, title: tr("لوحة جانبية"), hint: tr("بجانب الصفحة التي تعمل عليها، ويفهم ما تراه") },
+            { key: "page", icon: Maximize2, title: tr("صفحة كاملة"), hint: tr("مساحة واسعة بمحادثاتك وتقاريرك وأدواتك") },
           ] as const).map((o) => (
             <button key={o.key} type="button" role="menuitem" onClick={() => choose(o.key)}
               className="flex w-full items-start gap-3 rounded-lg px-2.5 py-2.5 text-start transition-colors hover:bg-subtle">
@@ -105,8 +106,7 @@ export function AssistantLauncher() {
             </button>
           ))}
           <p className="mx-2.5 mt-1.5 border-t border-line pt-2 pb-1 text-[14px] text-slate-400">
-            <kbd className="num rounded border border-line bg-panel px-1.5 text-slate-500">Ctrl J</kbd> يفتح آخر اختيار
-          </p>
+            <kbd className="num rounded border border-line bg-panel px-1.5 text-slate-500">Ctrl J</kbd>{" "}{tr("يفتح آخر اختيار")}</p>
         </div>
       </Popover>
 
@@ -140,24 +140,24 @@ function SidePanel({ chat, path, onClose, onExpand }: {
   const icon = "flex size-8 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-subtle hover:text-ink";
 
   return (
-    <m.aside role="dialog" aria-label="المساعد"
+    <m.aside role="dialog" aria-label={tr("المساعد")}
       initial={{ opacity: 0, x: -16, scale: 0.99 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: -16, scale: 0.99 }}
       transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
       className="assistant-panel fixed inset-y-3 end-3 z-50 flex w-[min(460px,calc(100vw-24px))] flex-col overflow-hidden rounded-[20px] border border-line bg-white">
       <header className="flex h-14 shrink-0 items-center gap-2.5 ps-4 pe-2.5">
         <AssistantMark thinking={chat.busy} className="size-5 text-ink" />
-        <p className="min-w-0 flex-1 truncate text-[16px] font-semibold text-ink">{chat.title || "المساعد"}</p>
-        <button ref={historyBtn} type="button" onClick={openHistory} className={icon} title="المحادثات السابقة" aria-label="المحادثات السابقة"><History className="size-[17px]" /></button>
-        <button type="button" disabled={chat.busy || empty} onClick={chat.reset} className={cn(icon, "disabled:opacity-40")} title="محادثة جديدة" aria-label="محادثة جديدة"><SquarePen className="size-[17px]" /></button>
-        <button type="button" onClick={onExpand} className={icon} title="فتح في صفحة كاملة" aria-label="فتح في صفحة كاملة"><Maximize2 className="size-[17px]" /></button>
-        <button type="button" onClick={onClose} className={icon} title="إغلاق" aria-label="إغلاق"><X className="size-[18px]" /></button>
+        <p className="min-w-0 flex-1 truncate text-[16px] font-semibold text-ink">{chat.title || tr("المساعد")}</p>
+        <button ref={historyBtn} type="button" onClick={openHistory} className={icon} title={tr("المحادثات السابقة")} aria-label={tr("المحادثات السابقة")}><History className="size-[17px]" /></button>
+        <button type="button" disabled={chat.busy || empty} onClick={chat.reset} className={cn(icon, "disabled:opacity-40")} title={tr("محادثة جديدة")} aria-label={tr("محادثة جديدة")}><SquarePen className="size-[17px]" /></button>
+        <button type="button" onClick={onExpand} className={icon} title={tr("فتح في صفحة كاملة")} aria-label={tr("فتح في صفحة كاملة")}><Maximize2 className="size-[17px]" /></button>
+        <button type="button" onClick={onClose} className={icon} title={tr("إغلاق")} aria-label={tr("إغلاق")}><X className="size-[18px]" /></button>
       </header>
 
       <Popover open={showHistory} anchor={historyBtn} onClose={() => setShowHistory(false)} width={300} maxHeight={380}>
-        <p className="px-2.5 pt-1.5 pb-1.5 text-[14px] text-slate-500">المحادثات السابقة</p>
+        <p className="px-2.5 pt-1.5 pb-1.5 text-[14px] text-slate-500">{tr("المحادثات السابقة")}</p>
         <div className="min-h-0 overflow-y-auto">
           {history === null && <div className="space-y-1.5 p-1.5">{[0, 1, 2].map((i) => <div key={i} className="skeleton h-7 rounded-md" />)}</div>}
-          {history?.length === 0 && <p className="px-2.5 py-2 text-[15px] text-slate-400">لا محادثات بعد</p>}
+          {history?.length === 0 && <p className="px-2.5 py-2 text-[15px] text-slate-400">{tr("لا محادثات بعد")}</p>}
           {history?.slice(0, 30).map((c) => (
             <button key={c.id} type="button" onClick={() => { setShowHistory(false); void chat.load(c.id); }}
               className={cn("block w-full truncate rounded-lg px-2.5 py-2 text-start text-[15.5px] transition-colors hover:bg-subtle", c.id === chat.conversationId ? "bg-subtle font-medium text-ink" : "text-slate-700")}>
@@ -172,8 +172,8 @@ function SidePanel({ chat, path, onClose, onExpand }: {
           <div className="flex h-full flex-col justify-end gap-6 pb-2">
             <div className="space-y-2">
               <AssistantMark className="size-9 text-ink" />
-              <p className="pt-2 text-[22px] font-bold leading-snug text-ink">كيف أساعدك؟</p>
-              <p className="text-[15.5px] leading-relaxed text-slate-500">أفهم كل أقسام النظام وأقرأ بياناتك الحية بصلاحياتك، وأرى الصفحة التي أنت فيها الآن.</p>
+              <p className="pt-2 text-[22px] font-bold leading-snug text-ink">{tr("كيف أساعدك؟")}</p>
+              <p className="text-[15.5px] leading-relaxed text-slate-500">{tr("أفهم كل أقسام النظام وأقرأ بياناتك الحية بصلاحياتك، وأرى الصفحة التي أنت فيها الآن.")}</p>
             </div>
             <div className="-mx-2 space-y-0.5">
               {PANEL_SUGGESTIONS.map((s) => (
@@ -191,7 +191,7 @@ function SidePanel({ chat, path, onClose, onExpand }: {
       </div>
 
       <div className="shrink-0 px-3 pb-3">
-        <Composer autoFocus busy={chat.busy} onStop={chat.stop} onSend={ask} hint="يقرأ بياناتك بصلاحياتك ولا ينفّذ أي عملية" />
+        <Composer autoFocus busy={chat.busy} onStop={chat.stop} onSend={ask} hint={tr("يقرأ بياناتك بصلاحياتك ولا ينفّذ أي عملية")} />
       </div>
     </m.aside>
   );

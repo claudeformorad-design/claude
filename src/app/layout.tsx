@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import localFont from "next/font/local";
@@ -34,7 +35,7 @@ const digits = Inter({ subsets: ["latin"], variable: "--font-digits", display: "
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
-  return { title: { default: t.app.name, template: `%s، ${t.app.shortName}` } };
+  return { title: { default: t.app.name, template: tr("%s، {0}", t.app.shortName) } };
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

@@ -87,3 +87,50 @@ export function amountInArabicWords(amount: string | number, currencyCode: strin
   if (minor > 0) text += ` و${integerToArabicWords(minor)} ${words.minor || `من ${integerToArabicWords(10 ** decimals)}`}`;
   return `فقط ${text} لا غير`;
 }
+
+// -----------------------------------------------------------------------------
+// المبلغ بالإنجليزية للواجهة الإنجليزية: "Only five thousand two hundred fifty Yemeni rials"
+// -----------------------------------------------------------------------------
+const EN_ONES = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",
+  "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+const EN_TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+const EN_SCALES = ["", "thousand", "million", "billion", "trillion"];
+const EN_CURRENCY: Record<string, { major: string; minor: string }> = {
+  YER: { major: "Yemeni rials", minor: "fils" }, SAR: { major: "Saudi riyals", minor: "halalas" }, USD: { major: "US dollars", minor: "cents" },
+  EUR: { major: "euros", minor: "cents" }, AED: { major: "UAE dirhams", minor: "fils" }, OMR: { major: "Omani rials", minor: "baisa" },
+  KWD: { major: "Kuwaiti dinars", minor: "fils" }, QAR: { major: "Qatari riyals", minor: "dirhams" }, BHD: { major: "Bahraini dinars", minor: "fils" },
+  EGP: { major: "Egyptian pounds", minor: "piastres" }, JOD: { major: "Jordanian dinars", minor: "piastres" }, GBP: { major: "pounds sterling", minor: "pence" },
+};
+
+function enBelowThousand(n: number): string {
+  const parts: string[] = [];
+  const h = Math.floor(n / 100);
+  const rest = n % 100;
+  if (h) parts.push(`${EN_ONES[h]} hundred`);
+  if (rest) parts.push(rest < 20 ? EN_ONES[rest]! : `${EN_TENS[Math.floor(rest / 10)]}${rest % 10 ? ` ${EN_ONES[rest % 10]}` : ""}`);
+  return parts.join(" ");
+}
+
+export function integerToEnglishWords(value: bigint | number): string {
+  let n = BigInt(value);
+  if (n === 0n) return "zero";
+  const groups: number[] = [];
+  while (n > 0n) { groups.push(Number(n % 1000n)); n /= 1000n; }
+  if (groups.length > EN_SCALES.length) throw new Error("Number too large");
+  const parts: string[] = [];
+  for (let i = groups.length - 1; i >= 0; i--) {
+    const g = groups[i]!;
+    if (g) parts.push(`${enBelowThousand(g)}${EN_SCALES[i] ? ` ${EN_SCALES[i]}` : ""}`);
+  }
+  return parts.join(" ");
+}
+
+export function amountInEnglishWords(amount: string | number, currencyCode: string, decimals = 2, fallbackName?: string): string {
+  const v = toMoney(String(amount)).abs().toDecimalPlaces(decimals);
+  const [intPart, frac = ""] = v.toFixed(decimals).split(".");
+  const words = EN_CURRENCY[currencyCode] ?? { major: fallbackName ?? currencyCode, minor: "" };
+  const minor = frac ? Number(frac) : 0;
+  let text = `${integerToEnglishWords(BigInt(intPart!))} ${words.major}`;
+  if (minor > 0) text += ` and ${integerToEnglishWords(minor)} ${words.minor || `of ${integerToEnglishWords(10 ** decimals)}`}`;
+  return `Only ${text}`;
+}

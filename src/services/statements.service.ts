@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import "server-only";
 import { type Money, ZERO, toMoney } from "@/lib/accounting/money";
 import type { SupabaseServerClient } from "@/lib/supabase/server";
@@ -57,7 +58,7 @@ export async function customerStatement(supabase: SupabaseServerClient, hotelId:
   for (const i of (invoices.data ?? []) as unknown as Inv[]) {
     const original = toMoney(i.amount_due).plus(credited.get(i.id) ?? ZERO);
     if (original.isZero()) continue;
-    moves.push({ date: i.issue_date, kind: "invoice", number: i.invoice_number, description: "فاتورة آجلة", debit: original, credit: ZERO, href: `/invoices/${i.id}` });
+    moves.push({ date: i.issue_date, kind: "invoice", number: i.invoice_number, description: tr("فاتورة آجلة"), debit: original, credit: ZERO, href: `/invoices/${i.id}` });
   }
   for (const n of noteRows) {
     moves.push({ date: n.issue_date, kind: "credit_note", number: n.credit_note_number, description: n.reason, debit: ZERO, credit: toMoney(n.total), href: `/invoices/${n.invoice_id}` });

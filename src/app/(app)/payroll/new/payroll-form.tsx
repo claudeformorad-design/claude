@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -36,7 +37,7 @@ export function PayrollForm({ t, locale, month, departments }: {
   return (
     <form className="space-y-5" onSubmit={handleSubmit((v) => start(async () => {
       const r = await callAction(postPayrollAction(v));
-      if (r.ok) { toast("تم ترحيل مسيّر الرواتب"); router.push("/payroll"); } else setError(actionErrorText(t.errors, r));
+      if (r.ok) { toast(tr("تم ترحيل مسيّر الرواتب")); router.push("/payroll"); } else setError(actionErrorText(t.errors, r));
     }))}>
       {error && <Alert variant="destructive">{error}</Alert>}
       <div className="grid max-w-md gap-4 sm:grid-cols-2">
@@ -53,7 +54,7 @@ export function PayrollForm({ t, locale, month, departments }: {
             {fields.map((f, i) => (
               <tr key={f.id}>
                 <td className="p-1"><Input {...register(`lines.${i}.employee_name`)} /></td>
-                <td className="p-1"><NativeSelect {...register(`lines.${i}.department_id`)}><option value="">اختر</option>{departments.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}</NativeSelect></td>
+                <td className="p-1"><NativeSelect {...register(`lines.${i}.department_id`)}><option value="">{tr("اختر")}</option>{departments.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}</NativeSelect></td>
                 {nums.map((n) => <td key={n} className="p-1"><Input dir="ltr" inputMode="decimal" className="num w-28" {...register(`lines.${i}.${n}`)} /></td>)}
                 <td><Button type="button" variant="ghost" size="icon" disabled={fields.length <= 1} onClick={() => remove(i)}><Trash2 /></Button></td>
               </tr>

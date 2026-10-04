@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { plainText } from "@/lib/text";
 /**
  * النص المعروض للمستخدم عند فشل Server Action:
@@ -9,7 +10,6 @@ export function actionErrorText(errors: Record<string, string>, r: { error: stri
   return plainText(r.message ?? errors.unknown ?? "");
 }
 
-const NETWORK_MESSAGE = "تعذّر الاتصال بالخادم، تحقق من الاتصال وحاول مرة أخرى";
 
 /**
  * استدعاء Server Action من الواجهة: انقطاع الاتصال بالخادم (إعادة تشغيل، شبكة) يعود كنتيجة خطأ
@@ -19,7 +19,7 @@ export async function callAction<T>(pending: Promise<T>): Promise<T | { ok: fals
   try {
     return await pending;
   } catch (e) {
-    if (e instanceof TypeError) return { ok: false, error: "unknown", message: NETWORK_MESSAGE };
+    if (e instanceof TypeError) return { ok: false, error: "unknown", message: tr("تعذّر الاتصال بالخادم، تحقق من الاتصال وحاول مرة أخرى") };
     throw e;
   }
 }

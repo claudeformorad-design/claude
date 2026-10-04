@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { FormDialog } from "@/components/ui/dialog";
 import { CheckCircle2, CircleDashed, Clock, Wrench } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -36,41 +37,41 @@ export default async function HousekeepingPage({ searchParams }: { searchParams:
 
   return (
     <>
-      <PageHeader title="التدبير الفندقي" actions={<div className="flex gap-2">
-          <FormDialog label="مهمة جديدة" title="مهمة جديدة" variant="outline">
-                  <SimpleForm columns={2} submitLabel="إضافة المهمة" errors={t.errors} action={addHousekeepingTaskAction}
+      <PageHeader title={tr("التدبير الفندقي")} actions={<div className="flex gap-2">
+          <FormDialog label={tr("مهمة جديدة")} title={tr("مهمة جديدة")} variant="outline">
+                  <SimpleForm columns={2} submitLabel={tr("إضافة المهمة")} errors={t.errors} action={addHousekeepingTaskAction}
               initial={{ room_id: rooms.find((r) => r.is_active)?.id ?? "", kind: "maintenance", date: today, notes: "", assignee: "", out_of_service: false }}
               fields={[
-                { name: "room_id", label: "الغرفة", options: rooms.filter((r) => r.is_active).map((r) => ({ id: r.id, label: r.room_number })) },
-                { name: "kind", label: "النوع", options: Object.entries(HOUSEKEEPING_KIND).map(([id, label]) => ({ id, label })) },
-                { name: "notes", label: "الوصف، إلزامي للصيانة" },
-                { name: "assignee", label: "العامل" },
-                { name: "date", label: "التاريخ", type: "date" },
-          { name: "out_of_service", label: "إخراج الغرفة من الخدمة حتى الإنجاز", checkbox: true },
+                { name: "room_id", label: tr("الغرفة"), options: rooms.filter((r) => r.is_active).map((r) => ({ id: r.id, label: r.room_number })) },
+                { name: "kind", label: tr("النوع"), options: Object.entries(HOUSEKEEPING_KIND).map(([id, label]) => ({ id, label })) },
+                { name: "notes", label: tr("الوصف، إلزامي للصيانة") },
+                { name: "assignee", label: tr("العامل") },
+                { name: "date", label: tr("التاريخ"), type: "date" },
+          { name: "out_of_service", label: tr("إخراج الغرفة من الخدمة حتى الإنجاز"), checkbox: true },
         ]} />
           </FormDialog>
           <GenerateButton date={today} errors={t.errors} />
         </div>} />
       <StatGrid>
-        <Stat icon={Clock} tone="ink" label="مهام مفتوحة" value={<span className="num">{open.length}</span>} />
-        <Stat icon={CircleDashed} tone="clay" label="قيد التنفيذ" value={<span className="num">{tasks.filter((x) => x.status === "in_progress").length}</span>} />
-        <Stat icon={CheckCircle2} tone="teal" label="أُنجزت اليوم" value={<span className="num">{tasks.filter((x) => x.status === "done").length}</span>} />
-        <Stat icon={Wrench} tone="neutral" label="غرف تحتاج تنظيف" value={<span className="num">{rooms.filter((r) => r.is_active && r.housekeeping_status === "dirty").length}</span>} />
+        <Stat icon={Clock} tone="ink" label={tr("مهام مفتوحة")} value={<span className="num">{open.length}</span>} />
+        <Stat icon={CircleDashed} tone="clay" label={tr("قيد التنفيذ")} value={<span className="num">{tasks.filter((x) => x.status === "in_progress").length}</span>} />
+        <Stat icon={CheckCircle2} tone="teal" label={tr("أُنجزت اليوم")} value={<span className="num">{tasks.filter((x) => x.status === "done").length}</span>} />
+        <Stat icon={Wrench} tone="neutral" label={tr("غرف تحتاج تنظيف")} value={<span className="num">{rooms.filter((r) => r.is_active && r.housekeeping_status === "dirty").length}</span>} />
       </StatGrid>
 
       <div className="grid gap-6">
         <Card className="overflow-hidden">
           <CardHeader>
             <FilterTabs active={tab} items={[
-              { key: "open", href: "/housekeeping", label: "المفتوحة", count: open.length },
-              { key: "done", href: "/housekeeping?tab=done", label: "المنجزة" },
-              { key: "all", href: "/housekeeping?tab=all", label: "الكل", count: tasks.length },
+              { key: "open", href: "/housekeeping", label: tr("المفتوحة"), count: open.length },
+              { key: "done", href: "/housekeeping?tab=done", label: tr("المنجزة") },
+              { key: "all", href: "/housekeeping?tab=all", label: tr("الكل"), count: tasks.length },
             ]} />
           </CardHeader>
           <Table>
-            <TableHeader><TableRow><TableHead>الغرفة</TableHead><TableHead>المهمة</TableHead><TableHead>الحالة</TableHead><TableHead /></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>{tr("الغرفة")}</TableHead><TableHead>{tr("المهمة")}</TableHead><TableHead>{tr("الحالة")}</TableHead><TableHead /></TableRow></TableHeader>
             <TableBody>
-              {shown.length === 0 && <TableRow><TableCell colSpan={4} className="py-10 text-center text-slate-500">{tab === "open" ? "لا مهام مفتوحة، اضغط توليد مهام اليوم" : "لا مهام"}</TableCell></TableRow>}
+              {shown.length === 0 && <TableRow><TableCell colSpan={4} className="py-10 text-center text-slate-500">{tab === "open" ? tr("لا مهام مفتوحة، اضغط توليد مهام اليوم") : tr("لا مهام")}</TableCell></TableRow>}
               {shown.map((x) => {
                 const r = room.get(x.room_id);
                 const hk = r ? HOUSEKEEPING[r.housekeeping_status] : null;
@@ -78,8 +79,8 @@ export default async function HousekeepingPage({ searchParams }: { searchParams:
                   <TableRow key={x.id}>
                     <TableCell className="whitespace-nowrap"><span className="num text-[18px] font-bold">{r?.room_number}</span>{hk && <Badge variant={hk.variant} className="ms-2">{hk.label}</Badge>}</TableCell>
                     <TableCell className="cell-fluid">
-                      <span className="font-medium text-ink">{HOUSEKEEPING_KIND[x.kind]}</span>{x.priority === 1 && <Badge variant="destructive" className="ms-2">عاجل</Badge>}
-                      {(x.notes || x.assignee) && <span className="block text-[14px] text-slate-500">{[x.assignee, x.notes].filter(Boolean).join("، ")}</span>}
+                      <span className="font-medium text-ink">{HOUSEKEEPING_KIND[x.kind]}</span>{x.priority === 1 && <Badge variant="destructive" className="ms-2">{tr("عاجل")}</Badge>}
+                      {(x.notes || x.assignee) && <span className="block text-[14px] text-slate-500">{[x.assignee, x.notes].filter(Boolean).join(tr("، "))}</span>}
                     </TableCell>
                     <TableCell><Badge variant={HOUSEKEEPING_TASK_STATUS[x.status].variant}>{HOUSEKEEPING_TASK_STATUS[x.status].label}</Badge></TableCell>
                     <TableCell className="text-end"><TaskControls taskId={x.id} status={x.status} assignee={x.assignee} errors={t.errors} /></TableCell>

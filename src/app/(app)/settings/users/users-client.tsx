@@ -1,4 +1,6 @@
 "use client";
+import { localNameOf } from "@/lib/local-name";
+import { tr } from "@/i18n/tr";
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -20,9 +22,9 @@ import {
 } from "./actions";
 
 const ERRORS: Record<string, string> = {
-  validation: "تحقق من الحقول المطلوبة",
-  permission_denied: "ليست لديك صلاحية لهذه العملية",
-  unknown: "تعذّر الحفظ، حاول مرة أخرى",
+  get validation() { return tr("تحقق من الحقول المطلوبة"); },
+  get permission_denied() { return tr("ليست لديك صلاحية لهذه العملية"); },
+  get unknown() { return tr("تعذّر الحفظ، حاول مرة أخرى"); },
 };
 const field = "field-group space-y-1.5";
 
@@ -51,18 +53,18 @@ export function EnableLogin() {
   const { pending, error, run } = useSubmit();
   const [v, setV] = useState({ username: "", password: "", confirm: "" });
   return (
-    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); run(() => enableLoginAction(v), "تم تفعيل تسجيل الدخول"); }}>
+    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); run(() => enableLoginAction(v), tr("تم تفعيل تسجيل الدخول")); }}>
       {error && <Alert variant="destructive">{error}</Alert>}
-      <p className="text-[15.5px] text-slate-600">اختر اسم دخول وكلمة مرور لحسابك أنت، مدير النظام. بعدها تضيف الموظفين بأسمائهم.</p>
+      <p className="text-[15.5px] text-slate-600">{tr("اختر اسم دخول وكلمة مرور لحسابك أنت، مدير النظام. بعدها تضيف الموظفين بأسمائهم.")}</p>
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className={field}><Label htmlFor="owner_username">اسم المستخدم</Label>
+        <div className={field}><Label htmlFor="owner_username">{tr("اسم المستخدم")}</Label>
           <Input id="owner_username" dir="ltr" autoCapitalize="none" value={v.username} onChange={(e) => setV({ ...v, username: e.target.value })} placeholder="admin" /></div>
-        <div className={field}><Label htmlFor="owner_password">كلمة المرور</Label>
+        <div className={field}><Label htmlFor="owner_password">{tr("كلمة المرور")}</Label>
           <Input id="owner_password" type="password" dir="ltr" value={v.password} onChange={(e) => setV({ ...v, password: e.target.value })} /></div>
-        <div className={field}><Label htmlFor="owner_confirm">تأكيد كلمة المرور</Label>
+        <div className={field}><Label htmlFor="owner_confirm">{tr("تأكيد كلمة المرور")}</Label>
           <Input id="owner_confirm" type="password" dir="ltr" value={v.confirm} onChange={(e) => setV({ ...v, confirm: e.target.value })} /></div>
       </div>
-      <Button type="submit" loading={pending}><KeyRound className="size-4" />تفعيل تسجيل الدخول</Button>
+      <Button type="submit" loading={pending}><KeyRound className="size-4" />{tr("تفعيل تسجيل الدخول")}</Button>
     </form>
   );
 }
@@ -76,31 +78,31 @@ export function AddEmployee({ local, roles }: { local: boolean; roles: Option[] 
   return (
     <form className="space-y-4" onSubmit={(e) => {
       e.preventDefault();
-      run(() => addEmployeeAction(v), "تمت إضافة الموظف", () => { setV({ ...v, full_name: "", username: "", email: "", password: "" }); router.refresh(); });
+      run(() => addEmployeeAction(v), tr("تمت إضافة الموظف"), () => { setV({ ...v, full_name: "", username: "", email: "", password: "" }); router.refresh(); });
     }}>
-      <p className="font-semibold text-ink">إضافة موظف</p>
+      <p className="font-semibold text-ink">{tr("إضافة موظف")}</p>
       {error && <Alert variant="destructive">{error}</Alert>}
       <div className="grid gap-3 sm:grid-cols-2">
         {local ? (
           <>
-            <div className={field}><Label htmlFor="emp_name">اسم الموظف</Label>
+            <div className={field}><Label htmlFor="emp_name">{tr("اسم الموظف")}</Label>
               <Input id="emp_name" value={v.full_name} onChange={(e) => setV({ ...v, full_name: e.target.value })} /></div>
-            <div className={field}><Label htmlFor="emp_username">اسم المستخدم</Label>
+            <div className={field}><Label htmlFor="emp_username">{tr("اسم المستخدم")}</Label>
               <Input id="emp_username" dir="ltr" autoCapitalize="none" value={v.username} onChange={(e) => setV({ ...v, username: e.target.value })} /></div>
-            <div className={field}><Label htmlFor="emp_password">كلمة مرور مؤقتة</Label>
+            <div className={field}><Label htmlFor="emp_password">{tr("كلمة مرور مؤقتة")}</Label>
               <Input id="emp_password" dir="ltr" value={v.password} onChange={(e) => setV({ ...v, password: e.target.value })} /></div>
           </>
         ) : (
-          <div className={field}><Label htmlFor="emp_email">البريد الإلكتروني</Label>
+          <div className={field}><Label htmlFor="emp_email">{tr("البريد الإلكتروني")}</Label>
             <Input id="emp_email" type="email" dir="ltr" value={v.email} onChange={(e) => setV({ ...v, email: e.target.value })} /></div>
         )}
-        <div className={field}><Label htmlFor="emp_role">الدور</Label>
+        <div className={field}><Label htmlFor="emp_role">{tr("الدور")}</Label>
           <NativeSelect id="emp_role" value={v.role_id} onChange={(e) => setV({ ...v, role_id: e.target.value })}>
             {roles.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
           </NativeSelect></div>
       </div>
-      {local && <p className="text-[14.5px] text-slate-500">يغيّر الموظف كلمة المرور المؤقتة عند أول دخول.</p>}
-      <Button type="submit" loading={pending}>إضافة الموظف</Button>
+      {local && <p className="text-[14.5px] text-slate-500">{tr("يغيّر الموظف كلمة المرور المؤقتة عند أول دخول.")}</p>}
+      <Button type="submit" loading={pending}>{tr("إضافة الموظف")}</Button>
     </form>
   );
 }
@@ -123,7 +125,7 @@ function LimitsFields({ value, onChange, inheritLabel, idPrefix }: {
     <div className="grid gap-3 md:grid-cols-3">
       {LIMITS.map((l) => (
         <div key={l.key} className={field}>
-          <Label htmlFor={`${idPrefix}_${l.key}`}>{l.label}{l.percent ? " بالنسبة المئوية" : ""}</Label>
+          <Label htmlFor={`${idPrefix}_${l.key}`}>{l.label}{l.percent ? tr(" بالنسبة المئوية") : ""}</Label>
           <Input id={`${idPrefix}_${l.key}`} inputMode="decimal" dir="ltr" placeholder={inheritLabel} value={value[l.key] ?? ""}
             onChange={(e) => onChange({ ...value, [l.key]: e.target.value })} />
           <p className="text-[13.5px] text-slate-500">{l.hint}</p>
@@ -160,11 +162,11 @@ export function MemberAccessEditor({ userId, name, local, roles, permissions, ro
   const groups = groupsOf(permissions.filter((p) => !filter.trim() || p.label.includes(filter.trim()) || (PERMISSION_GROUPS[p.module] ?? "").includes(filter.trim())));
 
   const save = () => {
-    if (!limitsValid(limits)) { toast("الحدود أرقام موجبة فقط", "error"); return; }
+    if (!limitsValid(limits)) { toast(tr("الحدود أرقام موجبة فقط"), "error"); return; }
     const grants = Object.entries(choice).filter(([, c]) => c === "allow").map(([k]) => k);
     const denies = Object.entries(choice).filter(([, c]) => c === "deny").map(([k]) => k);
     run(() => saveMemberAccessAction(userId, { role_ids: [...roleIds], grants, denies, home_path: home || null, limits: toLimits(limits), is_active: active }),
-      `تم حفظ صلاحيات ${name}`);
+      tr("تم حفظ صلاحيات {0}", name));
   };
 
   return (
@@ -172,7 +174,7 @@ export function MemberAccessEditor({ userId, name, local, roles, permissions, ro
       {error && <Alert variant="destructive">{error}</Alert>}
 
       <section className="space-y-3">
-        <h2 className="text-[19px] font-semibold text-ink">الدور</h2>
+        <h2 className="text-[19px] font-semibold text-ink">{tr("الدور")}</h2>
         <div className="flex flex-wrap gap-2">
           {roles.map((r) => {
             const on = roleIds.has(r.id);
@@ -190,17 +192,17 @@ export function MemberAccessEditor({ userId, name, local, roles, permissions, ro
 
       <section className="grid gap-4 md:grid-cols-2">
         <div className={field}>
-          <Label htmlFor="member_home">الصفحة الأولى بعد الدخول</Label>
+          <Label htmlFor="member_home">{tr("الصفحة الأولى بعد الدخول")}</Label>
           <NativeSelect id="member_home" value={home} onChange={(e) => setHome(e.target.value)}>
-            <option value="">حسب الدور</option>
+            <option value="">{tr("حسب الدور")}</option>
             {homeOptions.map((o) => <option key={o.href} value={o.href}>{o.label}</option>)}
           </NativeSelect>
         </div>
         <div className={field}>
-          <Label>حالة الحساب</Label>
+          <Label>{tr("حالة الحساب")}</Label>
           <label className="flex h-11 cursor-pointer items-center gap-2.5 rounded-md border border-line px-3 text-[15.5px] text-ink">
             <input type="checkbox" className="size-4" checked={active} onChange={(e) => setActive(e.target.checked)} />
-            {active ? "الحساب نشط ويستطيع الدخول" : "الحساب موقوف، ولا يستطيع الدخول"}
+            {active ? tr("الحساب نشط ويستطيع الدخول") : tr("الحساب موقوف، ولا يستطيع الدخول")}
           </label>
         </div>
       </section>
@@ -208,10 +210,10 @@ export function MemberAccessEditor({ userId, name, local, roles, permissions, ro
       <section className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-[19px] font-semibold text-ink">الصلاحيات</h2>
-            <p className="text-[15px] text-slate-500">حسب الدور ما لم تختر سماحًا أو منعًا لهذا الموظف. يملك الآن <span className="num">{count}</span> صلاحية.</p>
+            <h2 className="text-[19px] font-semibold text-ink">{tr("الصلاحيات")}</h2>
+            <p className="text-[15px] text-slate-500">{tr("حسب الدور ما لم تختر سماحًا أو منعًا لهذا الموظف. يملك الآن")}{" "}<span className="num">{count}</span>{" "}{tr("صلاحية.")}</p>
           </div>
-          <Input className="w-64" placeholder="بحث في الصلاحيات" value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="بحث في الصلاحيات" />
+          <Input className="w-64" placeholder={tr("بحث في الصلاحيات")} value={filter} onChange={(e) => setFilter(e.target.value)} aria-label={tr("بحث في الصلاحيات")} />
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
           {groups.map((g) => (
@@ -225,10 +227,10 @@ export function MemberAccessEditor({ userId, name, local, roles, permissions, ro
                     <li key={p.code} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5">
                       <span className={cn("min-w-0 text-[15.5px]", on ? "text-ink" : "text-slate-500")}>
                         {p.label}
-                        {c === "role" && <span className="ms-2 text-[13.5px] text-slate-500">{fromRoles.has(p.code) ? "من الدور" : ""}</span>}
+                        {c === "role" && <span className="ms-2 text-[13.5px] text-slate-500">{fromRoles.has(p.code) ? tr("من الدور") : ""}</span>}
                       </span>
                       <span className="inline-flex rounded-md border border-line p-0.5" role="radiogroup" aria-label={p.label}>
-                        {([["role", "حسب الدور"], ["allow", "سماح"], ["deny", "منع"]] as [Choice, string][]).map(([k, label]) => (
+                        {([["role", tr("حسب الدور")], ["allow", tr("سماح")], ["deny", tr("منع")]] as [Choice, string][]).map(([k, label]) => (
                           <button key={k} type="button" role="radio" aria-checked={c === k}
                             onClick={() => setChoice((x) => { const n = { ...x }; if (k === "role") delete n[p.code]; else n[p.code] = k; return n; })}
                             className={cn("rounded px-2.5 py-1 text-[14px] font-medium transition-colors",
@@ -247,13 +249,13 @@ export function MemberAccessEditor({ userId, name, local, roles, permissions, ro
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-[19px] font-semibold text-ink">الحدود المالية لهذا الموظف</h2>
-        <p className="text-[15px] text-slate-500">اتركها فارغة ليُطبَّق حد الدور. ما يتجاوز الحد يرسله الموظف طلب موافقة للمدير.</p>
-        <LimitsFields value={limits} onChange={setLimits} inheritLabel="حسب الدور" idPrefix="member" />
+        <h2 className="text-[19px] font-semibold text-ink">{tr("الحدود المالية لهذا الموظف")}</h2>
+        <p className="text-[15px] text-slate-500">{tr("اتركها فارغة ليُطبَّق حد الدور. ما يتجاوز الحد يرسله الموظف طلب موافقة للمدير.")}</p>
+        <LimitsFields value={limits} onChange={setLimits} inheritLabel={tr("حسب الدور")} idPrefix="member" />
       </section>
 
       <div className="flex flex-wrap gap-2 border-t border-line pt-5">
-        <Button onClick={save} loading={pending}>حفظ الصلاحيات</Button>
+        <Button onClick={save} loading={pending}>{tr("حفظ الصلاحيات")}</Button>
       </div>
 
       {local && <AccountTools userId={userId} />}
@@ -266,21 +268,19 @@ function AccountTools({ userId }: { userId: string }) {
   const [pw, setPw] = useState("");
   return (
     <section className="space-y-3 rounded-xl border border-line p-5">
-      <h2 className="text-[19px] font-semibold text-ink">الحساب</h2>
+      <h2 className="text-[19px] font-semibold text-ink">{tr("الحساب")}</h2>
       {error && <Alert variant="destructive">{error}</Alert>}
       <div className="flex flex-wrap items-end gap-3">
         <div className={cn(field, "w-64")}>
-          <Label htmlFor="reset_password">كلمة مرور مؤقتة جديدة</Label>
+          <Label htmlFor="reset_password">{tr("كلمة مرور مؤقتة جديدة")}</Label>
           <Input id="reset_password" dir="ltr" value={pw} onChange={(e) => setPw(e.target.value)} />
         </div>
-        <Button variant="outline" loading={pending} disabled={!pw} onClick={() => run(() => resetPasswordAction(userId, pw), "تم تعيين كلمة مرور مؤقتة", () => setPw(""))}>
-          <KeyRound className="size-4" />تعيين كلمة المرور
-        </Button>
-        <Button variant="outline" loading={pending} onClick={() => run(() => endSessionsAction(userId), "تم إخراج الموظف من كل الأجهزة")}>
-          <LogOut className="size-4" />إخراج من كل الأجهزة
-        </Button>
+        <Button variant="outline" loading={pending} disabled={!pw} onClick={() => run(() => resetPasswordAction(userId, pw), tr("تم تعيين كلمة مرور مؤقتة"), () => setPw(""))}>
+          <KeyRound className="size-4" />{tr("تعيين كلمة المرور")}</Button>
+        <Button variant="outline" loading={pending} onClick={() => run(() => endSessionsAction(userId), tr("تم إخراج الموظف من كل الأجهزة"))}>
+          <LogOut className="size-4" />{tr("إخراج من كل الأجهزة")}</Button>
       </div>
-      <p className="text-[14.5px] text-slate-500">يغيّر الموظف كلمة المرور المؤقتة عند دخوله التالي.</p>
+      <p className="text-[14.5px] text-slate-500">{tr("يغيّر الموظف كلمة المرور المؤقتة عند دخوله التالي.")}</p>
     </section>
   );
 }
@@ -307,15 +307,15 @@ export function RoleSettingsEditor({ roleId, homeOptions, quickOptions, initial 
       {error && <Alert variant="destructive">{error}</Alert>}
       <section className="grid gap-4 md:grid-cols-2">
         <div className={field}>
-          <Label htmlFor="role_home">الصفحة الأولى بعد الدخول</Label>
+          <Label htmlFor="role_home">{tr("الصفحة الأولى بعد الدخول")}</Label>
           <NativeSelect id="role_home" value={home} onChange={(e) => setHome(e.target.value)}>
-            <option value="">لوحة التحكم</option>
+            <option value="">{tr("لوحة التحكم")}</option>
             {homeOptions.map((o) => <option key={o.href} value={o.href}>{o.label}</option>)}
           </NativeSelect>
         </div>
       </section>
       <section className="space-y-3">
-        <h2 className="text-[19px] font-semibold text-ink">الإجراءات السريعة في أعلى الشاشة</h2>
+        <h2 className="text-[19px] font-semibold text-ink">{tr("الإجراءات السريعة في أعلى الشاشة")}</h2>
         <div className="flex flex-wrap gap-2">
           {quickOptions.map((q) => (
             <label key={q.key} className={chip(quick.has(q.key))}>
@@ -323,10 +323,10 @@ export function RoleSettingsEditor({ roleId, homeOptions, quickOptions, initial 
             </label>
           ))}
         </div>
-        <p className="text-[14.5px] text-slate-500">يظهر الإجراء فقط لمن يملك صلاحيته.</p>
+        <p className="text-[14.5px] text-slate-500">{tr("يظهر الإجراء فقط لمن يملك صلاحيته.")}</p>
       </section>
       <section className="space-y-3">
-        <h2 className="text-[19px] font-semibold text-ink">أقسام مخفية من لوحة التحكم</h2>
+        <h2 className="text-[19px] font-semibold text-ink">{tr("أقسام مخفية من لوحة التحكم")}</h2>
         <div className="flex flex-wrap gap-2">
           {DASHBOARD_SECTIONS.map((d) => (
             <label key={d.key} className={chip(hidden.has(d.key))}>
@@ -334,17 +334,17 @@ export function RoleSettingsEditor({ roleId, homeOptions, quickOptions, initial 
             </label>
           ))}
         </div>
-        <p className="text-[14.5px] text-slate-500">ما لا يملك الدور صلاحيته لا يظهر أصلًا، وهذا لإخفاء ما يملكه ولا يحتاجه.</p>
+        <p className="text-[14.5px] text-slate-500">{tr("ما لا يملك الدور صلاحيته لا يظهر أصلًا، وهذا لإخفاء ما يملكه ولا يحتاجه.")}</p>
       </section>
       <section className="space-y-3">
-        <h2 className="text-[19px] font-semibold text-ink">الحدود المالية للدور</h2>
-        <p className="text-[15px] text-slate-500">اتركها فارغة لعدم وضع حد. ما يتجاوز الحد يرسله الموظف طلب موافقة.</p>
-        <LimitsFields value={limits} onChange={setLimits} inheritLabel="بلا حد" idPrefix="role" />
+        <h2 className="text-[19px] font-semibold text-ink">{tr("الحدود المالية للدور")}</h2>
+        <p className="text-[15px] text-slate-500">{tr("اتركها فارغة لعدم وضع حد. ما يتجاوز الحد يرسله الموظف طلب موافقة.")}</p>
+        <LimitsFields value={limits} onChange={setLimits} inheritLabel={tr("بلا حد")} idPrefix="role" />
       </section>
       <Button loading={pending} onClick={() => {
-        if (!limitsValid(limits)) { toast("الحدود أرقام موجبة فقط", "error"); return; }
-        run(() => saveRoleSettingsAction(roleId, { home_path: home || null, quick_actions: [...quick], dashboard_hidden: [...hidden], limits: toLimits(limits) }), "تم حفظ إعدادات الدور");
-      }}>حفظ إعدادات الدور</Button>
+        if (!limitsValid(limits)) { toast(tr("الحدود أرقام موجبة فقط"), "error"); return; }
+        run(() => saveRoleSettingsAction(roleId, { home_path: home || null, quick_actions: [...quick], dashboard_hidden: [...hidden], limits: toLimits(limits) }), tr("تم حفظ إعدادات الدور"));
+      }}>{tr("حفظ إعدادات الدور")}</Button>
     </div>
   );
 }
@@ -364,11 +364,11 @@ export function RolePermissionsEditor({ role, permissions, held }: {
     <div className="space-y-5">
       {error && <Alert variant="destructive">{error}</Alert>}
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className={field}><Label htmlFor="role_name">اسم الدور</Label>
-          <Input id="role_name" value={v.name_ar} onChange={(e) => setV({ ...v, name_ar: e.target.value })} /></div>
-        <div className={field}><Label htmlFor="role_name_en">الاسم بالإنجليزية</Label>
+        <div className={field}><Label htmlFor="role_name">{tr("اسم الدور")}</Label>
+          <Input id="role_name" value={localNameOf(v)} onChange={(e) => setV({ ...v, name_ar: e.target.value })} /></div>
+        <div className={field}><Label htmlFor="role_name_en">{tr("الاسم بالإنجليزية")}</Label>
           <Input id="role_name_en" dir="ltr" value={v.name_en} onChange={(e) => setV({ ...v, name_en: e.target.value })} /></div>
-        <div className={field}><Label htmlFor="role_code">الرمز</Label>
+        <div className={field}><Label htmlFor="role_code">{tr("الرمز")}</Label>
           <Input id="role_code" dir="ltr" value={v.code} onChange={(e) => setV({ ...v, code: e.target.value })} placeholder="night_reception" /></div>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
@@ -382,7 +382,7 @@ export function RolePermissionsEditor({ role, permissions, held }: {
                     <input type="checkbox" className="size-4" disabled={!mine.has(p.code) && !sel.has(p.code)} checked={sel.has(p.code)}
                       onChange={(e) => { const n = new Set(sel); if (e.target.checked) n.add(p.code); else n.delete(p.code); setSel(n); }} />
                     {p.label}
-                    {!mine.has(p.code) && <Badge variant="secondary">ليست عندك</Badge>}
+                    {!mine.has(p.code) && <Badge variant="secondary">{tr("ليست عندك")}</Badge>}
                   </label>
                 </li>
               ))}
@@ -390,9 +390,7 @@ export function RolePermissionsEditor({ role, permissions, held }: {
           </div>
         ))}
       </div>
-      <Button loading={pending} onClick={() => run(() => saveRoleAction({ ...v, permissions: [...sel] }), "تم حفظ الدور", () => router.push("/settings/users"))}>
-        حفظ الدور
-      </Button>
+      <Button loading={pending} onClick={() => run(() => saveRoleAction({ ...v, permissions: [...sel] }), tr("تم حفظ الدور"), () => router.push("/settings/users"))}>{tr("حفظ الدور")}</Button>
     </div>
   );
 }

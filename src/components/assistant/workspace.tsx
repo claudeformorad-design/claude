@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
@@ -20,14 +21,14 @@ import { useChat } from "./use-chat";
 import { FixView, InstructionsView, LearnView, ReportsView, SavedView, type Section } from "./views";
 
 type View = "home" | "chat" | "reports" | "learn" | "fix" | "saved" | "instructions";
-const PAGE = { path: "/assistant", title: "صفحة المساعد الكاملة" };
+const PAGE = { path: "/assistant", get title() { return tr("صفحة المساعد الكاملة"); } };
 
 const TOOLS: { view: View; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { view: "reports", label: "التقارير الذكية", icon: FileBarChart },
-  { view: "learn", label: "الشرح والتعلم", icon: GraduationCap },
-  { view: "fix", label: "حل مشكلة", icon: LifeBuoy },
-  { view: "saved", label: "المحفوظات", icon: Bookmark },
-  { view: "instructions", label: "التعليمات الخاصة", icon: SlidersHorizontal },
+  { view: "reports", get label() { return tr("التقارير الذكية"); }, icon: FileBarChart },
+  { view: "learn", get label() { return tr("الشرح والتعلم"); }, icon: GraduationCap },
+  { view: "fix", get label() { return tr("حل مشكلة"); }, icon: LifeBuoy },
+  { view: "saved", get label() { return tr("المحفوظات"); }, icon: Bookmark },
+  { view: "instructions", get label() { return tr("التعليمات الخاصة"); }, icon: SlidersHorizontal },
 ];
 
 /** تجميع المحادثات: المثبتة، ثم حسب قِدمها */
@@ -36,7 +37,7 @@ function groupConversations(list: Conversation[]) {
   const start = new Date(); start.setHours(0, 0, 0, 0);
   const t0 = start.getTime();
   const groups: { title: string; items: Conversation[] }[] = [
-    { title: "المثبتة", items: [] }, { title: "اليوم", items: [] }, { title: "أمس", items: [] }, { title: "آخر 7 أيام", items: [] }, { title: "أقدم", items: [] },
+    { title: tr("المثبتة"), items: [] }, { title: tr("اليوم"), items: [] }, { title: tr("أمس"), items: [] }, { title: tr("آخر 7 أيام"), items: [] }, { title: tr("أقدم"), items: [] },
   ];
   for (const c of list) {
     const t = Date.parse(c.updated_at);
@@ -94,29 +95,28 @@ export function Workspace({ enabled, userName, hotelName, initialConversation, c
 
   const shown = query.trim() ? list.filter((c) => c.title.includes(query.trim())) : list;
   const firstName = userName.trim().split(/\s+/)[0] || "";
-  const greeting = new Date().getHours() < 12 ? "صباح الخير" : "مساء الخير";
+  const greeting = new Date().getHours() < 12 ? tr("صباح الخير") : tr("مساء الخير");
 
   const sidebar = (
     <aside className="flex h-full w-[284px] shrink-0 flex-col border-e border-line bg-[#fbfaf8]">
       <div className="flex h-14 shrink-0 items-center gap-2.5 px-4">
         <AssistantMark thinking={chat.busy} className="size-[22px] text-ink" />
-        <p className="flex-1 text-[17px] font-semibold text-ink">المساعد</p>
-        <button type="button" onClick={() => setDrawer(false)} className="flex size-8 items-center justify-center rounded-md text-slate-500 hover:bg-subtle lg:hidden" aria-label="إغلاق القائمة"><X className="size-[18px]" /></button>
+        <p className="flex-1 text-[17px] font-semibold text-ink">{tr("المساعد")}</p>
+        <button type="button" onClick={() => setDrawer(false)} className="flex size-8 items-center justify-center rounded-md text-slate-500 hover:bg-subtle lg:hidden" aria-label={tr("إغلاق القائمة")}><X className="size-[18px]" /></button>
       </div>
 
       <div className="space-y-2 px-3">
         <button type="button" onClick={newChat}
           className="flex h-10 w-full items-center gap-2.5 rounded-lg border border-line bg-white px-3 text-[15.5px] font-medium text-ink transition-colors hover:border-[#d4d1c8]">
-          <SquarePen className="size-[17px] text-slate-600" />محادثة جديدة
-        </button>
+          <SquarePen className="size-[17px] text-slate-600" />{tr("محادثة جديدة")}</button>
         <label className="flex h-9 items-center gap-2 rounded-lg px-3 text-slate-400 transition-colors focus-within:bg-white focus-within:ring-1 focus-within:ring-line hover:bg-subtle/70">
           <Search className="size-4 shrink-0" />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="بحث في المحادثات"
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tr("بحث في المحادثات")}
             className="min-w-0 flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-slate-400" />
         </label>
       </div>
 
-      <nav className="mt-4 space-y-0.5 px-3" aria-label="أدوات المساعد">
+      <nav className="mt-4 space-y-0.5 px-3" aria-label={tr("أدوات المساعد")}>
         {TOOLS.map((tl) => (
           <button key={tl.view} type="button" onClick={() => go(tl.view)}
             className={cn("flex h-9 w-full items-center gap-2.5 rounded-lg px-3 text-[15.5px] transition-colors",
@@ -136,14 +136,13 @@ export function Workspace({ enabled, userName, hotelName, initialConversation, c
             ))}
           </section>
         ))}
-        {shown.length === 0 && <p className="px-3 text-[14.5px] text-slate-400">{query ? "لا نتائج" : "محادثاتك تظهر هنا"}</p>}
+        {shown.length === 0 && <p className="px-3 text-[14.5px] text-slate-400">{query ? tr("لا نتائج") : tr("محادثاتك تظهر هنا")}</p>}
       </div>
 
       <div className="shrink-0 border-t border-line p-3">
         <button type="button" onClick={exit}
           className="flex h-10 w-full items-center gap-2.5 rounded-lg px-3 text-[15.5px] text-slate-600 transition-colors hover:bg-subtle hover:text-ink">
-          <ArrowRight className="size-[17px]" />العودة للنظام
-        </button>
+          <ArrowRight className="size-[17px]" />{tr("العودة للنظام")}</button>
       </div>
     </aside>
   );
@@ -153,14 +152,14 @@ export function Workspace({ enabled, userName, hotelName, initialConversation, c
       <div className="hidden lg:block">{sidebar}</div>
       {drawer && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <button type="button" aria-label="إغلاق القائمة" className="absolute inset-0 bg-ink/20" onClick={() => setDrawer(false)} />
+          <button type="button" aria-label={tr("إغلاق القائمة")} className="absolute inset-0 bg-ink/20" onClick={() => setDrawer(false)} />
           <div className="relative h-full w-fit">{sidebar}</div>
         </div>
       )}
 
       <main className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-14 shrink-0 items-center gap-3 px-4 lg:px-8">
-          <button type="button" onClick={() => setDrawer(true)} className="flex size-9 items-center justify-center rounded-md text-slate-600 hover:bg-subtle lg:hidden" aria-label="القائمة"><Menu className="size-5" /></button>
+          <button type="button" onClick={() => setDrawer(true)} className="flex size-9 items-center justify-center rounded-md text-slate-600 hover:bg-subtle lg:hidden" aria-label={tr("القائمة")}><Menu className="size-5" /></button>
           <p className="min-w-0 truncate text-[16px] font-medium text-slate-600">{view === "chat" ? chat.title : ""}</p>
         </header>
 
@@ -168,17 +167,17 @@ export function Workspace({ enabled, userName, hotelName, initialConversation, c
           <div className="flex flex-1 items-center justify-center px-6">
             <div className="max-w-md space-y-3 text-center">
               <AssistantMark className="mx-auto size-10 text-ink" />
-              <p className="text-[22px] font-bold text-ink">المساعد غير مفعّل بعد</p>
-              <p className="text-[16px] leading-relaxed text-slate-500">يحتاج مفتاح مزود الذكاء الاصطناعي على الخادم، GEMINI_API_KEY أو OPENROUTER_API_KEY. اطلب من المسؤول التقني ضبطه ثم أعد فتح الصفحة.</p>
+              <p className="text-[22px] font-bold text-ink">{tr("المساعد غير مفعّل بعد")}</p>
+              <p className="text-[16px] leading-relaxed text-slate-500">{tr("يحتاج مفتاح مزود الذكاء الاصطناعي على الخادم، GEMINI_API_KEY أو OPENROUTER_API_KEY. اطلب من المسؤول التقني ضبطه ثم أعد فتح الصفحة.")}</p>
             </div>
           </div>
         ) : view === "home" ? (
           <div className="flex min-h-0 flex-1 overflow-y-auto">
             <div className="m-auto w-full max-w-[720px] px-6 py-10">
               <AssistantMark className="size-10 text-ink" />
-              <h1 className="mt-5 text-[32px] font-bold leading-tight text-ink">{greeting}{firstName ? `، ${firstName}` : ""}</h1>
-              <p className="mt-2 text-[17px] text-slate-500">اسألني عن أي قسم أو رقم أو مشكلة في {hotelName}</p>
-              <Composer autoFocus className="mt-8" busy={chat.busy} onStop={chat.stop} onSend={ask} hint="يقرأ بياناتك الحية بصلاحياتك ولا ينفّذ أي عملية" />
+              <h1 className="mt-5 text-[32px] font-bold leading-tight text-ink">{greeting}{firstName ? tr("، {0}", firstName) : ""}</h1>
+              <p className="mt-2 text-[17px] text-slate-500">{tr("اسألني عن أي قسم أو رقم أو مشكلة في")}{" "}{hotelName}</p>
+              <Composer autoFocus className="mt-8" busy={chat.busy} onStop={chat.stop} onSend={ask} hint={tr("يقرأ بياناتك الحية بصلاحياتك ولا ينفّذ أي عملية")} />
               <div className="mt-8 grid gap-3 sm:grid-cols-2">
                 {SMART_REPORTS.map((r) => (
                   <button key={r.key} type="button" onClick={() => askFresh(r.prompt)}
@@ -211,8 +210,8 @@ export function Workspace({ enabled, userName, hotelName, initialConversation, c
               </div>
             </div>
             <div className="shrink-0 px-6 pb-5">
-              <Composer autoFocus className="mx-auto max-w-[760px]" busy={chat.busy} onStop={chat.stop} onSend={ask} placeholder="اكتب رسالتك"
-                hint="راجع الأرقام المهمة من شاشاتها قبل الاعتماد عليها" />
+              <Composer autoFocus className="mx-auto max-w-[760px]" busy={chat.busy} onStop={chat.stop} onSend={ask} placeholder={tr("اكتب رسالتك")}
+                hint={tr("راجع الأرقام المهمة من شاشاتها قبل الاعتماد عليها")} />
             </div>
           </>
         ) : (
@@ -243,15 +242,15 @@ function ConversationRow({ c, active, onOpen, onChanged, onDeleted }: {
     setEditing(false);
     if (!title.trim() || title.trim() === c.title) { setTitle(c.title); return; }
     const r = await callAction(updateConversationAction(c.id, { title: title.trim() }));
-    if (!r.ok) toast("تعذّر تغيير الاسم", "error");
+    if (!r.ok) toast(tr("تعذّر تغيير الاسم"), "error");
     onChanged();
   };
   const pin = async () => { setMenu(false); await callAction(updateConversationAction(c.id, { pinned: !c.pinned })); onChanged(); };
   const remove = async () => {
     setMenu(false);
-    if (!window.confirm("حذف هذه المحادثة نهائيًا؟ الإجابات المحفوظة منها تبقى في المحفوظات.")) return;
+    if (!window.confirm(tr("حذف هذه المحادثة نهائيًا؟ الإجابات المحفوظة منها تبقى في المحفوظات."))) return;
     const r = await callAction(deleteConversationAction(c.id));
-    if (r.ok) { toast("حُذفت المحادثة"); onDeleted(); } else toast("تعذّر حذف المحادثة", "error");
+    if (r.ok) { toast(tr("حُذفت المحادثة")); onDeleted(); } else toast(tr("تعذّر حذف المحادثة"), "error");
   };
 
   if (editing) {
@@ -266,21 +265,19 @@ function ConversationRow({ c, active, onOpen, onChanged, onDeleted }: {
       <button type="button" onClick={onOpen} className={cn("min-w-0 flex-1 truncate px-3 text-start text-[15px]", active ? "font-medium text-ink" : "text-slate-600")}>
         {c.title}
       </button>
-      <button ref={btn} type="button" onClick={() => setMenu((v) => !v)} aria-label="خيارات المحادثة"
+      <button ref={btn} type="button" onClick={() => setMenu((v) => !v)} aria-label={tr("خيارات المحادثة")}
         className={cn("me-1 flex size-7 shrink-0 items-center justify-center rounded-md text-slate-400 transition-opacity hover:bg-line hover:text-ink",
           menu ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus:opacity-100")}>
         <MoreHorizontal className="size-4" />
       </button>
       <Popover open={menu} anchor={btn} onClose={() => setMenu(false)} width={200}>
         <button type="button" onClick={pin} className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[15px] text-slate-700 hover:bg-subtle">
-          {c.pinned ? <PinOff className="size-4" /> : <Pin className="size-4" />}{c.pinned ? "إلغاء التثبيت" : "تثبيت"}
+          {c.pinned ? <PinOff className="size-4" /> : <Pin className="size-4" />}{c.pinned ? tr("إلغاء التثبيت") : tr("تثبيت")}
         </button>
         <button type="button" onClick={() => { setMenu(false); setEditing(true); }} className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[15px] text-slate-700 hover:bg-subtle">
-          <SquarePen className="size-4" />إعادة تسمية
-        </button>
+          <SquarePen className="size-4" />{tr("إعادة تسمية")}</button>
         <button type="button" onClick={remove} className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[15px] text-urgent hover:bg-urgent-tint">
-          <Trash2 className="size-4" />حذف
-        </button>
+          <Trash2 className="size-4" />{tr("حذف")}</button>
       </Popover>
     </div>
   );

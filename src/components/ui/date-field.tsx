@@ -1,4 +1,5 @@
 "use client";
+import { tr, trList } from "@/i18n/tr";
 
 import * as React from "react";
 import { CalendarDays } from "lucide-react";
@@ -6,8 +7,8 @@ import { Popover, setNativeValue } from "@/components/ui/popover";
 import { useMergedRef } from "@/components/ui/use-merged-ref";
 import { cn } from "@/lib/utils";
 
-const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
-const WEEKDAYS = ["س", "ح", "ن", "ث", "ر", "خ", "ج"]; // يبدأ الأسبوع بالسبت
+const MONTHS = trList(["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]);
+const WEEKDAYS = trList(["س", "ح", "ن", "ث", "ر", "خ", "ج"]); // يبدأ الأسبوع بالسبت
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const iso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`;
@@ -54,7 +55,7 @@ export function DateField({ className, onChange, ref, disabled, placeholder, ...
       >
         {d ? (
           <span className="truncate"><span className="num">{Number(value.slice(8))}</span> {MONTHS[d.m]} <span className="num">{d.y}</span></span>
-        ) : <span className="truncate text-slate-400">{placeholder ?? "اختر التاريخ"}</span>}
+        ) : <span className="truncate text-slate-400">{placeholder ?? tr("اختر التاريخ")}</span>}
         <CalendarDays className="size-[18px] shrink-0 stroke-[1.7] text-slate-400" />
       </button>
       <Popover open={open} anchor={buttonRef} onClose={close} width={300} maxHeight={420}>
@@ -104,8 +105,8 @@ function Calendar({ value, min, max, clearable, onPick }: {
         })}
       </div>
       <div className="mt-2 flex items-center justify-between border-t border-line pt-2 text-[15px]">
-        <button type="button" disabled={out(today)} onClick={() => onPick(today)} className="rounded-md px-2 py-1 text-action transition-colors hover:bg-subtle disabled:opacity-40">اليوم</button>
-        {clearable && value && <button type="button" onClick={() => onPick("")} className="rounded-md px-2 py-1 text-slate-500 transition-colors hover:bg-subtle hover:text-ink">مسح</button>}
+        <button type="button" disabled={out(today)} onClick={() => onPick(today)} className="rounded-md px-2 py-1 text-action transition-colors hover:bg-subtle disabled:opacity-40">{tr("اليوم")}</button>
+        {clearable && value && <button type="button" onClick={() => onPick("")} className="rounded-md px-2 py-1 text-slate-500 transition-colors hover:bg-subtle hover:text-ink">{tr("مسح")}</button>}
       </div>
     </div>
   );

@@ -1,9 +1,10 @@
+import { tr } from "@/i18n/tr";
 import "server-only";
 import fs from "node:fs";
 import path from "node:path";
 import PDFDocument from "pdfkit";
 import { currencyName } from "@/lib/currency-name";
-import { CODE_COLUMN, hasCodes, type DocMeta, type PlainReport } from "./plain-report";
+import { codeColumn, hasCodes, type DocMeta, type PlainReport } from "./plain-report";
 
 /**
  * ملف PDF حقيقي للتقرير (نص متجهي قابل للتحديد والبحث، لا صورة): خط «ثمانية» للعربي وInter للأرقام،
@@ -125,9 +126,9 @@ export async function reportPdf(report: PlainReport, meta: DocMeta): Promise<Buf
   let y = TOP + 14;
   draw(doc, meta.hotelName, { size: 15, bold: true, y, right });
   const metaRows: [string, string][] = [
-    ["تاريخ الإعداد", meta.generatedAt],
-    ...(meta.preparedBy ? [["أعدّه", meta.preparedBy] as [string, string]] : []),
-    ["العملة", currencyName(meta.currency)],
+    [tr("تاريخ الإعداد"), meta.generatedAt],
+    ...(meta.preparedBy ? [[tr("أعدّه"), meta.preparedBy] as [string, string]] : []),
+    [tr("العملة"), currencyName(meta.currency)],
   ];
   const labelW = Math.max(...metaRows.map(([l]) => measure(doc, l, { size: 8.5 })));
   const valueW = Math.max(...metaRows.map(([, v]) => measure(doc, v, { size: 8.5, bold: true })));
@@ -136,7 +137,7 @@ export async function reportPdf(report: PlainReport, meta: DocMeta): Promise<Buf
     draw(doc, l, { size: 8.5, color: C.soft, y: ly, right: SIDE + valueW + 12 + labelW });
     draw(doc, v, { size: 8.5, bold: true, y: ly, right: SIDE + valueW });
   });
-  for (const lineText of [meta.legal.join("، "), meta.contact.join("، ")].filter(Boolean)) {
+  for (const lineText of [meta.legal.join(tr("، ")), meta.contact.join(tr("، "))].filter(Boolean)) {
     y += 15;
     draw(doc, fit(doc, lineText, { size: 8.5 }, width - labelW - valueW - 40), { size: 8.5, color: C.soft, y, right });
   }
@@ -153,7 +154,7 @@ export async function reportPdf(report: PlainReport, meta: DocMeta): Promise<Buf
     measure(doc, report.columns[i]!, { size: 8.5, bold: true }),
     ...report.rows.map((r) => measure(doc, r.cells[i]?.text ?? "", { size: 9, bold: r.kind !== "line" })),
   ) + PAD * 2;
-  const codeW = codes ? Math.max(44, measure(doc, CODE_COLUMN, { size: 8.5, bold: true }), ...report.rows.map((r) => measure(doc, r.code ?? "", { size: 9 }))) + PAD * 2 : 0;
+  const codeW = codes ? Math.max(44, measure(doc, codeColumn(), { size: 8.5, bold: true }), ...report.rows.map((r) => measure(doc, r.code ?? "", { size: 9 }))) + PAD * 2 : 0;
   const restW = report.columns.slice(1).map((_, k) => Math.max(numeric[k + 1] ? 74 : 60, cellW(k + 1)));
   const restTotal = restW.reduce((a, b) => a + b, 0);
   const scale = Math.min(1, (width - codeW - 150) / Math.max(1, restTotal));
@@ -168,7 +169,7 @@ export async function reportPdf(report: PlainReport, meta: DocMeta): Promise<Buf
     roundedBand(doc, SIDE, y, width, HEAD_H, 6, "top", C.ink);
     const base = y + HEAD_H / 2 + 3.2;
     const s = { size: 8.5, bold: true, color: C.white, y: base };
-    if (codes) draw(doc, CODE_COLUMN, { ...s, right: right - PAD });
+    if (codes) draw(doc, codeColumn(), { ...s, right: right - PAD });
     report.columns.forEach((c, i) => {
       if (numeric[i]) draw(doc, c, { ...s, left: edges[i]! - colsW[i]! + PAD });
       else draw(doc, fit(doc, c, s, colsW[i]! - PAD * 2), { ...s, right: edges[i]! - PAD });
@@ -232,7 +233,7 @@ export async function reportPdf(report: PlainReport, meta: DocMeta): Promise<Buf
   pageBreak(70);
   y += 46;
   const half = (width - 60) / 2;
-  for (const [i, label] of ["المحاسب", "المدير المالي"].entries()) {
+  for (const [i, label] of [tr("المحاسب"), tr("المدير المالي")].entries()) {
     const r = right - i * (half + 60);
     doc.save().moveTo(r - half, y).lineTo(r, y).lineWidth(0.6).strokeColor(C.lineStrong).stroke().restore();
     draw(doc, label, { size: 9, color: C.soft, y: y + 15, right: r });
@@ -244,8 +245,8 @@ export async function reportPdf(report: PlainReport, meta: DocMeta): Promise<Buf
     doc.switchToPage(range.start + p);
     const fy = H - 30;
     doc.save().moveTo(SIDE, fy - 14).lineTo(right, fy - 14).lineWidth(0.5).strokeColor(C.line).stroke().restore();
-    draw(doc, `${meta.hotelName}، ${report.title}`, { size: 8, color: C.soft, y: fy, right });
-    draw(doc, `صفحة ${p + 1} من ${range.count}`, { size: 8, color: C.soft, y: fy, left: SIDE });
+    draw(doc, tr("{0}، {1}", meta.hotelName, report.title), { size: 8, color: C.soft, y: fy, right });
+    draw(doc, tr("صفحة {0} من {1}", p + 1, range.count), { size: 8, color: C.soft, y: fy, left: SIDE });
   }
   doc.end();
   return done;

@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -36,7 +37,7 @@ export function RosterGrid({ days, employees, shifts, initial, canEdit, errors }
   const save = () => start(async () => {
     const rows = [...changed].map((k) => { const [employee_id, work_date] = k.split("|"); return { employee_id: employee_id!, work_date: work_date!, shift: cells[k] ?? "default" }; });
     const r = await callAction(saveRosterAction(rows));
-    if (r.ok) { toast("حُفظ جدول الورديات"); setChanged(new Set()); router.refresh(); }
+    if (r.ok) { toast(tr("حُفظ جدول الورديات")); setChanged(new Set()); router.refresh(); }
     else toast(actionErrorText(errors, r), "error");
   });
 
@@ -44,14 +45,14 @@ export function RosterGrid({ days, employees, shifts, initial, canEdit, errors }
     <div className="space-y-4">
       {canEdit && (
         <div className="flex justify-end">
-          <Button onClick={save} loading={pending} disabled={changed.size === 0}>حفظ الجدول</Button>
+          <Button onClick={save} loading={pending} disabled={changed.size === 0}>{tr("حفظ الجدول")}</Button>
         </div>
       )}
       <div className="surface overflow-x-auto">
         <table className="w-full min-w-[900px] text-[15px]">
           <thead>
             <tr className="border-b border-line bg-panel text-slate-600">
-              <th className="px-4 py-3 text-start font-medium">الموظف</th>
+              <th className="px-4 py-3 text-start font-medium">{tr("الموظف")}</th>
               {days.map((d) => (
                 <th key={d.date} className={cn("px-2 py-3 text-start font-medium", d.weekend && "text-slate-400")}>
                   {d.label} <span className="num text-slate-400">{d.date.slice(8)}</span>
@@ -71,9 +72,9 @@ export function RosterGrid({ days, employees, shifts, initial, canEdit, errors }
                       <NativeSelect value={v} disabled={!canEdit} aria-label={`${e.name} ${d.label}`}
                         className={cn("h-9 px-2.5 text-[14.5px]", v === "off" && "bg-subtle text-slate-500", changed.has(k) && "border-action")}
                         onChange={(ev) => { const val = ev.target.value; setCells((c) => ({ ...c, [k]: val })); setChanged((s) => new Set(s).add(k)); }}>
-                        <option value="default">{e.defaultShift ? shiftName.get(e.defaultShift) ?? "الافتراضية" : d.weekend ? "راحة أسبوعية" : "بلا وردية"}</option>
+                        <option value="default">{e.defaultShift ? shiftName.get(e.defaultShift) ?? tr("الافتراضية") : d.weekend ? tr("راحة أسبوعية") : tr("بلا وردية")}</option>
                         {shifts.map((s) => <option key={s.id} value={s.id}>{short(s.name)}</option>)}
-                        <option value="off">راحة</option>
+                        <option value="off">{tr("راحة")}</option>
                       </NativeSelect>
                     </td>
                   );

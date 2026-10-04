@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -31,7 +32,7 @@ export function PayBillForm({ t, billId, vendorId, outstanding, methods }: {
         <Input className="w-44" dir="ltr" placeholder={t.folio.reference} value={reference} onChange={(e) => setReference(e.target.value)} />
         <Button loading={pending} disabled={pending || !method} onClick={() => start(async () => {
           const r = await callAction(payVendorAction({ vendor_id: vendorId, payment_method_id: method, payment_date: "", reference, allocations: [{ bill_id: billId, amount }] }));
-          if (r.ok) { toast("تم تسجيل السداد"); router.refresh(); } else setError(actionErrorText(t.errors, r));
+          if (r.ok) { toast(tr("تم تسجيل السداد")); router.refresh(); } else setError(actionErrorText(t.errors, r));
         })}>{t.payables.payVendor}</Button>
       </div>
     </div>

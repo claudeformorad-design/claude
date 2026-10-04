@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -24,7 +25,7 @@ export function CustomerForm({ t, initial }: { t: Pick<Dictionary, "customers" |
     start(async () => {
       setError(null);
       const r = await callAction(saveCustomerAction(v));
-      if (r.ok) { toast("تم حفظ العميل"); router.push("/customers"); }
+      if (r.ok) { toast(tr("تم حفظ العميل")); router.push("/customers"); }
       else setError(actionErrorText(t.errors, r));
     });
 
@@ -45,7 +46,7 @@ export function CustomerForm({ t, initial }: { t: Pick<Dictionary, "customers" |
         </div>
       </div>
       {f("name_ar", t.customers.name, { dir: "rtl" })}
-      {f("name_en", `${t.customers.name} بالإنجليزية`, { dir: "ltr" })}
+      {f("name_en", tr("{0} بالإنجليزية", t.customers.name), { dir: "ltr" })}
       <div className="grid grid-cols-2 gap-3">
         {f("tax_number", t.customers.taxNumber, { dir: "ltr" })}
         {f("commercial_registration", t.customers.cr, { dir: "ltr" })}

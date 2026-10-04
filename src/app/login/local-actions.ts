@@ -7,6 +7,7 @@ import {
   checkPassword, currentLocalUserId, getAuthMode, mustChangePassword, renewSession, setLocalPassword, signIn, signOut, strongPassword,
 } from "@/lib/supabase/local-auth";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { applyPreferredLocale } from "../locale-actions";
 
 export type LocalAuthState = { error?: "invalid" | "locked" | "inactive" | "validation" | "weak" | "mismatch" | "current" } | null;
 
@@ -19,6 +20,7 @@ export async function localSignInAction(_prev: LocalAuthState, formData: FormDat
   if (!p.success) return { error: "validation" };
   const r = await signIn(p.data.username, p.data.password, await userAgent());
   if (!r.ok) return { error: r.error };
+  await applyPreferredLocale(r.locale);
   redirect(r.mustChange ? "/account/password" : "/?home=1");
 }
 

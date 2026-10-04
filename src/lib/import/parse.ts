@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import ExcelJS from "exceljs";
 import { isValidAmount, toMoney } from "@/lib/accounting/money";
 
@@ -65,7 +66,7 @@ function parseCsv(text: string): string[][] {
 }
 
 export async function readSheet(file: File): Promise<RawSheet> {
-  if (file.size > MAX_IMPORT_BYTES) throw new ImportFileError("حجم الملف أكبر من 5 ميجابايت");
+  if (file.size > MAX_IMPORT_BYTES) throw new ImportFileError(tr("حجم الملف أكبر من 5 ميجابايت"));
   const name = file.name.toLowerCase();
   let grid: string[][];
   if (name.endsWith(".csv")) {
@@ -75,10 +76,10 @@ export async function readSheet(file: File): Promise<RawSheet> {
     try {
       await wb.xlsx.load(await file.arrayBuffer());
     } catch {
-      throw new ImportFileError("تعذّرت قراءة ملف Excel، احفظه بصيغة xlsx وأعد المحاولة");
+      throw new ImportFileError(tr("تعذّرت قراءة ملف Excel، احفظه بصيغة xlsx وأعد المحاولة"));
     }
     const ws = wb.worksheets[0];
-    if (!ws) throw new ImportFileError("الملف لا يحتوي على ورقة بيانات");
+    if (!ws) throw new ImportFileError(tr("الملف لا يحتوي على ورقة بيانات"));
     grid = [];
     ws.eachRow({ includeEmpty: true }, (r, n) => {
       const cells: string[] = [];
@@ -87,11 +88,11 @@ export async function readSheet(file: File): Promise<RawSheet> {
     });
     for (let i = 0; i < grid.length; i++) grid[i] ??= [];
   } else {
-    throw new ImportFileError("صيغة الملف غير مدعومة، استخدم xlsx أو csv");
+    throw new ImportFileError(tr("صيغة الملف غير مدعومة، استخدم xlsx أو csv"));
   }
   const [head = [], ...body] = grid;
   const rows = body.map((cells, i) => ({ line: i + 2, cells })).filter((r) => r.cells.some((c) => c.trim() !== ""));
-  if (rows.length > MAX_IMPORT_ROWS) throw new ImportFileError(`الحد الأقصى ${MAX_IMPORT_ROWS} صف في الملف الواحد`);
+  if (rows.length > MAX_IMPORT_ROWS) throw new ImportFileError(tr("الحد الأقصى {0} صف في الملف الواحد", MAX_IMPORT_ROWS));
   return { headers: head.map((h) => h.trim()), rows };
 }
 
@@ -104,10 +105,10 @@ export function mapHeaders(headers: string[], columns: ImportColumn[]): { index:
   headers.forEach((h, i) => {
     if (!h) return;
     const n = normalizeHeader(h);
-    const col = columns.find((c) => normalizeHeader(c.header) === n || c.key.toLowerCase() === n);
+    const col = columns.find((c) => normalizeHeader(c.header) === n || normalizeHeader(tr(c.header)) === n || c.key.toLowerCase() === n);
     if (col && !index.has(col.key)) index.set(col.key, i); else unknown.push(h);
   });
-  const missing = columns.filter((c) => c.required && !index.has(c.key)).map((c) => c.header);
+  const missing = columns.filter((c) => c.required && !index.has(c.key)).map((c) => tr(c.header));
   return { index, missing, unknown };
 }
 
@@ -117,36 +118,36 @@ const NO = new Set(["لا", "no", "n", "false", "0", "خطأ"]);
 /** تحويل قيمة الخلية حسب نوع العمود؛ يرجع خطأ بالعربية أو القيمة */
 export function convert(col: ImportColumn, raw: string): { value: string | number | boolean | null } | { error: string } {
   const v = raw.trim();
-  if (!v) return col.required ? { error: `${col.header} مطلوب` } : { value: null };
+  if (!v) return col.required ? { error: tr("{0} مطلوب", tr(col.header)) } : { value: null };
   switch (col.kind) {
     case "text":
-      if (col.max && v.length > col.max) return { error: `${col.header} أطول من ${col.max} حرفًا` };
+      if (col.max && v.length > col.max) return { error: tr("{0} أطول من {1} حرفًا", tr(col.header), col.max) };
       return { value: v };
     case "number": {
       const n = v.replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
-      if (!isValidAmount(n) || toMoney(n).isNegative()) return { error: `${col.header} يجب أن يكون رقمًا موجبًا` };
+      if (!isValidAmount(n) || toMoney(n).isNegative()) return { error: tr("{0} يجب أن يكون رقمًا موجبًا", tr(col.header)) };
       return { value: toMoney(n).toFixed() };
     }
     case "date": {
       const iso = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(v);
       const dmy = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/.exec(v);
       const [y, m, d] = iso ? [iso[1], iso[2], iso[3]] : dmy ? [dmy[3], dmy[2], dmy[1]] : [];
-      if (!y) return { error: `${col.header} تاريخ غير صحيح، اكتبه مثل 2026-01-31` };
+      if (!y) return { error: tr("{0} تاريخ غير صحيح، اكتبه مثل 2026-01-31", tr(col.header)) };
       const out = `${y}-${m!.padStart(2, "0")}-${d!.padStart(2, "0")}`;
       const dt = new Date(`${out}T00:00:00Z`);
-      if (Number.isNaN(dt.getTime()) || dt.toISOString().slice(0, 10) !== out) return { error: `${col.header} تاريخ غير صحيح` };
+      if (Number.isNaN(dt.getTime()) || dt.toISOString().slice(0, 10) !== out) return { error: tr("{0} تاريخ غير صحيح", tr(col.header)) };
       return { value: out };
     }
     case "bool": {
       const l = v.toLowerCase();
       if (YES.has(l)) return { value: true };
       if (NO.has(l)) return { value: false };
-      return { error: `${col.header} يُكتب نعم أو لا` };
+      return { error: tr("{0} يُكتب نعم أو لا", tr(col.header)) };
     }
     case "enum": {
       const options = col.options ?? {};
-      const hit = Object.entries(options).find(([label, val]) => label === v || val.toLowerCase() === v.toLowerCase());
-      if (!hit) return { error: `${col.header} يجب أن يكون واحدًا من: ${Object.keys(options).join("، ")}` };
+      const hit = Object.entries(options).find(([label, val]) => label === v || tr(label) === v || val.toLowerCase() === v.toLowerCase());
+      if (!hit) return { error: tr("{0} يجب أن يكون واحدًا من: {1}", tr(col.header), Object.keys(options).map((k) => tr(k)).join(tr("، "))) };
       return { value: hit[1] };
     }
   }

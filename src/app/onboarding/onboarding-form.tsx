@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useActionState } from "react";
 import { Alert } from "@/components/ui/alert";
@@ -25,8 +26,8 @@ const TIMEZONES: [string, string][] = [
 ];
 
 const MODULES = [
-  { value: "accounting", title: "المحاسبة", description: "دليل الحسابات والقيود، الفوليو والفواتير، المشتريات والرواتب، الأصول والمخزون، والتقارير المالية." },
-  { value: "pms", title: "إدارة الفندق", description: "الحجوزات والنزلاء، الغرف وحالاتها، الأسعار والمواسم، قائمة الانتظار، والقاعات بالساعة." },
+  { value: "accounting", get title() { return tr("المحاسبة"); }, get description() { return tr("دليل الحسابات والقيود، الفوليو والفواتير، المشتريات والرواتب، الأصول والمخزون، والتقارير المالية."); } },
+  { value: "pms", get title() { return tr("إدارة الفندق"); }, get description() { return tr("الحجوزات والنزلاء، الغرف وحالاتها، الأسعار والمواسم، قائمة الانتظار، والقاعات بالساعة."); } },
 ] as const;
 
 export function OnboardingForm({
@@ -57,14 +58,14 @@ export function OnboardingForm({
       <div className="field-group space-y-2">
         <Label htmlFor="country_code">{t.onboarding.country}</Label>
         <NativeSelect id="country_code" name="country_code" defaultValue="" required>
-          <option value="" disabled>اختر الدولة</option>
-          {COUNTRIES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+          <option value="" disabled>{tr("اختر الدولة")}</option>
+          {COUNTRIES.map(([code, name]) => <option key={code} value={code}>{tr(name)}</option>)}
         </NativeSelect>
       </div>
       <div className="field-group space-y-2">
         <Label htmlFor="base_currency">{t.onboarding.baseCurrency}</Label>
         <NativeSelect id="base_currency" name="base_currency" defaultValue="" required>
-          <option value="" disabled>اختر العملة</option>
+          <option value="" disabled>{tr("اختر العملة")}</option>
           {currencies.map((c) => (
             <option key={c.code} value={c.code}>
               {c.code} {c.name}
@@ -75,7 +76,7 @@ export function OnboardingForm({
       <div className="field-group space-y-2">
         <Label htmlFor="fiscal_year_start_month">{t.onboarding.fiscalStartMonth}</Label>
         <NativeSelect id="fiscal_year_start_month" name="fiscal_year_start_month" defaultValue="" required>
-          <option value="" disabled>اختر الشهر</option>
+          <option value="" disabled>{tr("اختر الشهر")}</option>
           {t.months.map((m, i) => (
             <option key={m} value={i + 1}>
               {m}
@@ -86,12 +87,12 @@ export function OnboardingForm({
       <div className="field-group space-y-2">
         <Label htmlFor="timezone">{t.onboarding.timezone}</Label>
         <NativeSelect id="timezone" name="timezone" defaultValue="" required lang={locale}>
-          <option value="" disabled>اختر المنطقة الزمنية</option>
-          {TIMEZONES.map(([tz, name]) => <option key={tz} value={tz}>{name}</option>)}
+          <option value="" disabled>{tr("اختر المنطقة الزمنية")}</option>
+          {TIMEZONES.map(([tz, name]) => <option key={tz} value={tz}>{tr(name)}</option>)}
         </NativeSelect>
       </div>
       <fieldset className="space-y-2 sm:col-span-2">
-        <legend className="mb-2 text-[16.5px] font-medium text-ink">الأقسام المطلوبة</legend>
+        <legend className="mb-2 text-[16.5px] font-medium text-ink">{tr("الأقسام المطلوبة")}</legend>
         <div className="grid gap-3 sm:grid-cols-2">
           {MODULES.map((m) => (
             <label key={m.value} className="flex cursor-pointer items-start gap-3 rounded-lg border border-line bg-white p-4 transition-colors hover:border-line-strong has-[:checked]:border-action has-[:checked]:bg-accent1-tint/40">
@@ -103,7 +104,7 @@ export function OnboardingForm({
             </label>
           ))}
         </div>
-        <p className="text-[14.5px] text-slate-500">يمكن تفعيل أي قسم أو إيقافه لاحقًا من إعدادات الفندق، والبيانات محفوظة في النظام نفسه.</p>
+        <p className="text-[14.5px] text-slate-500">{tr("يمكن تفعيل أي قسم أو إيقافه لاحقًا من إعدادات الفندق، والبيانات محفوظة في النظام نفسه.")}</p>
       </fieldset>
       <Button type="submit" className="sm:col-span-2" loading={pending}>
         {t.onboarding.submit}

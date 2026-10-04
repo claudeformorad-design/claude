@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import * as React from "react";
 import { AnimatePresence } from "motion/react";
@@ -29,7 +30,7 @@ export function ExpandableRow({ kind, id, colSpan, from, to, className, children
     setError(null);
     const r = await callAction(loadDetailAction({ kind, id, from, to }));
     if (r.ok) setDetail(r.data);
-    else setError("message" in r && r.message ? r.message : "تعذّر تحميل التفاصيل");
+    else setError("message" in r && r.message ? r.message : tr("تعذّر تحميل التفاصيل"));
   };
 
   return (

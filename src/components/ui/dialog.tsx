@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { createContext, useContext, useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
@@ -65,7 +66,7 @@ function Dialog({
                 <h2 className="text-[21px] font-bold text-ink">{title}</h2>
                 {description && <p className="text-[15.5px] text-slate-500">{description}</p>}
               </div>
-              <button type="button" onClick={onClose} aria-label="إغلاق"
+              <button type="button" onClick={onClose} aria-label={tr("إغلاق")}
                 className="-me-2 grid size-9 shrink-0 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-subtle hover:text-ink">
                 <X className="size-5" />
               </button>

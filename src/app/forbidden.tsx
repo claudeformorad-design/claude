@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { ShieldAlert } from "lucide-react";
 import Link from "@/components/link";
 import { getI18n } from "@/i18n/server";
@@ -13,7 +14,7 @@ export default async function Forbidden() {
       <p className="animate-rise text-5xl font-bold text-ink">403</p>
       <p className="animate-rise text-[18.5px] text-muted-foreground">{t.errors.permission_denied}</p>
       <Button asChild variant="outline">
-        <Link href="/">الصفحة الرئيسية</Link>
+        <Link href="/">{tr("الصفحة الرئيسية")}</Link>
       </Button>
     </div>
   );

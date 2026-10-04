@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -29,11 +30,11 @@ export function DemoDataCard({ active, errors }: { active: boolean; errors: Reco
           <Database className="size-5 stroke-[1.75]" />
         </span>
         <div className="space-y-1">
-          <h3 className="text-[18.5px] font-semibold text-ink">بيانات تجريبية مؤقتة</h3>
+          <h3 className="text-[18.5px] font-semibold text-ink">{tr("بيانات تجريبية مؤقتة")}</h3>
           <p className="max-w-xl text-[16.5px] leading-relaxed text-slate-600">
             {active
-              ? "البيانات التجريبية محمّلة الآن. الحذف يعيد النظام كما كان قبل تحميلها تمامًا، وأي عملية أجريتها بعد التحميل ستُحذف معها."
-              : "تولّد ستة أشهر من النشاط من إقامات ومطعم ومناسبات ومشتريات ورواتب عبر نفس القيود المحاسبية الحقيقية، لتعاين لوحة التحكم والتقارير. تُحذف بالكامل متى شئت."}
+              ? tr("البيانات التجريبية محمّلة الآن. الحذف يعيد النظام كما كان قبل تحميلها تمامًا، وأي عملية أجريتها بعد التحميل ستُحذف معها.")
+              : tr("تولّد ستة أشهر من النشاط من إقامات ومطعم ومناسبات ومشتريات ورواتب عبر نفس القيود المحاسبية الحقيقية، لتعاين لوحة التحكم والتقارير. تُحذف بالكامل متى شئت.")}
           </p>
           {error && <p className="text-[15.5px] text-urgent">{error}</p>}
         </div>
@@ -41,12 +42,12 @@ export function DemoDataCard({ active, errors }: { active: boolean; errors: Reco
       {active ? (
         <Button variant="destructive" loading={pending} onClick={() => run(removeDemoDataAction, "/settings/hotel")}>
           <Trash2 />
-          {pending ? "جارٍ الحذف…" : "حذف البيانات التجريبية"}
+          {pending ? tr("جارٍ الحذف…") : tr("حذف البيانات التجريبية")}
         </Button>
       ) : (
         <Button loading={pending} onClick={() => run(loadDemoDataAction, "/")}>
           <Database />
-          {pending ? "جارٍ التوليد، قد يستغرق دقيقة" : "إنشاء بيانات تجريبية"}
+          {pending ? tr("جارٍ التوليد، قد يستغرق دقيقة") : tr("إنشاء بيانات تجريبية")}
         </Button>
       )}
     </div>

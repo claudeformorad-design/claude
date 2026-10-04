@@ -1,11 +1,12 @@
+import { tr } from "@/i18n/tr";
 import React from "react";
 import { FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "@/components/link";
 
 export function EmptyState({
-  title = "لا توجد بيانات حالياً",
-  description = "لم يتم تسجيل أي حركات أو بيانات حتى الآن.",
+  title = tr("لا توجد بيانات حالياً"),
+  description = tr("لم يتم تسجيل أي حركات أو بيانات حتى الآن."),
   actionHref,
   actionLabel,
   icon: Icon = FolderOpen,

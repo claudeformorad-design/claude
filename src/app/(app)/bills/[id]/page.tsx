@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import Link from "@/components/link";
 import { CodeName, DocText } from "@/components/ui/code-text";
 import { notFound } from "next/navigation";
@@ -38,7 +39,7 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
         [t.payables.vendor, (locale === "en" && vendor.data?.name_en) || vendor.data?.name_ar],
         [t.payables.vendorInvoiceNo, bill.vendor_invoice_no && <span className="num">{bill.vendor_invoice_no}</span>],
         [t.common.date, <span key="d" className="num">{bill.bill_date}</span>],
-        ["الاستحقاق", bill.due_date && <span className="num">{bill.due_date}</span>],
+        [tr("الاستحقاق"), bill.due_date && <span className="num">{bill.due_date}</span>],
       ]} />
       <Card className="mb-6 overflow-hidden">
         <Table>

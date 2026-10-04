@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import { RouteDialog } from "@/components/ui/dialog";
 import Link from "@/components/link";
@@ -51,10 +52,10 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
         actions={canManage && <Button asChild><Link href="/customers?new=1"><Plus />{t.customers.newCustomer}</Link></Button>}
       />
       <StatGrid>
-        <Stat icon={Users} tone="ink" label="العملاء" value={<span className="num">{customers.length}</span>} hint={`${customers.filter((x) => x.is_active).length} فعّال`} />
-        <Stat icon={BadgeCheck} tone="teal" label="مسموح لهم بالآجل" value={<span className="num">{customers.filter((x) => x.allow_credit).length}</span>} />
-        <Stat currency={ctx.hotel.base_currency} icon={Hourglass} tone="clay" label="فواتير مفتوحة" value={<Money value={customers.reduce((a, x) => a.plus(toMoney(x.open_invoices)), ZERO)} locale={locale} />} />
-        <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="neutral" label="أرصدة دائنة غير مخصصة" value={<Money value={customers.reduce((a, x) => a.plus(toMoney(x.unapplied_credit)), ZERO)} locale={locale} />} />
+        <Stat icon={Users} tone="ink" label={tr("العملاء")} value={<span className="num">{customers.length}</span>} hint={tr("{0} فعّال", customers.filter((x) => x.is_active).length)} />
+        <Stat icon={BadgeCheck} tone="teal" label={tr("مسموح لهم بالآجل")} value={<span className="num">{customers.filter((x) => x.allow_credit).length}</span>} />
+        <Stat currency={ctx.hotel.base_currency} icon={Hourglass} tone="clay" label={tr("فواتير مفتوحة")} value={<Money value={customers.reduce((a, x) => a.plus(toMoney(x.open_invoices)), ZERO)} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="neutral" label={tr("أرصدة دائنة غير مخصصة")} value={<Money value={customers.reduce((a, x) => a.plus(toMoney(x.unapplied_credit)), ZERO)} locale={locale} />} />
       </StatGrid>
       <div className="grid gap-6">
         <Card className="overflow-hidden">
@@ -73,7 +74,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
             </TableHeader>
             <TableBody>
               {customers.length === 0 && (
-                <TableRow><TableCell colSpan={8} className="py-8"><EmptyState title="لا يوجد عملاء بعد" description="أضف الشركات والجهات التي تتعامل معها بالآجل لإصدار الفواتير ومتابعة ذممها." actionHref="/customers?new=1" actionLabel="إضافة عميل" icon={Users} /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="py-8"><EmptyState title={tr("لا يوجد عملاء بعد")} description={tr("أضف الشركات والجهات التي تتعامل معها بالآجل لإصدار الفواتير ومتابعة ذممها.")} actionHref="/customers?new=1" actionLabel={tr("إضافة عميل")} icon={Users} /></TableCell></TableRow>
               )}
               {customers.map((x) => (
                 <ExpandableRow kind="customer" id={x.id} colSpan={canManage ? 8 : 7} key={x.id} className={x.is_active ? "" : "opacity-50"}>
@@ -93,7 +94,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
           </Table>
         </Card>
         {initial && (
-          <RouteDialog key={initial.id ?? "new"} closeHref="/customers" title={initial.id ? `تعديل ${initial.name_ar}` : t.customers.newCustomer}>
+          <RouteDialog key={initial.id ?? "new"} closeHref="/customers" title={initial.id ? tr("تعديل {0}", initial.name_ar) : t.customers.newCustomer}>
             <CustomerForm t={{ customers: t.customers, common: t.common, errors: t.errors }} initial={initial} />
           </RouteDialog>
         )}

@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import Link from "@/components/link";
 import { CodeTag } from "@/components/ui/code-text";
 import { Money } from "@/components/money";
@@ -8,7 +9,7 @@ import { cn } from "@/lib/utils";
 import type { ShiftReport } from "@/lib/supabase/database.types";
 
 const TXN: Record<string, string> = {
-  payment: "تحصيل", deposit: "عربون", refund: "إرجاع للنزيل", deposit_refund: "استرداد عربون",
+  get payment() { return tr("تحصيل"); }, get deposit() { return tr("عربون"); }, get refund() { return tr("إرجاع للنزيل"); }, get deposit_refund() { return tr("استرداد عربون"); },
 };
 
 /** ملخص الوردية لكل صندوق/طريقة دفع وحركاتها (يُعرض للوردية المفتوحة والمغلقة) */
@@ -19,17 +20,17 @@ export function ShiftReportView({ report, locale, timezone, canViewFolio }: { re
   return (
     <>
       <Card className="overflow-hidden">
-        <CardHeader><CardTitle>الصناديق وطرق الدفع</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{tr("الصناديق وطرق الدفع")}</CardTitle></CardHeader>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>الطريقة</TableHead><TableHead className="text-end">الحركات</TableHead><TableHead className="text-end">العهدة</TableHead><TableHead className="text-end">المقبوض</TableHead>
-              <TableHead className="text-end">المدفوع</TableHead><TableHead className="text-end">المتوقع</TableHead>
-              {closed && <><TableHead className="text-end">المعدود</TableHead><TableHead className="text-end">الفرق</TableHead></>}
+              <TableHead>{tr("الطريقة")}</TableHead><TableHead className="text-end">{tr("الحركات")}</TableHead><TableHead className="text-end">{tr("العهدة")}</TableHead><TableHead className="text-end">{tr("المقبوض")}</TableHead>
+              <TableHead className="text-end">{tr("المدفوع")}</TableHead><TableHead className="text-end">{tr("المتوقع")}</TableHead>
+              {closed && <><TableHead className="text-end">{tr("المعدود")}</TableHead><TableHead className="text-end">{tr("الفرق")}</TableHead></>}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {report.methods.length === 0 && <TableRow><TableCell colSpan={8} className="py-8 text-center text-slate-500">لا حركات بعد</TableCell></TableRow>}
+            {report.methods.length === 0 && <TableRow><TableCell colSpan={8} className="py-8 text-center text-slate-500">{tr("لا حركات بعد")}</TableCell></TableRow>}
             {report.methods.map((m) => (
               <TableRow key={m.payment_method_id}>
                 <TableCell className="cell-fluid">
@@ -54,7 +55,7 @@ export function ShiftReportView({ report, locale, timezone, canViewFolio }: { re
           </TableBody>
           <TableFooter>
             <TableRow>
-              <TableCell colSpan={5}>صافي الوردية بالعملة الأساسية</TableCell>
+              <TableCell colSpan={5}>{tr("صافي الوردية بالعملة الأساسية")}</TableCell>
               <TableCell className="text-end"><Money value={baseTotal} locale={locale} /></TableCell>
               {closed && <><TableCell /><TableCell /></>}
             </TableRow>
@@ -63,19 +64,19 @@ export function ShiftReportView({ report, locale, timezone, canViewFolio }: { re
       </Card>
 
       <Card className="overflow-hidden">
-        <CardHeader><CardTitle className="justify-between"><span>حركات الوردية</span><span className="num font-medium text-slate-500">{report.transactions.length}</span></CardTitle></CardHeader>
+        <CardHeader><CardTitle className="justify-between"><span>{tr("حركات الوردية")}</span><span className="num font-medium text-slate-500">{report.transactions.length}</span></CardTitle></CardHeader>
         <Table>
           <TableHeader>
-            <TableRow><TableHead>الوقت</TableHead><TableHead>النزيل</TableHead><TableHead>الفوليو</TableHead><TableHead>النوع</TableHead><TableHead>الطريقة</TableHead><TableHead className="text-end">المبلغ</TableHead><TableHead className="text-end">بالعملة الأجنبية</TableHead></TableRow>
+            <TableRow><TableHead>{tr("الوقت")}</TableHead><TableHead>{tr("النزيل")}</TableHead><TableHead>{tr("الفوليو")}</TableHead><TableHead>{tr("النوع")}</TableHead><TableHead>{tr("الطريقة")}</TableHead><TableHead className="text-end">{tr("المبلغ")}</TableHead><TableHead className="text-end">{tr("بالعملة الأجنبية")}</TableHead></TableRow>
           </TableHeader>
           <TableBody>
-            {report.transactions.length === 0 && <TableRow><TableCell colSpan={7} className="py-8 text-center text-slate-500">لا حركات في هذه الوردية</TableCell></TableRow>}
+            {report.transactions.length === 0 && <TableRow><TableCell colSpan={7} className="py-8 text-center text-slate-500">{tr("لا حركات في هذه الوردية")}</TableCell></TableRow>}
             {report.transactions.map((x) => (
               <TableRow key={x.id}>
                 <TableCell className="num whitespace-nowrap">{time(x.created_at)}</TableCell>
-                <TableCell className="cell-fluid"><span className="font-medium text-ink">{x.guest_name}</span>{x.room_number && <span className="ms-2 text-slate-500">غرفة <span className="num">{x.room_number}</span></span>}</TableCell>
+                <TableCell className="cell-fluid"><span className="font-medium text-ink">{x.guest_name}</span>{x.room_number && <span className="ms-2 text-slate-500">{tr("غرفة")}{" "}<span className="num">{x.room_number}</span></span>}</TableCell>
                 <TableCell className="num whitespace-nowrap">{canViewFolio ? <Link href={`/folios/${x.folio_id}`} className="text-action">{x.folio_number}</Link> : x.folio_number}</TableCell>
-                <TableCell>{TXN[x.txn_type] ?? x.txn_type}{x.direction === -1 && <Badge variant="destructive" className="ms-2">إلغاء</Badge>}</TableCell>
+                <TableCell>{TXN[x.txn_type] ?? x.txn_type}{x.direction === -1 && <Badge variant="destructive" className="ms-2">{tr("إلغاء")}</Badge>}</TableCell>
                 <TableCell>{x.method}</TableCell>
                 <TableCell className="text-end whitespace-nowrap"><Money value={x.amount * x.direction} locale={locale} className="font-semibold" /></TableCell>
                 <TableCell className="text-end whitespace-nowrap text-slate-600">{x.foreign_amount != null && <><span className="num">{(x.foreign_amount * x.direction).toLocaleString("en-US", { minimumFractionDigits: 2 })}</span><CodeTag className="me-0">{x.currency_code}</CodeTag></>}</TableCell>

@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -18,11 +19,10 @@ export function RunAuditButton({ date, confirmText, errors }: { date: string; co
         if (!window.confirm(confirmText)) return;
         start(async () => {
           const r = await callAction(runNightAuditAction(date));
-          if (r.ok) { toast("اكتمل تدقيق نهاية اليوم"); router.push(`/night-audit/${r.data}`); }
+          if (r.ok) { toast(tr("اكتمل تدقيق نهاية اليوم")); router.push(`/night-audit/${r.data}`); }
           else toast(actionErrorText(errors, r), "error");
         });
       }}>
-      <MoonStar className="size-4" />تشغيل تدقيق نهاية اليوم
-    </Button>
+      <MoonStar className="size-4" />{tr("تشغيل تدقيق نهاية اليوم")}</Button>
   );
 }

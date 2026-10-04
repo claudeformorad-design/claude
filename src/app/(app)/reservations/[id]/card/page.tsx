@@ -1,3 +1,5 @@
+import { localNameOf } from "@/lib/local-name";
+import { tr } from "@/i18n/tr";
 import { notFound } from "next/navigation";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
@@ -21,60 +23,60 @@ export default async function RegistrationCardPage({ params }: { params: Promise
 
   return (
     <div className="mx-auto max-w-3xl">
-      <div className="mb-4 flex justify-end print:hidden"><PrintButton label="طباعة البطاقة" /></div>
+      <div className="mb-4 flex justify-end print:hidden"><PrintButton label={tr("طباعة البطاقة")} /></div>
       <div className="surface space-y-6 p-8 print:border-0 print:p-0">
         <header className="flex items-start justify-between border-b border-line pb-4">
           <div>
-            <h1 className="text-[24px] font-bold text-ink">{h.name_ar}</h1>
+            <h1 className="text-[24px] font-bold text-ink">{localNameOf(h)}</h1>
             {h.legal_name && <p className="text-[14px] text-slate-600">{h.legal_name}</p>}
-            {h.tax_number && <p className="num text-[13px] text-slate-500">الرقم الضريبي {h.tax_number}</p>}
+            {h.tax_number && <p className="num text-[13px] text-slate-500">{tr("الرقم الضريبي")}{" "}{h.tax_number}</p>}
           </div>
           <div className="text-end">
-            <p className="text-[20px] font-bold text-ink">بطاقة تسجيل نزيل</p>
+            <p className="text-[20px] font-bold text-ink">{tr("بطاقة تسجيل نزيل")}</p>
             <p className="num text-[15px] text-slate-600">{r.confirmation_number}</p>
           </div>
         </header>
 
         <section>
-          <h2 className="mb-2 text-[16px] font-bold text-ink">بيانات النزيل</h2>
+          <h2 className="mb-2 text-[16px] font-bold text-ink">{tr("بيانات النزيل")}</h2>
           <div className="grid grid-cols-2 gap-x-8">
-            <Field label="الاسم الكامل" value={g?.full_name} />
-            <Field label="الجنسية" value={g?.nationality} />
-            <Field label="نوع الهوية" value={g?.id_type ? ID_TYPES[g.id_type] : ""} />
-            <Field label="رقم الهوية" value={g?.id_number} ltr />
-            <Field label="تاريخ الميلاد" value={g?.date_of_birth} ltr />
-            <Field label="الجوال" value={g?.phone} ltr />
-            <Field label="البريد" value={g?.email} ltr />
-            <Field label="الجهة / الشركة" value={r.customer?.name_ar} />
+            <Field label={tr("الاسم الكامل")} value={g?.full_name} />
+            <Field label={tr("الجنسية")} value={g?.nationality} />
+            <Field label={tr("نوع الهوية")} value={g?.id_type ? ID_TYPES[g.id_type] : ""} />
+            <Field label={tr("رقم الهوية")} value={g?.id_number} ltr />
+            <Field label={tr("تاريخ الميلاد")} value={g?.date_of_birth} ltr />
+            <Field label={tr("الجوال")} value={g?.phone} ltr />
+            <Field label={tr("البريد")} value={g?.email} ltr />
+            <Field label={tr("الجهة / الشركة")} value={localNameOf(r.customer)} />
           </div>
         </section>
 
         <section>
-          <h2 className="mb-2 text-[16px] font-bold text-ink">الإقامة</h2>
+          <h2 className="mb-2 text-[16px] font-bold text-ink">{tr("الإقامة")}</h2>
           <div className="grid grid-cols-2 gap-x-8">
-            <Field label={hourly ? "الوحدة" : "الغرفة"} value={`${r.room?.room_number ?? ""} ${r.room_type?.name_ar ?? ""}`} />
-            <Field label="عدد الأشخاص" value={`${r.adults}${r.children ? ` بالغ + ${r.children} طفل` : " بالغ"}`} />
-            <Field label="الوصول" value={hourly ? `${r.arrival_date} ${timeOf(r.starts_at)}` : `${r.arrival_date} بعد ${h.check_in_time.slice(0, 5)}`} ltr />
-            <Field label="المغادرة" value={hourly ? `${r.arrival_date} ${timeOf(r.ends_at)}` : `${r.departure_date} قبل ${h.check_out_time.slice(0, 5)}`} ltr />
-            <Field label={hourly ? "المدة" : "عدد الليالي"} value={hourly ? timeRange(r.starts_at, r.ends_at) : nightsText(nights)} />
-            <Field label="إجمالي الإقامة قبل الضريبة" value={`${money(r.total_amount)} ${h.base_currency}`} />
+            <Field label={hourly ? tr("الوحدة") : tr("الغرفة")} value={`${r.room?.room_number ?? ""} ${r.room_type?.name_ar ?? ""}`} />
+            <Field label={tr("عدد الأشخاص")} value={`${r.adults}${r.children ? tr(" بالغ + {0} طفل", r.children) : tr(" بالغ")}`} />
+            <Field label={tr("الوصول")} value={hourly ? `${r.arrival_date} ${timeOf(r.starts_at)}` : tr("{0} بعد {1}", r.arrival_date, h.check_in_time.slice(0, 5))} ltr />
+            <Field label={tr("المغادرة")} value={hourly ? `${r.arrival_date} ${timeOf(r.ends_at)}` : tr("{0} قبل {1}", r.departure_date, h.check_out_time.slice(0, 5))} ltr />
+            <Field label={hourly ? tr("المدة") : tr("عدد الليالي")} value={hourly ? timeRange(r.starts_at, r.ends_at) : nightsText(nights)} />
+            <Field label={tr("إجمالي الإقامة قبل الضريبة")} value={`${money(r.total_amount)} ${h.base_currency}`} />
           </div>
-          {r.special_requests && <p className="mt-3 text-[14.5px] text-slate-700">طلبات خاصة: {r.special_requests}</p>}
+          {r.special_requests && <p className="mt-3 text-[14.5px] text-slate-700">{tr("طلبات خاصة:")}{" "}{r.special_requests}</p>}
         </section>
 
         <section className="rounded-lg bg-panel p-4 text-[13.5px] leading-relaxed text-slate-700">
-          <p className="mb-1 font-semibold text-ink">أقرّ بما يلي:</p>
+          <p className="mb-1 font-semibold text-ink">{tr("أقرّ بما يلي:")}</p>
           <ul className="list-inside list-disc space-y-0.5">
-            <li>صحة البيانات أعلاه، والالتزام بأنظمة الفندق وقوانين البلد.</li>
-            <li>سداد كامل مستحقات الإقامة والخدمات عند المغادرة أو عند الطلب.</li>
-            <li>الفندق غير مسؤول عن المقتنيات الثمينة غير المودعة في الأمانات.</li>
-            <li>المغادرة قبل الساعة {h.check_out_time.slice(0, 5)}، وقد تُحتسب ليلة إضافية بعدها.</li>
+            <li>{tr("صحة البيانات أعلاه، والالتزام بأنظمة الفندق وقوانين البلد.")}</li>
+            <li>{tr("سداد كامل مستحقات الإقامة والخدمات عند المغادرة أو عند الطلب.")}</li>
+            <li>{tr("الفندق غير مسؤول عن المقتنيات الثمينة غير المودعة في الأمانات.")}</li>
+            <li>{tr("المغادرة قبل الساعة")}{" "}{h.check_out_time.slice(0, 5)}{tr("، وقد تُحتسب ليلة إضافية بعدها.")}</li>
           </ul>
         </section>
 
         <footer className="grid grid-cols-2 gap-8 pt-6 text-[14px] text-slate-600">
-          <div><p>توقيع النزيل</p><div className="mt-10 border-t border-slate-400" /></div>
-          <div><p>موظف الاستقبال</p><div className="mt-10 border-t border-slate-400" /></div>
+          <div><p>{tr("توقيع النزيل")}</p><div className="mt-10 border-t border-slate-400" /></div>
+          <div><p>{tr("موظف الاستقبال")}</p><div className="mt-10 border-t border-slate-400" /></div>
         </footer>
       </div>
     </div>

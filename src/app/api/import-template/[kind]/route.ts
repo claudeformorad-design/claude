@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { NextResponse } from "next/server";
 import { getAppContext, type AppContext } from "@/lib/auth/context";
 import { importTemplate } from "@/lib/import/template";
@@ -12,7 +13,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ kin
   if (!ctx.user || !ctx.hotel) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   if (!(ctx as AppContext).can(def.permission)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const buffer = await importTemplate(def.title, def.columns);
-  const name = `قالب استيراد ${def.title}.xlsx`;
+  const name = tr("قالب استيراد {0}.xlsx", def.title);
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

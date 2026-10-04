@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { applyPreferredLocale } from "../locale-actions";
 
 export type AuthState = { error?: "invalid" | "validation" | "generic"; info?: "check_email"; message?: string } | null;
 
@@ -17,11 +18,15 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
   if (!parsed.success) return { error: "validation" };
   try {
     const supabase = await createClient();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: parsed.data.email,
       password: parsed.data.password,
     });
     if (error) return { error: "invalid" };
+    if (data.user) {
+      const { data: profile } = await supabase.from("users_profiles").select("preferred_locale").eq("id", data.user.id).maybeSingle();
+      await applyPreferredLocale(profile?.preferred_locale);
+    }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : undefined;
     return { error: "generic", message: msg };

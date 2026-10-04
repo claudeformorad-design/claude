@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import "server-only";
 import type { AppContext } from "@/lib/auth/context";
 import { PERMISSIONS, type Permission } from "@/lib/auth/permissions";
@@ -56,10 +57,10 @@ export const IMPORTS: ImportDefinition[] = [
       const typeByCode = new Map((types.data ?? []).map((t) => [upper(t.code), t.id]));
       const floorByName = new Map((floors.data ?? []).map((f) => [lower(f.name), f.id]));
       return {
-        existing: new Set((rooms.data ?? []).map((r) => lower(r.room_number))), keyLabel: "رقم الغرفة",
+        existing: new Set((rooms.data ?? []).map((r) => lower(r.room_number))), keyLabel: tr("رقم الغرفة"),
         build: (v) => {
           const typeId = typeByCode.get(upper(v.room_type));
-          if (!typeId) return { error: `نوع الغرفة ${v.room_type} غير موجود في إعداد الغرف` };
+          if (!typeId) return { error: tr("نوع الغرفة {0} غير موجود في إعداد الغرف", v.room_type) };
           return {
             key: lower(v.room_number),
             row: { room_number: s(v.room_number), room_type_id: typeId, notes: s(v.notes), floor_name: v.floor ? String(v.floor) : null, floor_id: v.floor ? floorByName.get(lower(v.floor)) ?? null : null },
@@ -85,9 +86,9 @@ export const IMPORTS: ImportDefinition[] = [
       const { data, error } = await ctx.supabase.from("guests").select("id_type, id_number").eq("hotel_id", ctx.hotel.id);
       raise(error);
       return {
-        existing: new Set((data ?? []).filter((g) => g.id_number).map((g) => `${g.id_type}:${upper(g.id_number)}`)), keyLabel: "الهوية",
+        existing: new Set((data ?? []).filter((g) => g.id_number).map((g) => `${g.id_type}:${upper(g.id_number)}`)), keyLabel: tr("الهوية"),
         build: (v) => {
-          if (v.id_number && !v.id_type) return { error: "اختر نوع الهوية مع رقمها" };
+          if (v.id_number && !v.id_type) return { error: tr("اختر نوع الهوية مع رقمها") };
           return {
             key: v.id_number ? `${v.id_type}:${upper(v.id_number)}` : undefined,
             row: { full_name: s(v.full_name), phone: s(v.phone), email: s(v.email), nationality: s(v.nationality), id_type: v.id_type ?? null,
@@ -118,12 +119,12 @@ export const IMPORTS: ImportDefinition[] = [
       const { data, error } = await ctx.supabase.from("customers").select("code").eq("hotel_id", ctx.hotel.id);
       raise(error);
       return {
-        existing: new Set((data ?? []).map((c) => upper(c.code))), keyLabel: "الرمز",
+        existing: new Set((data ?? []).map((c) => upper(c.code))), keyLabel: tr("الرمز"),
         build: (v) => {
           const code = upper(v.code);
-          if (!/^[A-Z0-9_-]{1,20}$/.test(code)) return { error: "الرمز حروف إنجليزية وأرقام فقط" };
+          if (!/^[A-Z0-9_-]{1,20}$/.test(code)) return { error: tr("الرمز حروف إنجليزية وأرقام فقط") };
           const terms = v.payment_terms_days === null ? 30 : Number(v.payment_terms_days);
-          if (!Number.isInteger(terms) || terms > 365) return { error: "مدة السداد عدد أيام صحيح حتى 365" };
+          if (!Number.isInteger(terms) || terms > 365) return { error: tr("مدة السداد عدد أيام صحيح حتى 365") };
           return {
             key: code,
             row: { code, name_ar: s(v.name_ar), name_en: s(v.name_en), customer_type: v.customer_type ?? "company", tax_number: s(v.tax_number),
@@ -156,15 +157,15 @@ export const IMPORTS: ImportDefinition[] = [
       const byCode = new Map(acc.map((a) => [String(a.code), a]));
       const defaultInventory = acc.find((a) => a.system_key === "inventory_supplies");
       return {
-        existing: new Set((items.data ?? []).map((i) => upper(i.sku))), keyLabel: "رمز الصنف",
+        existing: new Set((items.data ?? []).map((i) => upper(i.sku))), keyLabel: tr("رمز الصنف"),
         build: (v) => {
           const sku = upper(v.sku);
-          if (!/^[A-Z0-9_.-]{1,30}$/.test(sku)) return { error: "رمز الصنف حروف إنجليزية وأرقام فقط" };
+          if (!/^[A-Z0-9_.-]{1,30}$/.test(sku)) return { error: tr("رمز الصنف حروف إنجليزية وأرقام فقط") };
           const inv = v.inventory_account ? byCode.get(String(v.inventory_account)) : defaultInventory;
-          if (!inv || !inv.is_postable || inv.account_type !== "asset") return { error: `حساب المخزون ${v.inventory_account ?? ""} غير موجود أو ليس حساب أصول تفصيليًا` };
-          if (!v.expense_account) return { error: "رمز حساب الصرف مطلوب" };
+          if (!inv || !inv.is_postable || inv.account_type !== "asset") return { error: tr("حساب المخزون {0} غير موجود أو ليس حساب أصول تفصيليًا", v.inventory_account ?? "") };
+          if (!v.expense_account) return { error: tr("رمز حساب الصرف مطلوب") };
           const exp = byCode.get(String(v.expense_account));
-          if (!exp || !exp.is_postable || exp.account_type !== "expense") return { error: `حساب الصرف ${v.expense_account} غير موجود أو ليس حساب مصروف تفصيليًا` };
+          if (!exp || !exp.is_postable || exp.account_type !== "expense") return { error: tr("حساب الصرف {0} غير موجود أو ليس حساب مصروف تفصيليًا", v.expense_account) };
           return {
             key: sku,
             row: { sku, name_ar: s(v.name_ar), name_en: s(v.name_en), unit: s(v.unit), reorder_level: v.reorder_level ?? "0",
@@ -196,20 +197,20 @@ export const IMPORTS: ImportDefinition[] = [
     async prepare(ctx) {
       const [emps, deps] = await Promise.all([
         ctx.supabase.from("hr_employees").select("code").eq("hotel_id", ctx.hotel.id),
-        ctx.supabase.from("departments").select("id, code, name_ar").eq("hotel_id", ctx.hotel.id),
+        ctx.supabase.from("departments").select("id, code, name_ar, name_en").eq("hotel_id", ctx.hotel.id),
       ]);
       raise(emps.error); raise(deps.error);
       const depBy = new Map<string, string>();
       for (const d of deps.data ?? []) { depBy.set(upper(d.code), d.id); depBy.set(upper(d.name_ar), d.id); }
       return {
-        existing: new Set((emps.data ?? []).map((e) => upper(e.code))), keyLabel: "الرقم الوظيفي",
+        existing: new Set((emps.data ?? []).map((e) => upper(e.code))), keyLabel: tr("الرقم الوظيفي"),
         build: (v) => {
           const code = v.code ? String(v.code).trim() : "";
-          if (code && !/^[A-Za-z0-9_-]{1,20}$/.test(code)) return { error: "الرقم الوظيفي حروف إنجليزية وأرقام فقط" };
-          if (String(v.full_name ?? "").trim().length < 2) return { error: "الاسم الكامل حرفان على الأقل" };
+          if (code && !/^[A-Za-z0-9_-]{1,20}$/.test(code)) return { error: tr("الرقم الوظيفي حروف إنجليزية وأرقام فقط") };
+          if (String(v.full_name ?? "").trim().length < 2) return { error: tr("الاسم الكامل حرفان على الأقل") };
           const dep = depBy.get(upper(v.department));
-          if (!dep) return { error: `القسم ${v.department} غير موجود` };
-          if (v.contract_end && v.hire_date && String(v.contract_end) < String(v.hire_date)) return { error: "نهاية العقد قبل تاريخ التعيين" };
+          if (!dep) return { error: tr("القسم {0} غير موجود", v.department) };
+          if (v.contract_end && v.hire_date && String(v.contract_end) < String(v.hire_date)) return { error: tr("نهاية العقد قبل تاريخ التعيين") };
           return {
             key: code ? code.toUpperCase() : undefined,
             row: { code, full_name: s(v.full_name), job_title: s(v.job_title), department_id: dep, phone: s(v.phone), email: s(v.email),
@@ -259,8 +260,8 @@ export async function checkImport(ctx: AppContext, def: ImportDefinition, sheet:
       const b = prep.build(values);
       if ("error" in b) errs.push(b.error);
       else {
-        if (b.key && prep.existing.has(b.key)) errs.push(`${prep.keyLabel} موجود مسبقًا في النظام`);
-        else if (b.key && seen.has(b.key)) errs.push(`${prep.keyLabel} مكرر مع الصف ${seen.get(b.key)}`);
+        if (b.key && prep.existing.has(b.key)) errs.push(tr("{0} موجود مسبقًا في النظام", prep.keyLabel));
+        else if (b.key && seen.has(b.key)) errs.push(tr("{0} مكرر مع الصف {1}", prep.keyLabel, seen.get(b.key)));
         else {
           if (b.key) seen.set(b.key, r.line);
           rows.push(b.row);

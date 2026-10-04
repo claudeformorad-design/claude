@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { ExportButtons } from "@/components/reports/export-buttons";
 import Link from "@/components/link";
 import { PageHeader } from "@/components/layout/page-header";
@@ -56,7 +57,7 @@ export default async function AgingPage({ searchParams }: { searchParams: Promis
             <TableHead className="text-end">{t.common.total}</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {parties.length === 0 && <TableRow><TableCell colSpan={7} className="py-8"><EmptyState title="لا توجد أرصدة قائمة" description="تظهر هنا المستندات غير المسددة موزعة حسب مدة تأخرها." icon={Clock} /></TableCell></TableRow>}
+            {parties.length === 0 && <TableRow><TableCell colSpan={7} className="py-8"><EmptyState title={tr("لا توجد أرصدة قائمة")} description={tr("تظهر هنا المستندات غير المسددة موزعة حسب مدة تأخرها.")} icon={Clock} /></TableCell></TableRow>}
             {parties.map((p) => (
               <TableRow key={p.partyId}>
                 <TableCell className="cell-fluid">

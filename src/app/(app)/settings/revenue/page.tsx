@@ -1,3 +1,5 @@
+import { localNameOf } from "@/lib/local-name";
+import { tr } from "@/i18n/tr";
 import { RouteDialog } from "@/components/ui/dialog";
 import { CodeName, CodeTag } from "@/components/ui/code-text";
 import Link from "@/components/link";
@@ -95,7 +97,7 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
                 <TableCell>{rs.categories[x.category]}</TableCell>
                 <TableCell>{(() => { const d = departments.find((y) => y.id === x.department_id); return d ? name(d) : ""; })()}</TableCell>
                 <TableCell><CodeName label={acc(x.revenue_account_id)} /></TableCell>
-                <TableCell>{x.tax_rate_ids.map((id) => taxById.get(id)?.code).join(" + ") || ""}{x.price_includes_tax ? `، ${t.folio.priceIncludesTax}` : ""}</TableCell>
+                <TableCell>{x.tax_rate_ids.map((id) => taxById.get(id)?.code).join(" + ") || ""}{x.price_includes_tax ? tr("، {0}", t.folio.priceIncludesTax) : ""}</TableCell>
                 {editCell("charge", x.id)}
               </TableRow>
             )))}
@@ -118,7 +120,7 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
               accounts={accountOptions(formKind === "tax" ? ["liability"] : formKind === "charge" ? ["revenue"] : ["asset"])}
               departments={departments.map((d) => ({ id: d.id, label: `${d.code} ${name(d)}` }))}
               taxes={taxes.filter((x) => x.is_active).map((x) => ({ id: x.id, label: `${x.code} ${toMoney(x.rate).toString()}%` }))}
-              currencies={currencies.filter((c) => c.code !== ctx.hotel.base_currency).map((c) => ({ id: c.code, label: `${c.code} ${c.name_ar}` }))}
+              currencies={currencies.filter((c) => c.code !== ctx.hotel.base_currency).map((c) => ({ id: c.code, label: `${c.code} ${localNameOf(c)}` }))}
             />
           </RouteDialog>
         )}

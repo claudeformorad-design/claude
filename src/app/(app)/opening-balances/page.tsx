@@ -1,3 +1,5 @@
+import { tr } from "@/i18n/tr";
+import { localName } from "@/lib/local-name";
 import Link from "@/components/link";
 import { CheckCircle2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -27,12 +29,12 @@ export default async function OpeningBalancesPage() {
   if (posted) {
     return (
       <>
-        <PageHeader title="الأرصدة الافتتاحية" />
+        <PageHeader title={tr("الأرصدة الافتتاحية")} />
         <Card className="max-w-2xl">
-          <CardHeader><CardTitle><CheckCircle2 className="size-5 text-success" />رُحّلت الأرصدة الافتتاحية</CardTitle></CardHeader>
+          <CardHeader><CardTitle><CheckCircle2 className="size-5 text-success" />{tr("رُحّلت الأرصدة الافتتاحية")}</CardTitle></CardHeader>
           <CardContent className="space-y-4 text-[16px] text-slate-700">
-            <p>بتاريخ <span className="num">{posted.entry_date}</span> بالقيد <span className="num font-semibold">{posted.entry_number}</span>. لأي تصحيح استخدم قيد تسوية.</p>
-            <Button asChild variant="outline"><Link href={`/journal/${posted.id}`}>عرض القيد</Link></Button>
+            <p>{tr("بتاريخ")}{" "}<span className="num">{posted.entry_date}</span>{" "}{tr("بالقيد")}{" "}<span className="num font-semibold">{posted.entry_number}</span>{tr(". لأي تصحيح استخدم قيد تسوية.")}</p>
+            <Button asChild variant="outline"><Link href={`/journal/${posted.id}`}>{tr("عرض القيد")}</Link></Button>
           </CardContent>
         </Card>
       </>
@@ -44,11 +46,11 @@ export default async function OpeningBalancesPage() {
   ]);
   return (
     <>
-      <PageHeader title="الأرصدة الافتتاحية" />
+      <PageHeader title={tr("الأرصدة الافتتاحية")} />
       <OpeningForm today={todayInTimeZone(ctx.hotel.timezone)} errors={t.errors}
-        accounts={accounts.filter((a) => a.is_postable && a.is_active && !CONTROL_KEYS.has(a.system_key ?? "")).map((a) => ({ id: a.id, label: `${a.code} ${a.name_ar}` }))}
-        customers={customers.filter((c) => c.is_active).map((c) => ({ id: c.id, label: `${c.name_ar} ${c.code}` }))}
-        vendors={vendors.filter((v) => v.is_active).map((v) => ({ id: v.id, label: `${v.name_ar} ${v.code}` }))} />
+        accounts={accounts.filter((a) => a.is_postable && a.is_active && !CONTROL_KEYS.has(a.system_key ?? "")).map((a) => ({ id: a.id, label: `${a.code} ${localName(a)}` }))}
+        customers={customers.filter((c) => c.is_active).map((c) => ({ id: c.id, label: `${localName(c)} ${c.code}` }))}
+        vendors={vendors.filter((v) => v.is_active).map((v) => ({ id: v.id, label: `${localName(v)} ${v.code}` }))} />
     </>
   );
 }

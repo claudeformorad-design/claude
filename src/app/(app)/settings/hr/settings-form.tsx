@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -37,7 +38,7 @@ export function HrSettingsForm({ initial, errors, canEdit }: { initial: HrSettin
       eos_tiers: tiers.map((x) => ({ from: Number(x.from), days: Number(x.days) })),
       eos_resign: resign.map((x) => ({ from: Number(x.from), pct: Number(x.pct) })),
     }));
-    if (r.ok) { toast("حُفظت إعدادات الموارد البشرية"); router.refresh(); }
+    if (r.ok) { toast(tr("حُفظت إعدادات الموارد البشرية")); router.refresh(); }
     else toast(actionErrorText(errors, r), "error");
   });
 
@@ -53,13 +54,13 @@ export function HrSettingsForm({ initial, errors, canEdit }: { initial: HrSettin
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader><CardTitle>الدوام والحضور</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{tr("الدوام والحضور")}</CardTitle></CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
-          {field("work_hours_per_day", "ساعات العمل اليومية", "لحساب أجر الساعة والإضافي لمن ليس له وردية")}
-          {field("month_days", "أيام الشهر في الحساب", "الأجر اليومي يساوي الشهري مقسومًا عليها")}
-          {field("late_grace_minutes", "دقائق السماح للتأخير", "ما دونها لا يُخصم")}
+          {field("work_hours_per_day", tr("ساعات العمل اليومية"), tr("لحساب أجر الساعة والإضافي لمن ليس له وردية"))}
+          {field("month_days", tr("أيام الشهر في الحساب"), tr("الأجر اليومي يساوي الشهري مقسومًا عليها"))}
+          {field("late_grace_minutes", tr("دقائق السماح للتأخير"), tr("ما دونها لا يُخصم"))}
           <div className="md:col-span-3">
-            <Label>العطلة الأسبوعية</Label>
+            <Label>{tr("العطلة الأسبوعية")}</Label>
             <div className="mt-2 flex flex-wrap gap-2">
               {WEEKDAYS.map((d, i) => (
                 <button key={d} type="button" disabled={!canEdit} aria-pressed={weekend.includes(i)}
@@ -72,66 +73,64 @@ export function HrSettingsForm({ initial, errors, canEdit }: { initial: HrSettin
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>الخصومات والإضافي</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{tr("الخصومات والإضافي")}</CardTitle></CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
-          {field("absence_deduction_days", "خصم يوم الغياب", "عدد الأيام المخصومة عن كل يوم غياب، مثل 1 أو 2")}
-          {field("late_deduction_rate", "معامل خصم التأخير", "واحد يعني أجر الساعة كما هو، وصفر يوقف الخصم")}
-          {field("overtime_rate", "معامل الساعة الإضافية", "مثل 1.5 أي ساعة ونصف عن كل ساعة")}
+          {field("absence_deduction_days", tr("خصم يوم الغياب"), tr("عدد الأيام المخصومة عن كل يوم غياب، مثل 1 أو 2"))}
+          {field("late_deduction_rate", tr("معامل خصم التأخير"), tr("واحد يعني أجر الساعة كما هو، وصفر يوقف الخصم"))}
+          {field("overtime_rate", tr("معامل الساعة الإضافية"), tr("مثل 1.5 أي ساعة ونصف عن كل ساعة"))}
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>التأمينات والتنبيهات</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{tr("التأمينات والتنبيهات")}</CardTitle></CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
-          {field("insurance_employee_pct", "نسبة الموظف ٪", "تُخصم من راتبه، وصفر إن لا تنطبق")}
-          {field("insurance_employer_pct", "نسبة المنشأة ٪", "مصروف على المنشأة")}
-          {field("expiry_alert_days", "التنبيه قبل انتهاء الوثائق بأيام")}
+          {field("insurance_employee_pct", tr("نسبة الموظف ٪"), tr("تُخصم من راتبه، وصفر إن لا تنطبق"))}
+          {field("insurance_employer_pct", tr("نسبة المنشأة ٪"), tr("مصروف على المنشأة"))}
+          {field("expiry_alert_days", tr("التنبيه قبل انتهاء الوثائق بأيام"))}
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>مكافأة نهاية الخدمة</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{tr("مكافأة نهاية الخدمة")}</CardTitle></CardHeader>
         <CardContent className="grid gap-8 lg:grid-cols-2">
           <div className="space-y-3">
-            <p className="text-[15.5px] text-slate-600">أيام الأجر عن كل سنة خدمة، حسب الشريحة</p>
+            <p className="text-[15.5px] text-slate-600">{tr("أيام الأجر عن كل سنة خدمة، حسب الشريحة")}</p>
             {tiers.map((x, i) => (
               <div key={i} className="flex items-center gap-2.5 text-[15.5px]">
-                <span className="text-slate-600">من السنة</span>
-                <input value={x.from} disabled={!canEdit} inputMode="decimal" dir="ltr" aria-label="بداية الشريحة" className={small}
+                <span className="text-slate-600">{tr("من السنة")}</span>
+                <input value={x.from} disabled={!canEdit} inputMode="decimal" dir="ltr" aria-label={tr("بداية الشريحة")} className={small}
                   onChange={(e) => setTiers((t) => t.map((y, k) => (k === i ? { ...y, from: e.target.value } : y)))} />
-                <span className="text-slate-600">تُحسب</span>
-                <input value={x.days} disabled={!canEdit} inputMode="decimal" dir="ltr" aria-label="أيام كل سنة" className={small}
+                <span className="text-slate-600">{tr("تُحسب")}</span>
+                <input value={x.days} disabled={!canEdit} inputMode="decimal" dir="ltr" aria-label={tr("أيام كل سنة")} className={small}
                   onChange={(e) => setTiers((t) => t.map((y, k) => (k === i ? { ...y, days: e.target.value } : y)))} />
-                <span className="text-slate-600">يومًا عن كل سنة</span>
-                {canEdit && tiers.length > 1 && <button type="button" onClick={() => setTiers((t) => t.filter((_, k) => k !== i))} className="ms-auto rounded-md p-1.5 text-slate-400 hover:bg-subtle hover:text-urgent" aria-label="حذف الشريحة"><X className="size-4" /></button>}
+                <span className="text-slate-600">{tr("يومًا عن كل سنة")}</span>
+                {canEdit && tiers.length > 1 && <button type="button" onClick={() => setTiers((t) => t.filter((_, k) => k !== i))} className="ms-auto rounded-md p-1.5 text-slate-400 hover:bg-subtle hover:text-urgent" aria-label={tr("حذف الشريحة")}><X className="size-4" /></button>}
               </div>
             ))}
-            {canEdit && <Button variant="ghost" size="sm" onClick={() => setTiers((t) => [...t, { from: "", days: "" }])}><Plus />شريحة</Button>}
+            {canEdit && <Button variant="ghost" size="sm" onClick={() => setTiers((t) => [...t, { from: "", days: "" }])}><Plus />{tr("شريحة")}</Button>}
           </div>
           <div className="space-y-3">
-            <p className="text-[15.5px] text-slate-600">نسبة المكافأة عند الاستقالة حسب مجموع سنوات الخدمة، وعند الإنهاء من المنشأة كاملة</p>
+            <p className="text-[15.5px] text-slate-600">{tr("نسبة المكافأة عند الاستقالة حسب مجموع سنوات الخدمة، وعند الإنهاء من المنشأة كاملة")}</p>
             {resign.map((x, i) => (
               <div key={i} className="flex items-center gap-2.5 text-[15.5px]">
-                <span className="text-slate-600">من</span>
-                <input value={x.from} disabled={!canEdit} inputMode="decimal" dir="ltr" aria-label="سنوات الخدمة" className={small}
+                <span className="text-slate-600">{tr("من")}</span>
+                <input value={x.from} disabled={!canEdit} inputMode="decimal" dir="ltr" aria-label={tr("سنوات الخدمة")} className={small}
                   onChange={(e) => setResign((t) => t.map((y, k) => (k === i ? { ...y, from: e.target.value } : y)))} />
-                <span className="text-slate-600">سنة، يستحق</span>
-                <input value={x.pct} disabled={!canEdit} inputMode="decimal" dir="ltr" aria-label="النسبة" className={small}
+                <span className="text-slate-600">{tr("سنة، يستحق")}</span>
+                <input value={x.pct} disabled={!canEdit} inputMode="decimal" dir="ltr" aria-label={tr("النسبة")} className={small}
                   onChange={(e) => setResign((t) => t.map((y, k) => (k === i ? { ...y, pct: e.target.value } : y)))} />
-                <span className="text-slate-600">٪</span>
-                {canEdit && resign.length > 1 && <button type="button" onClick={() => setResign((t) => t.filter((_, k) => k !== i))} className="ms-auto rounded-md p-1.5 text-slate-400 hover:bg-subtle hover:text-urgent" aria-label="حذف"><X className="size-4" /></button>}
+                <span className="text-slate-600">{tr("٪")}</span>
+                {canEdit && resign.length > 1 && <button type="button" onClick={() => setResign((t) => t.filter((_, k) => k !== i))} className="ms-auto rounded-md p-1.5 text-slate-400 hover:bg-subtle hover:text-urgent" aria-label={tr("حذف")}><X className="size-4" /></button>}
               </div>
             ))}
-            {canEdit && <Button variant="ghost" size="sm" onClick={() => setResign((t) => [...t, { from: "", pct: "" }])}><Plus />شريحة</Button>}
+            {canEdit && <Button variant="ghost" size="sm" onClick={() => setResign((t) => [...t, { from: "", pct: "" }])}><Plus />{tr("شريحة")}</Button>}
           </div>
           <label className="flex items-center gap-2.5 text-[16px] lg:col-span-2">
-            <input type="checkbox" className="size-4" checked={encash} disabled={!canEdit} onChange={(e) => setEncash(e.target.checked)} />
-            تعويض رصيد الإجازات القابلة للتعويض عند نهاية الخدمة
-          </label>
+            <input type="checkbox" className="size-4" checked={encash} disabled={!canEdit} onChange={(e) => setEncash(e.target.checked)} />{tr("تعويض رصيد الإجازات القابلة للتعويض عند نهاية الخدمة")}</label>
         </CardContent>
       </Card>
 
-      {canEdit && <Button onClick={save} loading={pending}>حفظ الإعدادات</Button>}
+      {canEdit && <Button onClick={save} loading={pending}>{tr("حفظ الإعدادات")}</Button>}
     </div>
   );
 }

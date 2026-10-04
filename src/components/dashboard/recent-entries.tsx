@@ -1,3 +1,4 @@
+import { tr, currentLocale } from "@/i18n/tr";
 import {
   BedDouble, BookOpen, Boxes, Building2, FilePen, FileSpreadsheet, FileText, Flag, Lock, Receipt, Scale, Undo2, UserCog, Wallet,
 } from "lucide-react";
@@ -16,9 +17,9 @@ export type RecentEntry = { id: string; entry_number: string | null; entry_date:
 
 const dayLabel = (d: string, today: string) => {
   const diff = Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${d}T00:00:00Z`)) / 86_400_000);
-  if (diff === 0) return "اليوم";
-  if (diff === 1) return "أمس";
-  return new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" })
+  if (diff === 0) return tr("اليوم");
+  if (diff === 1) return tr("أمس");
+  return new Intl.DateTimeFormat(currentLocale() === "en" ? "en-GB" : "ar-SA-u-ca-gregory-nu-latn", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" })
     .format(new Date(`${d}T00:00:00Z`));
 };
 

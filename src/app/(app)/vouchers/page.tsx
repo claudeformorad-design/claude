@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
 import { DocText } from "@/components/ui/code-text";
 import Link from "@/components/link";
@@ -53,22 +54,22 @@ export default async function VouchersPage({ searchParams }: { searchParams: Pro
         }
       />
       <StatGrid>
-        <Stat icon={Receipt} tone="ink" label="سندات في القائمة" value={<span className="num">{vouchers.length}</span>} />
-        <Stat currency={ctx.hotel.base_currency} icon={HandCoins} tone="teal" label="مقبوضات" value={<Money value={receipts} locale={locale} />} />
-        <Stat currency={ctx.hotel.base_currency} icon={CreditCard} tone="clay" label="مدفوعات" value={<Money value={disbursements} locale={locale} />} />
-        <Stat currency={ctx.hotel.base_currency} icon={Scale} tone="neutral" label="صافي الحركة" value={<Money value={receipts.minus(disbursements)} locale={locale} />}
-          valueClassName={receipts.minus(disbursements).isNegative() ? "text-urgent" : undefined} hint="بدون السندات الملغاة" />
+        <Stat icon={Receipt} tone="ink" label={tr("سندات في القائمة")} value={<span className="num">{vouchers.length}</span>} />
+        <Stat currency={ctx.hotel.base_currency} icon={HandCoins} tone="teal" label={tr("مقبوضات")} value={<Money value={receipts} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={CreditCard} tone="clay" label={tr("مدفوعات")} value={<Money value={disbursements} locale={locale} />} />
+        <Stat currency={ctx.hotel.base_currency} icon={Scale} tone="neutral" label={tr("صافي الحركة")} value={<Money value={receipts.minus(disbursements)} locale={locale} />}
+          valueClassName={receipts.minus(disbursements).isNegative() ? "text-urgent" : undefined} hint={tr("بدون السندات الملغاة")} />
       </StatGrid>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <FilterTabs active={sp.type ?? "all"} items={[
-          { key: "all", href: qs(), label: "الكل" },
+          { key: "all", href: qs(), label: tr("الكل") },
           { key: "receipt", href: qs("receipt"), label: t.vouchers.types.receipt },
           { key: "disbursement", href: qs("disbursement"), label: t.vouchers.types.disbursement },
         ]} />
         <form className="flex items-center gap-2">
           {sp.type && <input type="hidden" name="type" value={sp.type} />}
-          <Input name="q" defaultValue={sp.q} placeholder="ابحث برقم السند أو الجهة" className="w-64 bg-white" />
+          <Input name="q" defaultValue={sp.q} placeholder={tr("ابحث برقم السند أو الجهة")} className="w-64 bg-white" />
           <Button type="submit" variant="outline">{t.common.apply}</Button>
         </form>
       </div>
@@ -90,10 +91,10 @@ export default async function VouchersPage({ searchParams }: { searchParams: Pro
               <TableRow>
                 <TableCell colSpan={7} className="py-8">
                   <EmptyState
-                    title="سجل سندات القبض والصرف فارغ"
-                    description="لم يتم إصدار أي سند قبض أو صرف بعد. يمكنك تسجيل سند قبض جديد من النزلاء أو سند صرف للموردين."
+                    title={tr("سجل سندات القبض والصرف فارغ")}
+                    description={tr("لم يتم إصدار أي سند قبض أو صرف بعد. يمكنك تسجيل سند قبض جديد من النزلاء أو سند صرف للموردين.")}
                     actionHref="/vouchers/new?type=receipt"
-                    actionLabel="إصدار سند قبض جديد"
+                    actionLabel={tr("إصدار سند قبض جديد")}
                     icon={Receipt}
                   />
                 </TableCell>

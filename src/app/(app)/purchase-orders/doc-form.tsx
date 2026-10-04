@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -40,7 +41,7 @@ export function PurchaseDocForm({
     const r = kind === "po"
       ? await callAction(createPurchaseOrderAction({ vendor_id: v.vendor_id, order_date: v.date, notes: v.notes, lines: v.lines }))
       : await callAction(createBillAction({ vendor_id: v.vendor_id, bill_date: v.date, vendor_invoice_no: v.vendor_invoice_no, notes: v.notes, po_id: "", lines: v.lines }));
-    if (r.ok) { toast(kind === "po" ? "تم حفظ أمر الشراء" : "تم تسجيل فاتورة المورد"); router.push(kind === "po" ? "/purchase-orders" : `/bills/${r.data}`); }
+    if (r.ok) { toast(kind === "po" ? tr("تم حفظ أمر الشراء") : tr("تم تسجيل فاتورة المورد")); router.push(kind === "po" ? "/purchase-orders" : `/bills/${r.data}`); }
     else setError(actionErrorText(t.errors, r));
   }));
   return (
@@ -48,7 +49,7 @@ export function PurchaseDocForm({
       {error && <Alert variant="destructive">{error}</Alert>}
       <div className="grid gap-4 md:grid-cols-4">
         <div className="field-group space-y-1.5"><Label htmlFor="vendor_id">{t.payables.vendor}</Label>
-          <NativeSelect id="vendor_id" {...register("vendor_id")}><option value="">اختر</option>{vendors.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}</NativeSelect></div>
+          <NativeSelect id="vendor_id" {...register("vendor_id")}><option value="">{tr("اختر")}</option>{vendors.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}</NativeSelect></div>
         <div className="field-group space-y-1.5"><Label htmlFor="date">{t.common.date}</Label><Input id="date" type="date" dir="ltr" {...register("date")} /></div>
         {kind === "bill" && <div className="field-group space-y-1.5"><Label htmlFor="vin">{t.payables.vendorInvoiceNo}</Label><Input id="vin" dir="ltr" {...register("vendor_invoice_no")} /></div>}
         <div className="field-group space-y-1.5"><Label htmlFor="notes">{t.folio.notes}</Label><Input id="notes" {...register("notes")} /></div>

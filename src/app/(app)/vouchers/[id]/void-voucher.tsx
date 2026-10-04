@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -29,12 +30,12 @@ export function VoidVoucher({ id, t, request = false }: { id: string; t: Pick<Di
           onClick={() =>
             start(async () => {
               const r = await callAction<ActionResult<unknown>>(request ? requestVoucherVoidAction(id, reason) : voidVoucherAction(id, reason));
-              if (r.ok) { toast(request ? "أُرسل طلب الإلغاء للمدير" : "تم إلغاء السند"); setReason(""); router.refresh(); }
+              if (r.ok) { toast(request ? tr("أُرسل طلب الإلغاء للمدير") : tr("تم إلغاء السند")); setReason(""); router.refresh(); }
               else setError(actionErrorText(t.errors, r));
             })
           }
         >
-          {request ? "طلب إلغاء السند" : t.vouchers.void}
+          {request ? tr("طلب إلغاء السند") : t.vouchers.void}
         </Button>
       </div>
     </div>

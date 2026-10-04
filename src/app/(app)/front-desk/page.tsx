@@ -1,3 +1,5 @@
+import { localNameOf } from "@/lib/local-name";
+import { tr } from "@/i18n/tr";
 import Link from "@/components/link";
 import { BedDouble, BellRing, BrushCleaning, CalendarCheck, CalendarRange, DoorOpen, Hourglass, LogOut, Plus, Users, Wrench } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -52,47 +54,47 @@ export default async function FrontDeskPage() {
         title={t.nav.frontDesk}
         actions={
           <>
-            <Button asChild variant="outline"><Link href="/tape-chart"><CalendarRange />جدول الإشغال</Link></Button>
-            {canManage && <Button asChild><Link href="/reservations/new"><Plus />حجز جديد</Link></Button>}
+            <Button asChild variant="outline"><Link href="/tape-chart"><CalendarRange />{tr("جدول الإشغال")}</Link></Button>
+            {canManage && <Button asChild><Link href="/reservations/new"><Plus />{tr("حجز جديد")}</Link></Button>}
           </>
         }
       />
 
       <StatGrid>
-        <Stat icon={CalendarCheck} tone="ink" label="وصول اليوم" value={<span className="num">{s.arrivals}</span>} hint={`${arrivals.filter((r) => !r.room_id).length} بلا غرفة مخصصة`} />
-        <Stat icon={LogOut} tone="teal" label="مغادرة اليوم" value={<span className="num">{s.departures}</span>} />
-        <Stat icon={Users} tone="clay" label="المقيمون الآن" value={<span className="num">{s.in_house}</span>} />
-        <Stat icon={BedDouble} tone="neutral" label="الإشغال الليلة" value={<span className="num">{occupancy}%</span>} hint={`${s.available_tonight} شاغرة من ${s.capacity}`} />
+        <Stat icon={CalendarCheck} tone="ink" label={tr("وصول اليوم")} value={<span className="num">{s.arrivals}</span>} hint={tr("{0} بلا غرفة مخصصة", arrivals.filter((r) => !r.room_id).length)} />
+        <Stat icon={LogOut} tone="teal" label={tr("مغادرة اليوم")} value={<span className="num">{s.departures}</span>} />
+        <Stat icon={Users} tone="clay" label={tr("المقيمون الآن")} value={<span className="num">{s.in_house}</span>} />
+        <Stat icon={BedDouble} tone="neutral" label={tr("الإشغال الليلة")} value={<span className="num">{occupancy}%</span>} hint={tr("{0} شاغرة من {1}", s.available_tonight, s.capacity)} />
       </StatGrid>
 
       {(s.waitlist_ready > 0 || expiring.length > 0 || s.dirty > 0 || s.out_of_service > 0) && (
         <div className="stagger mb-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {s.waitlist_ready > 0 && <Alert href="/waitlist?tab=ready" icon={BellRing} tone="action" title={`${s.waitlist_ready} طلب انتظار أصبح متاحًا`} text="تحررت غرف لطلبات في قائمة الانتظار، حوّلها لحجوزات" />}
-          {expiring.length > 0 && <Alert href="/reservations?tab=tentative" icon={Hourglass} tone="amber" title={`${expiring.length} حجز مبدئي انتهت مهلته`} text="أكّدها مع النزيل أو ألغها لتحرير الغرف" />}
-          {s.dirty > 0 && <Alert href="/rooms?filter=dirty" icon={BrushCleaning} tone="neutral" title={`${s.dirty} غرفة تحتاج تنظيف`} text="تابعها مع التدبير الفندقي قبل وصول النزلاء" />}
-          {s.out_of_service > 0 && <Alert href="/rooms?filter=oos" icon={Wrench} tone="urgent" title={`${s.out_of_service} غرفة خارج الخدمة`} text="لا تُباع حتى تعود للخدمة" />}
+          {s.waitlist_ready > 0 && <Alert href="/waitlist?tab=ready" icon={BellRing} tone="action" title={tr("{0} طلب انتظار أصبح متاحًا", s.waitlist_ready)} text={tr("تحررت غرف لطلبات في قائمة الانتظار، حوّلها لحجوزات")} />}
+          {expiring.length > 0 && <Alert href="/reservations?tab=tentative" icon={Hourglass} tone="amber" title={tr("{0} حجز مبدئي انتهت مهلته", expiring.length)} text={tr("أكّدها مع النزيل أو ألغها لتحرير الغرف")} />}
+          {s.dirty > 0 && <Alert href="/rooms?filter=dirty" icon={BrushCleaning} tone="neutral" title={tr("{0} غرفة تحتاج تنظيف", s.dirty)} text={tr("تابعها مع التدبير الفندقي قبل وصول النزلاء")} />}
+          {s.out_of_service > 0 && <Alert href="/rooms?filter=oos" icon={Wrench} tone="urgent" title={tr("{0} غرفة خارج الخدمة", s.out_of_service)} text={tr("لا تُباع حتى تعود للخدمة")} />}
         </div>
       )}
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <div className="space-y-6">
           <Card className="overflow-hidden">
-            <CardHeader><CardTitle className="justify-between"><span>الوصول اليوم</span><Link href="/reservations?tab=arrivals" className="font-medium text-action">الكل</Link></CardTitle></CardHeader>
+            <CardHeader><CardTitle className="justify-between"><span>{tr("الوصول اليوم")}</span><Link href="/reservations?tab=arrivals" className="font-medium text-action">{tr("الكل")}</Link></CardTitle></CardHeader>
             <Table>
-              <TableHeader><TableRow><TableHead>النزيل</TableHead><TableHead>الغرفة</TableHead><TableHead>النوع</TableHead><TableHead>الإقامة</TableHead><TableHead>الحالة</TableHead>{canManage && <TableHead />}</TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>{tr("النزيل")}</TableHead><TableHead>{tr("الغرفة")}</TableHead><TableHead>{tr("النوع")}</TableHead><TableHead>{tr("الإقامة")}</TableHead><TableHead>{tr("الحالة")}</TableHead>{canManage && <TableHead />}</TableRow></TableHeader>
               <TableBody>
-                {arrivals.length === 0 && <TableRow><TableCell colSpan={6} className="py-10 text-center text-slate-500">لا يوجد وصول متوقع اليوم</TableCell></TableRow>}
+                {arrivals.length === 0 && <TableRow><TableCell colSpan={6} className="py-10 text-center text-slate-500">{tr("لا يوجد وصول متوقع اليوم")}</TableCell></TableRow>}
                 {arrivals.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="cell-fluid"><EntityCell name={r.guest?.full_name ?? ""} href={`/reservations/${r.id}`} /></TableCell>
-                    <TableCell className="whitespace-nowrap">{r.room ? <span className="num font-semibold">{r.room.room_number}</span> : <Link href={`/reservations/${r.id}`}><Badge variant="warning">خصّص غرفة</Badge></Link>}</TableCell>
-                    <TableCell className="whitespace-nowrap text-slate-600">{r.room_type?.name_ar}</TableCell>
+                    <TableCell className="whitespace-nowrap">{r.room ? <span className="num font-semibold">{r.room.room_number}</span> : <Link href={`/reservations/${r.id}`}><Badge variant="warning">{tr("خصّص غرفة")}</Badge></Link>}</TableCell>
+                    <TableCell className="whitespace-nowrap text-slate-600">{localNameOf(r.room_type)}</TableCell>
                     <TableCell className="whitespace-nowrap">{stayText(r)}</TableCell>
                     <TableCell><Badge variant={RESERVATION_STATUS[r.status].variant}>{RESERVATION_STATUS[r.status].label}</Badge></TableCell>
                     {canManage && (
                       <TableCell className="text-end">
                         {r.room_id && r.booking_mode === "nightly" && dirtyRooms.has(r.room_id)
-                          ? <Badge variant="warning">الغرفة تحتاج تنظيف</Badge>
+                          ? <Badge variant="warning">{tr("الغرفة تحتاج تنظيف")}</Badge>
                           : (r.room_id || r.booking_mode === "hourly") && (
                             <QuickCheckIn reservationId={r.id} roomId={r.room_id} access={ctx.hotel.room_access} errors={t.errors} />
                           )}
@@ -105,19 +107,19 @@ export default async function FrontDeskPage() {
           </Card>
 
           <Card className="overflow-hidden">
-            <CardHeader><CardTitle className="justify-between"><span>المقيمون الآن</span><span className="num font-medium text-slate-500">{inHouse.length}</span></CardTitle></CardHeader>
+            <CardHeader><CardTitle className="justify-between"><span>{tr("المقيمون الآن")}</span><span className="num font-medium text-slate-500">{inHouse.length}</span></CardTitle></CardHeader>
             <Table>
-              <TableHeader><TableRow><TableHead>النزيل</TableHead><TableHead>الغرفة</TableHead><TableHead>المغادرة</TableHead><TableHead /></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>{tr("النزيل")}</TableHead><TableHead>{tr("الغرفة")}</TableHead><TableHead>{tr("المغادرة")}</TableHead><TableHead /></TableRow></TableHeader>
               <TableBody>
-                {inHouse.length === 0 && <TableRow><TableCell colSpan={4} className="py-10 text-center text-slate-500">لا يوجد نزلاء مقيمون</TableCell></TableRow>}
+                {inHouse.length === 0 && <TableRow><TableCell colSpan={4} className="py-10 text-center text-slate-500">{tr("لا يوجد نزلاء مقيمون")}</TableCell></TableRow>}
                 {inHouse.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="cell-fluid"><EntityCell name={r.guest?.full_name ?? ""} href={`/reservations/${r.id}`} /></TableCell>
                     <TableCell className="num whitespace-nowrap font-semibold">{r.room?.room_number ?? ""}</TableCell>
                     <TableCell className="whitespace-nowrap">{r.booking_mode === "hourly" ? <span className="num">{timeOf(r.ends_at)}</span> : dayLabel(r.departure_date)}
-                      {r.departure_date < today && <Badge variant="destructive" className="ms-2">متأخر</Badge>}</TableCell>
+                      {r.departure_date < today && <Badge variant="destructive" className="ms-2">{tr("متأخر")}</Badge>}</TableCell>
                     <TableCell className="text-end">
-                      {(r.departure_date <= today || r.booking_mode === "hourly") && <Button asChild size="sm" variant="outline"><Link href={`/reservations/${r.id}`}><LogOut className="size-4" />مغادرة</Link></Button>}
+                      {(r.departure_date <= today || r.booking_mode === "hourly") && <Button asChild size="sm" variant="outline"><Link href={`/reservations/${r.id}`}><LogOut className="size-4" />{tr("مغادرة")}</Link></Button>}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -128,33 +130,33 @@ export default async function FrontDeskPage() {
 
         <div className="space-y-6">
           <Card>
-            <CardHeader><CardTitle>الإشغال للأيام السبعة القادمة</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{tr("الإشغال للأيام السبعة القادمة")}</CardTitle></CardHeader>
             <CardContent>
               <div className="flex h-40 items-end gap-2">
                 {days.map((x) => (
-                  <div key={x.d} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5" title={`${x.sold} من ${x.cap}`}>
+                  <div key={x.d} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5" title={tr("{0} من {1}", x.sold, x.cap)}>
                     <span className="num text-[13.5px] font-semibold text-ink">{x.pct}%</span>
                     <div className="relative w-full flex-1 overflow-hidden rounded-md bg-subtle">
                       <div className={cn("absolute inset-x-0 bottom-0 rounded-md transition-[height] duration-700", x.pct >= 90 ? "bg-urgent-dot" : x.pct >= 70 ? "bg-action" : "bg-action/60")}
                         style={{ height: `${Math.min(100, x.pct)}%` }} />
                     </div>
-                    <span className="text-[13px] text-slate-500">{x.d === today ? "الليلة" : dayLabel(x.d, { weekday: "short" })}</span>
+                    <span className="text-[13px] text-slate-500">{x.d === today ? tr("الليلة") : dayLabel(x.d, { weekday: "short" })}</span>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
           <Card className="overflow-hidden">
-            <CardHeader><CardTitle>المغادرة اليوم</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{tr("المغادرة اليوم")}</CardTitle></CardHeader>
             <Table>
               <TableBody>
-                {departures.length === 0 && <TableRow><TableCell className="py-8 text-center text-slate-500">لا مغادرة متوقعة اليوم</TableCell></TableRow>}
+                {departures.length === 0 && <TableRow><TableCell className="py-8 text-center text-slate-500">{tr("لا مغادرة متوقعة اليوم")}</TableCell></TableRow>}
                 {departures.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="cell-fluid"><EntityCell name={r.guest?.full_name ?? ""} href={`/reservations/${r.id}`} /></TableCell>
                     <TableCell className="num font-bold">{r.room?.room_number ?? ""}</TableCell>
                     <TableCell className="text-end">{r.status === "checked_in" && canManage
-                      ? <Button asChild size="sm" variant="dark"><Link href={`/reservations/${r.id}`}>مغادرة</Link></Button>
+                      ? <Button asChild size="sm" variant="dark"><Link href={`/reservations/${r.id}`}>{tr("مغادرة")}</Link></Button>
                       : <Badge variant={RESERVATION_STATUS[r.status].variant}>{RESERVATION_STATUS[r.status].label}</Badge>}</TableCell>
                   </TableRow>
                 ))}
@@ -162,8 +164,8 @@ export default async function FrontDeskPage() {
             </Table>
           </Card>
           <div className="grid grid-cols-2 gap-3">
-            <QuickLink href="/rooms" icon={DoorOpen} label="خريطة الغرف" />
-            <QuickLink href="/waitlist" icon={Hourglass} label={`قائمة الانتظار${s.waitlist_ready ? `، ${s.waitlist_ready} متاح` : ""}`} />
+            <QuickLink href="/rooms" icon={DoorOpen} label={tr("خريطة الغرف")} />
+            <QuickLink href="/waitlist" icon={Hourglass} label={tr("قائمة الانتظار{0}", s.waitlist_ready ? tr("، {0} متاح", s.waitlist_ready) : "")} />
           </div>
         </div>
       </div>

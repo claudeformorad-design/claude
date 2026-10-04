@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -43,11 +44,11 @@ export function AttendanceSheet({ day, rows, canEdit, errors }: { day: string; r
   const save = () => start(async () => {
     const rows = data.map(({ employee_id, status, check_in, check_out, notes }) => ({ employee_id, status, check_in: normalizeTime(check_in), check_out: normalizeTime(check_out), notes }));
     if (rows.some((r) => (r.check_in && !TIME.test(r.check_in)) || (r.check_out && !TIME.test(r.check_out)))) {
-      toast("اكتب الوقت بنظام 24 ساعة مثل 08:30 أو 17:15", "error");
+      toast(tr("اكتب الوقت بنظام 24 ساعة مثل 08:30 أو 17:15"), "error");
       return;
     }
     const r = await callAction(saveAttendanceAction(day, rows));
-    if (r.ok) { toast("حُفظ كشف الحضور"); setDirty(false); router.refresh(); }
+    if (r.ok) { toast(tr("حُفظ كشف الحضور")); setDirty(false); router.refresh(); }
     else toast(actionErrorText(errors, r), "error");
   });
 
@@ -60,23 +61,23 @@ export function AttendanceSheet({ day, rows, canEdit, errors }: { day: string; r
         {canEdit && (
           <span className="ms-auto flex gap-2">
             <Button variant="outline" size="sm" disabled={pending}
-              onClick={() => { setData((d) => d.map((r) => (r.status === "absent" ? { ...r, status: "present" } : r))); setDirty(true); }}>الجميع حاضر</Button>
-            <Button size="sm" onClick={save} loading={pending} disabled={!dirty}>حفظ الكشف</Button>
+              onClick={() => { setData((d) => d.map((r) => (r.status === "absent" ? { ...r, status: "present" } : r))); setDirty(true); }}>{tr("الجميع حاضر")}</Button>
+            <Button size="sm" onClick={save} loading={pending} disabled={!dirty}>{tr("حفظ الكشف")}</Button>
           </span>
         )}
       </div>
       <div className="surface overflow-hidden">
         <Table>
           <TableHeader><TableRow>
-            <TableHead>الموظف</TableHead><TableHead>الحالة</TableHead>
-            <TableHead>الحضور</TableHead><TableHead>الانصراف</TableHead><TableHead>تأخير</TableHead><TableHead>إضافي</TableHead><TableHead>ملاحظة</TableHead>
+            <TableHead>{tr("الموظف")}</TableHead><TableHead>{tr("الحالة")}</TableHead>
+            <TableHead>{tr("الحضور")}</TableHead><TableHead>{tr("الانصراف")}</TableHead><TableHead>{tr("تأخير")}</TableHead><TableHead>{tr("إضافي")}</TableHead><TableHead>{tr("ملاحظة")}</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {data.map((r, i) => (
               <TableRow key={r.employee_id} className={cn(r.status === "absent" && "bg-urgent-tint/40")}>
-                <TableCell className="whitespace-nowrap"><EntityCell name={r.name} sub={r.leave ?? r.shift ?? "بلا وردية"} href={`/hr/${r.employee_id}`} /></TableCell>
+                <TableCell className="whitespace-nowrap"><EntityCell name={r.name} sub={r.leave ?? r.shift ?? tr("بلا وردية")} href={`/hr/${r.employee_id}`} /></TableCell>
                 <TableCell>
-                  <div className="inline-flex rounded-lg bg-subtle p-0.5" role="radiogroup" aria-label={`حالة ${r.name}`}>
+                  <div className="inline-flex rounded-lg bg-subtle p-0.5" role="radiogroup" aria-label={tr("حالة {0}", r.name)}>
                     {(["present", "absent", "leave", "off"] as const).map((k) => (
                       <button key={k} type="button" role="radio" aria-checked={r.status === k} disabled={!canEdit}
                         onClick={() => set(i, { status: k, ...(k !== "present" ? { check_in: "", check_out: "" } : {}) })}
@@ -87,13 +88,13 @@ export function AttendanceSheet({ day, rows, canEdit, errors }: { day: string; r
                     ))}
                   </div>
                 </TableCell>
-                <TableCell><input value={r.check_in} disabled={!canEdit || r.status !== "present"} aria-label={`حضور ${r.name}`} {...timeProps}
+                <TableCell><input value={r.check_in} disabled={!canEdit || r.status !== "present"} aria-label={tr("حضور {0}", r.name)} {...timeProps}
                   onChange={(e) => set(i, { check_in: e.target.value })} onBlur={(e) => e.target.value && set(i, { check_in: normalizeTime(e.target.value) })} /></TableCell>
-                <TableCell><input value={r.check_out} disabled={!canEdit || r.status !== "present"} aria-label={`انصراف ${r.name}`} {...timeProps}
+                <TableCell><input value={r.check_out} disabled={!canEdit || r.status !== "present"} aria-label={tr("انصراف {0}", r.name)} {...timeProps}
                   onChange={(e) => set(i, { check_out: e.target.value })} onBlur={(e) => e.target.value && set(i, { check_out: normalizeTime(e.target.value) })} /></TableCell>
                 <TableCell className={cn("num whitespace-nowrap", r.late ? "text-urgent" : "text-slate-400")}>{minutesText(r.late)}</TableCell>
                 <TableCell className={cn("num whitespace-nowrap", r.overtime ? "text-success" : "text-slate-400")}>{minutesText(r.overtime)}</TableCell>
-                <TableCell className="cell-fluid"><input value={r.notes} disabled={!canEdit} maxLength={300} aria-label={`ملاحظة ${r.name}`}
+                <TableCell className="cell-fluid"><input value={r.notes} disabled={!canEdit} maxLength={300} aria-label={tr("ملاحظة {0}", r.name)}
                   onChange={(e) => set(i, { notes: e.target.value })} className="field h-9 w-full min-w-28" /></TableCell>
               </TableRow>
             ))}

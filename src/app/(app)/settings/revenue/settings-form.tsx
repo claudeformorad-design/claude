@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -38,7 +39,7 @@ export function RevenueSettingForm({
       setError(null);
       const payload = { ...v, tax_rate_ids: kind === "charge" ? ((v.tax_rate_ids as string[] | false) || []) : undefined };
       const r = await callAction(saveRevenueSettingAction(kind, payload));
-      if (r.ok) { toast("تم الحفظ"); router.push("/settings/revenue"); }
+      if (r.ok) { toast(tr("تم الحفظ")); router.push("/settings/revenue"); }
       else setError(actionErrorText(t.errors, r));
     });
 
@@ -49,7 +50,7 @@ export function RevenueSettingForm({
     <div className="field-group space-y-1.5">
       <Label htmlFor={name}>{label}</Label>
       <NativeSelect id={name} {...register(name)}>
-        <option value="">اختر</option>
+        <option value="">{tr("اختر")}</option>
         {options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
       </NativeSelect>
     </div>
@@ -61,7 +62,7 @@ export function RevenueSettingForm({
       {error && <Alert variant="destructive">{error}</Alert>}
       {text("code", t.customers.code, { dir: "ltr" })}
       {text("name_ar", t.customers.name, { dir: "rtl" })}
-      {text("name_en", `${t.customers.name} بالإنجليزية`, { dir: "ltr" })}
+      {text("name_en", tr("{0} بالإنجليزية", t.customers.name), { dir: "ltr" })}
       {kind === "tax" && (
         <>
           {select("kind", rs.kind, enumOptions(rs.taxKinds))}
@@ -74,7 +75,7 @@ export function RevenueSettingForm({
         <>
           {select("kind", rs.kind, enumOptions(rs.methodKinds))}
           {select("account_id", rs.account, accounts)}
-          {currencies.length > 0 && select("currency_code", "العملة، واتركها فارغة للعملة الأساسية", currencies)}
+          {currencies.length > 0 && select("currency_code", tr("العملة، واتركها فارغة للعملة الأساسية"), currencies)}
         </>
       )}
       {kind === "charge" && (

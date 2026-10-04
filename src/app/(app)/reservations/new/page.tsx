@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import Link from "@/components/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
@@ -40,16 +41,16 @@ export default async function NewReservationPage({ searchParams }: {
 
   return (
     <>
-      <PageHeader title="حجز جديد" />
+      <PageHeader title={tr("حجز جديد")} />
       {data.roomTypes.length === 0 ? (
-        <Card><EmptyState icon={BedDouble} title="لا توجد أنواع غرف" description="عرّف أنواع الغرف والغرف أولًا لتتمكن من الحجز."
-          actionHref={ctx.can(PERMISSIONS.pmsSetup) ? "/room-setup" : undefined} actionLabel="إعداد الغرف" /></Card>
+        <Card><EmptyState icon={BedDouble} title={tr("لا توجد أنواع غرف")} description={tr("عرّف أنواع الغرف والغرف أولًا لتتمكن من الحجز.")}
+          actionHref={ctx.can(PERMISSIONS.pmsSetup) ? "/room-setup" : undefined} actionLabel={tr("إعداد الغرف")} /></Card>
       ) : (
         <ReservationForm mode="create" initial={initial} roomTypes={data.roomTypes} rooms={data.roomOptions} guests={data.guestOptions}
           companies={data.companies} today={today} canOverride={ctx.can(PERMISSIONS.pmsRatesOverride)} canOverbook={ctx.can(PERMISSIONS.pmsOverbook)}
           errors={t.errors} />
       )}
-      <p className="mt-6 text-[14.5px] text-slate-500">تبحث عن غرفة لتاريخ محدد؟ <Link href="/tape-chart" className="text-action">افتح جدول الإشغال</Link></p>
+      <p className="mt-6 text-[14.5px] text-slate-500">{tr("تبحث عن غرفة لتاريخ محدد؟")}{" "}<Link href="/tape-chart" className="text-action">{tr("افتح جدول الإشغال")}</Link></p>
     </>
   );
 }

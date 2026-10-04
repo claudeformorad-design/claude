@@ -1,4 +1,5 @@
 "use server";
+import { tr } from "@/i18n/tr";
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -129,13 +130,13 @@ export async function resetHotelDataAction(): Promise<ActionResult<undefined>> {
 export async function loadDemoDataAction(): Promise<ActionResult<undefined>> {
   const ctx = await requireAppContext(PERMISSIONS.hotelManage);
   if (isSupabaseConfigured()) return { ok: false, error: "permission_denied" };
-  if (isDemoDataActive()) return { ok: false, error: "unknown", message: "البيانات التجريبية محمّلة بالفعل" };
+  if (isDemoDataActive()) return { ok: false, error: "unknown", message: tr("البيانات التجريبية محمّلة بالفعل") };
   try {
     await loadDemoData(ctx.hotel.id, DEMO_DATA_SQL, ctx.user.id);
   } catch (e) {
     console.error(e);
     const msg = e instanceof Error ? e.message : String(e);
-    return { ok: false, error: "unknown", message: describeDatabaseError(msg) ?? "تعذّر توليد البيانات التجريبية؛ لم يتغير شيء." };
+    return { ok: false, error: "unknown", message: describeDatabaseError(msg) ?? tr("تعذّر توليد البيانات التجريبية؛ لم يتغير شيء.") };
   }
   revalidatePath("/", "layout");
   return { ok: true, data: undefined };
@@ -154,12 +155,12 @@ export async function restoreBackupAction(form: FormData): Promise<ActionResult<
   await requireAppContext(PERMISSIONS.hotelManage);
   if (isSupabaseConfigured()) return { ok: false, error: "permission_denied" };
   const file = form.get("file");
-  if (!(file instanceof Blob) || file.size === 0) return { ok: false, error: "unknown", message: "اختر ملف النسخة الاحتياطية" };
+  if (!(file instanceof Blob) || file.size === 0) return { ok: false, error: "unknown", message: tr("اختر ملف النسخة الاحتياطية") };
   try {
     await restoreLocalBackup(file);
   } catch (e) {
     console.error(e);
-    return { ok: false, error: "unknown", message: "الملف ليس نسخة احتياطية صالحة من هذا النظام؛ لم يتغير شيء." };
+    return { ok: false, error: "unknown", message: tr("الملف ليس نسخة احتياطية صالحة من هذا النظام؛ لم يتغير شيء.") };
   }
   revalidatePath("/", "layout");
   return { ok: true, data: undefined };

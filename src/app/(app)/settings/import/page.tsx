@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import { forbidden } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { FilterTabs } from "@/components/ui/filter-tabs";
@@ -17,10 +18,10 @@ export default async function ImportPage({ searchParams }: { searchParams: Promi
   const current = defs.find((d) => d.kind === sp.kind) ?? defs[0]!;
   return (
     <>
-      <PageHeader title="استيراد البيانات" />
-      <FilterTabs className="mb-6" active={current.kind} items={defs.map((d) => ({ key: d.kind, href: `/settings/import?kind=${d.kind}`, label: d.title }))} />
-      <ImportPanel key={current.kind} kind={current.kind} title={current.title} description={current.description}
-        columns={current.columns.map((c) => ({ header: c.header, required: Boolean(c.required), hint: c.hint ?? "" }))} />
+      <PageHeader title={tr("استيراد البيانات")} />
+      <FilterTabs className="mb-6" active={current.kind} items={defs.map((d) => ({ key: d.kind, href: `/settings/import?kind=${d.kind}`, label: tr(d.title) }))} />
+      <ImportPanel key={current.kind} kind={current.kind} title={tr(current.title)} description={tr(current.description)}
+        columns={current.columns.map((c) => ({ header: tr(c.header), required: Boolean(c.required), hint: c.hint ? tr(c.hint) : "" }))} />
     </>
   );
 }

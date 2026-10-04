@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -36,7 +37,7 @@ export function OpenFolioForm({
     start(async () => {
       setError(null);
       const r = await callAction(openFolioAction(v));
-      if (r.ok) { toast("تم فتح الفوليو"); router.push(`/folios/${r.data}`); }
+      if (r.ok) { toast(tr("تم فتح الفوليو")); router.push(`/folios/${r.data}`); }
       else setError(actionErrorText(t.errors, r));
     });
 
