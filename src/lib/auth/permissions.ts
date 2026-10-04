@@ -67,6 +67,15 @@ export const PERMISSIONS = {
   pmsNightAudit: "pms.night_audit",
   pmsReports: "pms.reports.view",
   pmsSetup: "pms.setup.manage",
+  // خدمات التشغيل
+  maintenanceReport: "maintenance.report",
+  maintenanceManage: "maintenance.manage",
+  lostFoundManage: "lost_found.manage",
+  laundryManage: "laundry.manage",
+  eventsView: "events.view",
+  eventsManage: "events.manage",
+  feedbackView: "feedback.view",
+  feedbackManage: "feedback.manage",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

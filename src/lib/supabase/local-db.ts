@@ -17,6 +17,8 @@ const ROOT = process.cwd();
 const LOCAL_DATA_DIR = path.resolve(/*turbopackIgnore: true*/ process.env.LOCAL_DB_DIR || path.join(ROOT, ".data", "pglite"));
 const MIGRATIONS_DIR = path.join(ROOT, "supabase", "migrations");
 const SHIM_FILE = path.join(ROOT, "supabase", "tests", "supabase_shim.sql");
+/** المجلد الحاوي لقاعدة البيانات المحلية (فيه إعدادات النسخ التلقائي ومجلد النسخ الافتراضي) */
+export const LOCAL_DATA_ROOT = path.dirname(LOCAL_DATA_DIR);
 
 export interface LocalDb {
   db: PGlite;

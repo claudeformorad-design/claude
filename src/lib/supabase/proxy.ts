@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import type { Database } from "./database.types";
 import { isSupabaseConfigured, supabaseEnv } from "./env";
 
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = ["/login", "/survey/"];
 
 /**
  * التثبيت المحلي (بدون Supabase): تسجيل الدخول يتحقق منه الخادم بجلسة محلية، أو لا دخول في وضع المستخدم الواحد.

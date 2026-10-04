@@ -15,6 +15,7 @@ import { SimpleForm } from "../../_assets/simple-form";
 import { ResetHotelDataButton } from "./reset-data-button";
 import { DemoDataCard } from "./demo-data-card";
 import { BackupCard } from "./backup-card";
+import { AutoBackupCard } from "./auto-backup-card";
 import { OperationsCard } from "./operations-card";
 import { isDemoDataActive } from "@/lib/supabase/local-db";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -34,6 +35,10 @@ export default async function HotelSettingsPage() {
       : Promise.resolve(0),
   ]);
   const autoRooms = roomCount > 0;
+  const local = !isSupabaseConfigured();
+  const auto = local && ctx.can(PERMISSIONS.hotelManage)
+    ? await import("@/lib/supabase/auto-backup").then((m) => ({ ...m.getAutoBackup(), files: m.listBackupFiles() }))
+    : null;
   const amt = (v: string | null) => (v ? toMoney(v).toString() : "");
   return (
     <>
@@ -94,6 +99,7 @@ export default async function HotelSettingsPage() {
         {ctx.can(PERMISSIONS.hotelManage) && !isSupabaseConfigured() && (
           <div className="space-y-5">
             <BackupCard errors={t.errors} />
+            {auto && <AutoBackupCard settings={auto.settings} status={auto.status} stale={auto.stale} files={auto.files} errors={t.errors} />}
             <DemoDataCard active={isDemoDataActive()} errors={t.errors} />
             <ResetHotelDataButton />
           </div>

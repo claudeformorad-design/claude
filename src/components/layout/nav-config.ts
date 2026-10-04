@@ -2,7 +2,7 @@ import {
   BarChart3, Banknote, BedDouble, BookOpen, Boxes, Building2, CalendarCheck, CalendarDays, CalendarRange, Clock, ConciergeBell, DoorOpen,
   FileSpreadsheet, FileText, History, Hourglass, Landmark, LayoutDashboard, ListChecks, ListTree, Percent, PieChart, Receipt, Scale,
   ClipboardList, Coins, Scale3d, MoonStar, BrushCleaning, Utensils, BadgePercent, Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
-  IdCard, ClipboardCheck, CalendarClock, Plane, HandCoins, Calculator, SlidersHorizontal, FileUp,
+  IdCard, ClipboardCheck, CalendarClock, Plane, HandCoins, Calculator, SlidersHorizontal, FileUp, Wrench, PackageSearch, WashingMachine, PartyPopper, Star,
 } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import type { HotelModule } from "@/lib/supabase/database.types";
@@ -69,6 +69,18 @@ function allGroups(l: NavLabels): NavGroup[] {
         { href: "/rate-plans", label: l.ratePlans, icon: BadgePercent, permission: "pms.reservations.view" },
         { href: "/housekeeping", label: l.housekeeping, icon: BrushCleaning, permission: "pms.housekeeping" },
         { href: "/room-setup", label: l.roomSetup, icon: Building2, permission: "pms.setup.manage" },
+      ],
+    },
+    {
+      title: l.groupServices,
+      icon: Wrench,
+      color: "#312f2e",
+      items: [
+        { href: "/maintenance", label: l.maintenance, icon: Wrench, permission: ["maintenance.report", "maintenance.manage"] },
+        { href: "/lost-found", label: l.lostFound, icon: PackageSearch, module: "pms", permission: "lost_found.manage" },
+        { href: "/laundry", label: l.laundry, icon: WashingMachine, module: "pms", permission: "laundry.manage" },
+        { href: "/events", label: l.events, icon: PartyPopper, module: "pms", permission: "events.view" },
+        { href: "/surveys", label: l.surveys, icon: Star, module: "pms", permission: ["feedback.view", "feedback.manage"] },
       ],
     },
     {

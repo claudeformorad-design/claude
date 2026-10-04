@@ -165,3 +165,42 @@ export async function restoreBackupAction(form: FormData): Promise<ActionResult<
   revalidatePath("/", "layout");
   return { ok: true, data: undefined };
 }
+
+// ----------------------------------------------------------------------------- النسخ الاحتياطي التلقائي
+/** إعدادات النسخ اليومي: التفعيل والمجلد ووقت النسخ وعدد النسخ المحفوظة */
+export async function saveAutoBackupAction(input: unknown): Promise<ActionResult<undefined>> {
+  await requireAppContext(PERMISSIONS.hotelManage);
+  if (isSupabaseConfigured()) return { ok: false, error: "permission_denied" };
+  const p = z.object({
+    enabled: z.union([z.boolean(), z.literal("on"), z.literal("")]).optional().transform((v) => v === true || v === "on"),
+    folder: z.string().trim().min(1).max(500),
+    time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+    keep: z.coerce.number().int().min(1).max(365),
+  }).safeParse(input);
+  if (!p.success) return fail;
+  const { saveAutoBackupSettings } = await import("@/lib/supabase/auto-backup");
+  try {
+    saveAutoBackupSettings(p.data);
+  } catch (e) {
+    console.error(e);
+    return { ok: false, error: "unknown", message: tr("لا يمكن الكتابة في هذا المجلد، اختر مجلدًا آخر") };
+  }
+  revalidatePath("/settings/hotel");
+  return { ok: true, data: undefined };
+}
+
+/** نسخة احتياطية فورية في مجلد النسخ */
+export async function runBackupNowAction(): Promise<ActionResult<string>> {
+  await requireAppContext(PERMISSIONS.hotelManage);
+  if (isSupabaseConfigured()) return { ok: false, error: "permission_denied" };
+  const { runBackupNow } = await import("@/lib/supabase/auto-backup");
+  try {
+    const f = await runBackupNow();
+    revalidatePath("/settings/hotel");
+    return { ok: true, data: f.name };
+  } catch (e) {
+    console.error(e);
+    revalidatePath("/settings/hotel");
+    return { ok: false, error: "unknown", message: tr("تعذر أخذ النسخة الاحتياطية: {0}", e instanceof Error ? e.message : String(e)) };
+  }
+}

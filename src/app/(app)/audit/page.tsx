@@ -21,6 +21,10 @@ const TABLE_AR: Record<string, string> = {
   get fixed_assets() { return tr("الأصول الثابتة"); }, get inventory_items() { return tr("أصناف المخزون"); }, get inventory_movements() { return tr("حركات المخزون"); }, get hotels() { return tr("بيانات الفندق"); },
   get departments() { return tr("الأقسام"); }, get charge_codes() { return tr("رموز الإيراد"); }, get tax_rates() { return tr("الضرائب"); }, get payment_methods() { return tr("طرق الدفع"); }, get hotel_members() { return tr("المستخدمون"); }, get cashier_shifts() { return tr("ورديات الكاشير"); },
   get user_hotel_roles() { return tr("أدوار المستخدمين"); }, get roles() { return tr("الأدوار"); }, get bank_statement_lines() { return tr("كشوف البنك"); },
+  get maintenance_requests() { return tr("بلاغات الصيانة"); }, get maintenance_assets() { return tr("سجل الأجهزة"); }, get maintenance_parts() { return tr("قطع الغيار"); },
+  get lost_found_items() { return tr("المفقودات"); }, get safe_deposits() { return tr("أمانات الخزنة"); }, get laundry_items() { return tr("أسعار المغسلة"); },
+  get laundry_orders() { return tr("طلبات الغسيل"); }, get linen_movements() { return tr("حركات المفروشات"); }, get event_bookings() { return tr("المناسبات"); },
+  get event_tasks() { return tr("مهام التجهيز"); }, get guest_surveys() { return tr("تقييمات النزلاء"); },
 };
 
 export default async function AuditPage({ searchParams }: { searchParams: Promise<{ table?: string; page?: string }> }) {

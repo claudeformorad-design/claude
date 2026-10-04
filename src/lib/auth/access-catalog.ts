@@ -24,6 +24,10 @@ export const PERMISSION_GROUPS: Record<string, string> = {
   get assets() { return tr("الأصول"); },
   get inventory() { return tr("المخزون"); },
   get hr() { return tr("الموارد البشرية"); },
+  get maintenance() { return tr("الصيانة"); },
+  get guest_services() { return tr("المفقودات والمغسلة"); },
+  get events() { return tr("القاعات والمناسبات"); },
+  get feedback() { return tr("تقييمات النزلاء"); },
 };
 
 /** الحدود المالية القابلة للضبط لكل دور ولكل موظف */

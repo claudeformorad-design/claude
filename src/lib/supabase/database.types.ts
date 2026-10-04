@@ -383,6 +383,79 @@ type FolioMoneyArgs = {
   p_business_date?: string | null; p_reference?: string | null; p_description?: string | null;
 };
 
+// ----------------------------------------------------------------------------- خدمات التشغيل (الترحيل 31)
+export type MaintenancePriority = "low" | "normal" | "high" | "urgent";
+export type MaintenanceStatus = "open" | "in_progress" | "on_hold" | "done" | "cancelled";
+export type MaintenanceAssetCategory = "ac" | "electrical" | "plumbing" | "appliance" | "furniture" | "elevator" | "generator" | "it" | "other";
+export type MaintenanceAssetRow = {
+  id: string; hotel_id: string; code: string | null; name: string; category: MaintenanceAssetCategory; room_id: string | null; location: string | null;
+  brand: string | null; serial_number: string | null; purchase_date: string | null; warranty_until: string | null; notes: string | null;
+  is_active: boolean; created_at: string; created_by: string | null;
+};
+export type MaintenanceRequestRow = {
+  id: string; hotel_id: string; request_number: string; title: string; description: string | null; room_id: string | null; asset_id: string | null;
+  location: string | null; priority: MaintenancePriority; status: MaintenanceStatus; assignee: string | null; out_of_service: boolean;
+  due_date: string | null; labor_cost: string; resolution: string | null; reported_by: string | null; reported_at: string;
+  started_at: string | null; completed_at: string | null; completed_by: string | null;
+};
+export type MaintenancePartRow = {
+  id: string; hotel_id: string; request_id: string; description: string; quantity: string; unit_cost: string; inventory_item_id: string | null;
+  created_at: string; created_by: string | null;
+};
+export type LostItemCategory = "electronics" | "documents" | "money" | "jewelry" | "clothing" | "bags" | "other";
+export type LostFoundRow = {
+  id: string; hotel_id: string; item_number: string; found_date: string; found_location: string | null; room_id: string | null; description: string;
+  category: LostItemCategory; found_by: string | null; storage_location: string | null; guest_id: string | null; status: "stored" | "returned" | "disposed";
+  returned_to: string | null; returned_id_number: string | null; returned_at: string | null; returned_by: string | null; closed_note: string | null;
+  created_at: string; created_by: string | null;
+};
+export type SafeDepositRow = {
+  id: string; hotel_id: string; deposit_number: string; guest_id: string | null; guest_name: string; reservation_id: string | null; room_number: string | null;
+  box_number: string; items: string; status: "held" | "returned"; deposited_at: string; received_by: string | null; returned_at: string | null;
+  returned_by: string | null; return_note: string | null;
+};
+export type LaundryService = "wash" | "iron" | "wash_iron" | "dry_clean";
+export type LaundryItemRow = {
+  id: string; hotel_id: string; name: string; service: LaundryService; price: string; charge_code_id: string; is_active: boolean; sort_order: number;
+  created_at: string; created_by: string | null;
+};
+export type LaundryStatus = "received" | "in_process" | "ready" | "delivered" | "cancelled";
+export type LaundryOrderRow = {
+  id: string; hotel_id: string; order_number: string; reservation_id: string; folio_id: string; room_number: string | null; guest_name: string;
+  status: LaundryStatus; express: boolean; express_pct: string; promised_at: string | null; notes: string | null; total: string;
+  received_at: string; received_by: string | null; delivered_at: string | null; delivered_by: string | null;
+};
+export type LaundryOrderLineRow = {
+  order_id: string; line_no: number; hotel_id: string; item_id: string; name: string; quantity: number; unit_price: string; folio_transaction_id: string | null;
+};
+export type LinenTypeRow = { id: string; hotel_id: string; name: string; par_level: number; is_active: boolean; created_at: string; created_by: string | null };
+export type LinenMovementKind = "purchased" | "sent" | "returned" | "damaged";
+export type LinenMovementRow = {
+  id: string; hotel_id: string; linen_type_id: string; movement_date: string; kind: LinenMovementKind; quantity: number; notes: string | null;
+  created_at: string; created_by: string | null;
+};
+export type EventType = "wedding" | "conference" | "meeting" | "party" | "graduation" | "other";
+export type EventStatus = "tentative" | "confirmed" | "completed" | "cancelled";
+export type EventBookingRow = {
+  id: string; hotel_id: string; event_number: string; title: string; event_type: EventType; status: EventStatus; customer_id: string | null;
+  contact_name: string; contact_phone: string | null; hall_room_id: string | null; starts_at: string; ends_at: string; guests_count: number;
+  discount: string; folio_id: string | null; notes: string | null; terms: string | null; cancel_reason: string | null; created_at: string;
+  created_by: string | null; completed_at: string | null;
+};
+export type EventItemRow = {
+  event_id: string; line_no: number; hotel_id: string; description: string; per_person: boolean; quantity: string; unit_price: string; charge_code_id: string;
+};
+export type EventTaskRow = {
+  id: string; hotel_id: string; event_id: string; due_at: string; task: string; owner: string | null; done: boolean; done_at: string | null;
+  created_at: string; created_by: string | null;
+};
+export type GuestSurveyRow = {
+  id: string; hotel_id: string; reservation_id: string | null; guest_name: string; room_number: string | null; token: string;
+  status: "pending" | "completed"; channel: "kiosk" | "link" | "paper" | null; overall: number | null; cleanliness: number | null; staff: number | null;
+  comfort: number | null; value: number | null; food: number | null; recommend: boolean | null; comment: string | null; created_at: string;
+  completed_at: string | null; entered_by: string | null;
+};
+
 type ReadOnlyTable<Row> = { Row: Row; Insert: never; Update: never; Relationships: [] };
 
 // =============================================================================
@@ -668,8 +741,26 @@ export type Database = {
       assistant_messages: Table<AssistantMessageRow, "conversation_id" | "role" | "content">;
       assistant_saved: Table<AssistantSavedRow, "hotel_id" | "content">;
       assistant_settings: Table<AssistantSettingsRow, "hotel_id">;
+      maintenance_assets: Table<MaintenanceAssetRow, "hotel_id" | "name">;
+      maintenance_requests: ReadOnlyTable<MaintenanceRequestRow>;
+      maintenance_parts: ReadOnlyTable<MaintenancePartRow>;
+      lost_found_items: ReadOnlyTable<LostFoundRow>;
+      safe_deposits: ReadOnlyTable<SafeDepositRow>;
+      laundry_items: Table<LaundryItemRow, "hotel_id" | "name" | "price" | "charge_code_id">;
+      laundry_orders: ReadOnlyTable<LaundryOrderRow>;
+      laundry_order_lines: ReadOnlyTable<LaundryOrderLineRow>;
+      linen_types: Table<LinenTypeRow, "hotel_id" | "name">;
+      linen_movements: Table<LinenMovementRow, "hotel_id" | "linen_type_id" | "movement_date" | "kind" | "quantity">;
+      event_bookings: ReadOnlyTable<EventBookingRow>;
+      event_items: ReadOnlyTable<EventItemRow>;
+      event_tasks: Table<EventTaskRow, "hotel_id" | "event_id" | "due_at" | "task">;
+      guest_surveys: ReadOnlyTable<GuestSurveyRow>;
     };
     Views: {
+      linen_balances: {
+        Row: { linen_type_id: string; hotel_id: string; name: string; par_level: number; is_active: boolean; total: number; at_laundry: number };
+        Relationships: [];
+      };
       folio_balances: {
         Row: { folio_id: string; hotel_id: string; balance: string; deposit_balance: string; net_charges: string; transaction_count: number };
         Relationships: [];
@@ -964,6 +1055,50 @@ export type Database = {
       hr_save_attendance: { Args: { p_hotel_id: string; p_date: string; p_rows: Json }; Returns: number };
       hr_save_roster: { Args: { p_hotel_id: string; p_rows: Json }; Returns: undefined };
       hr_save_employee_components: { Args: { p_employee_id: string; p_rows: Json }; Returns: undefined };
+      create_maintenance_request: {
+        Args: { p_hotel_id: string; p_title: string; p_description?: string | null; p_room_id?: string | null; p_asset_id?: string | null;
+          p_location?: string | null; p_priority?: string; p_out_of_service?: boolean; p_due_date?: string | null };
+        Returns: string;
+      };
+      update_maintenance_request: {
+        Args: { p_request_id: string; p_status?: string | null; p_assignee?: string | null; p_priority?: string | null; p_resolution?: string | null; p_labor_cost?: string | null };
+        Returns: undefined;
+      };
+      add_maintenance_part: { Args: { p_request_id: string; p_description: string; p_quantity: string; p_unit_cost?: string | null; p_item_id?: string | null }; Returns: string };
+      register_lost_item: {
+        Args: { p_hotel_id: string; p_description: string; p_found_date?: string | null; p_category?: string; p_room_id?: string | null;
+          p_found_location?: string | null; p_found_by?: string | null; p_storage_location?: string | null; p_guest_id?: string | null };
+        Returns: string;
+      };
+      close_lost_item: { Args: { p_item_id: string; p_action: string; p_returned_to?: string | null; p_id_number?: string | null; p_note?: string | null }; Returns: undefined };
+      open_safe_deposit: { Args: { p_hotel_id: string; p_guest_name: string; p_box_number: string; p_items: string; p_reservation_id?: string | null }; Returns: string };
+      return_safe_deposit: { Args: { p_deposit_id: string; p_note?: string | null }; Returns: undefined };
+      create_laundry_order: {
+        Args: { p_reservation_id: string; p_lines: Json; p_express?: boolean; p_express_pct?: string; p_promised_at?: string | null; p_notes?: string | null };
+        Returns: string;
+      };
+      update_laundry_order: { Args: { p_order_id: string; p_status: string }; Returns: undefined };
+      save_event: {
+        Args: { p_hotel_id: string; p_event_id: string | null; p_title: string; p_event_type: string; p_contact_name: string; p_contact_phone: string | null;
+          p_customer_id: string | null; p_hall_room_id: string | null; p_starts_at: string; p_ends_at: string; p_guests_count: number;
+          p_discount: string; p_notes: string | null; p_terms: string | null; p_items: Json };
+        Returns: string;
+      };
+      confirm_event: { Args: { p_event_id: string }; Returns: string };
+      complete_event: { Args: { p_event_id: string }; Returns: undefined };
+      cancel_event: { Args: { p_event_id: string; p_reason: string }; Returns: undefined };
+      submit_guest_survey: {
+        Args: { p_token: string; p_overall: number; p_cleanliness: number | null; p_staff: number | null; p_comfort: number | null; p_value: number | null;
+          p_food: number | null; p_recommend: boolean | null; p_comment: string | null; p_channel?: string };
+        Returns: undefined;
+      };
+      services_in_house: { Args: { p_hotel_id: string }; Returns: { reservation_id: string; room_number: string | null; guest_name: string }[] };
+      survey_info: { Args: { p_token: string }; Returns: { hotel_name: string; hotel_name_en: string | null; guest_name: string; room_number: string | null; valid: boolean }[] };
+      record_paper_survey: {
+        Args: { p_hotel_id: string; p_guest_name: string | null; p_room_number: string | null; p_overall: number; p_cleanliness: number | null; p_staff: number | null;
+          p_comfort: number | null; p_value: number | null; p_food: number | null; p_recommend: boolean | null; p_comment: string | null };
+        Returns: string;
+      };
     };
     Enums: {
       account_type: AccountType;
