@@ -1,6 +1,5 @@
-import { Building2 } from "lucide-react";
 import { CODE_COLUMN, hasCodes, type DocMeta, type PlainReport } from "@/lib/export/plain-report";
-import { currencyName } from "@/lib/currency-name";
+import { DocHeader, PageStyle, Signatures } from "./doc-header";
 import { cn } from "@/lib/utils";
 
 /**
@@ -13,32 +12,10 @@ export function ReportDocument({ report, meta }: { report: PlainReport; meta: Do
   const codes = hasCodes(report.rows);
   return (
     <article className={cn("report-doc mx-auto bg-white text-ink", landscape && "report-doc-landscape")}>
-      <style>{`
-        @page { size: A4 ${landscape ? "landscape" : "portrait"}; margin: 14mm 12mm 16mm;
-          @bottom-left { content: "صفحة " counter(page) " من " counter(pages); font: 500 9pt var(--font-thmanyah), sans-serif; color: #6b6964; }
-          @bottom-right { content: "${meta.hotelName.replace(/"/g, "")}"; font: 500 9pt var(--font-thmanyah), sans-serif; color: #6b6964; }
-        }
-      `}</style>
+      <PageStyle hotelName={meta.hotelName} size={`A4 ${landscape ? "landscape" : "portrait"}`} />
 
       <div>
-        <div className="flex items-start justify-between gap-8 border-b border-line pb-6">
-          <div className="flex items-center gap-4">
-            {meta.logoUrl
-              // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={meta.logoUrl} alt="" className="size-14 rounded-xl object-contain" />
-              : <div className="grid size-14 place-items-center rounded-xl bg-ink text-white"><Building2 className="size-7" strokeWidth={1.6} /></div>}
-            <div className="space-y-1">
-              <p className="text-[21px] font-bold leading-tight">{meta.hotelName}</p>
-              {meta.legal.length > 0 && <p className="text-[12.5px] text-slate-500">{meta.legal.join("، ")}</p>}
-              {meta.contact.length > 0 && <p className="text-[12.5px] text-slate-500">{meta.contact.join("، ")}</p>}
-            </div>
-          </div>
-          <dl className="grid shrink-0 grid-cols-[auto_auto] gap-x-5 gap-y-1 text-[12.5px]">
-            <dt className="text-slate-500">تاريخ الإعداد</dt><dd className="num text-start font-semibold">{meta.generatedAt}</dd>
-            {meta.preparedBy && <><dt className="text-slate-500">أعدّه</dt><dd className="font-semibold">{meta.preparedBy}</dd></>}
-            <dt className="text-slate-500">العملة</dt><dd className="font-semibold">{currencyName(meta.currency)}</dd>
-          </dl>
-        </div>
+        <DocHeader meta={meta} />
         <section className="pt-6 pb-5">
           <h1 className="text-[30px] font-bold leading-tight">{report.title}</h1>
           {report.subtitle && <p className="mt-2 text-[15px] text-slate-600">{report.subtitle}</p>}
@@ -87,10 +64,7 @@ export function ReportDocument({ report, meta }: { report: PlainReport; meta: Do
           <p className={cn("mt-6 inline-block rounded-lg px-4 py-2 text-[13px] font-semibold",
             report.note.ok ? "bg-success/10 text-success" : "bg-urgent-tint text-urgent")}>{report.note.text}</p>
         )}
-        <footer className="report-doc-sign mt-10 grid grid-cols-2 gap-16 text-[12.5px] text-slate-500">
-          <div className="border-t border-line-strong pt-2">المحاسب</div>
-          <div className="border-t border-line-strong pt-2">المدير المالي</div>
-        </footer>
+        <Signatures names={["المحاسب", "المدير المالي"]} />
       </div>
     </article>
   );

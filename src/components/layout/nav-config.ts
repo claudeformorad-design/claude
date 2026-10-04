@@ -2,7 +2,7 @@ import {
   BarChart3, Banknote, BedDouble, BookOpen, Boxes, Building2, CalendarCheck, CalendarDays, CalendarRange, Clock, ConciergeBell, DoorOpen,
   FileSpreadsheet, FileText, History, Hourglass, Landmark, LayoutDashboard, ListChecks, ListTree, Percent, PieChart, Receipt, Scale,
   ClipboardList, Coins, Scale3d, MoonStar, BrushCleaning, Utensils, BadgePercent, Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
-  IdCard, ClipboardCheck, CalendarClock, Plane, HandCoins, Calculator, SlidersHorizontal,
+  IdCard, ClipboardCheck, CalendarClock, Plane, HandCoins, Calculator, SlidersHorizontal, FileUp,
 } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import type { HotelModule } from "@/lib/supabase/database.types";
@@ -20,6 +20,8 @@ export type NavAccess = { modules: readonly string[]; permissions: readonly stri
 export const DASHBOARD_PERMISSIONS = ["reports.financial.view"] as const;
 /** صفحة الموافقات لمن يقرّر الطلبات ولمن يرسلها (من يعمل على الفوليو أو الحجوزات أو السندات) */
 export const APPROVALS_PERMISSIONS = ["approvals.decide", "folio.manage", "pms.reservations.view", "payments.view"] as const;
+/** صفحة الاستيراد لمن يملك إضافة أي نوع من البيانات القابلة للاستيراد */
+export const IMPORT_PERMISSIONS = ["pms.setup.manage", "pms.reservations.manage", "customers.manage", "inventory.manage", "hr.manage"] as const;
 
 /** الصلاحية المفردة مطلوبة، والقائمة يكفي منها واحدة */
 export const allowed = (p: NavItem["permission"], perms: ReadonlySet<string>) =>
@@ -156,6 +158,7 @@ function allGroups(l: NavLabels): NavGroup[] {
         { href: "/settings/hr", label: l.hrSettings, icon: SlidersHorizontal, permission: "hr.manage", module: "accounting" },
         { href: "/opening-balances", label: l.openingBalances, icon: Scale3d, permission: "settings.hotel.manage", module: "accounting" },
         { href: "/settings/users", label: l.users, icon: ShieldCheck, permission: "settings.users.manage" },
+        { href: "/settings/import", label: l.dataImport, icon: FileUp, permission: IMPORT_PERMISSIONS },
         { href: "/approvals", label: l.approvals, icon: ClipboardCheck, permission: APPROVALS_PERMISSIONS },
         { href: "/periods", label: l.periods, icon: CalendarCheck, permission: "gl.periods.view", module: "accounting" },
         { href: "/audit", label: l.audit, icon: History, permission: "audit.logs.view" },

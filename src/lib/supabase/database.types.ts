@@ -803,6 +803,7 @@ export type Database = {
       set_period_status: { Args: { p_period_id: string; p_status: PeriodStatus }; Returns: undefined };
       add_hotel_member: { Args: { p_hotel_id: string; p_email: string; p_role_ids: string[] }; Returns: string };
       hotel_members_overview: { Args: { p_hotel_id: string }; Returns: { user_id: string; email: string; full_name: string; is_active: boolean; role_ids: string[] }[] };
+      customer_pending_city_ledger: { Args: { p_customer_id: string }; Returns: string };
       tax_return: {
         Args: { p_hotel_id: string; p_from: string; p_to: string };
         Returns: { tax_rate_id: string; code: string; name: string; kind: TaxKind; rate: string; sales_base: string; sales_tax: string; purchases_base: string; purchases_tax: string }[];

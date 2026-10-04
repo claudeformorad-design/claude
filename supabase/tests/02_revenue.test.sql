@@ -230,9 +230,19 @@ select pg_temp.expect_error($q$
   select public.post_folio_payment((select v from ids where k = 'master'), (select v from ids where k = 'pm_credit'), 2000)
 $q$, 'cannot exceed the folio balance');
 select public.post_folio_payment((select v from ids where k = 'master'), (select v from ids where k = 'pm_credit'), 1175);
+-- كشف حساب العميل: الآجل على فوليو مفتوح يظهر في ذيل الكشف حتى الفوترة، ولغير المخوّلين ممنوع
+do $$ begin
+  assert public.customer_pending_city_ledger((select v from ids where k = 'acme')) = 1175, 'pending city ledger before invoicing';
+end $$;
+select pg_temp.act_as('00000000-0000-0000-0000-00000000dead');
+select pg_temp.expect_error($q$ select public.customer_pending_city_ledger((select v from ids where k = 'acme')) $q$, 'Permission denied');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000b2');
 
 insert into ids select 'inv_g2', public.checkout_folio((select v from ids where k = 'g2'));
 insert into ids select 'inv_master', public.checkout_folio((select v from ids where k = 'master'));
+do $$ begin
+  assert public.customer_pending_city_ledger((select v from ids where k = 'acme')) = 0, 'pending city ledger cleared by the invoice';
+end $$;
 
 select pg_temp.act_as(null);
 do $$

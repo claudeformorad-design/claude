@@ -80,6 +80,7 @@ export const ar = {
     hotelSettings: "إعدادات الفندق",
     users: "المستخدمون والأدوار",
     approvals: "الموافقات",
+    dataImport: "استيراد البيانات",
     audit: "سجل التدقيق",
     groupAdmin: "الإدارة",
     payments: "المدفوعات",

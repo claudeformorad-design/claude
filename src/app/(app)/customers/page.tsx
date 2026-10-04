@@ -78,7 +78,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
               {customers.map((x) => (
                 <ExpandableRow kind="customer" id={x.id} colSpan={canManage ? 8 : 7} key={x.id} className={x.is_active ? "" : "opacity-50"}>
                   <TableCell className="text-slate-600"><ExpandMark /><span className="num">{x.code}</span></TableCell>
-                  <TableCell className="cell-fluid"><EntityCell name={name(x)} sub={t.customers.types[x.customer_type]} href={`/invoices?customer=${x.id}`} /></TableCell>
+                  <TableCell className="cell-fluid"><EntityCell name={name(x)} sub={t.customers.types[x.customer_type]} href={`/customers/${x.id}`} /></TableCell>
                   <TableCell>{t.customers.types[x.customer_type]}</TableCell>
                   <TableCell>{x.allow_credit ? <Badge variant="success">{t.common.yes}</Badge> : <Badge variant="secondary">{t.common.no}</Badge>}</TableCell>
                   <TableCell className="text-end">{x.credit_limit ? <Money value={x.credit_limit} locale={locale} /> : ""}</TableCell>

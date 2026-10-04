@@ -213,6 +213,7 @@ const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
   [/Only your own pending requests can be withdrawn/i, "يمكنك سحب طلباتك المعلقة فقط"],
   [/Not authenticated/i, "انتهت الجلسة، سجّل الدخول مرة أخرى"],
   [/Approval request not found/i, "طلب الموافقة غير موجود"],
+  [/^Customer not found$/i, "العميل غير موجود"],
   [/Only the approver can record the outcome/i, "يسجل نتيجة التنفيذ من وافق على الطلب فقط"],
   [/User is not a member of this hotel/i, "هذا المستخدم ليس موظفًا في هذا الفندق"],
   [/^Unknown role$/i, "دور غير معروف"],
