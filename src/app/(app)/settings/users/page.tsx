@@ -15,7 +15,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { loginName } from "@/lib/auth/staff";
 import { IDLE_MINUTES, getAuthMode, usernamesOf } from "@/lib/supabase/local-auth";
 import { raise } from "@/services/errors";
-import { AddEmployee, EnableLogin } from "./users-client";
+import { AddEmployee, AddEmployeeByLink, EnableLogin } from "./users-client";
 
 /**
  * المستخدمون والأدوار: قائمة الموظفين وأدوارهم، وتفعيل تسجيل الدخول في التثبيت المحلي، والأدوار وإعداداتها.
@@ -82,7 +82,7 @@ export default async function UsersPage() {
           </Table>
           {(!local || mode === "multi") && (
             <CardContent className="border-t border-line pt-5">
-              <AddEmployee roles={roleOptions} />
+              {local ? <AddEmployee roles={roleOptions} /> : <AddEmployeeByLink roles={roleOptions} />}
             </CardContent>
           )}
         </Card>

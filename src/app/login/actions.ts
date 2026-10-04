@@ -1,6 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { tr } from "@/i18n/tr";
 import { STAFF_DOMAIN } from "@/lib/auth/staff";
@@ -10,11 +9,6 @@ import { applyPreferredLocale } from "../locale-actions";
 
 export type AuthState = { error?: "invalid" | "validation" | "generic"; info?: "check_email"; message?: string } | null;
 
-const credentials = z.object({
-  email: z.email(),
-  password: z.string().min(8).max(72),
-  full_name: z.string().trim().max(200).optional(),
-});
 
 /** حسابات الموظفين باسم مستخدم: يُكتب الاسم وحده فيُكمَل بنطاق حسابات النظام */
 const loginId = z.string().trim().toLowerCase().max(254).transform((v) => (v.includes("@") ? v : `${v}@${STAFF_DOMAIN}`)).pipe(z.email());
@@ -42,33 +36,39 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
   redirect(mustChange ? "/account/password" : "/?home=1");
 }
 
-export async function signUpAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
-  const parsed = credentials.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: "validation" };
-  let needsOnboarding = false;
-  try {
-    const supabase = await createClient();
-    const origin = (await headers()).get("origin");
-    const { data, error } = await supabase.auth.signUp({
-      email: parsed.data.email,
-      password: parsed.data.password,
-      options: { data: { full_name: parsed.data.full_name ?? "" }, emailRedirectTo: origin ? `${origin}/login` : undefined },
-    });
-    // رفض قاعدة البيانات (التسجيل بالدعوة فقط) يصل من Supabase Auth كخطأ حفظ عام
-    if (error) return { error: "generic", message: /database error/i.test(error.message) ? tr("التسجيل بالدعوة فقط، اطلب من مدير النظام إنشاء حسابك") : undefined };
-    if (!data.session) return { info: "check_email" };
-    needsOnboarding = true;
-  } catch {
-    return { error: "generic" };
-  }
-  if (needsOnboarding) {
-    redirect("/onboarding");
-  }
-  return null;
-}
-
 export async function signOutAction(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/login");
+}
+
+/** يفتح جلسة على هذا الجهاز بالكلمة العشوائية التي أصدرتها قاعدة البيانات لمرة واحدة (لا تصل للمتصفح أبدًا) */
+async function signInIssued(login: { email?: string; password?: string } | null): Promise<boolean> {
+  if (!login?.email || !login.password) return false;
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email: login.email, password: login.password });
+  return !error;
+}
+
+/** «ابدأ» على النظام الجديد: يصبح هذا الجهاز جهاز صاحب النظام */
+export async function claimOwnerAction(): Promise<AuthState> {
+  const { anonRpc } = await import("@/lib/supabase/public-rpc");
+  const { data, error } = await anonRpc<{ email: string; password: string }>("claim_owner", {});
+  if (error || !(await signInIssued(data))) {
+    const { describeDatabaseError } = await import("@/lib/accounting/errors");
+    return { error: "generic", message: (error && describeDatabaseError(error.message)) || tr("تعذر البدء، حدّث الصفحة وحاول مرة أخرى") };
+  }
+  redirect("/onboarding");
+}
+
+/** رابط دخول الموظف: يُستخدم مرة واحدة ويسجّل دخوله على جهازه */
+export async function redeemLinkAction(token: string): Promise<AuthState> {
+  if (!/^[0-9a-f]{64}$/.test(token)) return { error: "generic", message: tr("رابط الدخول غير صالح: استُخدم من قبل أو انتهت مدته، اطلب رابطًا جديدًا من المدير") };
+  const { anonRpc } = await import("@/lib/supabase/public-rpc");
+  const { data, error } = await anonRpc<{ email: string; password: string }>("redeem_access_link", { p_token: token });
+  if (error || !(await signInIssued(data))) {
+    const { describeDatabaseError } = await import("@/lib/accounting/errors");
+    return { error: "generic", message: (error && describeDatabaseError(error.message)) || tr("تعذر الدخول، حاول مرة أخرى") };
+  }
+  redirect("/?home=1");
 }

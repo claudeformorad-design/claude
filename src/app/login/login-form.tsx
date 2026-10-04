@@ -1,72 +1,34 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
-import { signInAction, signUpAction } from "./actions";
+import { signInAction } from "./actions";
 
+/** الدخول باسم المستخدم (أو البريد) وكلمة المرور التي اختارها صاحب الحساب. الحسابات تُنشأ من داخل النظام فقط */
 export function LoginForm({ t }: { t: Pick<Dictionary, "auth" | "errors"> }) {
-  const [mode, setMode] = useState<"in" | "up">("in");
-  const [inState, signIn, signingIn] = useActionState(signInAction, null);
-  const [upState, signUp, signingUp] = useActionState(signUpAction, null);
-  const state = mode === "in" ? inState : upState;
-
+  const [state, signIn, signingIn] = useActionState(signInAction, null);
   return (
-    <form action={mode === "in" ? signIn : signUp} className="space-y-4">
-      <h1 className="text-xl font-semibold">{mode === "in" ? t.auth.signInTitle : t.auth.signUpTitle}</h1>
-
+    <form action={signIn} className="space-y-4">
+      <h1 className="text-xl font-semibold">{t.auth.signInTitle}</h1>
       {state?.error && (
         <Alert variant="destructive">
-          {state.error === "invalid"
-            ? t.auth.invalidCredentials
-            : state.error === "validation"
-              ? t.errors.validation
-              : (state.message ?? t.errors.unknown)}
+          {state.error === "invalid" ? t.auth.invalidCredentials : state.error === "validation" ? t.errors.validation : (state.message ?? t.errors.unknown)}
         </Alert>
       )}
-      {state?.info === "check_email" && <Alert variant="success">{t.auth.checkEmail}</Alert>}
-
-      {mode === "up" && (
-        <div className="field-group space-y-2">
-          <Label htmlFor="full_name">{t.auth.fullName}</Label>
-          <Input id="full_name" name="full_name" autoComplete="name" />
-        </div>
-      )}
       <div className="field-group space-y-2">
-        <Label htmlFor="email">{mode === "in" ? t.auth.emailOrUsername : t.auth.email}</Label>
-        <Input id="email" name="email" type={mode === "in" ? "text" : "email"} dir="ltr" autoCapitalize="none" autoComplete={mode === "in" ? "username" : "email"} required />
+        <Label htmlFor="email">{t.auth.emailOrUsername}</Label>
+        <Input id="email" name="email" type="text" dir="ltr" autoCapitalize="none" autoComplete="username" required />
       </div>
       <div className="field-group space-y-2">
         <Label htmlFor="password">{t.auth.password}</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          dir="ltr"
-          minLength={mode === "in" ? 1 : 8}
-          maxLength={72}
-          autoComplete={mode === "in" ? "current-password" : "new-password"}
-          required
-        />
+        <Input id="password" name="password" type="password" dir="ltr" maxLength={72} autoComplete="current-password" required />
       </div>
-      <Button type="submit" className="w-full" disabled={signingIn || signingUp}>
-        {mode === "in" ? t.auth.signIn : t.auth.signUp}
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        className="w-full cursor-pointer text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setMode((m) => (m === "in" ? "up" : "in"));
-        }}
-      >
-        {mode === "in" ? t.auth.noAccount : t.auth.haveAccount}
-      </Button>
+      <Button type="submit" className="w-full" disabled={signingIn}>{t.auth.signIn}</Button>
+      <p className="text-center text-[14.5px] text-slate-500">{t.auth.noPasswordHint}</p>
     </form>
   );
 }

@@ -4,7 +4,7 @@ import { tr } from "@/i18n/tr";
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { KeyRound, LogOut } from "lucide-react";
+import { Copy, KeyRound, Link2, LogOut } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import type { ActionResult } from "@/services/errors";
 import { saveRoleAction } from "../../_admin/actions";
 import {
-  addEmployeeAction, enableLoginAction, endSessionsAction, resetPasswordAction, saveMemberAccessAction, saveRoleSettingsAction,
+  accessLinkAction, addEmployeeAction, addStaffWithLinkAction, enableLoginAction, endSessionsAction, resetPasswordAction, saveMemberAccessAction, saveRoleSettingsAction,
 } from "./actions";
 
 const ERRORS: Record<string, string> = {
@@ -65,6 +65,57 @@ export function EnableLogin() {
           <Input id="owner_confirm" type="password" dir="ltr" value={v.confirm} onChange={(e) => setV({ ...v, confirm: e.target.value })} /></div>
       </div>
       <Button type="submit" loading={pending}><KeyRound className="size-4" />{tr("تفعيل تسجيل الدخول")}</Button>
+    </form>
+  );
+}
+
+// -----------------------------------------------------------------------------
+// رابط الدخول: يُنسخ ويُرسل للموظف، ويعمل مرة واحدة خلال 7 أيام
+// -----------------------------------------------------------------------------
+function AccessLinkBox({ token, username }: { token: string; username?: string }) {
+  const url = typeof window === "undefined" ? `/join/${token}` : `${window.location.origin}/join/${token}`;
+  return (
+    <div className="space-y-2 rounded-lg border border-line bg-panel p-4" data-access-link={url}>
+      <p className="font-semibold text-ink">{tr("أرسل هذا الرابط للموظف")}</p>
+      <div className="flex gap-2">
+        <Input readOnly dir="ltr" value={url} aria-label={tr("رابط الدخول")} onFocus={(e) => e.currentTarget.select()} />
+        <Button type="button" variant="outline" onClick={() => { void navigator.clipboard?.writeText(url); toast(tr("نُسخ الرابط")); }}><Copy className="size-4" />{tr("نسخ")}</Button>
+      </div>
+      <p className="text-[14.5px] text-slate-500">
+        {tr("يفتحه الموظف ويضغط دخول فيبقى جهازه مسجّلًا. يعمل مرة واحدة خلال 7 أيام.")}
+        {username && <> {tr("اسم المستخدم إن وضع كلمة مرور لاحقًا:")} <span dir="ltr" className="num font-semibold text-ink">{username}</span></>}
+      </p>
+    </div>
+  );
+}
+
+/** النسخة المنشورة: موظف بالاسم والدور فقط، ثم رابط دخوله */
+export function AddEmployeeByLink({ roles }: { roles: Option[] }) {
+  const { pending, error, run, router } = useSubmit();
+  const [v, setV] = useState({ full_name: "", role_id: roles.find((r) => r.label.includes("استقبال"))?.id ?? roles[0]?.id ?? "" });
+  const [link, setLink] = useState<{ token: string; username: string } | null>(null);
+  return (
+    <form className="space-y-4" onSubmit={(e) => {
+      e.preventDefault();
+      setLink(null);
+      run(async () => {
+        const r = await addStaffWithLinkAction(v);
+        if (r.ok) setLink(r.data);
+        return r;
+      }, tr("تمت إضافة الموظف"), () => { setV({ ...v, full_name: "" }); router.refresh(); });
+    }}>
+      <p className="font-semibold text-ink">{tr("إضافة موظف")}</p>
+      {error && <Alert variant="destructive">{error}</Alert>}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className={field}><Label htmlFor="emp_name">{tr("اسم الموظف")}</Label>
+          <Input id="emp_name" value={v.full_name} onChange={(e) => setV({ ...v, full_name: e.target.value })} /></div>
+        <div className={field}><Label htmlFor="emp_role">{tr("الدور")}</Label>
+          <NativeSelect id="emp_role" value={v.role_id} onChange={(e) => setV({ ...v, role_id: e.target.value })}>
+            {roles.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
+          </NativeSelect></div>
+      </div>
+      <Button type="submit" loading={pending}>{tr("إضافة وإنشاء رابط دخول")}</Button>
+      {link && <AccessLinkBox token={link.token} username={link.username} />}
     </form>
   );
 }
@@ -132,8 +183,8 @@ const toLimits = (v: Partial<Record<LimitKey, string>>) =>
   Object.fromEntries(LIMITS.map((l) => [l.key, v[l.key]?.trim() ? Number(v[l.key]) : null]));
 const limitsValid = (v: Partial<Record<LimitKey, string>>) => LIMITS.every((l) => !v[l.key]?.trim() || (Number.isFinite(Number(v[l.key])) && Number(v[l.key]) >= 0));
 
-export function MemberAccessEditor({ userId, name, local, roles, permissions, rolePermissions, homeOptions, initial }: {
-  userId: string; name: string; local: boolean; roles: Option[]; permissions: PermissionItem[];
+export function MemberAccessEditor({ userId, name, local, linkMode = false, roles, permissions, rolePermissions, homeOptions, initial }: {
+  userId: string; name: string; local: boolean; linkMode?: boolean; roles: Option[]; permissions: PermissionItem[];
   rolePermissions: Record<string, string[]>; homeOptions: HomeOption[];
   initial: { role_ids: string[]; grants: string[]; denies: string[]; home_path: string | null; limits: Record<string, number | null>; is_active: boolean };
 }) {
@@ -252,7 +303,30 @@ export function MemberAccessEditor({ userId, name, local, roles, permissions, ro
       </div>
 
       {local && <AccountTools userId={userId} />}
+      {linkMode && <LinkTools userId={userId} />}
     </div>
+  );
+}
+
+function LinkTools({ userId }: { userId: string }) {
+  const { pending, error, run } = useSubmit();
+  const [token, setToken] = useState<string | null>(null);
+  return (
+    <section className="space-y-3 rounded-xl border border-line p-5">
+      <h2 className="text-[19px] font-semibold text-ink">{tr("الدخول")}</h2>
+      {error && <Alert variant="destructive">{error}</Alert>}
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" loading={pending} onClick={() => run(async () => {
+          const r = await accessLinkAction(userId);
+          if (r.ok) setToken(r.data);
+          return r;
+        }, tr("أُنشئ رابط دخول جديد"), () => undefined)}><Link2 className="size-4" />{tr("رابط دخول جديد")}</Button>
+        <Button variant="outline" loading={pending} onClick={() => run(() => endSessionsAction(userId), tr("تم إخراج الموظف من كل الأجهزة"))}>
+          <LogOut className="size-4" />{tr("إخراج من كل الأجهزة")}</Button>
+      </div>
+      {token && <AccessLinkBox token={token} />}
+      <p className="text-[14.5px] text-slate-500">{tr("الرابط الجديد يلغي أي رابط سابق لم يُستخدم. لإيقاف الموظف تمامًا اجعل حسابه موقوفًا من الأعلى.")}</p>
+    </section>
   );
 }
 

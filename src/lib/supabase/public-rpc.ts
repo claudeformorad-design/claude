@@ -7,7 +7,7 @@ import { ownerTransaction } from "./local-db";
  * استدعاء دالة متاحة للزائر بلا تسجيل دخول (دور anon) مثل استبيان النزيل برمزه.
  * محليًا: معاملة بدور anon فتسري نفس الصلاحيات الممنوحة في قاعدة البيانات، ومع Supabase: عميل بالمفتاح العام بلا جلسة.
  */
-export async function anonRpc<T = unknown>(fn: "survey_info" | "submit_guest_survey", args: Record<string, unknown>): Promise<{ data: T | null; error: { message: string } | null }> {
+export async function anonRpc<T = unknown>(fn: "survey_info" | "submit_guest_survey" | "system_has_owner" | "claim_owner" | "redeem_access_link", args: Record<string, unknown>): Promise<{ data: T | null; error: { message: string } | null }> {
   if (isSupabaseConfigured()) {
     const { url, anonKey } = supabaseEnv();
     const client = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });

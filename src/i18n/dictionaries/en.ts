@@ -122,6 +122,7 @@ export const en: Dictionary = {
     signUpTitle: "Create account",
     email: "Email",
     emailOrUsername: "Email or username",
+    noPasswordHint: "No password? Ask the manager for a sign-in link for your device.",
     password: "Password",
     fullName: "Full name",
     signIn: "Sign in",

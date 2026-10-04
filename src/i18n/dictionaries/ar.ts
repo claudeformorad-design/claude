@@ -120,6 +120,7 @@ export const ar = {
     signUpTitle: "إنشاء حساب",
     email: "البريد الإلكتروني",
     emailOrUsername: "البريد الإلكتروني أو اسم المستخدم",
+    noPasswordHint: "لا تملك كلمة مرور؟ اطلب من المدير رابط دخول لجهازك.",
     password: "كلمة المرور",
     fullName: "الاسم الكامل",
     signIn: "دخول",

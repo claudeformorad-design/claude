@@ -84,6 +84,33 @@ export async function addEmployeeAction(input: unknown): Promise<ActionResult<st
   return r;
 }
 
+/** النسخة المنشورة: موظف جديد بالاسم والدور، ورابط دخول لمرة واحدة يُرسل له */
+export async function addStaffWithLinkAction(input: unknown): Promise<ActionResult<{ username: string; token: string }>> {
+  const ctx = await requireAppContext(PERMISSIONS.usersManage);
+  if (!isSupabaseConfigured()) return fail;
+  const p = z.object({ full_name: z.string().trim().min(2).max(120), role_id: z.uuid() }).safeParse(input);
+  if (!p.success) return msg(tr("اكتب اسم الموظف"));
+  const r = await toActionResult(async () => {
+    const { data, error } = await ctx.supabase.rpc("add_staff_member", { p_hotel_id: ctx.hotel.id, p_full_name: p.data.full_name, p_role_ids: [p.data.role_id] });
+    raise(error);
+    const d = data as unknown as { username: string; token: string };
+    return { username: d.username, token: d.token };
+  });
+  if (r.ok) revalidatePath("/settings/users");
+  return r;
+}
+
+/** رابط دخول جديد لموظف (يلغي روابطه السابقة غير المستخدمة) */
+export async function accessLinkAction(userId: string): Promise<ActionResult<string>> {
+  const ctx = await requireAppContext(PERMISSIONS.usersManage);
+  if (!isSupabaseConfigured() || !z.uuid().safeParse(userId).success) return fail;
+  return toActionResult(async () => {
+    const { data, error } = await ctx.supabase.rpc("create_access_link", { p_hotel_id: ctx.hotel.id, p_user_id: userId });
+    raise(error);
+    return data as string;
+  });
+}
+
 /** حفظ صلاحيات موظف دفعة واحدة */
 export async function saveMemberAccessAction(userId: string, input: unknown): Promise<ActionResult<undefined>> {
   const ctx = await requireAppContext(PERMISSIONS.usersManage);

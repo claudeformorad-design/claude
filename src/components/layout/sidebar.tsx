@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, LayoutGroup } from "motion/react";
 import * as m from "motion/react-m";
-import { ChevronDown, LogOut, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { ChevronDown, KeyRound, LogOut, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import Link from "@/components/link";
 import { cn } from "@/lib/utils";
@@ -140,6 +140,12 @@ export function Sidebar({
 
       {/* الأسفل: الخروج (عند وجود حسابات) وزر التوسيع / الطي */}
       <div className={cn("mt-3 flex gap-2 border-t border-line pt-3", expanded ? "px-4" : "flex-col items-center")}>
+        {signOut && (
+          <Link href="/account/password" title={tr("كلمة المرور")} aria-label={tr("كلمة المرور")}
+            className="flex size-10 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-subtle hover:text-ink">
+            <KeyRound className="size-[18px] stroke-[1.9]" />
+          </Link>
+        )}
         {signOut && (
           <form action={signOut} className={expanded ? "" : "contents"}>
             <button type="submit" title={tr("تسجيل الخروج")} aria-label={tr("تسجيل الخروج")}

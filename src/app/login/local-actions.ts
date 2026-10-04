@@ -55,7 +55,8 @@ async function changeSupabasePassword(formData: FormData): Promise<LocalAuthStat
   const p = z.object({ current: z.string().max(200), password: z.string().max(200), confirm: z.string().max(200) }).safeParse(Object.fromEntries(formData));
   if (!p.success) return { error: "validation" };
   const app = ctx as AppContext;
-  const forced = app.hotel ? app.profile?.must_change_password === true : false;
+  // الحساب الذي دخل برابط أو بزر البدء ولم يختر كلمة مرور بعد لا يملك كلمة حالية يعرفها
+  const forced = (app.hotel ? app.profile?.must_change_password === true : false) || app.profile?.password_chosen === false;
   if (p.data.password !== p.data.confirm) return { error: "mismatch" };
   if (!strongPassword(p.data.password) || p.data.password.length > 72) return { error: "weak" };
   const supabase = await createClient();

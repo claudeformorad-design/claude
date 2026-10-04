@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import type { Database } from "./database.types";
 import { isSupabaseConfigured, SESSION_COOKIE_OPTIONS, supabaseEnv } from "./env";
 
-const PUBLIC_PATHS = ["/login", "/survey/"];
+const PUBLIC_PATHS = ["/login", "/survey/", "/join/"];
 
 /**
  * سياسة أمان المحتوى برمز (nonce) جديد لكل طلب: لا يُنفَّذ أي سكربت إلا سكربتات النظام نفسه،
