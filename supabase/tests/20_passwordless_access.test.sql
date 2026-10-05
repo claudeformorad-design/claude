@@ -29,18 +29,34 @@ delete from app.system_settings;
 set role anon;
 do $$ begin assert not public.system_has_owner(), 'no owner yet'; end $$;
 insert into v select 'owner', public.claim_owner();
-select pg_temp.expect_error($q$ select public.claim_owner() $q$, 'already has an owner');
-do $$ begin assert public.system_has_owner(), 'owner exists'; end $$;
+-- قبل أن يضع المالك كلمة مرور يبقى «ابدأ» متاحًا ويعيد الدخول لنفس الحساب
+do $$ begin assert not public.system_has_owner(), 'still open until a password is chosen'; end $$;
+insert into v select 'owner_again', public.claim_owner();
 -- الزائر لا يرى الإعدادات ولا ينشئ حسابات مباشرة
 select pg_temp.expect_error($q$ select * from app.access_links $q$, 'permission denied');
 reset role;
 do $$ begin
+  assert (select j ->> 'email' from v where k = 'owner_again') = 'admin@nazeel.local', 'same owner account';
+  assert (select count(*) from auth.users where email = 'admin@nazeel.local') = 1, 'no second owner';
+  -- الدخول الجديد يلغي كلمة الدخول السابقة
+  assert not (select encrypted_password = extensions.crypt((select j ->> 'password' from v where k = 'owner'), encrypted_password)
+              from auth.users where email = 'admin@nazeel.local'), 'old login replaced';
+  update v set j = (select j from v where k = 'owner_again') where k = 'owner';
   assert (select j ->> 'email' from v where k = 'owner') = 'admin@nazeel.local', 'owner login email';
   assert (select encrypted_password = extensions.crypt((select j ->> 'password' from v where k = 'owner'), encrypted_password)
           from auth.users where email = 'admin@nazeel.local'), 'issued password works';
   assert app.invite_only(), 'sign-up closed after claim';
 end $$;
 select pg_temp.expect_error($q$ insert into auth.users (id, email) values (gen_random_uuid(), 'x@evil.test') $q$, 'invitation only');
+
+-- بعد أن يختار المالك كلمة مرور يُغلق الباب نهائيًا
+select pg_temp.act_as((select id from auth.users where email = 'admin@nazeel.local'));
+select public.confirm_password_changed();
+reset role;
+set role anon;
+do $$ begin assert public.system_has_owner(), 'closed after password'; end $$;
+select pg_temp.expect_error($q$ select public.claim_owner() $q$, 'already has an owner');
+reset role;
 
 -- المالك ينشئ الفندق ويضيف موظفًا بالاسم والدور، فيحصل على رابط
 insert into v select 'owner_id', to_jsonb(id::text) from auth.users where email = 'admin@nazeel.local';
