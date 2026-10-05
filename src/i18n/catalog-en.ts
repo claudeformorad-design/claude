@@ -2370,4 +2370,6 @@ export const EN: Record<string, string> = {
   "كل البيانات ستُحذف نهائيًا. للتأكيد اكتب كلمة {0} في الخانة.": "All data will be deleted permanently. To confirm, type the word {0} in the box.",
   "كلمة التأكيد": "Confirmation word",
   "فورمات الآن": "Format now",
+  "إدارة الفندق والمحاسبة": "Hotel management and accounting",
+  "ضع كلمة مرور لاحقًا لتدخل من أي جهاز.": "Set a password later to sign in from any device.",
 };

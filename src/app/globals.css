@@ -405,13 +405,16 @@ tbody.rows-animate > tr:hover > td { background-color: #fbfaf8; }
   50% { opacity: 0.55; }
 }
 
-/* نوافذ الفندق في صفحة البداية: تضيء وتخفت ببطء */
-.auth-window { animation: auth-window 9s ease-in-out infinite; }
-@keyframes auth-window {
-  0%, 100% { fill-opacity: 0.08; }
-  35%, 70% { fill-opacity: 0.85; }
-}
-@media (prefers-reduced-motion: reduce) { .auth-window { animation: none; fill-opacity: 0.6; } }
+/* علامة نزيل في صفحة البداية: الغرفة، ثم الحرف، ثم يصل النزيل */
+.mark-room { transform-origin: 50% 50%; animation: mark-room 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.mark-letter { animation: mark-fade 0.5s ease-out 0.3s both; }
+.mark-guest { transform-box: fill-box; transform-origin: 50% 50%; animation: mark-guest 0.75s cubic-bezier(0.34, 1.4, 0.64, 1) 0.55s both; }
+.auth-in { animation: auth-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes mark-room { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
+@keyframes mark-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mark-guest { 0% { opacity: 0; transform: translateY(-46px) scale(0.6); } 60% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+@keyframes auth-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .mark-room, .mark-letter, .mark-guest, .auth-in { animation: none; } }
 
 @keyframes page-enter {
   from { opacity: 0; transform: translateY(6px); }
