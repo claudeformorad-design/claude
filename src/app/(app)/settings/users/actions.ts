@@ -9,7 +9,7 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import { DASHBOARD_SECTIONS, LIMITS, QUICK_ACTIONS } from "@/lib/auth/access-catalog";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import {
-  USERNAME_RE, createLocalAccount, discardLocalAccount, enableMultiUser, endSessionsOf, getAuthMode, normalizeUsername, setLocalPassword,
+  USERNAME_RE, closeLocalAccount, createLocalAccount, discardLocalAccount, enableMultiUser, endSessionsOf, getAuthMode, normalizeUsername, setLocalPassword,
   strongPassword, usernameTaken,
 } from "@/lib/supabase/local-auth";
 import type { Json } from "@/lib/supabase/database.types";
@@ -183,6 +183,38 @@ export async function endSessionsAction(userId: string): Promise<ActionResult<un
   }
   await endSessionsOf(userId);
   return { ok: true, data: undefined };
+}
+
+/** إيقاف دخول الموظف أو إعادته. الإيقاف يُخرجه من كل أجهزته فورًا ويلغي روابطه غير المستخدمة */
+export async function setStaffActiveAction(userId: string, active: boolean): Promise<ActionResult<undefined>> {
+  const ctx = await requireAppContext(PERMISSIONS.usersManage);
+  if (!z.uuid().safeParse(userId).success || typeof active !== "boolean") return fail;
+  const r = await toActionResult(async () => {
+    const { error } = await ctx.supabase.rpc("set_staff_active", { p_hotel_id: ctx.hotel.id, p_user_id: userId, p_active: active });
+    raise(error);
+    return undefined;
+  });
+  if (r.ok) {
+    if (!active && !isSupabaseConfigured()) await endSessionsOf(userId);
+    revalidatePath("/settings/users", "layout");
+  }
+  return r;
+}
+
+/** حذف الموظف من الفندق: لا يدخل بعدها، وتبقى عملياته السابقة باسمه في السجلات */
+export async function removeStaffAction(userId: string): Promise<ActionResult<undefined>> {
+  const ctx = await requireAppContext(PERMISSIONS.usersManage);
+  if (!z.uuid().safeParse(userId).success) return fail;
+  const r = await toActionResult(async () => {
+    const { error } = await ctx.supabase.rpc("remove_staff_member", { p_hotel_id: ctx.hotel.id, p_user_id: userId });
+    raise(error);
+    return undefined;
+  });
+  if (r.ok) {
+    if (!isSupabaseConfigured()) await closeLocalAccount(userId);
+    revalidatePath("/settings/users", "layout");
+  }
+  return r;
 }
 
 /** إعدادات الدور في هذا الفندق: الصفحة الأولى، الإجراءات السريعة، أقسام اللوحة المخفية، والحدود */

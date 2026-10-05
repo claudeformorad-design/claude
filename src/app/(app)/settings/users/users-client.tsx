@@ -4,7 +4,8 @@ import { tr } from "@/i18n/tr";
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, KeyRound, Link2, LogOut } from "lucide-react";
+import { Check, ChevronDown, Copy, KeyRound, Link2, LogOut, PauseCircle, PlayCircle, RotateCcw, Trash2 } from "lucide-react";
+import { Dialog } from "@/components/ui/dialog";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,8 @@ import { cn } from "@/lib/utils";
 import type { ActionResult } from "@/services/errors";
 import { saveRoleAction } from "../../_admin/actions";
 import {
-  accessLinkAction, addEmployeeAction, addStaffWithLinkAction, enableLoginAction, endSessionsAction, resetPasswordAction, saveMemberAccessAction, saveRoleSettingsAction,
+  accessLinkAction, addEmployeeAction, addStaffWithLinkAction, enableLoginAction, endSessionsAction, removeStaffAction, resetPasswordAction, saveMemberAccessAction,
+  saveRoleSettingsAction, setStaffActiveAction,
 } from "./actions";
 
 const ERRORS: Record<string, string> = {
@@ -152,9 +154,8 @@ export function AddEmployee({ roles }: { roles: Option[] }) {
 }
 
 // -----------------------------------------------------------------------------
-// شجرة الصلاحيات: لكل صلاحية «حسب الدور» أو «سماح» أو «منع»
+// صلاحيات الموظف: مفتاح لكل صلاحية، والمختلف عن وظيفته يُحفظ استثناءً (سماح أو منع)
 // -----------------------------------------------------------------------------
-type Choice = "role" | "allow" | "deny";
 
 function groupsOf(permissions: PermissionItem[]) {
   const order: string[] = [];
@@ -183,171 +184,260 @@ const toLimits = (v: Partial<Record<LimitKey, string>>) =>
   Object.fromEntries(LIMITS.map((l) => [l.key, v[l.key]?.trim() ? Number(v[l.key]) : null]));
 const limitsValid = (v: Partial<Record<LimitKey, string>>) => LIMITS.every((l) => !v[l.key]?.trim() || (Number.isFinite(Number(v[l.key])) && Number(v[l.key]) >= 0));
 
-export function MemberAccessEditor({ userId, name, local, linkMode = false, roles, permissions, rolePermissions, homeOptions, initial }: {
-  userId: string; name: string; local: boolean; linkMode?: boolean; roles: Option[]; permissions: PermissionItem[];
-  rolePermissions: Record<string, string[]>; homeOptions: HomeOption[];
-  initial: { role_ids: string[]; grants: string[]; denies: string[]; home_path: string | null; limits: Record<string, number | null>; is_active: boolean };
+/** مفتاح تشغيل وإيقاف. mixed: بعض عناصر المجموعة مفعّلة */
+function Switch({ on, mixed = false, onChange, label }: { on: boolean; mixed?: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <button type="button" role="switch" aria-checked={mixed ? "mixed" : on} aria-label={label}
+      onClick={(e) => { e.stopPropagation(); onChange(mixed ? true : !on); }}
+      className={cn("relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200",
+        on ? "bg-success" : mixed ? "bg-success-dot/45" : "bg-slate-300")}>
+      <span className={cn("absolute size-5 rounded-full bg-white shadow-sm transition-[inset-inline-start] duration-200",
+        on ? "start-[22px]" : mixed ? "start-[12px]" : "start-0.5")} />
+    </button>
+  );
+}
+
+/** أسماء الأقسام التي يغطيها الدور، الأكثر صلاحيات أولًا، لتعرف الوظيفة من نظرة */
+function areasOf(codes: string[], permissions: PermissionItem[]) {
+  const held = new Set(codes);
+  const counts = new Map<string, number>();
+  for (const p of permissions) {
+    if (!held.has(p.code)) continue;
+    const t = PERMISSION_GROUPS[p.module] ?? p.module;
+    counts.set(t, (counts.get(t) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([t]) => t);
+}
+
+export function MemberAccessEditor({ userId, name, roles, permissions, rolePermissions, homeOptions, isActive, initial }: {
+  userId: string; name: string; roles: Option[]; permissions: PermissionItem[];
+  rolePermissions: Record<string, string[]>; homeOptions: HomeOption[]; isActive: boolean;
+  initial: { role_ids: string[]; grants: string[]; denies: string[]; home_path: string | null; limits: Record<string, number | null> };
 }) {
-  const { pending, error, run } = useSubmit();
-  const [roleIds, setRoleIds] = useState(new Set(initial.role_ids));
-  const [choice, setChoice] = useState<Record<string, Choice>>(() => ({
-    ...Object.fromEntries(initial.grants.map((c) => [c, "allow" as Choice])),
-    ...Object.fromEntries(initial.denies.map((c) => [c, "deny" as Choice])),
-  }));
-  const [home, setHome] = useState(initial.home_path ?? "");
-  const [limits, setLimits] = useState<Partial<Record<LimitKey, string>>>(() =>
-    Object.fromEntries(Object.entries(initial.limits ?? {}).map(([k, v]) => [k, v == null ? "" : String(v)])));
-  const [active, setActive] = useState(initial.is_active);
+  const { pending, error, run, router } = useSubmit();
+  const start = useMemo(() => ({
+    roles: new Set(initial.role_ids),
+    overrides: { ...Object.fromEntries(initial.grants.map((c) => [c, true])), ...Object.fromEntries(initial.denies.map((c) => [c, false])) } as Record<string, boolean>,
+    home: initial.home_path ?? "",
+    limits: Object.fromEntries(Object.entries(initial.limits ?? {}).map(([k, v]) => [k, v == null ? "" : String(v)])) as Partial<Record<LimitKey, string>>,
+  }), [initial]);
+  const [roleIds, setRoleIds] = useState(start.roles);
+  const [overrides, setOverrides] = useState(start.overrides);
+  const [home, setHome] = useState(start.home);
+  const [limits, setLimits] = useState(start.limits);
+  const [open, setOpen] = useState<Set<string>>(new Set());
+  const [dirty, setDirty] = useState(false);
   const [filter, setFilter] = useState("");
+  const touch = () => setDirty(true);
 
   const fromRoles = useMemo(() => new Set([...roleIds].flatMap((r) => rolePermissions[r] ?? [])), [roleIds, rolePermissions]);
-  const effective = (code: string) => choice[code] === "allow" || (choice[code] !== "deny" && fromRoles.has(code));
-  const count = permissions.filter((p) => effective(p.code)).length;
-  const groups = groupsOf(permissions.filter((p) => !filter.trim() || p.label.includes(filter.trim()) || (PERMISSION_GROUPS[p.module] ?? "").includes(filter.trim())));
+  const has = (code: string) => overrides[code] ?? fromRoles.has(code);
+  const changed = (code: string) => code in overrides && overrides[code] !== fromRoles.has(code);
+  const changedCount = permissions.filter((p) => changed(p.code)).length;
+  const count = permissions.filter((p) => has(p.code)).length;
+  const q = filter.trim();
+  const groups = groupsOf(permissions.filter((p) => !q || p.label.includes(q) || (PERMISSION_GROUPS[p.module] ?? "").includes(q)));
 
+  const setMany = (codes: string[], on: boolean) => {
+    setOverrides((x) => {
+      const n = { ...x };
+      for (const c of codes) { if (on === fromRoles.has(c)) delete n[c]; else n[c] = on; }
+      return n;
+    });
+    touch();
+  };
+  const toggleOpen = (m: string) => setOpen((x) => { const n = new Set(x); if (n.has(m)) n.delete(m); else n.add(m); return n; });
+
+  const reset = () => { setRoleIds(start.roles); setOverrides(start.overrides); setHome(start.home); setLimits(start.limits); setDirty(false); };
   const save = () => {
     if (!limitsValid(limits)) { toast(tr("الحدود أرقام موجبة فقط"), "error"); return; }
-    const grants = Object.entries(choice).filter(([, c]) => c === "allow").map(([k]) => k);
-    const denies = Object.entries(choice).filter(([, c]) => c === "deny").map(([k]) => k);
-    run(() => saveMemberAccessAction(userId, { role_ids: [...roleIds], grants, denies, home_path: home || null, limits: toLimits(limits), is_active: active }),
-      tr("تم حفظ صلاحيات {0}", name));
+    const grants = permissions.filter((p) => overrides[p.code] === true && !fromRoles.has(p.code)).map((p) => p.code);
+    const denies = permissions.filter((p) => overrides[p.code] === false && fromRoles.has(p.code)).map((p) => p.code);
+    run(() => saveMemberAccessAction(userId, { role_ids: [...roleIds], grants, denies, home_path: home || null, limits: toLimits(limits), is_active: isActive }),
+      tr("تم حفظ صلاحيات {0}", name), () => { setDirty(false); router.refresh(); });
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {error && <Alert variant="destructive">{error}</Alert>}
 
-      <section className="space-y-3">
-        <h2 className="text-[19px] font-semibold text-ink">{tr("الدور")}</h2>
-        <div className="flex flex-wrap gap-2">
+      <section className="surface space-y-4 p-6">
+        <h2 className="text-[19px] font-semibold text-ink">{tr("الوظيفة")}</h2>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {roles.map((r) => {
             const on = roleIds.has(r.id);
+            const areas = areasOf(rolePermissions[r.id] ?? [], permissions);
             return (
-              <label key={r.id} className={cn("flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-[15.5px] font-medium transition-colors",
-                on ? "border-ink bg-ink text-white" : "border-line bg-white text-slate-700 hover:border-line-strong")}>
+              <label key={r.id} className={cn("relative flex cursor-pointer flex-col gap-1.5 rounded-xl border p-4 transition-colors",
+                on ? "border-ink bg-panel shadow-[inset_0_0_0_1px_var(--color-ink)]" : "border-line bg-white hover:border-line-strong")}>
                 <input type="checkbox" className="sr-only" checked={on}
-                  onChange={(e) => { const n = new Set(roleIds); if (e.target.checked) n.add(r.id); else n.delete(r.id); setRoleIds(n); }} />
-                {r.label}
+                  onChange={(e) => { const n = new Set(roleIds); if (e.target.checked) n.add(r.id); else n.delete(r.id); setRoleIds(n); touch(); }} />
+                <span className="flex items-center justify-between gap-2">
+                  <span className="text-[16.5px] font-semibold text-ink">{r.label}</span>
+                  <span className={cn("grid size-5 place-items-center rounded-full border", on ? "border-ink bg-ink text-white" : "border-line-strong")}>
+                    {on && <Check className="size-3.5" />}
+                  </span>
+                </span>
+                <span className="text-[14px] leading-relaxed text-slate-500">
+                  {areas.length === 0 ? tr("بلا صلاحيات") : areas.slice(0, 3).join(tr("، "))}
+                  {areas.length > 3 && <span className="num ms-1.5 rounded bg-subtle px-1.5 py-px text-[13px] text-slate-600" dir="ltr">+{areas.length - 3}</span>}
+                </span>
               </label>
             );
           })}
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <div className={field}>
-          <Label htmlFor="member_home">{tr("الصفحة الأولى بعد الدخول")}</Label>
-          <NativeSelect id="member_home" value={home} onChange={(e) => setHome(e.target.value)}>
-            <option value="">{tr("حسب الدور")}</option>
-            {homeOptions.map((o) => <option key={o.href} value={o.href}>{o.label}</option>)}
-          </NativeSelect>
-        </div>
-        <div className={field}>
-          <Label>{tr("حالة الحساب")}</Label>
-          <label className="flex h-11 cursor-pointer items-center gap-2.5 rounded-md border border-line px-3 text-[15.5px] text-ink">
-            <input type="checkbox" className="size-4" checked={active} onChange={(e) => setActive(e.target.checked)} />
-            {active ? tr("الحساب نشط ويستطيع الدخول") : tr("الحساب موقوف، ولا يستطيع الدخول")}
-          </label>
-        </div>
-      </section>
-
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2 className="text-[19px] font-semibold text-ink">{tr("الصلاحيات")}</h2>
-            <p className="text-[15px] text-slate-500">{tr("حسب الدور ما لم تختر سماحًا أو منعًا لهذا الموظف. يملك الآن")}{" "}<span className="num">{count}</span>{" "}{tr("صلاحية.")}</p>
+      <section className="surface overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-6 pb-4">
+          <div className="space-y-1">
+            <h2 className="text-[19px] font-semibold text-ink">{tr("ماذا يستطيع أن يفعل")}</h2>
+            <p className="text-[15px] text-slate-500"><span className="num font-semibold text-ink">{count}</span> {tr("من")} <span className="num">{permissions.length}</span> {tr("صلاحية مفعّلة")}</p>
           </div>
-          <Input className="w-64" placeholder={tr("بحث في الصلاحيات")} value={filter} onChange={(e) => setFilter(e.target.value)} aria-label={tr("بحث في الصلاحيات")} />
+          <div className="flex flex-wrap items-center gap-2">
+            {changedCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={() => { setOverrides({}); touch(); }}>
+                <RotateCcw className="size-4" />{tr("كما في الوظيفة")} <span className="num text-slate-500">({changedCount})</span>
+              </Button>
+            )}
+            <Input className="w-56" placeholder={tr("بحث")} value={filter} onChange={(e) => setFilter(e.target.value)} aria-label={tr("بحث في الصلاحيات")} />
+          </div>
         </div>
-        <div className="grid gap-4 lg:grid-cols-2">
-          {groups.map((g) => (
-            <div key={g.module} className="rounded-xl border border-line">
-              <p className="border-b border-line bg-panel px-4 py-2.5 font-semibold text-ink">{g.title}</p>
-              <ul className="divide-y divide-line">
-                {g.items.map((p) => {
-                  const c = choice[p.code] ?? "role";
-                  const on = effective(p.code);
-                  return (
-                    <li key={p.code} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5">
-                      <span className={cn("min-w-0 text-[15.5px]", on ? "text-ink" : "text-slate-500")}>
-                        {p.label}
-                        {c === "role" && <span className="ms-2 text-[13.5px] text-slate-500">{fromRoles.has(p.code) ? tr("من الدور") : ""}</span>}
-                      </span>
-                      <span className="inline-flex rounded-md border border-line p-0.5" role="radiogroup" aria-label={p.label}>
-                        {([["role", tr("حسب الدور")], ["allow", tr("سماح")], ["deny", tr("منع")]] as [Choice, string][]).map(([k, label]) => (
-                          <button key={k} type="button" role="radio" aria-checked={c === k}
-                            onClick={() => setChoice((x) => { const n = { ...x }; if (k === "role") delete n[p.code]; else n[p.code] = k; return n; })}
-                            className={cn("rounded px-2.5 py-1 text-[14px] font-medium transition-colors",
-                              c === k ? (k === "deny" ? "bg-urgent text-white" : k === "allow" ? "bg-success text-white" : "bg-ink text-white") : "text-slate-600 hover:bg-subtle")}>
-                            {label}
-                          </button>
-                        ))}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-        </div>
+        <ul className="divide-y divide-line border-t border-line">
+          {groups.map((g) => {
+            const codes = g.items.map((p) => p.code);
+            const onCount = codes.filter(has).length;
+            const expanded = open.has(g.module) || !!q;
+            return (
+              <li key={g.module}>
+                <div className="flex cursor-pointer items-center gap-3 px-6 py-3.5 transition-colors hover:bg-panel" onClick={() => toggleOpen(g.module)}>
+                  <ChevronDown className={cn("size-4 shrink-0 text-slate-400 transition-transform", expanded && "rotate-180")} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-semibold text-ink">{g.title}</span>
+                    <span className="text-[14px] text-slate-500">
+                      {onCount === 0 ? tr("لا شيء") : onCount === codes.length ? tr("كل الصلاحيات") : <><span className="num">{onCount}</span> {tr("من")} <span className="num">{codes.length}</span></>}
+                    </span>
+                  </span>
+                  <Switch on={onCount === codes.length} mixed={onCount > 0 && onCount < codes.length} label={g.title} onChange={(v) => setMany(codes, v)} />
+                </div>
+                {expanded && (
+                  <ul className="bg-panel/60 pb-2">
+                    {g.items.map((p) => (
+                      <li key={p.code} className="flex items-center gap-3 py-2.5 ps-[52px] pe-6">
+                        <span className={cn("min-w-0 flex-1 text-[15.5px]", has(p.code) ? "text-ink" : "text-slate-500")}>
+                          {p.label}
+                          {changed(p.code) && <Badge variant="info" className="ms-2 text-[13px]">{has(p.code) ? tr("مضافة له") : tr("ممنوعة عنه")}</Badge>}
+                        </span>
+                        <Switch on={has(p.code)} label={p.label} onChange={(v) => setMany([p.code], v)} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-[19px] font-semibold text-ink">{tr("الحدود المالية لهذا الموظف")}</h2>
-        <p className="text-[15px] text-slate-500">{tr("اتركها فارغة ليُطبَّق حد الدور. ما يتجاوز الحد يرسله الموظف طلب موافقة للمدير.")}</p>
-        <LimitsFields value={limits} onChange={setLimits} inheritLabel={tr("حسب الدور")} idPrefix="member" />
-      </section>
+      <details className="surface group p-6">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+          <span className="text-[19px] font-semibold text-ink">{tr("إعدادات إضافية")}</span>
+          <ChevronDown className="size-4 text-slate-400 transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="mt-5 space-y-6">
+          <div className={cn(field, "max-w-md")}>
+            <Label htmlFor="member_home">{tr("الصفحة الأولى بعد الدخول")}</Label>
+            <NativeSelect id="member_home" value={home} onChange={(e) => { setHome(e.target.value); touch(); }}>
+              <option value="">{tr("حسب الوظيفة")}</option>
+              {homeOptions.map((o) => <option key={o.href} value={o.href}>{o.label}</option>)}
+            </NativeSelect>
+          </div>
+          <div className="space-y-3">
+            <p className="font-semibold text-ink">{tr("الحدود المالية")}</p>
+            <p className="text-[15px] text-slate-500">{tr("ما يتجاوز الحد يرسله الموظف طلب موافقة لك. الفارغ يتبع الوظيفة.")}</p>
+            <LimitsFields value={limits} onChange={(v) => { setLimits(v); touch(); }} inheritLabel={tr("حسب الوظيفة")} idPrefix="member" />
+          </div>
+        </div>
+      </details>
 
-      <div className="flex flex-wrap gap-2 border-t border-line pt-5">
-        <Button onClick={save} loading={pending}>{tr("حفظ الصلاحيات")}</Button>
+      <div className={cn("sticky bottom-4 z-20 transition-[opacity,transform] duration-200", dirty ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0")}>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line-strong bg-white px-5 py-3 shadow-[0_8px_30px_rgba(31,29,27,0.12)]">
+          <span className="font-medium text-ink">{tr("لديك تغييرات لم تُحفظ")}</span>
+          <span className="flex gap-2">
+            <Button variant="ghost" onClick={reset} disabled={pending}>{tr("تراجع")}</Button>
+            <Button onClick={save} loading={pending}>{tr("حفظ التغييرات")}</Button>
+          </span>
+        </div>
       </div>
-
-      {local && <AccountTools userId={userId} />}
-      {linkMode && <LinkTools userId={userId} />}
     </div>
   );
 }
 
-function LinkTools({ userId }: { userId: string }) {
-  const { pending, error, run } = useSubmit();
+/** حالة الحساب وأزراره: رابط دخول، إيقاف وإعادة، إخراج من الأجهزة، كلمة مؤقتة (محليًا)، حذف */
+export function StaffAccountPanel({ userId, name, isActive, linkMode, local, joined, linkExpiresAt }: {
+  userId: string; name: string; isActive: boolean; linkMode: boolean; local: boolean; joined: boolean; linkExpiresAt: string | null;
+}) {
+  const { pending, error, run, router } = useSubmit();
   const [token, setToken] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState(false);
+  const [pw, setPw] = useState("");
+  const status = !isActive
+    ? { tone: "secondary" as const, text: tr("موقوف"), hint: tr("لا يستطيع الدخول حتى تعيد تفعيله.") }
+    : linkMode && !joined
+      ? linkExpiresAt
+        ? { tone: "warning" as const, text: tr("لم يدخل بعد"), hint: tr("أرسلت له رابطًا ولم يفتحه بعد.") }
+        : { tone: "warning" as const, text: tr("لم يدخل بعد"), hint: tr("لا يوجد رابط ساري. أنشئ رابطًا جديدًا وأرسله له.") }
+      : { tone: "success" as const, text: tr("نشط"), hint: tr("يستطيع الدخول والعمل بصلاحياته.") };
+
   return (
-    <section className="space-y-3 rounded-xl border border-line p-5">
-      <h2 className="text-[19px] font-semibold text-ink">{tr("الدخول")}</h2>
+    <section className="surface space-y-4 p-6">
       {error && <Alert variant="destructive">{error}</Alert>}
+      <div className="flex flex-wrap items-center gap-3">
+        <Badge variant={status.tone}>{status.text}</Badge>
+        <span className="text-[15.5px] text-slate-600">{status.hint}</span>
+      </div>
       <div className="flex flex-wrap gap-2">
-        <Button variant="outline" loading={pending} onClick={() => run(async () => {
-          const r = await accessLinkAction(userId);
-          if (r.ok) setToken(r.data);
-          return r;
-        }, tr("أُنشئ رابط دخول جديد"), () => undefined)}><Link2 className="size-4" />{tr("رابط دخول جديد")}</Button>
-        <Button variant="outline" loading={pending} onClick={() => run(() => endSessionsAction(userId), tr("تم إخراج الموظف من كل الأجهزة"))}>
-          <LogOut className="size-4" />{tr("إخراج من كل الأجهزة")}</Button>
+        {linkMode && isActive && (
+          <Button variant="outline" loading={pending} onClick={() => run(async () => {
+            const r = await accessLinkAction(userId);
+            if (r.ok) setToken(r.data);
+            return r;
+          }, tr("أُنشئ رابط دخول جديد"), () => router.refresh())}><Link2 className="size-4" />{tr("رابط دخول جديد")}</Button>
+        )}
+        {isActive ? (
+          <Button variant="outline" loading={pending} onClick={() => run(() => setStaffActiveAction(userId, false), tr("أُوقف دخول {0}", name))}>
+            <PauseCircle className="size-4" />{tr("إيقاف الدخول")}</Button>
+        ) : (
+          <Button loading={pending} onClick={() => run(() => setStaffActiveAction(userId, true), tr("أُعيد تفعيل {0}", name))}>
+            <PlayCircle className="size-4" />{tr("إعادة التفعيل")}</Button>
+        )}
+        {isActive && (
+          <Button variant="ghost" loading={pending} onClick={() => run(() => endSessionsAction(userId), tr("تم إخراج الموظف من كل الأجهزة"))}>
+            <LogOut className="size-4" />{tr("إخراج من كل الأجهزة")}</Button>
+        )}
+        <Button variant="destructive" className="ms-auto" onClick={() => setConfirm(true)}><Trash2 className="size-4" />{tr("حذف الموظف")}</Button>
       </div>
       {token && <AccessLinkBox token={token} />}
-      <p className="text-[14.5px] text-slate-500">{tr("الرابط الجديد يلغي أي رابط سابق لم يُستخدم. لإيقاف الموظف تمامًا اجعل حسابه موقوفًا من الأعلى.")}</p>
-    </section>
-  );
-}
-
-function AccountTools({ userId }: { userId: string }) {
-  const { pending, error, run } = useSubmit();
-  const [pw, setPw] = useState("");
-  return (
-    <section className="space-y-3 rounded-xl border border-line p-5">
-      <h2 className="text-[19px] font-semibold text-ink">{tr("الحساب")}</h2>
-      {error && <Alert variant="destructive">{error}</Alert>}
-      <div className="flex flex-wrap items-end gap-3">
-        <div className={cn(field, "w-64")}>
-          <Label htmlFor="reset_password">{tr("كلمة مرور مؤقتة جديدة")}</Label>
-          <Input id="reset_password" dir="ltr" value={pw} onChange={(e) => setPw(e.target.value)} />
+      {local && (
+        <div className="flex flex-wrap items-end gap-3 border-t border-line pt-4">
+          <div className={cn(field, "w-64")}>
+            <Label htmlFor="reset_password">{tr("كلمة مرور مؤقتة جديدة")}</Label>
+            <Input id="reset_password" dir="ltr" value={pw} onChange={(e) => setPw(e.target.value)} />
+          </div>
+          <Button variant="outline" loading={pending} disabled={!pw} onClick={() => run(() => resetPasswordAction(userId, pw), tr("تم تعيين كلمة مرور مؤقتة"), () => setPw(""))}>
+            <KeyRound className="size-4" />{tr("تعيين كلمة المرور")}</Button>
         </div>
-        <Button variant="outline" loading={pending} disabled={!pw} onClick={() => run(() => resetPasswordAction(userId, pw), tr("تم تعيين كلمة مرور مؤقتة"), () => setPw(""))}>
-          <KeyRound className="size-4" />{tr("تعيين كلمة المرور")}</Button>
-        <Button variant="outline" loading={pending} onClick={() => run(() => endSessionsAction(userId), tr("تم إخراج الموظف من كل الأجهزة"))}>
-          <LogOut className="size-4" />{tr("إخراج من كل الأجهزة")}</Button>
-      </div>
-      <p className="text-[14.5px] text-slate-500">{tr("يغيّر الموظف كلمة المرور المؤقتة عند دخوله التالي.")}</p>
+      )}
+      <Dialog open={confirm} onClose={() => setConfirm(false)} title={tr("حذف {0}؟", name)} width="sm">
+        <div className="space-y-5">
+          <p className="leading-relaxed text-slate-600">{tr("لن يستطيع الدخول بعد الآن، وتُلغى روابطه وصلاحياته. العمليات التي سجّلها تبقى باسمه في السجلات.")}</p>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setConfirm(false)}>{tr("إلغاء")}</Button>
+            <Button variant="destructive" loading={pending} onClick={() => run(() => removeStaffAction(userId), tr("حُذف {0}", name), () => router.push("/settings/users"))}>
+              <Trash2 className="size-4" />{tr("حذف الموظف")}</Button>
+          </div>
+        </div>
+      </Dialog>
     </section>
   );
 }

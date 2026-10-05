@@ -23,7 +23,7 @@ export function useDialogClose() {
  * نافذة منبثقة في منتصف الشاشة: خلفية مغبشة، حواف ناعمة، وحركة دخول هادئة.
  * كل نماذج الإدخال في النظام تُفتح بها بدل العمود الجانبي.
  */
-function Dialog({
+export function Dialog({
   open, onClose, title, description, width = "md", children,
 }: {
   open: boolean;

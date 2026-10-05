@@ -12,8 +12,8 @@ import { signInAction } from "./actions";
 export function LoginForm({ t }: { t: Pick<Dictionary, "auth" | "errors"> }) {
   const [state, signIn, signingIn] = useActionState(signInAction, null);
   return (
-    <form action={signIn} className="space-y-4">
-      <h1 className="text-xl font-semibold">{t.auth.signInTitle}</h1>
+    <form action={signIn} className="space-y-5">
+      <h1 className="text-[30px] font-bold text-ink">{t.auth.signInTitle}</h1>
       {state?.error && (
         <Alert variant="destructive">
           {state.error === "invalid" ? t.auth.invalidCredentials : state.error === "validation" ? t.errors.validation : (state.message ?? t.errors.unknown)}
@@ -27,7 +27,7 @@ export function LoginForm({ t }: { t: Pick<Dictionary, "auth" | "errors"> }) {
         <Label htmlFor="password">{t.auth.password}</Label>
         <Input id="password" name="password" type="password" dir="ltr" maxLength={72} autoComplete="current-password" required />
       </div>
-      <Button type="submit" className="w-full" disabled={signingIn}>{t.auth.signIn}</Button>
+      <Button type="submit" className="h-12 w-full rounded-xl text-[17.5px] font-semibold" disabled={signingIn}>{t.auth.signIn}</Button>
       <p className="text-center text-[14.5px] text-slate-500">{t.auth.noPasswordHint}</p>
     </form>
   );

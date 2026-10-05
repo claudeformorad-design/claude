@@ -1,6 +1,6 @@
 import { tr } from "@/i18n/tr";
-import { BrandMark } from "@/components/brand-mark";
-import { LanguageSwitch } from "@/components/language-switch";
+import { ShieldCheck } from "lucide-react";
+import { AuthShell } from "@/components/auth-shell";
 import { JoinButton } from "./join-button";
 
 /**
@@ -10,16 +10,18 @@ import { JoinButton } from "./join-button";
 export default async function JoinPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   return (
-    <main className="relative flex min-h-screen items-center justify-center p-4">
-      <LanguageSwitch className="absolute end-4 top-4" />
-      <div className="surface animate-rise w-full max-w-md space-y-4 p-8">
-        <div className="flex items-center gap-3">
-          <BrandMark className="size-11" />
-          <p className="text-lg font-semibold text-ink">{tr("الدخول إلى النظام")}</p>
+    <AuthShell>
+      <div className="space-y-7">
+        <div className="space-y-3">
+          <h1 className="text-[30px] font-bold text-ink">{tr("مرحبًا بك")}</h1>
+          <p className="text-[16.5px] leading-relaxed text-slate-600">{tr("هذا رابط دخولك الخاص من المدير. اضغط دخول فيبقى جهازك مسجّلًا.")}</p>
         </div>
-        <p className="leading-relaxed text-slate-600">{tr("هذا رابط دخولك الخاص من المدير. اضغط دخول فيبقى جهازك مسجّلًا، والرابط لا يعمل بعدها لغيرك.")}</p>
         <JoinButton token={token} />
+        <p className="flex items-start gap-2.5 text-[14.5px] leading-relaxed text-slate-500">
+          <ShieldCheck className="mt-0.5 size-[18px] shrink-0 text-success" />
+          {tr("الرابط يعمل مرة واحدة فقط، فلا تشاركه مع أحد.")}
+        </p>
       </div>
-    </main>
+    </AuthShell>
   );
 }

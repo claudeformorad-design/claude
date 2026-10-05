@@ -18,8 +18,8 @@ const MESSAGES = {
 export function LocalLoginForm() {
   const [state, action, pending] = useActionState(localSignInAction, null);
   return (
-    <form action={action} className="space-y-4">
-      <h1 className="text-xl font-semibold text-ink">{tr("تسجيل الدخول")}</h1>
+    <form action={action} className="space-y-5">
+      <h1 className="text-[30px] font-bold text-ink">{tr("تسجيل الدخول")}</h1>
       {state?.error && <Alert variant="destructive">{MESSAGES[state.error as keyof typeof MESSAGES] ?? MESSAGES.invalid}</Alert>}
       <div className="field-group space-y-2">
         <Label htmlFor="username">{tr("اسم المستخدم")}</Label>
@@ -29,7 +29,7 @@ export function LocalLoginForm() {
         <Label htmlFor="password">{tr("كلمة المرور")}</Label>
         <Input id="password" name="password" type="password" dir="ltr" autoComplete="current-password" required />
       </div>
-      <Button type="submit" className="w-full" loading={pending}>{tr("دخول")}</Button>
+      <Button type="submit" className="h-12 w-full rounded-xl text-[17.5px] font-semibold" loading={pending}>{tr("دخول")}</Button>
     </form>
   );
 }

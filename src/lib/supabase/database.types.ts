@@ -1104,6 +1104,9 @@ export type Database = {
       system_has_owner: { Args: Record<string, never>; Returns: boolean };
       claim_owner: { Args: Record<string, never>; Returns: Json };
       redeem_access_link: { Args: { p_token: string }; Returns: Json };
+      set_staff_active: { Args: { p_hotel_id: string; p_user_id: string; p_active: boolean }; Returns: undefined };
+      remove_staff_member: { Args: { p_hotel_id: string; p_user_id: string }; Returns: boolean };
+      staff_link_status: { Args: { p_hotel_id: string }; Returns: { user_id: string; joined: boolean; link_expires_at: string | null }[] };
       survey_info: { Args: { p_token: string }; Returns: { hotel_name: string; hotel_name_en: string | null; guest_name: string; room_number: string | null; valid: boolean }[] };
       record_paper_survey: {
         Args: { p_hotel_id: string; p_guest_name: string | null; p_room_number: string | null; p_overall: number; p_cleanliness: number | null; p_staff: number | null;

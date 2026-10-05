@@ -209,9 +209,9 @@ await step("manager deactivates the cashier", async () => {
   await go("/settings/users");
   await page.locator("a", { hasText: "سالم الكاشير" }).first().click();
   await page.waitForURL(/settings\/users\/[0-9a-f-]{36}$/);
-  await page.getByText("الحساب نشط ويستطيع الدخول").click();
-  await page.getByRole("button", { name: "حفظ الصلاحيات" }).click();
-  await toast("تم حفظ صلاحيات");
+  await page.getByRole("button", { name: "إيقاف الدخول" }).click();
+  await toast("أُوقف دخول");
+  await bodyHas("إعادة التفعيل");
   await go("/settings/users");
   await bodyHas("موقوف");
 });
@@ -228,14 +228,43 @@ await step("per-employee deny removes a page", async () => {
   await go("/settings/users");
   await page.locator("a", { hasText: "منى المحاسبة" }).first().click();
   await page.waitForURL(/settings\/users\/[0-9a-f-]{36}$/);
-  await page.getByPlaceholder("بحث في الصلاحيات").fill("عرض القيود");
-  const group = page.getByRole("radiogroup", { name: "عرض القيود اليومية" });
-  await group.getByRole("radio", { name: "منع" }).click();
-  await page.getByRole("button", { name: "حفظ الصلاحيات" }).click();
+  await page.getByLabel("بحث في الصلاحيات").fill("عرض القيود");
+  const sw = page.getByRole("switch", { name: "عرض القيود اليومية" });
+  if (await sw.getAttribute("aria-checked") !== "true") throw new Error("journal view should come from the role");
+  await sw.click();
+  await bodyHas("ممنوعة عنه", "لديك تغييرات لم تُحفظ");
+  await page.getByRole("button", { name: "حفظ التغييرات" }).click();
   await toast("تم حفظ صلاحيات");
+  await page.reload(); await page.waitForLoadState("networkidle");
+  await page.getByLabel("بحث في الصلاحيات").fill("عرض القيود");
+  if (await page.getByRole("switch", { name: "عرض القيود اليومية" }).getAttribute("aria-checked") !== "false") throw new Error("deny not saved");
   await login("mona", "Mona12345");
   await go("/journal");
   await bodyHas("403");
+});
+
+await step("reactivated cashier signs in again", async () => {
+  await login("admin", "Admin1234");
+  await go("/settings/users");
+  await page.locator("a", { hasText: "سالم الكاشير" }).first().click();
+  await page.waitForURL(/settings\/users\/[0-9a-f-]{36}$/);
+  await page.getByRole("button", { name: "إعادة التفعيل" }).click();
+  await toast("أُعيد تفعيل");
+  await login("salem", "Salem1234");
+  if (page.url().includes("/login")) throw new Error("reactivated cashier could not sign in");
+});
+await step("manager deletes an employee", async () => {
+  await login("admin", "Admin1234");
+  await addEmployee("موظف مؤقت", "temp1", /استقبال/);
+  await page.locator("a", { hasText: "موظف مؤقت" }).first().click();
+  await page.waitForURL(/settings\/users\/[0-9a-f-]{36}$/);
+  await page.getByRole("button", { name: "حذف الموظف" }).first().click();
+  await page.getByRole("dialog").getByRole("button", { name: "حذف الموظف" }).click();
+  await page.waitForURL((u) => u.pathname === "/settings/users");
+  await page.waitForLoadState("networkidle");
+  if ((await page.locator("main").innerText()).includes("موظف مؤقت")) throw new Error("deleted employee still listed");
+  await login("temp1", "Temp1234");
+  if (!page.url().includes("/login")) throw new Error("deleted employee signed in");
 });
 
 console.log(`\nproblems (${problems.length}):`);

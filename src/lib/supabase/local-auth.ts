@@ -201,6 +201,14 @@ export async function discardLocalAccount(userId: string): Promise<void> {
   });
 }
 
+/** حساب حُذف من آخر فندق له: لا دخول بعد اليوم، ويتحرر اسم المستخدم. يبقى الحساب لحفظ اسمه على المستندات السابقة */
+export async function closeLocalAccount(userId: string): Promise<void> {
+  await ownerTransaction(async (tx) => {
+    await tx.query("delete from local_meta.sessions where user_id = $1", [userId]);
+    await tx.query("delete from local_meta.credentials where user_id = $1 and not exists (select 1 from public.hotel_members where user_id = $1)", [userId]);
+  });
+}
+
 export async function setLocalPassword(userId: string, password: string, mustChange: boolean): Promise<void> {
   const hash = await hashPassword(password);
   await ownerTransaction(async (tx) => {

@@ -25,10 +25,12 @@ export default async function UsersPage() {
   const ctx = await requireAppContext(PERMISSIONS.usersManage);
   const local = !isSupabaseConfigured();
   const mode = local ? await getAuthMode() : "multi";
-  const [members, roles] = await Promise.all([
+  const [members, roles, links] = await Promise.all([
     ctx.supabase.rpc("hotel_members_overview", { p_hotel_id: ctx.hotel.id }),
     ctx.supabase.from("roles").select("id, code, name_ar, name_en, is_system").order("is_system", { ascending: false }).order("code"),
+    local ? null : ctx.supabase.rpc("staff_link_status", { p_hotel_id: ctx.hotel.id }),
   ]);
+  const joined = new Map((links?.data ?? []).map((l) => [l.user_id, l.joined]));
   raise(members.error);
   const roleRows = (roles.data ?? []).filter((r) => !EDITION.hiddenRoles.has(r.code));
   const roleName = new Map(roleRows.map((r) => [r.id, localName(r)]));
@@ -60,7 +62,7 @@ export default async function UsersPage() {
         <Card className="overflow-hidden">
           <CardHeader><CardTitle className="justify-between"><span>{tr("الموظفون")}</span><span className="num font-medium text-slate-500">{list.length}</span></CardTitle></CardHeader>
           <Table>
-            <TableHeader><TableRow><TableHead>{tr("الموظف")}</TableHead><TableHead>{tr("الأدوار")}</TableHead><TableHead>{tr("الحالة")}</TableHead><TableHead /></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>{tr("الموظف")}</TableHead><TableHead>{tr("الوظيفة")}</TableHead><TableHead>{tr("الحالة")}</TableHead><TableHead /></TableRow></TableHeader>
             <TableBody>
               {list.map((m) => {
                 const self = m.user_id === ctx.user.id;
@@ -70,10 +72,12 @@ export default async function UsersPage() {
                     <TableCell className="cell-fluid"><EntityCell name={tr(m.full_name) || login || m.email} sub={login ? <span dir="ltr">{login}</span> : undefined}
                       href={self ? undefined : `/settings/users/${m.user_id}`} /></TableCell>
                     <TableCell className="text-slate-600">{m.role_ids.map((id) => roleName.get(id)).filter(Boolean).join(tr("، ")) || tr("بلا دور")}</TableCell>
-                    <TableCell>{m.is_active ? <Badge variant="success">{tr("نشط")}</Badge> : <Badge variant="secondary">{tr("موقوف")}</Badge>}</TableCell>
+                    <TableCell>{!m.is_active ? <Badge variant="secondary">{tr("موقوف")}</Badge>
+                      : !self && joined.get(m.user_id) === false ? <Badge variant="warning">{tr("لم يدخل بعد")}</Badge>
+                      : <Badge variant="success">{tr("نشط")}</Badge>}</TableCell>
                     <TableCell className="text-end">
                       {self ? <span className="text-[15px] text-slate-500">{tr("حسابك")}</span>
-                        : <Link href={`/settings/users/${m.user_id}`} className="inline-flex items-center gap-1 font-medium text-action">{tr("الصلاحيات")}<ChevronLeft className="size-4" /></Link>}
+                        : <Link href={`/settings/users/${m.user_id}`} className="inline-flex items-center gap-1 font-medium text-action">{tr("إدارة")}<ChevronLeft className="size-4" /></Link>}
                     </TableCell>
                   </TableRow>
                 );
