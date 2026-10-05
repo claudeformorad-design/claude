@@ -7,6 +7,7 @@ import {
   ArrowRight, Bookmark, FileBarChart, GraduationCap, LifeBuoy, Menu, MoreHorizontal, Pin, PinOff, Search, SlidersHorizontal, SquarePen, Trash2, X,
 } from "lucide-react";
 import { deleteConversationAction, listConversationsAction, updateConversationAction } from "@/app/assistant/actions";
+import Link from "@/components/link";
 import { Popover } from "@/components/ui/popover";
 import { toast } from "@/components/ui/toast";
 import { callAction } from "@/lib/action-error";
@@ -51,8 +52,10 @@ function groupConversations(list: Conversation[]) {
  * صفحة المساعد الكاملة: شريط جانبي خاص (محادثة جديدة، بحث، الأدوات، المحادثات، والعودة للنظام)،
  * ومساحة رئيسية للبداية أو المحادثة أو إحدى الأدوات.
  */
-export function Workspace({ enabled, userName, hotelName, initialConversation, conversations, settings, sections }: {
+export function Workspace({ enabled, canSetup = false, userName, hotelName, initialConversation, conversations, settings, sections }: {
   enabled: boolean;
+  /** صاحب النظام يرى زر إضافة المفتاح حين لا يكون المساعد مفعّلًا */
+  canSetup?: boolean;
   userName: string;
   hotelName: string;
   initialConversation?: string;
@@ -168,7 +171,10 @@ export function Workspace({ enabled, userName, hotelName, initialConversation, c
             <div className="max-w-md space-y-3 text-center">
               <AssistantMark className="mx-auto size-10 text-ink" />
               <p className="text-[22px] font-bold text-ink">{tr("المساعد غير مفعّل بعد")}</p>
-              <p className="text-[16px] leading-relaxed text-slate-500">{tr("يحتاج مفتاح مزود الذكاء الاصطناعي على الخادم، GEMINI_API_KEY أو OPENROUTER_API_KEY. اطلب من المسؤول التقني ضبطه ثم أعد فتح الصفحة.")}</p>
+              <p className="text-[16px] leading-relaxed text-slate-500">
+                {canSetup ? tr("أضف مفتاح Google Gemini أو OpenRouter من إعدادات الفندق، ويعمل المساعد فورًا لكل الموظفين.") : tr("يفعّله صاحب النظام من إعدادات الفندق. اطلب منه ذلك ثم أعد فتح الصفحة.")}
+              </p>
+              {canSetup && <Link href="/settings/hotel#assistant" className="mt-2 inline-flex h-11 items-center justify-center rounded-lg bg-ink px-5 font-medium text-white hover:bg-black">{tr("إضافة المفتاح")}</Link>}
             </div>
           </div>
         ) : view === "home" ? (

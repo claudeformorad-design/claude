@@ -1,8 +1,8 @@
-import { tr } from "@/i18n/tr";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAppContext, type AppContext } from "@/lib/auth/context";
-import { assistantConfig, ProviderError, streamTurn, type ChatMessage } from "@/lib/assistant/provider";
+import { tr } from "@/i18n/tr";
+import { classifyProviderError, getAssistantConfig, problemText, streamTurn, type ChatMessage } from "@/lib/assistant/provider";
 import { systemPrompt } from "@/lib/assistant/prompt";
 import { TOOL_SPECS, runTool } from "@/lib/assistant/tools";
 import { addMessage, createConversation, dropLastAnswer, getConversation, getSettings } from "@/services/assistant.service";
@@ -22,16 +22,11 @@ const body = z.object({
 const MAX_ROUNDS = 12;
 /** آخر الرسائل التي تُرسل للنموذج من تاريخ المحادثة */
 const HISTORY = 20;
+/** مهلة الخادم المستضاف 60 ثانية: بعد هذا الوقت تكون الجولة التالية للإجابة فقط بلا أدوات، وتُقطع أي جولة تتجاوز الحد */
+const SOFT_DEADLINE = 38_000;
+const HARD_DEADLINE = 54_000;
 
-const friendly = (e: unknown) => {
-  if (e instanceof ProviderError) {
-    if (e.status === 401 || e.status === 403) return tr("مفتاح مزود الذكاء الاصطناعي غير صالح أو بلا صلاحية، راجع إعداده على الخادم.");
-    if (e.status === 404) return tr("النموذج المحدد غير متاح لدى المزود، راجع قيمة AI_MODEL.");
-    if (e.status === 429) return tr("تجاوزت حد الاستخدام لدى المزود، حاول بعد قليل.");
-    return tr("تعذّر الحصول على رد من مزود الذكاء الاصطناعي، حاول مرة أخرى.");
-  }
-  return tr("تعذّر الاتصال بمزود الذكاء الاصطناعي، تحقق من الاتصال وحاول مرة أخرى.");
-};
+const friendly = (e: unknown) => problemText(classifyProviderError(e));
 
 /**
  * محادثة المساعد: تُحفظ في قاعدة البيانات لكل مستخدم، ويُبث الرد سطرًا سطرًا بصيغة NDJSON:
@@ -39,10 +34,10 @@ const friendly = (e: unknown) => {
  * {type:"tool"} الأداة التي يقرأ بها الآن، ثم {type:"done"} أو {type:"error"}.
  */
 export async function POST(request: Request) {
-  const cfg = assistantConfig();
-  if (!cfg) return NextResponse.json({ error: "not_configured" }, { status: 503 });
   const ctx = await getAppContext();
   if (!ctx.user || !ctx.hotel) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const cfg = await getAssistantConfig();
+  if (!cfg) return NextResponse.json({ error: "not_configured" }, { status: 503 });
   const app = ctx as AppContext;
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success || (!parsed.data.question && !parsed.data.retry)) return NextResponse.json({ error: "validation" }, { status: 400 });
@@ -73,11 +68,13 @@ export async function POST(request: Request) {
       const send = (o: Record<string, unknown>) => { try { controller.enqueue(encoder.encode(`${JSON.stringify(o)}\n`)); } catch { /* أغلق المستخدم الاتصال */ } };
       send({ type: "conversation", id: convId, title: conversation.title });
       let answer = "";
+      const started = Date.now();
+      const signal = AbortSignal.any([request.signal, AbortSignal.timeout(HARD_DEADLINE)]);
       try {
         for (let round = 0; ; round++) {
-          const last = round === MAX_ROUNDS;
+          const last = round === MAX_ROUNDS || Date.now() - started > SOFT_DEADLINE;
           if (answer && !answer.endsWith("\n")) answer += "\n\n";
-          const turn = await streamTurn(cfg, messages, last ? [] : TOOL_SPECS, (text) => { answer += text; send({ type: "text", text }); }, request.signal);
+          const turn = await streamTurn(cfg, messages, last ? [] : TOOL_SPECS, (text) => { answer += text; send({ type: "text", text }); }, signal);
           if (!turn.toolCalls.length || last) break;
           messages.push({
             role: "assistant", content: turn.text || null, tool_calls: turn.toolCalls,
@@ -91,11 +88,17 @@ export async function POST(request: Request) {
         if (answer.trim()) await addMessage(app.supabase, convId, "assistant", answer.trim());
         send({ type: "done" });
       } catch (e) {
-        const aborted = request.signal.aborted || (e instanceof Error && e.name === "AbortError");
+        const aborted = request.signal.aborted;
         // الرد الجزئي عند الإيقاف يبقى في المحادثة، والخطأ يُحفظ مميزًا ولا يُرسل للنموذج لاحقًا
         if (aborted) { if (answer.trim()) await addMessage(app.supabase, convId, "assistant", answer.trim()).catch(() => {}); }
         else {
-          const message = friendly(e);
+          // ما وصل من الرد قبل الخطأ يُحفظ كما هو، ثم رسالة الخطأ منفصلة بعده
+          const timedOut = signal.aborted;
+          const partial = answer.trim();
+          if (partial) await addMessage(app.supabase, convId, "assistant", partial).catch(() => {});
+          const message = timedOut ? tr("استغرق الرد وقتًا أطول من المسموح. اسأل سؤالًا أضيق، مثل فترة أقصر أو قسم واحد.")
+            : partial && classifyProviderError(e) === "network" ? tr("انقطع الرد من مزود الذكاء الاصطناعي قبل اكتماله. اضغط إعادة المحاولة.")
+            : friendly(e);
           await addMessage(app.supabase, convId, "assistant", message, true).catch(() => {});
           send({ type: "error", message });
         }

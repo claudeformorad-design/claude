@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
-const { assistantConfig, readStream, streamTurn, ProviderError } = await import("./provider");
+const { assistantConfig, readStream, streamTurn, ProviderError, classifyProviderError, providerFromKey, maskKey, buildConfig } = await import("./provider");
 
 const sse = (events: unknown[]) => {
   const text = events.map((e) => `data: ${typeof e === "string" ? e : JSON.stringify(e)}\n\n`).join("");
@@ -63,5 +63,30 @@ describe("streamTurn", () => {
     const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect((init.headers as Record<string, string>).Authorization).toBe("Bearer secret");
     expect(JSON.parse(init.body as string)).not.toHaveProperty("tools");
+  });
+});
+
+describe("provider diagnostics", () => {
+  const gemini = (code: number, status: string, message: string) => new ProviderError(code, JSON.stringify([{ error: { code, message, status } }]));
+  it("reads Gemini errors wrapped in an array", () => {
+    expect(classifyProviderError(gemini(400, "INVALID_ARGUMENT", "API key not valid. Please pass a valid API key."))).toBe("invalid_key");
+    expect(classifyProviderError(gemini(400, "FAILED_PRECONDITION", "User location is not supported for the API use."))).toBe("location");
+    expect(classifyProviderError(gemini(429, "RESOURCE_EXHAUSTED", "Resource has been exhausted (e.g. check quota)."))).toBe("rate_limit");
+    expect(classifyProviderError(gemini(404, "NOT_FOUND", "models/gemini-9 is not found for API version v1beta"))).toBe("model");
+    expect(classifyProviderError(gemini(503, "UNAVAILABLE", "The model is overloaded."))).toBe("unavailable");
+  });
+  it("reads OpenRouter errors and network failures", () => {
+    expect(classifyProviderError(new ProviderError(401, JSON.stringify({ error: { message: "No auth credentials found", code: 401 } })))).toBe("invalid_key");
+    expect(classifyProviderError(new ProviderError(402, JSON.stringify({ error: { message: "Insufficient credits", code: 402 } })))).toBe("credits");
+    expect(classifyProviderError(new TypeError("fetch failed"))).toBe("network");
+  });
+  it("recognizes key types and never shows more than the last four characters", () => {
+    expect(providerFromKey("AIzaSyA1234567890abcdefghijklmnopqrs")).toBe("gemini");
+    expect(providerFromKey("sk-or-v1-0123456789abcdef0123456789")).toBe("openrouter");
+    expect(providerFromKey("sk-proj-something")).toBeNull();
+    expect(providerFromKey("AIza with space")).toBeNull();
+    expect(maskKey("AIzaSyA1234567890abcdefghijklmnopqrs")).toBe("••••pqrs");
+    expect(buildConfig("gemini", "k").url).toBe("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions");
+    expect(buildConfig("openrouter", "k", "  ").model).toBe("google/gemini-3.8-flash");
   });
 });

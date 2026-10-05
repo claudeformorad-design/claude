@@ -11,6 +11,9 @@ import { toMoney } from "@/lib/accounting/money";
 import { listDepartments } from "@/services/accounts.service";
 import { getI18n } from "@/i18n/server";
 import { FormatCard } from "./format-card";
+import { AssistantCard } from "./assistant-card";
+import { isSystemAdmin } from "@/lib/auth/owner";
+import { maskKey, resolveAssistant } from "@/lib/assistant/provider";
 import { saveDepartmentAction, saveHotelAction } from "../../_admin/actions";
 import { SimpleForm } from "../../_assets/simple-form";
 import { ResetHotelDataButton } from "./reset-data-button";
@@ -40,6 +43,9 @@ export default async function HotelSettingsPage() {
   const auto = local && ctx.can(PERMISSIONS.hotelManage)
     ? await import("@/lib/supabase/auto-backup").then((m) => ({ ...m.getAutoBackup(), files: m.listBackupFiles() }))
     : null;
+  // ما يخص النظام كله (مفتاح المساعد والفورمات) لصاحبه فقط
+  const admin = await isSystemAdmin(ctx);
+  const ai = admin ? await resolveAssistant().catch(() => null) : null;
   const amt = (v: string | null) => (v ? toMoney(v).toString() : "");
   return (
     <>
@@ -97,7 +103,13 @@ export default async function HotelSettingsPage() {
           }} />
         )}
 
-        {ctx.can(PERMISSIONS.hotelManage) && isSupabaseConfigured() && <FormatCard errors={t.errors} />}
+        {admin && (
+          <AssistantCard errors={t.errors} state={ai
+            ? { source: ai.source, provider: ai.config.provider, masked: maskKey(ai.config.key), model: ai.config.model }
+            : { source: null, provider: null, masked: null, model: null }} />
+        )}
+
+        {admin && isSupabaseConfigured() && <FormatCard errors={t.errors} />}
 
         {ctx.can(PERMISSIONS.hotelManage) && !isSupabaseConfigured() && (
           <div className="space-y-5">

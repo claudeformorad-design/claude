@@ -32,6 +32,8 @@ export function useChat(onSaved?: (c: { id: string; title: string }) => void) {
   const [status, setStatus] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const abort = React.useRef<AbortController | null>(null);
+  // قفل فوري ضد الضغط المزدوج: الحالة busy لا تتحدث إلا بعد إعادة الرسم
+  const busyRef = React.useRef(false);
   const idRef = React.useRef<string | null>(null);
   const savedRef = React.useRef(onSaved);
   React.useEffect(() => { savedRef.current = onSaved; });
@@ -59,17 +61,20 @@ export function useChat(onSaved?: (c: { id: string; title: string }) => void) {
   }, []);
 
   const run = React.useCallback(async (payload: { question?: string; retry?: boolean }, page?: PageInfo) => {
+    busyRef.current = true;
     setBusy(true);
     setStatus(tr("يفكر"));
     const ctrl = new AbortController();
     abort.current = ctrl;
+    // الخطأ بعد جزء من الرد يظهر في فقاعة مستقلة، فيبقى ما وصل مقروءًا كما هو
     const append = (text: string, error = false) => setMessages((all) => {
-      const next = [...all];
-      const last = next[next.length - 1]!;
-      next[next.length - 1] = { ...last, content: last.content + text, error: error || last.error };
-      return next;
+      const last = all[all.length - 1]!;
+      if (error && last.content.trim() && !last.error) return [...all, { id: localId(), role: "assistant", content: text.trim(), error: true }];
+      return [...all.slice(0, -1), { ...last, content: last.content + text, error: error || last.error }];
     });
     let afterTool = false;
+    let finished = false;
+    let received = false;
     try {
       const res = await fetch("/api/assistant", {
         method: "POST",
@@ -77,7 +82,16 @@ export function useChat(onSaved?: (c: { id: string; title: string }) => void) {
         body: JSON.stringify({ conversationId: idRef.current ?? undefined, ...payload, page }),
         signal: ctrl.signal,
       });
-      if (!res.ok || !res.body) throw new Error(res.status === 503 ? tr("المساعد غير مفعّل على الخادم.") : tr("تعذّر الوصول إلى المساعد، حاول مرة أخرى."));
+      if (!res.ok || !res.body) {
+        const code = res.status === 503 ? "not_configured" : ((await res.json().catch(() => null)) as { error?: string } | null)?.error;
+        throw new Error(
+          code === "not_configured" ? tr("المساعد غير مفعّل بعد. يفعّله صاحب النظام من إعدادات الفندق.")
+          : code === "unauthorized" || res.status === 401 ? tr("انتهت جلستك، سجّل الدخول من جديد ثم أعد السؤال.")
+          : code === "not_found" ? tr("هذه المحادثة لم تعد موجودة، ابدأ محادثة جديدة.")
+          : code === "validation" ? tr("السؤال طويل جدًا أو فارغ، اختصره وأعد المحاولة.")
+          : tr("تعذّر الوصول إلى المساعد، حاول مرة أخرى."),
+        );
+      }
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -89,13 +103,16 @@ export function useChat(onSaved?: (c: { id: string; title: string }) => void) {
         buffer = lines.pop() ?? "";
         for (const line of lines) {
           if (!line.trim()) continue;
-          const ev = JSON.parse(line) as { type: string; text?: string; name?: string; message?: string; id?: string; title?: string };
+          let parsed: unknown;
+          try { parsed = JSON.parse(line); } catch { continue; }
+          const ev = parsed as { type: string; text?: string; name?: string; message?: string; id?: string; title?: string };
           if (ev.type === "conversation" && ev.id) {
             idRef.current = ev.id;
             setConversationId(ev.id);
             setTitle(ev.title ?? "");
             savedRef.current?.({ id: ev.id, title: ev.title ?? "" });
           } else if (ev.type === "text" && ev.text) {
+            received = true;
             setStatus(null);
             const text = ev.text;
             const newBlock = afterTool;
@@ -109,13 +126,24 @@ export function useChat(onSaved?: (c: { id: string; title: string }) => void) {
             setStatus(TOOL_LABEL[ev.name ?? ""] ?? tr("يقرأ البيانات"));
             afterTool = true;
           } else if (ev.type === "error") {
+            finished = true;
             append(ev.message ?? tr("حدث خطأ"), true);
+          } else if (ev.type === "done") {
+            finished = true;
           }
         }
       }
+      // انقطع البث قبل نهايته (مهلة الخادم أو الشبكة): يُقال ذلك بوضوح بدل رد ناقص صامت
+      if (!finished && !ctrl.signal.aborted) {
+        append(received ? tr("انقطع الرد قبل اكتماله. اضغط إعادة المحاولة.") : tr("انقطع الاتصال قبل وصول الرد. اضغط إعادة المحاولة."), true);
+      }
     } catch (e) {
-      if (!(e instanceof DOMException && e.name === "AbortError")) append(e instanceof Error ? e.message : tr("حدث خطأ"), true);
+      if (!(e instanceof DOMException && e.name === "AbortError")) {
+        // فشل الشبكة يصل من المتصفح بنص إنجليزي تقني (Failed to fetch)، فيُستبدل برسالة مفهومة
+        append(e instanceof TypeError ? tr("تعذّر الاتصال بالخادم، تحقق من الإنترنت وحاول مرة أخرى.") : e instanceof Error ? e.message : tr("حدث خطأ"), true);
+      }
     } finally {
+      busyRef.current = false;
       setBusy(false);
       setStatus(null);
       abort.current = null;
@@ -126,19 +154,21 @@ export function useChat(onSaved?: (c: { id: string; title: string }) => void) {
 
   const ask = React.useCallback(async (question: string, page?: PageInfo) => {
     const q = question.trim();
-    if (!q || busy) return;
+    if (!q || busyRef.current) return;
     setMessages((all) => [...all, { id: localId(), role: "user", content: q }, { id: localId(), role: "assistant", content: "" }]);
     await run({ question: q }, page);
-  }, [busy, run]);
+  }, [run]);
 
   const retry = React.useCallback(async (page?: PageInfo) => {
-    if (busy || !idRef.current) return;
+    if (busyRef.current || !idRef.current) return;
     setMessages((all) => {
-      const next = all[all.length - 1]?.role === "assistant" ? all.slice(0, -1) : all;
-      return [...next, { id: localId(), role: "assistant", content: "" }];
+      // كل ما بعد آخر سؤال يُستبدل: الرد الجزئي ورسالة الخطأ معًا
+      let end = all.length;
+      while (end > 0 && all[end - 1]!.role === "assistant") end--;
+      return [...all.slice(0, end), { id: localId(), role: "assistant", content: "" }];
     });
     await run({ retry: true }, page);
-  }, [busy, run]);
+  }, [run]);
 
   const stop = React.useCallback(() => abort.current?.abort(), []);
 

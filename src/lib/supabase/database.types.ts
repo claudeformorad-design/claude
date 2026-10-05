@@ -1102,6 +1102,7 @@ export type Database = {
       add_staff_member: { Args: { p_hotel_id: string; p_full_name: string; p_role_ids: string[] }; Returns: Json };
       create_access_link: { Args: { p_hotel_id: string; p_user_id: string }; Returns: string };
       system_has_owner: { Args: Record<string, never>; Returns: boolean };
+      is_system_owner: { Args: Record<string, never>; Returns: boolean };
       claim_owner: { Args: Record<string, never>; Returns: Json };
       redeem_access_link: { Args: { p_token: string }; Returns: Json };
       factory_reset: { Args: { p_confirm: string }; Returns: undefined };

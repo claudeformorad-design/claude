@@ -12,7 +12,7 @@ import { PageFrame } from "@/components/layout/page-frame";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { assistantConfig } from "@/lib/assistant/provider";
+import { getAssistantConfig } from "@/lib/assistant/provider";
 import { isDemoDataActive } from "@/lib/supabase/local-db";
 import { getI18n } from "@/i18n/server";
 import { redirect } from "next/navigation";
@@ -46,6 +46,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const quickActions = (ctx.ui.quick_actions.length ? chosen : quickAllowed).map(({ href, label }) => ({ href, label }));
   // في التثبيت المحلي يظهر اسم الدخول بدل البريد الداخلي
   const login = localMulti ? (await usernamesOf([ctx.user.id])).get(ctx.user.id) : undefined;
+  const assistantOn = (await getAssistantConfig().catch(() => null)) !== null;
 
   return (
     // ملء الشاشة بلا حدود في الأطراف
@@ -74,7 +75,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             roleLabel={roleLabel}
             signOut={signOut}
             demo={!isSupabaseConfigured() && isDemoDataActive()}
-            assistant={assistantConfig() !== null}
+            assistant={assistantOn}
             quickActions={quickActions}
           />
           <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-12 pt-1 md:px-10"><PageFrame>{children}</PageFrame></main>

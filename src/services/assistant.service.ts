@@ -56,11 +56,14 @@ export async function addMessage(supabase: SupabaseServerClient, conversationId:
 }
 
 /** يحذف آخر رد للمساعد في المحادثة (لإعادة توليده) */
+/** إعادة التوليد: يحذف كل ما بعد آخر سؤال من ردود (الرد الجزئي ورسالة الخطأ معًا) */
 export async function dropLastAnswer(supabase: SupabaseServerClient, conversationId: string) {
   const { data, error } = await supabase.from("assistant_messages").select("id, role").eq("conversation_id", conversationId)
-    .order("created_at", { ascending: false }).limit(1).maybeSingle();
+    .order("created_at", { ascending: false }).limit(20);
   raise(error);
-  if (data?.role === "assistant") raise((await supabase.from("assistant_messages").delete().eq("id", data.id)).error);
+  const trailing: string[] = [];
+  for (const m of data ?? []) { if (m.role !== "assistant") break; trailing.push(m.id); }
+  if (trailing.length) raise((await supabase.from("assistant_messages").delete().in("id", trailing)).error);
 }
 
 export async function updateConversation(supabase: SupabaseServerClient, id: string, patch: { title?: string; pinned?: boolean }) {

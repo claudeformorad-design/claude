@@ -6,8 +6,19 @@ import { currencyName } from "@/lib/currency-name";
 import { isActivePath, navGroups } from "@/components/layout/nav-config";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { GUIDE } from "./guide";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
 export type PageContext = { path: string; title?: string; text?: string };
+
+/** وصف عمل المستخدم من صلاحياته الفعلية، ليشرح المساعد بما يناسبه ولا يقترح عليه ما لا يملكه */
+function roleOf(ctx: AppContext): string {
+  const parts = [
+    ctx.can(PERMISSIONS.hotelManage) && "يدير الفندق وإعداداته",
+    ctx.can(PERMISSIONS.journalCreate) && "يسجّل القيود المحاسبية",
+    ctx.can(PERMISSIONS.pmsManage) && "يدير الحجوزات والتسكين",
+  ].filter(Boolean);
+  return parts.length ? parts.join("، ") : "يطّلع على ما تسمح به صلاحياته فقط";
+}
 
 /**
  * تعليمات المساعد: من هو، ومن يحادث، وأين يقف المستخدم الآن في النظام، وخريطة الأقسام المتاحة له،
@@ -22,7 +33,7 @@ export function systemPrompt(ctx: AppContext, t: Dictionary, page: PageContext, 
   return `أنت «مساعد النظام»، خبير محاسبة فندقية وإدارة فنادق مدمج داخل نظام «${ctx.hotel.name_ar}» لإدارة الفندق والمحاسبة.
 تعرف النظام بكل أقسامه وقواعده، وتقرأ بياناته الحية لحظة السؤال بالأدوات، بصلاحيات المستخدم الحالي فقط.
 
-المستخدم: ${ctx.profile?.full_name || ctx.user.email || "مستخدم"}
+المستخدم: ${ctx.profile?.full_name || ctx.user.email || "مستخدم"}، وعمله في النظام: ${roleOf(ctx)}
 تاريخ اليوم: ${todayInTimeZone(ctx.hotel.timezone)}، والعملة الأساسية ${currencyName(ctx.hotel.base_currency)}
 الصفحة المفتوحة الآن: ${current ? `${current.group ? `${current.group}، ` : ""}${current.label}` : page.title || "غير معروفة"} ${page.path}
 ${page.text ? `ما يظهر على الشاشة الآن باختصار:\n${page.text.slice(0, 3000)}\n` : ""}
