@@ -1,7 +1,7 @@
 "use client";
 import { tr } from "@/i18n/tr";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
@@ -64,14 +64,20 @@ export function StayPanel({
   const money = (n: number | string) => formatMoney(n, { locale: "ar" });
   const cashMethods = methods.filter((m) => m.kind !== "city_ledger");
 
-  const run = (key: string, fn: () => Promise<ActionResult<unknown>>, done: string, after?: (data: unknown) => void) =>
+  // قفل فوري: الضغطة الثانية قبل إعادة الرسم لا تسجّل العملية مرتين (عربون، دفعة، تسكين)
+  const inFlight = useRef(false);
+  const run = (key: string, fn: () => Promise<ActionResult<unknown>>, done: string, after?: (data: unknown) => void) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
     start(async () => {
       setBusy(key);
       const r = await callAction(fn());
+      inFlight.current = false;
       setBusy(null);
       if (r.ok) { toast(done); if (after) after(r.data); else router.refresh(); }
       else toast(actionErrorText(errors, r), "error");
     });
+  };
 
   // الحقول
   const [dep, setDep] = useState({ method: cashMethods[0]?.id ?? "", amount: "", reference: "" });
@@ -105,7 +111,7 @@ export function StayPanel({
   const active = status === "tentative" || status === "confirmed" || status === "checked_in";
 
   return (
-    <div className="space-y-6">
+    <div className="@container space-y-6">
       {status === "checked_in" && (
         <Card className="border-ink/20">
           <CardHeader>
@@ -130,7 +136,7 @@ export function StayPanel({
             ) : (
               <AnimatePresence>
                 <m.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                  <dl className={cn("grid gap-3 rounded-lg border border-line bg-panel p-4 text-center", bill.company > 0 ? "grid-cols-4" : "grid-cols-3")}>
+                  <dl className={cn("grid grid-cols-2 gap-3 rounded-lg border border-line bg-panel p-4 text-center", bill.company > 0 ? "@xl:grid-cols-4" : "@xl:grid-cols-3")}>
                     <div><dt className="text-[14px] text-slate-500">{tr("الرصيد")}</dt><dd className="num text-[20px] font-bold text-ink">{money(bill.balance)}</dd></div>
                     <div><dt className="text-[14px] text-slate-500">{tr("العربون")}</dt><dd className="num text-[20px] font-bold text-success">{money(bill.deposits)}</dd></div>
                     {bill.company > 0 && <div><dt className="text-[14px] text-slate-500">{tr("على الشركة")}</dt><dd className="num text-[20px] font-bold text-sky">{money(bill.company)}</dd></div>}
@@ -151,7 +157,7 @@ export function StayPanel({
                     </div>
                   )}
                   {bill.due > 0 && (
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="grid gap-3 @md:grid-cols-2">
                       <div className={field}>
                         <Label htmlFor="pay_method">{tr("طريقة التحصيل")}</Label>
                         <NativeSelect id="pay_method" value={pay.method} onChange={(e) => {
@@ -202,9 +208,9 @@ export function StayPanel({
             <CardTitle><KeyRound className="size-5" />{tr("تسجيل الوصول")}</CardTitle>
             <CardDescription>{hourly ? tr("بدء الجلسة وفتح فوليو الحجز، وتسليم {0} للنزيل.", words.one) : tr("غرفة نظيفة في الخدمة، وتسليم {0} للنزيل، ويُفتح فوليو الحجز أو يُستخدم فوليو العربون.", words.one)}</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-wrap items-end gap-3">
+          <CardContent className="space-y-3">
             {!hourly && (
-              <div className={cn(field, "min-w-56 flex-1")}>
+              <div className={field}>
                 <Label htmlFor="checkin_room">{tr("الغرفة")}</Label>
                 <NativeSelect id="checkin_room" value={room} onChange={(e) => setRoom(e.target.value)}>
                   {!room && <option value="">{tr("اختر غرفة")}</option>}
@@ -212,8 +218,10 @@ export function StayPanel({
                 </NativeSelect>
               </div>
             )}
-            <HandoverFields access={roomAccess} keys={keys} onKeys={setKeys} confirmed={handed} onConfirmed={setHanded} idPrefix="checkin" />
-            <Button type="button" loading={busy === "in"} disabled={pending || (!hourly && !room) || !handed || !validKeys(keys)}
+            <div className="flex flex-wrap items-end gap-3">
+              <HandoverFields access={roomAccess} keys={keys} onKeys={setKeys} confirmed={handed} onConfirmed={setHanded} idPrefix="checkin" />
+            </div>
+            <Button type="button" className="w-full" loading={busy === "in"} disabled={pending || (!hourly && !room) || !handed || !validKeys(keys)}
               onClick={() => run("in", () => checkInAction(reservationId, hourly ? null : room, Number(keys)), words.done)}>
               <KeyRound className="size-4" />{tr("إتمام التسكين")}</Button>
           </CardContent>
@@ -235,8 +243,8 @@ export function StayPanel({
                 onClick={() => run("post", () => postChargesAction(reservationId), tr("تم ترحيل الليالي"))}>{tr("ترحيل الليالي")}</Button>
             </div>
             {!hourly && (
-              <div className="flex flex-wrap items-end gap-3">
-                <div className={cn(field, "w-52")}>
+              <div className="grid gap-3 @md:grid-cols-[1fr_auto] @md:items-end">
+                <div className={field}>
                   <Label htmlFor="new_departure">{tr("تاريخ المغادرة")}</Label>
                   <Input id="new_departure" type="date" dir="ltr" min={today > arrival ? today : arrival} value={newDeparture} onChange={(e) => setNewDeparture(e.target.value)} />
                 </div>
@@ -247,21 +255,23 @@ export function StayPanel({
               </div>
             )}
             {!hourly && moveRooms.length > 0 && (
-              <div className="flex flex-wrap items-end gap-3">
-                <div className={cn(field, "w-52")}>
+              <div className="space-y-3 border-t border-line pt-5">
+                <div className="grid gap-3 @md:grid-cols-2">
+                <div className={field}>
                   <Label htmlFor="move_room">{tr("نقل إلى غرفة")}</Label>
                   <NativeSelect id="move_room" value={move.room} onChange={(e) => setMove({ ...move, room: e.target.value })}>
                     <option value="">{tr("اختر")}</option>
                     {moveRooms.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
                   </NativeSelect>
                 </div>
-                <div className={cn(field, "min-w-48 flex-1")}>
+                <div className={field}>
                   <Label htmlFor="move_reason">{tr("السبب")}</Label>
                   <Input id="move_reason" value={move.reason} onChange={(e) => setMove({ ...move, reason: e.target.value })} placeholder={tr("مثل: عطل في التكييف، ترقية")} />
                 </div>
-                <label className="flex h-11 cursor-pointer items-center gap-2.5 rounded-md border border-line px-3 text-[15.5px] text-ink">
-                  <input type="checkbox" className="size-4" checked={move.handed} onChange={(e) => setMove({ ...move, handed: e.target.checked })} />{tr("سلّمتُ")}{" "}{words.one}{" "}{tr("للغرفة الجديدة واستلمتُ السابقة")}</label>
-                <Button type="button" variant="outline" loading={busy === "move"} disabled={pending || !move.room || !move.reason.trim() || !move.handed}
+                </div>
+                <label className="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-md border border-line px-3 text-[15.5px] text-ink">
+                  <input type="checkbox" className="size-4 shrink-0" checked={move.handed} onChange={(e) => setMove({ ...move, handed: e.target.checked })} />{tr("سلّمتُ")}{" "}{words.one}{" "}{tr("للغرفة الجديدة واستلمتُ السابقة")}</label>
+                <Button type="button" variant="outline" className="w-full" loading={busy === "move"} disabled={pending || !move.room || !move.reason.trim() || !move.handed}
                   onClick={() => run("move", () => moveRoomAction(reservationId, move.room, move.reason.trim()), tr("تم نقل النزيل"), () => { setMove({ room: "", reason: "", handed: false }); router.refresh(); })}>
                   <DoorOpen className="size-4" />{tr("نقل")}</Button>
               </div>
@@ -273,9 +283,9 @@ export function StayPanel({
       {(folio || active) && (
         <Card>
           <CardHeader>
-            <CardTitle className="justify-between">
+            <CardTitle className="flex-wrap justify-between gap-y-1">
               <span className="flex items-center gap-2"><Wallet className="size-5" />{tr("الفوليو والعربون")}</span>
-              {folio && canViewFolio && <Link href={`/folios/${folio.id}`} className="text-[15px] font-medium text-action">{tr("فتح الفوليو")}{" "}{folio.number}</Link>}
+              {folio && canViewFolio && <Link href={`/folios/${folio.id}`} className="whitespace-nowrap text-[15px] font-medium text-action">{tr("فتح الفوليو")}{" "}<span className="num">{folio.number}</span></Link>}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -286,9 +296,11 @@ export function StayPanel({
               </dl>
             ) : <p className="text-[15.5px] text-slate-500">{tr("لم يُفتح فوليو بعد؛ يُفتح عند أول عربون أو عند التسكين.")}</p>}
             {active && cashMethods.length > 0 && (
-              <div className="grid gap-3 sm:grid-cols-[1fr_120px_1fr_auto] sm:items-end">
+              <div className="space-y-3 border-t border-line pt-4">
+                <p className="text-[15.5px] font-medium text-ink">{tr("عربون جديد")}</p>
+                <div className="grid gap-3 @md:grid-cols-2">
                 <div className={field}>
-                  <Label htmlFor="dep_method">{tr("عربون جديد")}</Label>
+                  <Label htmlFor="dep_method">{tr("طريقة الدفع")}</Label>
                   <NativeSelect id="dep_method" value={dep.method} onChange={(e) => setDep({ ...dep, method: e.target.value })}>
                     {cashMethods.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
                   </NativeSelect>
@@ -298,9 +310,10 @@ export function StayPanel({
                   <Input id="dep_amount" inputMode="decimal" dir="ltr" value={dep.amount} onChange={(e) => setDep({ ...dep, amount: e.target.value })} />
                   {approx(dep.method, dep.amount) && <p className="num text-[13px] text-slate-500">{approx(dep.method, dep.amount)}</p>}
                 </div>
+                </div>
                 <div className={field}><Label htmlFor="dep_ref">{tr("المرجع")}</Label><Input id="dep_ref" value={dep.reference} onChange={(e) => setDep({ ...dep, reference: e.target.value })} placeholder={tr("رقم الإيصال أو الحوالة")} /></div>
-                <Button type="button" variant="outline" loading={busy === "dep_add"} disabled={pending || !dep.amount}
-                  onClick={() => run("dep_add", () => recordDepositAction(reservationId, dep), tr("تم تسجيل العربون"), () => { setDep({ ...dep, amount: "", reference: "" }); router.refresh(); })}>{tr("تسجيل")}</Button>
+                <Button type="button" variant="outline" className="w-full" loading={busy === "dep_add"} disabled={pending || !dep.amount}
+                  onClick={() => run("dep_add", () => recordDepositAction(reservationId, dep), tr("تم تسجيل العربون"), () => { setDep({ ...dep, amount: "", reference: "" }); router.refresh(); })}><Wallet className="size-4" />{tr("تسجيل العربون")}</Button>
               </div>
             )}
           </CardContent>

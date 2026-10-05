@@ -5,7 +5,7 @@ import { z } from "zod";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isValidAmount, toMoney } from "@/lib/accounting/money";
-import { raise, type ActionResult, toActionResult } from "@/services/errors";
+import { raise, type ActionResult, toActionResult, invalid } from "@/services/errors";
 
 /** عمليات الأقسام التشغيلية — القواعد كلها في قاعدة البيانات، وهنا التحقق من الشكل */
 const fail = { ok: false as const, error: "validation" as const };
@@ -25,7 +25,7 @@ async function run<T>(permission: string, paths: string[], fn: (ctx: Awaited<Ret
 // ----------------------------------------------------------------------------- نقاط البيع
 export async function saveOutletAction(input: unknown) {
   const p = z.object({ id: uuid.optional().or(z.literal("")), code, name_ar: z.string().trim().min(1), is_active: bool }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(PERMISSIONS.posManage, ["/pos", "/pos/setup"], async (ctx) => {
     const row = { code: p.data.code, name_ar: p.data.name_ar, is_active: p.data.id ? p.data.is_active : true };
     const { error } = p.data.id
@@ -41,7 +41,7 @@ export async function savePosItemAction(input: unknown) {
     id: uuid.optional().or(z.literal("")), outlet_id: uuid, item_name: z.string().trim().min(1), category: optText,
     price: money(), charge_code_id: uuid, is_active: bool,
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(PERMISSIONS.posManage, ["/pos", "/pos/setup"], async (ctx) => {
     const row = {
       outlet_id: p.data.outlet_id, name_ar: p.data.item_name, category: p.data.category, price: p.data.price,
@@ -64,7 +64,7 @@ export async function settlePosOrderAction(input: unknown) {
     payment_method_id: uuid.optional().nullable(),
     note: optText,
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(PERMISSIONS.posSell, ["/pos", "/folios", "/invoices"], async (ctx) => {
     const { data, error } = await ctx.supabase.rpc("pos_settle_order", {
       p_outlet_id: p.data.outlet_id, p_lines: p.data.lines.map((l) => ({ item_id: l.item_id, quantity: String(l.quantity) })),
@@ -90,7 +90,7 @@ export async function addHousekeepingTaskAction(input: unknown) {
     room_id: uuid, kind: z.enum(["departure", "stayover", "inspection", "maintenance", "turndown"]),
     date: z.iso.date(), notes: optText, assignee: optText, out_of_service: bool,
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(PERMISSIONS.pmsHousekeeping, ["/housekeeping", "/rooms", "/front-desk"], async (ctx) => {
     const { error } = await ctx.supabase.rpc("add_housekeeping_task", {
       p_room_id: p.data.room_id, p_kind: p.data.kind, p_date: p.data.date, p_notes: p.data.notes, p_assignee: p.data.assignee,
@@ -124,7 +124,7 @@ export async function saveRatePlanAction(input: unknown) {
     per_person: bool, includes_breakfast: bool, is_active: bool,
     customer_id: uuid.optional().or(z.literal("")), room_type_id: uuid.optional().or(z.literal("")), description: optText,
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(PERMISSIONS.pmsRatesManage, ["/rate-plans"], async (ctx) => {
     const row = {
       code: p.data.code, name_ar: p.data.name_ar, adjust_pct: p.data.adjust_pct || "0", per_night: p.data.per_night ? toMoney(p.data.per_night).toFixed() : "0",

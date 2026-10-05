@@ -28,12 +28,12 @@ export function HandoverFields({ access, keys, onKeys, confirmed, onConfirmed, i
   const w = accessWords(access);
   return (
     <>
-      <div className="field-group w-32 space-y-1.5">
+      <div className="field-group w-28 shrink-0 space-y-1.5">
         <Label htmlFor={`${idPrefix}_keys`}>{w.count}</Label>
         <Input id={`${idPrefix}_keys`} type="number" inputMode="numeric" dir="ltr" min={1} max={9} value={keys} onChange={(e) => onKeys(e.target.value)} />
       </div>
-      <label className="flex h-11 cursor-pointer items-center gap-2.5 rounded-md border border-line px-3 text-[15.5px] text-ink">
-        <input type="checkbox" className="size-4" checked={confirmed} onChange={(e) => onConfirmed(e.target.checked)} />
+      <label className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md border border-line px-3 py-2 text-[15.5px] text-ink">
+        <input type="checkbox" className="size-4 shrink-0" checked={confirmed} onChange={(e) => onConfirmed(e.target.checked)} />
         {w.confirm}
       </label>
     </>

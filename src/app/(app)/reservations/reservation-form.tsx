@@ -81,6 +81,9 @@ export function ReservationForm({
   const hourly = type?.mode === "hourly";
   const typeRooms = rooms.filter((r) => r.typeId === v.room_type_id);
   const nights = !hourly && v.arrival_date && v.departure_date ? nightsBetween(v.arrival_date, v.departure_date) : 0;
+  const sending = useRef(false);
+  const [nightsDraft, setNightsDraft] = useState<string | null>(null);
+  const nightsBad = nightsDraft !== null && nightsDraft !== "";
 
   // ---------------------------------------------------------------- عرض السعر الحي
   const quoteInput = useMemo(() => {
@@ -119,6 +122,9 @@ export function ReservationForm({
   // ---------------------------------------------------------------- الحفظ
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    // ضغطتان متتاليتان قبل إعادة رسم الزر معطّلًا: يُرسل الحجز مرة واحدة
+    if (sending.current || nightsBad) return;
+    sending.current = true;
     setError(null);
     // حقول الموعد بالساعة لا تُرسل للغرف الليلية (والعكس)
     const payload = hourly
@@ -128,12 +134,12 @@ export function ReservationForm({
       if (mode === "edit" && reservationId) {
         const r = await callAction(updateReservationAction({ id: reservationId, ...payload }));
         if (r.ok) { toast(tr("تم تحديث الحجز")); router.push(`/reservations/${reservationId}`); }
-        else setError(actionErrorText(errors, r));
+        else { sending.current = false; setError(actionErrorText(errors, r)); }
         return;
       }
       const r = await callAction(createReservationAction({ ...payload, weekday: v.kind === "series" ? v.weekday : "" }));
       if (r.ok) { toast(r.data.message); router.push(r.data.href); }
-      else setError(actionErrorText(errors, r));
+      else { sending.current = false; setError(actionErrorText(errors, r)); }
     });
   };
 
@@ -248,8 +254,15 @@ export function ReservationForm({
                 </div>
                 <div className={field}>
                   <Label htmlFor="nights">{tr("عدد الليالي")}</Label>
-                  <Input id="nights" inputMode="numeric" dir="ltr" value={nights ? String(nights) : ""} placeholder=""
-                    onChange={(e) => { const n = Number(e.target.value); if (v.arrival_date && n >= 1 && n <= 366) set("departure_date", addDays(v.arrival_date, n)); }} />
+                  {/* ما يكتبه المستخدم يبقى ظاهرًا، والقيمة خارج المدى تُرفض برسالة بدل أن تُتجاهل بصمت */}
+                  <Input id="nights" inputMode="numeric" dir="ltr" value={nightsDraft ?? (nights ? String(nights) : "")} placeholder="" aria-invalid={nightsBad || undefined}
+                    onChange={(e) => {
+                      const raw = e.target.value.trim();
+                      const n = Number(raw);
+                      if (v.arrival_date && /^\d+$/.test(raw) && n >= 1 && n <= 366) { setNightsDraft(null); set("departure_date", addDays(v.arrival_date, n)); }
+                      else setNightsDraft(raw);
+                    }} />
+                  {nightsBad && <p className="text-[14px] text-urgent">{tr("عدد الليالي من 1 إلى 366")}</p>}
                 </div>
               </div>
             )}
@@ -357,7 +370,7 @@ export function ReservationForm({
         <QuoteCard quote={quote} error={quoteError} loading={quoting} kind={v.kind} groupRooms={Number(v.group_rooms) || 0} canOverbook={canOverbook}
           waitlistHref={!hourly && v.room_type_id && v.arrival_date && v.departure_date
             ? `/waitlist?new=1&type=${v.room_type_id}&arrival=${v.arrival_date}&departure=${v.departure_date}` : undefined} />
-        <Button type="submit" className="h-12 w-full text-[17px]" loading={pending}>
+        <Button type="submit" className="h-12 w-full text-[17px]" loading={pending} disabled={nightsBad}>
           {mode === "edit" ? tr("حفظ التعديلات") : v.kind === "group" ? tr("حجز المجموعة") : v.kind === "series" ? tr("إنشاء الحجز المتكرر") : tr("تأكيد الحجز")}
         </Button>
         {mode === "edit" && reservationId && (

@@ -8,7 +8,7 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isIsoDate } from "@/lib/accounting/fiscal";
 import { isValidAmount, toMoney } from "@/lib/accounting/money";
 import { saveVendor } from "@/services/payables.service";
-import { raise, type ActionResult, toActionResult } from "@/services/errors";
+import { raise, type ActionResult, toActionResult, invalid } from "@/services/errors";
 
 const amount = z.string().trim().refine((v) => isValidAmount(v) && toMoney(v).gt(0), "invalid_amount").transform((v) => toMoney(v).toFixed());
 const opt = optText;
@@ -34,7 +34,7 @@ export async function saveVendorAction(input: unknown): Promise<ActionResult<und
     payment_terms_days: z.coerce.number().int().min(0).max(365),
     is_active: z.boolean(),
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const r = await toActionResult(async () => { await saveVendor(ctx.supabase, ctx.hotel.id, p.data); return undefined; });
   if (r.ok) revalidatePath("/vendors");
   return r;
@@ -43,7 +43,7 @@ export async function saveVendorAction(input: unknown): Promise<ActionResult<und
 export async function createPurchaseOrderAction(input: unknown): Promise<ActionResult<string>> {
   const ctx = await requireAppContext(PERMISSIONS.purchasesManage);
   const p = z.object({ vendor_id: z.uuid(), order_date: optDate, notes: opt, lines: linesSchema }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const r = await toActionResult(async () => {
     const { data, error } = await ctx.supabase.rpc("create_purchase_order", {
       p_hotel_id: ctx.hotel.id, p_vendor_id: p.data.vendor_id, p_lines: p.data.lines, p_order_date: p.data.order_date, p_notes: p.data.notes,
@@ -80,7 +80,7 @@ export async function payVendorAction(input: unknown): Promise<ActionResult<stri
     vendor_id: z.uuid(), payment_method_id: z.uuid(), payment_date: optDate, reference: opt,
     allocations: z.array(z.object({ bill_id: z.uuid(), amount })).min(1),
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const r = await toActionResult(async () => {
     const { data, error } = await ctx.supabase.rpc("pay_vendor", {
       p_hotel_id: ctx.hotel.id, p_vendor_id: p.data.vendor_id, p_payment_method_id: p.data.payment_method_id,
@@ -105,7 +105,7 @@ export async function postPayrollAction(input: unknown): Promise<ActionResult<st
       basic: money0, allowances: money0, deductions: money0, insurance_employee: money0, insurance_employer: money0,
     })).min(1),
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const r = await toActionResult(async () => {
     const { data, error } = await ctx.supabase.rpc("post_payroll", {
       p_hotel_id: ctx.hotel.id, p_period_month: `${p.data.period_month}-01`, p_lines: p.data.lines, p_posting_date: p.data.posting_date,
@@ -136,7 +136,7 @@ export async function addBankLineAction(input: unknown): Promise<ActionResult<un
     account_id: z.uuid(), txn_date: z.string().refine(isIsoDate), description: z.string().trim().min(1).max(300), reference: opt,
     amount: z.string().trim().refine((v) => isValidAmount(v) && !toMoney(v).isZero()).transform((v) => toMoney(v).toFixed()),
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const r = await toActionResult(async () => {
     const { error } = await ctx.supabase.from("bank_statement_lines").insert({ ...p.data, hotel_id: ctx.hotel.id });
     raise(error);

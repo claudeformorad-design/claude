@@ -204,7 +204,7 @@ await step("deposit before arrival opens the folio in accounting", async () => {
   await submitReservation(); await page.waitForURL(/reservations\/[0-9a-f-]{36}$/);
   stayId = page.url().split("/").pop();
   await page.fill("#dep_amount", "100"); await page.fill("#dep_ref", "TRX-1");
-  await page.getByRole("button", { name: "تسجيل", exact: true }).click();
+  await page.getByRole("button", { name: "تسجيل العربون", exact: true }).click();
   await bodyHas("فتح الفوليو", "100.00");
 });
 await step("check-in waits for the card handover; dirty room blocks it; clean room checks in", async () => {
@@ -295,7 +295,7 @@ await step("dollar deposit, check-out refunds the extra deposit in cash", async 
 
   await pick("#dep_method", /دولار/); await page.fill("#dep_amount", "1");
   await page.locator("text=يعادل 530.00").first().waitFor();
-  await page.getByRole("button", { name: "تسجيل", exact: true }).click();
+  await page.getByRole("button", { name: "تسجيل العربون", exact: true }).click();
   await bodyHas("530.00");
   await page.getByLabel("سلّمتُ المفتاح للنزيل").check();
   await page.getByRole("button", { name: "إتمام التسكين" }).click();

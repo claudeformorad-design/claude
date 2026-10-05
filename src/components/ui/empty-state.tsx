@@ -18,7 +18,8 @@ export function EmptyState({
   icon?: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
+    // داخل خلية جدول عريض على الجوال: تبقى الرسالة بعرض الشاشة وفي الجزء الظاهر منه
+    <div className="sticky start-0 flex max-w-[calc(100vw-4.5rem)] flex-col items-center justify-center px-4 py-12 text-center sm:mx-auto sm:max-w-none">
       <div className="animate-pop mb-4 flex size-12 items-center justify-center rounded-lg bg-subtle text-slate-500">
         <Icon className="size-6 stroke-[1.5]" />
       </div>

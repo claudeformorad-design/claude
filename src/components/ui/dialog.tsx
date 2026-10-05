@@ -61,7 +61,7 @@ export function Dialog({
             initial={{ opacity: 0, scale: 0.96, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97, y: 8 }}
             transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="flex items-start justify-between gap-4 px-7 pt-6 pb-2">
+            <div className="flex items-start justify-between gap-4 px-5 pt-5 pb-2 sm:px-7 sm:pt-6">
               <div className="space-y-1">
                 <h2 className="text-[21px] font-bold text-ink">{title}</h2>
                 {description && <p className="text-[15.5px] text-slate-500">{description}</p>}
@@ -71,7 +71,7 @@ export function Dialog({
                 <X className="size-5" />
               </button>
             </div>
-            <div className="overflow-y-auto px-7 pt-3 pb-7">
+            <div className="overflow-y-auto px-5 pt-3 pb-6 sm:px-7 sm:pb-7">
               <DialogContext.Provider value={{ close: onClose }}>{children}</DialogContext.Provider>
             </div>
           </m.div>

@@ -12,7 +12,7 @@ import {
 import type { CheckOutSummary, ReservationQuote } from "@/lib/supabase/database.types";
 import { isValidAmount, toMoney } from "@/lib/accounting/money";
 import { quoteReservation } from "@/services/pms.service";
-import { raise, type ActionResult, toActionResult } from "@/services/errors";
+import { raise, type ActionResult, toActionResult, invalid } from "@/services/errors";
 
 /**
  * عمليات قسم إدارة الفندق. كل قاعدة (السعة، التداخل، الأسعار، الحالات، الصلاحيات)
@@ -29,7 +29,7 @@ function refreshPms(...extra: string[]) {
 export async function saveFloorAction(input: unknown): Promise<ActionResult<undefined>> {
   const ctx = await requireAppContext(PERMISSIONS.pmsSetup);
   const p = floorSchema.safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const r = await toActionResult(async () => {
     const { id, ...v } = p.data;
     const { error } = id
@@ -56,7 +56,7 @@ export async function deleteFloorAction(id: string): Promise<ActionResult<undefi
 export async function saveRoomTypeAction(input: unknown): Promise<ActionResult<undefined>> {
   const ctx = await requireAppContext(PERMISSIONS.pmsSetup);
   const p = roomTypeSchema.safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const r = await toActionResult(async () => {
     const { id, ...v } = p.data;
     const payload = { ...v, weekend_rate: v.booking_mode === "hourly" ? null : v.weekend_rate, overbooking_limit: v.booking_mode === "hourly" ? 0 : v.overbooking_limit };
@@ -73,7 +73,7 @@ export async function saveRoomTypeAction(input: unknown): Promise<ActionResult<u
 export async function saveRoomAction(input: unknown): Promise<ActionResult<undefined>> {
   const ctx = await requireAppContext(PERMISSIONS.pmsSetup);
   const p = roomSchema.safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const r = await toActionResult(async () => {
     const { id, ...v } = p.data;
     const { error } = id
@@ -89,7 +89,7 @@ export async function saveRoomAction(input: unknown): Promise<ActionResult<undef
 export async function createRoomsBulkAction(input: unknown): Promise<ActionResult<number>> {
   const ctx = await requireAppContext(PERMISSIONS.pmsSetup);
   const p = bulkRoomsSchema.safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const r = await toActionResult(async () => {
     const { data, error } = await ctx.supabase.rpc("create_rooms_bulk", {
       p_hotel_id: ctx.hotel.id, p_room_type_id: p.data.room_type_id, p_from_number: p.data.from_number, p_to_number: p.data.to_number,
@@ -116,7 +116,7 @@ export async function deleteRoomAction(id: string): Promise<ActionResult<undefin
 export async function setRoomStatusAction(input: unknown): Promise<ActionResult<undefined>> {
   const ctx = await requireAppContext(PERMISSIONS.pmsRoomStatus);
   const p = roomStatusSchema.safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const r = await toActionResult(async () => {
     const { error } = await ctx.supabase.rpc("set_room_status", {
       p_room_id: p.data.room_id, p_housekeeping_status: p.data.housekeeping_status ?? null,
@@ -133,7 +133,7 @@ export async function setRoomStatusAction(input: unknown): Promise<ActionResult<
 export async function saveGuestAction(input: unknown): Promise<ActionResult<string>> {
   const ctx = await requireAppContext(PERMISSIONS.pmsManage);
   const p = guestSchema.safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const r = await toActionResult(async () => {
     const { id, ...v } = p.data;
     const payload = { ...v, id_number: v.id_type ? v.id_number : null, blacklist_reason: v.is_blacklisted ? v.blacklist_reason : null };
@@ -157,7 +157,7 @@ const ts = (date: string | null, time: string | null) => (date && time ? `${date
 export async function quoteAction(input: unknown): Promise<ActionResult<ReservationQuote>> {
   const ctx = await requireAppContext(PERMISSIONS.pmsView);
   const p = quoteSchema.safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const v = p.data;
   return toActionResult(() => quoteReservation(ctx.supabase, ctx.hotel.id, {
     roomTypeId: v.room_type_id, arrival: v.arrival_date, departure: v.departure_date,
@@ -173,7 +173,7 @@ export async function quoteAction(input: unknown): Promise<ActionResult<Reservat
 export async function createReservationAction(input: unknown): Promise<ActionResult<{ href: string; message: string }>> {
   const ctx = await requireAppContext(PERMISSIONS.pmsManage);
   const p = reservationSchema.safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const v = p.data;
   const r = await toActionResult(async () => {
     const newGuest = async (): Promise<string> => {
@@ -230,7 +230,7 @@ export async function createReservationAction(input: unknown): Promise<ActionRes
 export async function updateReservationAction(input: unknown): Promise<ActionResult<undefined>> {
   const ctx = await requireAppContext(PERMISSIONS.pmsManage);
   const p = reservationUpdateSchema.safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const v = p.data;
   const r = await toActionResult(async () => {
     const { error } = await ctx.supabase.rpc("update_reservation", {
@@ -318,7 +318,7 @@ async function methodCurrency(ctx: Awaited<ReturnType<typeof requireAppContext>>
 
 export async function recordDepositAction(reservationId: string, input: unknown): Promise<ActionResult<undefined>> {
   const p = z.object({ method: z.uuid(), amount: moneyInput, reference: z.string().trim().max(100).optional() }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return reservationOp(PERMISSIONS.pmsManage, reservationId, async (ctx) => (await methodCurrency(ctx, p.data.method))
     ? ctx.supabase.rpc("record_reservation_deposit_fx", {
         p_reservation_id: reservationId, p_payment_method_id: p.data.method, p_foreign_amount: p.data.amount, p_reference: p.data.reference || null,
@@ -427,7 +427,7 @@ export async function settleAndCheckOutAction(reservationId: string, input: unkn
 export async function addWaitlistAction(input: unknown): Promise<ActionResult<undefined>> {
   const ctx = await requireAppContext(PERMISSIONS.pmsManage);
   const p = waitlistSchema.safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const v = p.data;
   const r = await toActionResult(async () => {
     const { error } = await ctx.supabase.rpc("add_waitlist_entry", {
@@ -469,7 +469,7 @@ export async function cancelWaitlistAction(entryId: string): Promise<ActionResul
 export async function saveSeasonAction(input: unknown): Promise<ActionResult<undefined>> {
   const ctx = await requireAppContext(PERMISSIONS.pmsRatesManage);
   const p = seasonSchema.safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const { id: seasonId, prices, ...v } = p.data;
   const r = await toActionResult(async () => {
     let sid = seasonId;
@@ -511,7 +511,7 @@ export async function deleteSeasonAction(seasonId: string): Promise<ActionResult
 export async function saveLastMinuteAction(input: unknown): Promise<ActionResult<undefined>> {
   const ctx = await requireAppContext(PERMISSIONS.pmsRatesManage);
   const p = lastMinuteSchema.safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const r = await toActionResult(async () => {
     const { id: ruleId, ...v } = p.data;
     const { error } = ruleId

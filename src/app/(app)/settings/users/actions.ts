@@ -13,7 +13,7 @@ import {
   strongPassword, usernameTaken,
 } from "@/lib/supabase/local-auth";
 import type { Json } from "@/lib/supabase/database.types";
-import { type ActionResult, raise, toActionResult } from "@/services/errors";
+import { type ActionResult, raise, toActionResult, invalid } from "@/services/errors";
 
 const fail = { ok: false as const, error: "validation" as const };
 const msg = (message: string) => ({ ok: false as const, error: "unknown" as const, message });
@@ -30,7 +30,7 @@ export async function enableLoginAction(input: unknown): Promise<ActionResult<un
   const ctx = await requireAppContext(PERMISSIONS.usersManage);
   if (isSupabaseConfigured() || (await getAuthMode()) === "multi") return fail;
   const p = z.object({ username: z.string(), password: z.string().max(200), confirm: z.string().max(200) }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const username = normalizeUsername(p.data.username);
   if (!USERNAME_RE.test(username)) return msg(tr("اسم المستخدم من 3 إلى 32 حرفًا إنجليزيًا صغيرًا أو رقمًا"));
   if (p.data.password !== p.data.confirm) return msg(tr("كلمتا المرور غير متطابقتين"));
@@ -48,7 +48,7 @@ export async function addEmployeeAction(input: unknown): Promise<ActionResult<st
     full_name: z.string().trim().min(2).max(120).optional(), username: z.string().optional(), email: z.string().optional(),
     password: z.string().max(200).optional(), role_id: z.uuid(),
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const v = p.data;
   if (isSupabaseConfigured()) {
     // النسخة المنشورة: حساب موظف باسم مستخدم وكلمة مرور مؤقتة، تنشئه قاعدة البيانات بحراسة الصلاحيات نفسها

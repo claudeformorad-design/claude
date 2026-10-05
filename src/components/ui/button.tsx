@@ -1,10 +1,11 @@
+"use client";
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "relative isolate inline-flex items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-lg text-[17.5px] font-medium transition-[background-color,border-color,color,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] cursor-pointer outline-none disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:stroke-[1.75] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action/40 active:scale-[0.98]",
+  "relative isolate inline-flex shrink-0 items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-lg text-[17.5px] font-medium transition-[background-color,border-color,color,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] cursor-pointer outline-none disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:stroke-[1.75] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action/40 active:scale-[0.98]",
   {
     variants: {
       variant: {
@@ -33,13 +34,27 @@ export interface ButtonProps extends React.ComponentProps<"button">, VariantProp
   loading?: boolean;
 }
 
-export function Button({ className, variant, size, asChild = false, loading = false, disabled, children, ...props }: ButtonProps) {
+/** أقل مدة بين ضغطتين على زر حفظ أو عملية: الضغطة المزدوجة لا ترسل العملية مرتين قبل أن يُعطَّل الزر */
+const REPEAT_MS = 800;
+
+export function Button({ className, variant, size, asChild = false, loading, disabled, children, onClick, ...props }: ButtonProps) {
+  const last = React.useRef(0);
   if (asChild) {
-    return <Slot data-slot="button" className={cn(buttonVariants({ variant, size, className }))} {...props}>{children}</Slot>;
+    return <Slot data-slot="button" className={cn(buttonVariants({ variant, size, className }))} onClick={onClick} {...props}>{children}</Slot>;
   }
+  // يُحمى زر الإرسال والزر الذي يعرض حالة تحميل (عملية على الخادم)، لا أزرار التنقل والعدّادات
+  const guarded = props.type === "submit" || loading !== undefined;
+  const click = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (guarded) {
+      const now = Date.now();
+      if (now - last.current < REPEAT_MS) { e.preventDefault(); e.stopPropagation(); return; }
+      last.current = now;
+    }
+    onClick?.(e);
+  };
   return (
     <button data-slot="button" aria-busy={loading || undefined} disabled={disabled || loading}
-      className={cn(buttonVariants({ variant, size, className }), loading && "cursor-wait")} {...props}>
+      className={cn(buttonVariants({ variant, size, className }), loading && "cursor-wait")} onClick={click} {...props}>
       {loading && <span className="size-4 animate-spin rounded-full border-2 border-current border-e-transparent" aria-hidden />}
       {children}
     </button>

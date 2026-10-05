@@ -36,7 +36,7 @@ export function Stat({
         {currency && <CurrencyTag code={currency} className="ms-auto" />}
       </div>
       <p className={cn("display-num mt-3 truncate text-[24px] font-bold leading-tight text-ink", valueClassName)}>{value}</p>
-      {hint && <p className="mt-1 truncate text-[15.5px] text-slate-500">{hint}</p>}
+      {hint && <p className="mt-1 line-clamp-2 text-[15.5px] leading-snug text-slate-500">{hint}</p>}
     </div>
   );
 }

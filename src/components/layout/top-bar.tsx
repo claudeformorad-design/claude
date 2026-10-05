@@ -80,7 +80,7 @@ export function TopBar({
         {assistant && <AssistantLauncher />}
         {demo && (
           <Link href="/settings/hotel" title={tr("بيانات تجريبية مؤقتة، احذفها من الإعدادات")}
-            className="flex h-8 items-center rounded-md bg-sky-tint px-3 text-[15.5px] font-medium text-sky">{tr("بيانات تجريبية")}</Link>
+            className="hidden h-8 items-center whitespace-nowrap rounded-md bg-sky-tint px-3 text-[15.5px] font-medium text-sky sm:flex">{tr("بيانات تجريبية")}</Link>
         )}
         <button type="button" onClick={() => setSearchOpen((v) => !v)} className={cn(iconBtn, "md:hidden")} title={tr("بحث")} aria-label={tr("بحث")}>
           <Search className="size-[18px] stroke-[1.75]" />

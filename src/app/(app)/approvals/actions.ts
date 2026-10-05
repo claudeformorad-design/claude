@@ -10,7 +10,7 @@ import type { Json } from "@/lib/supabase/database.types";
 import { folioActionSchema, type FolioAction } from "@/lib/validation/revenue";
 import { runFolioAction } from "@/services/folio.service";
 import { voidVoucher } from "@/services/vouchers.service";
-import { type ActionResult, raise, toActionResult } from "@/services/errors";
+import { type ActionResult, raise, toActionResult, invalid } from "@/services/errors";
 
 const fail = { ok: false as const, error: "validation" as const };
 
@@ -64,7 +64,7 @@ async function describe(ctx: AppContext, r: Request): Promise<{ summary: string;
 export async function requestApprovalAction(input: unknown): Promise<ActionResult<string>> {
   const ctx = await requireAppContext();
   const p = requestSchema.safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   // يطلب الموافقة من يعمل على هذا النوع من العمليات فقط
   if (!ctx.can(REQUESTER_PERMISSION[p.data.kind])) return { ok: false, error: "permission_denied" };
   const r = await toActionResult(async () => {

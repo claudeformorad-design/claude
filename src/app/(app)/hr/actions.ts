@@ -6,7 +6,7 @@ import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isIsoDate } from "@/lib/accounting/fiscal";
 import { isValidAmount, toMoney } from "@/lib/accounting/money";
-import { raise, type ActionResult, toActionResult } from "@/services/errors";
+import { raise, type ActionResult, toActionResult, invalid } from "@/services/errors";
 import { settlementQuote, type SettlementQuote } from "@/services/hr.service";
 
 /** عمليات الموارد البشرية: التحقق من الشكل هنا، والقواعد والحسابات كلها في قاعدة البيانات */
@@ -41,7 +41,7 @@ const employeeSchema = z.object({
 
 export async function saveEmployeeAction(input: unknown): Promise<ActionResult<string>> {
   const p = employeeSchema.safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const { id, ...row } = p.data;
   return run(M, ["/hr"], async (ctx) => {
     if (id) {
@@ -57,7 +57,7 @@ export async function saveEmployeeAction(input: unknown): Promise<ActionResult<s
 
 export async function saveEmployeeComponentsAction(employeeId: string, rows: { component_id: string; value: string }[]): Promise<ActionResult> {
   const p = z.object({ employeeId: uuid, rows: z.array(z.object({ component_id: uuid, value: z.union([amount(), z.literal("")]) })).max(50) }).safeParse({ employeeId, rows });
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(M, ["/hr"], async (ctx) => {
     raise((await ctx.supabase.rpc("hr_save_employee_components", { p_employee_id: p.data.employeeId, p_rows: p.data.rows })).error);
     return undefined;
@@ -70,7 +70,7 @@ export async function saveAttendanceAction(day: string, rows: { employee_id: str
     day: date,
     rows: z.array(z.object({ employee_id: uuid, status: z.enum(["present", "absent", "leave", "off"]), check_in: optTime, check_out: optTime, notes: z.string().max(300) })).max(1000),
   }).safeParse({ day, rows });
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(M, ["/hr/attendance"], async (ctx) => {
     const { data, error } = await ctx.supabase.rpc("hr_save_attendance", { p_hotel_id: ctx.hotel.id, p_date: p.data.day, p_rows: p.data.rows });
     raise(error);
@@ -80,7 +80,7 @@ export async function saveAttendanceAction(day: string, rows: { employee_id: str
 
 export async function saveRosterAction(rows: { employee_id: string; work_date: string; shift: string }[]): Promise<ActionResult> {
   const p = z.array(z.object({ employee_id: uuid, work_date: date, shift: z.union([uuid, z.literal("off"), z.literal("default")]) })).max(5000).safeParse(rows);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(M, ["/hr/roster"], async (ctx) => {
     raise((await ctx.supabase.rpc("hr_save_roster", { p_hotel_id: ctx.hotel.id, p_rows: p.data })).error);
     return undefined;
@@ -109,7 +109,7 @@ export async function decideLeaveAction(id: string, status: "approved" | "reject
 // ----------------------------------------------------------------------------- السلف والجزاءات
 export async function payAdvanceAction(input: unknown): Promise<ActionResult<string>> {
   const p = z.object({ employee_id: uuid, advance_date: date, amount: amount(false), installments: num(1, 60), payment_method_id: uuid, notes: text(300) }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(M, ["/hr"], async (ctx) => {
     const { data, error } = await ctx.supabase.rpc("hr_pay_advance", {
       p_employee_id: p.data.employee_id, p_date: p.data.advance_date, p_amount: p.data.amount, p_installments: p.data.installments,
@@ -122,7 +122,7 @@ export async function payAdvanceAction(input: unknown): Promise<ActionResult<str
 
 export async function savePenaltyAction(input: unknown): Promise<ActionResult> {
   const p = z.object({ employee_id: uuid, penalty_date: date, amount: amount(false), reason: z.string().trim().min(2).max(300), approve: bool }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const { approve, ...row } = p.data;
   return run(M, ["/hr"], async (ctx) => {
     raise((await ctx.supabase.from("hr_penalties").insert({ ...row, hotel_id: ctx.hotel.id, status: approve ? "approved" : "pending" })).error);
@@ -150,14 +150,14 @@ export async function runPayrollAction(month: string): Promise<ActionResult<stri
 
 export async function settlementQuoteAction(employeeId: string, day: string, reason: string): Promise<ActionResult<SettlementQuote>> {
   const p = z.object({ employeeId: uuid, day: date, reason: z.enum(["resignation", "termination"]) }).safeParse({ employeeId, day, reason });
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const ctx = await requireAppContext(PERMISSIONS.hrView);
   return toActionResult(() => settlementQuote(ctx.supabase, p.data.employeeId, p.data.day, p.data.reason));
 }
 
 export async function terminateAction(input: unknown): Promise<ActionResult> {
   const p = z.object({ employee_id: uuid, date, reason: z.enum(["resignation", "termination"]), notes: text(500) }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(M, ["/hr", "/journal", "/"], async (ctx) => {
     raise((await ctx.supabase.rpc("hr_terminate", { p_employee_id: p.data.employee_id, p_date: p.data.date, p_reason: p.data.reason, p_notes: p.data.notes })).error);
     return undefined;
@@ -175,7 +175,7 @@ export async function saveHrSettingsAction(input: unknown): Promise<ActionResult
     insurance_employee_pct: num(0, 100), insurance_employer_pct: num(0, 100), eos_tiers: tiers, eos_resign: resign,
     leave_encashment: z.boolean(), expiry_alert_days: num(1, 365),
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const sort = <T extends { from: number }>(x: T[]) => [...x].sort((a, b) => a.from - b.from);
   return run(M, ["/settings/hr", "/hr"], async (ctx) => {
     const row = { ...p.data, month_days: Math.round(p.data.month_days), late_grace_minutes: Math.round(p.data.late_grace_minutes), expiry_alert_days: Math.round(p.data.expiry_alert_days),
@@ -187,7 +187,7 @@ export async function saveHrSettingsAction(input: unknown): Promise<ActionResult
 
 export async function saveLeaveTypeAction(input: unknown): Promise<ActionResult> {
   const p = z.object({ id: optUuid, name: z.string().trim().min(1).max(60), days_per_year: num(0, 366), paid: bool, carry_over: bool, encashable: bool, is_active: bool }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const { id, ...row } = p.data;
   return run(M, ["/settings/hr", "/hr"], async (ctx) => {
     const r = { ...row, days_per_year: String(row.days_per_year), is_active: id ? row.is_active : true };

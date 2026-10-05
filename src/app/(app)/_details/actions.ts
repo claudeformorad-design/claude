@@ -14,7 +14,7 @@ import { getJournalEntry } from "@/services/journal.service";
 import { getBill } from "@/services/payables.service";
 import { getReservation } from "@/services/pms.service";
 import { getVoucher } from "@/services/vouchers.service";
-import { raise, type ActionResult, toActionResult } from "@/services/errors";
+import { raise, type ActionResult, toActionResult, invalid } from "@/services/errors";
 import { getDictionary } from "@/i18n/server";
 
 const NEED: Record<DetailKind, Permission> = {
@@ -60,7 +60,7 @@ const accountCells = (a: Account | undefined, tone?: DetailCell["tone"]): Detail
 /** تفاصيل صف من أي جدول (تُحمَّل عند فتحه فقط)، بنفس صلاحية الصفحة التي يظهر فيها */
 export async function loadDetailAction(raw: unknown): Promise<ActionResult<Detail>> {
   const p = input.safeParse(raw);
-  if (!p.success) return { ok: false, error: "validation" };
+  if (!p.success) return invalid(p.error);
   const ctx = await getAppContext();
   if (!ctx.user || !ctx.hotel) return { ok: false, error: "permission_denied" };
   const app = ctx as AppContext;

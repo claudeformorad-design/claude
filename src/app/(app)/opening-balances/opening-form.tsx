@@ -62,10 +62,10 @@ export function OpeningForm({ accounts, customers, vendors, today, errors }: {
       <CardContent className="space-y-2">
         {!options.length && <p className="text-[15px] text-slate-500">{tr("لا توجد سجلات بعد، أضفها أولًا من صفحتها.")}</p>}
         {list.map((x, i) => (
-          <div key={i} className="grid grid-cols-[1fr_140px_1fr_auto] items-center gap-2">
-            <NativeSelect aria-label={`${prefix} ${i + 1}`} value={x.id} onChange={(e) => set(list.map((y, j) => j === i ? { ...y, id: e.target.value } : y))}>
+          <div key={i} className="grid grid-cols-[1fr_1fr_auto] items-center gap-2 border-b border-line pb-3 last:border-0 last:pb-0 sm:grid-cols-[1fr_140px_1fr_auto] sm:border-0 sm:pb-0">
+            <div className="col-span-3 sm:col-span-1"><NativeSelect aria-label={`${prefix} ${i + 1}`} value={x.id} onChange={(e) => set(list.map((y, j) => j === i ? { ...y, id: e.target.value } : y))}>
               <option value="">{tr("اختر")}</option>{options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-            </NativeSelect>
+            </NativeSelect></div>
             <Input aria-label={tr("المبلغ")} inputMode="decimal" dir="ltr" value={x.amount} onChange={(e) => set(list.map((y, j) => j === i ? { ...y, amount: e.target.value } : y))} placeholder={tr("المبلغ")} />
             <Input aria-label={tr("المرجع")} value={x.reference} onChange={(e) => set(list.map((y, j) => j === i ? { ...y, reference: e.target.value } : y))} placeholder={tr("رقم الكشف أو الفاتورة")} />
             <Button type="button" size="sm" variant="ghost" aria-label={tr("حذف")} onClick={() => set(list.filter((_, j) => j !== i))}><Trash2 className="size-4" /></Button>
@@ -84,14 +84,14 @@ export function OpeningForm({ accounts, customers, vendors, today, errors }: {
             <Button type="button" size="sm" variant="outline" onClick={() => setRows([...rows, { account_id: "", debit: "", credit: "" }])}><Plus className="size-4" />{tr("سطر")}</Button>
           </CardHeader>
           <CardContent className="space-y-2">
-            <div className="grid grid-cols-[1fr_140px_140px_auto] gap-2 px-1 text-[14px] text-slate-500"><span>{tr("الحساب")}</span><span>{tr("مدين")}</span><span>{tr("دائن")}</span><span className="w-9" /></div>
+            <div className="hidden grid-cols-[1fr_140px_140px_auto] gap-2 px-1 text-[14px] text-slate-500 sm:grid"><span>{tr("الحساب")}</span><span>{tr("مدين")}</span><span>{tr("دائن")}</span><span className="w-9" /></div>
             {rows.map((x, i) => (
-              <div key={i} className="grid grid-cols-[1fr_140px_140px_auto] items-center gap-2">
-                <NativeSelect aria-label={tr("الحساب {0}", i + 1)} value={x.account_id} onChange={(e) => setRows(rows.map((y, j) => j === i ? { ...y, account_id: e.target.value } : y))}>
+              <div key={i} className="grid grid-cols-[1fr_1fr_auto] items-center gap-2 border-b border-line pb-3 last:border-0 last:pb-0 sm:grid-cols-[1fr_140px_140px_auto] sm:border-0 sm:pb-0">
+                <div className="col-span-3 sm:col-span-1"><NativeSelect aria-label={tr("الحساب {0}", i + 1)} value={x.account_id} onChange={(e) => setRows(rows.map((y, j) => j === i ? { ...y, account_id: e.target.value } : y))}>
                   <option value="">{tr("اختر الحساب")}</option>{accounts.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-                </NativeSelect>
-                <Input aria-label={tr("مدين {0}", i + 1)} inputMode="decimal" dir="ltr" value={x.debit} onChange={(e) => setRows(rows.map((y, j) => j === i ? { ...y, debit: e.target.value, credit: e.target.value ? "" : y.credit } : y))} />
-                <Input aria-label={tr("دائن {0}", i + 1)} inputMode="decimal" dir="ltr" value={x.credit} onChange={(e) => setRows(rows.map((y, j) => j === i ? { ...y, credit: e.target.value, debit: e.target.value ? "" : y.debit } : y))} />
+                </NativeSelect></div>
+                <Input aria-label={tr("مدين {0}", i + 1)} placeholder={tr("مدين")} inputMode="decimal" dir="ltr" value={x.debit} onChange={(e) => setRows(rows.map((y, j) => j === i ? { ...y, debit: e.target.value, credit: e.target.value ? "" : y.credit } : y))} />
+                <Input aria-label={tr("دائن {0}", i + 1)} placeholder={tr("دائن")} inputMode="decimal" dir="ltr" value={x.credit} onChange={(e) => setRows(rows.map((y, j) => j === i ? { ...y, credit: e.target.value, debit: e.target.value ? "" : y.debit } : y))} />
                 <Button type="button" size="sm" variant="ghost" aria-label={tr("حذف")} onClick={() => setRows(rows.filter((_, j) => j !== i))}><Trash2 className="size-4" /></Button>
               </div>
             ))}

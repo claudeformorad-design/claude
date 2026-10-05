@@ -6,7 +6,7 @@ import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isValidAmount, toMoney } from "@/lib/accounting/money";
 import type { ShiftReport } from "@/lib/supabase/database.types";
-import { raise, type ActionResult, toActionResult } from "@/services/errors";
+import { raise, type ActionResult, toActionResult, invalid } from "@/services/errors";
 
 /** ورديات الكاشير وأسعار الصرف — القواعد كلها في قاعدة البيانات */
 const fail = { ok: false as const, error: "validation" as const };
@@ -15,7 +15,7 @@ const amount = z.string().trim().refine((v) => v === "" || (isValidAmount(v) && 
 export async function openShiftAction(openingFloat: string): Promise<ActionResult<string>> {
   const ctx = await requireAppContext(PERMISSIONS.cashierShifts);
   const p = amount.safeParse(openingFloat ?? "");
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const r = await toActionResult(async () => {
     const { data, error } = await ctx.supabase.rpc("open_cashier_shift", { p_hotel_id: ctx.hotel.id, p_opening_float: p.data ? toMoney(p.data).toFixed() : "0" });
     raise(error);
@@ -52,7 +52,7 @@ export async function setExchangeRateAction(input: unknown): Promise<ActionResul
     rate: z.string().trim().refine((v) => /^\d+(\.\d{1,10})?$/.test(v) && Number(v) > 0, "invalid_amount"),
     date: z.iso.date().optional().or(z.literal("")),
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const r = await toActionResult(async () => {
     const { error } = await ctx.supabase.rpc("set_exchange_rate", {
       p_hotel_id: ctx.hotel.id, p_currency_code: p.data.currency, p_rate: p.data.rate, p_rate_date: p.data.date || null,

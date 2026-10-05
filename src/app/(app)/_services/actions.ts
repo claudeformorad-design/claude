@@ -5,7 +5,7 @@ import { z } from "zod";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS, type Permission } from "@/lib/auth/permissions";
 import { isValidAmount, toMoney } from "@/lib/accounting/money";
-import { raise, type ActionResult, toActionResult } from "@/services/errors";
+import { raise, type ActionResult, toActionResult, invalid } from "@/services/errors";
 
 /** عمليات خدمات التشغيل: القواعد كلها في قاعدة البيانات، وهنا التحقق من الشكل فقط */
 const fail = { ok: false as const, error: "validation" as const };
@@ -36,7 +36,7 @@ export async function createMaintenanceRequestAction(input: unknown) {
     title: text, description: optText, room_id: optUuid, asset_id: optUuid, location: optText,
     priority: z.enum(["low", "normal", "high", "urgent"]), out_of_service: bool, due_date: optDate,
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(PERMISSIONS.maintenanceReport, MAINT, async (ctx) => {
     const { data, error } = await ctx.supabase.rpc("create_maintenance_request", {
       p_hotel_id: ctx.hotel.id, p_title: p.data.title, p_description: p.data.description, p_room_id: p.data.room_id, p_asset_id: p.data.asset_id,
@@ -82,7 +82,7 @@ export async function saveMaintenanceAssetAction(input: unknown) {
     category: z.enum(["ac", "electrical", "plumbing", "appliance", "furniture", "elevator", "generator", "it", "other"]),
     room_id: optUuid, location: optText, brand: optText, serial_number: optText, purchase_date: optDate, warranty_until: optDate, notes: optText, is_active: bool,
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(PERMISSIONS.maintenanceManage, ["/maintenance/assets"], async (ctx) => {
     const { id, ...row } = p.data;
     const values = { ...row, is_active: id ? row.is_active : true };
@@ -102,7 +102,7 @@ export async function registerLostItemAction(input: unknown) {
     description: text, category: z.enum(["electronics", "documents", "money", "jewelry", "clothing", "bags", "other"]), found_date: optDate,
     room_id: optUuid, found_location: optText, found_by: optText, storage_location: optText,
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(PERMISSIONS.lostFoundManage, LOST, async (ctx) => {
     const { error } = await ctx.supabase.rpc("register_lost_item", {
       p_hotel_id: ctx.hotel.id, p_description: p.data.description, p_found_date: p.data.found_date, p_category: p.data.category,
@@ -137,7 +137,7 @@ export async function disposeLostItemAction(itemId: string, reason: string) {
 
 export async function openSafeDepositAction(input: unknown) {
   const p = z.object({ reservation_id: optUuid, guest_name: z.string().trim().max(200).optional(), box_number: text, items: text }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(PERMISSIONS.lostFoundManage, LOST, async (ctx) => {
     let guest = p.data.guest_name ?? "";
     if (!guest && p.data.reservation_id) {
@@ -168,7 +168,7 @@ export async function saveLaundryItemAction(input: unknown) {
   const p = z.object({
     id: uuid.optional().or(z.literal("")), name: text, service: z.enum(["wash", "iron", "wash_iron", "dry_clean"]), price: money(), is_active: bool,
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(PERMISSIONS.laundryManage, LAUNDRY, async (ctx) => {
     const row = { name: p.data.name, service: p.data.service, price: p.data.price, is_active: p.data.id ? p.data.is_active : true };
     if (p.data.id) {
@@ -191,7 +191,7 @@ export async function createLaundryOrderAction(input: unknown) {
     reservation_id: uuid, lines: z.array(z.object({ item_id: uuid, quantity: z.coerce.number().int().min(1).max(500) })).min(1),
     express: z.boolean(), express_pct: z.coerce.number().min(0).max(300), notes: optText,
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(PERMISSIONS.laundryManage, LAUNDRY, async (ctx) => {
     const { data, error } = await ctx.supabase.rpc("create_laundry_order", {
       p_reservation_id: p.data.reservation_id, p_lines: p.data.lines, p_express: p.data.express, p_express_pct: String(p.data.express_pct),
@@ -213,7 +213,7 @@ export async function updateLaundryOrderAction(orderId: string, status: string) 
 
 export async function saveLinenTypeAction(input: unknown) {
   const p = z.object({ id: uuid.optional().or(z.literal("")), name: text, par_level: z.coerce.number().int().min(0).max(100000), is_active: bool }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(PERMISSIONS.laundryManage, LAUNDRY, async (ctx) => {
     const row = { name: p.data.name, par_level: p.data.par_level, is_active: p.data.id ? p.data.is_active : true };
     const { error } = p.data.id
@@ -229,7 +229,7 @@ export async function addLinenMovementAction(input: unknown) {
     linen_type_id: uuid, kind: z.enum(["purchased", "sent", "returned", "damaged"]), quantity: z.coerce.number().int().min(1).max(100000),
     movement_date: z.iso.date(), notes: optText,
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(PERMISSIONS.laundryManage, LAUNDRY, async (ctx) => {
     const { error } = await ctx.supabase.from("linen_movements").insert({ ...p.data, hotel_id: ctx.hotel.id });
     raise(error);
@@ -251,7 +251,7 @@ const eventInput = z.object({
 
 export async function saveEventAction(input: unknown) {
   const p = eventInput.safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const v = p.data;
   return run(PERMISSIONS.eventsManage, [...EVENTS, ...(v.id ? [`/events/${v.id}`] : [])], async (ctx) => {
     const { data, error } = await ctx.supabase.rpc("save_event", {
@@ -321,7 +321,7 @@ export async function recordPaperSurveyAction(input: unknown) {
     guest_name: optText, room_number: optText, overall: rating, cleanliness: optRating, staff: optRating, comfort: optRating, value: optRating, food: optRating,
     recommend: z.enum(["yes", "no", ""]).optional(), comment: optText,
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return run(PERMISSIONS.feedbackManage, ["/surveys"], async (ctx) => {
     const { error } = await ctx.supabase.rpc("record_paper_survey", {
       p_hotel_id: ctx.hotel.id, p_guest_name: p.data.guest_name, p_room_number: p.data.room_number, p_overall: p.data.overall,

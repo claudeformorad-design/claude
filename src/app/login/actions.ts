@@ -58,7 +58,8 @@ export async function claimOwnerAction(): Promise<AuthState> {
     const { describeDatabaseError } = await import("@/lib/accounting/errors");
     return { error: "generic", message: (error && describeDatabaseError(error.message)) || tr("تعذر البدء، حدّث الصفحة وحاول مرة أخرى") };
   }
-  redirect("/onboarding");
+  // أول دخول: تعريف قصير بالنظام، ثم إعداد الفندق
+  redirect("/welcome");
 }
 
 /** رابط دخول الموظف: يُستخدم مرة واحدة ويسجّل دخوله على جهازه */

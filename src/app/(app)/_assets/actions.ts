@@ -7,7 +7,7 @@ import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isIsoDate } from "@/lib/accounting/fiscal";
 import { isValidAmount, toMoney } from "@/lib/accounting/money";
-import { raise, type ActionResult, toActionResult } from "@/services/errors";
+import { raise, type ActionResult, toActionResult, invalid } from "@/services/errors";
 
 const amount = (allowZero = false) =>
   z.string().trim().refine((v) => isValidAmount(v) && (allowZero ? !toMoney(v).isNegative() : toMoney(v).gt(0))).transform((v) => toMoney(v).toFixed());
@@ -22,7 +22,7 @@ export async function registerAssetAction(input: unknown): Promise<ActionResult<
     salvage_value: amount(true), useful_life_months: z.coerce.number().int().positive(), acquisition_date: date,
     department_id: opt, counter_account_id: z.uuid(), notes: opt,
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const v = p.data;
   const r = await toActionResult(async () => {
     const { data, error } = await ctx.supabase.rpc("register_fixed_asset", {
@@ -52,7 +52,7 @@ export async function runDepreciationAction(month: string): Promise<ActionResult
 export async function disposeAssetAction(input: unknown): Promise<ActionResult<string>> {
   const ctx = await requireAppContext(PERMISSIONS.assetsManage);
   const p = z.object({ asset_id: z.uuid(), disposal_date: date, proceeds: amount(true), proceeds_account_id: opt }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const r = await toActionResult(async () => {
     const { data, error } = await ctx.supabase.rpc("dispose_fixed_asset", {
       p_asset_id: p.data.asset_id, p_disposal_date: p.data.disposal_date, p_proceeds: p.data.proceeds, p_proceeds_account_id: p.data.proceeds_account_id,
@@ -71,7 +71,7 @@ export async function saveItemAction(input: unknown): Promise<ActionResult<undef
     name_en: opt, unit: z.string().trim().min(1), inventory_account_id: z.uuid(), expense_account_id: z.uuid(),
     reorder_level: amount(true), is_active: z.boolean(),
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const { id, ...payload } = p.data;
   const r = await toActionResult(async () => {
     const { error } = id
@@ -91,7 +91,7 @@ export async function inventoryMovementAction(input: unknown): Promise<ActionRes
     quantity: z.string().trim().refine((v) => isValidAmount(v) && !toMoney(v).isZero()).transform((v) => toMoney(v).toFixed()),
     unit_cost: opt, department_id: opt, vendor_bill_id: opt, description: opt,
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const v = p.data;
   const r = await toActionResult(async () => {
     const { data, error } = await ctx.supabase.rpc("post_inventory_movement", {

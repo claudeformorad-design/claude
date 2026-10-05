@@ -5,7 +5,7 @@ import { z } from "zod";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isValidAmount, toMoney } from "@/lib/accounting/money";
-import { raise, type ActionResult, toActionResult } from "@/services/errors";
+import { raise, type ActionResult, toActionResult, invalid } from "@/services/errors";
 
 const amt = z.string().trim().refine((v) => v === "" || (isValidAmount(v) && !toMoney(v).isNegative()), "invalid_amount")
   .transform((v) => (v === "" ? "" : toMoney(v).toFixed()));
@@ -19,7 +19,7 @@ export async function postOpeningBalancesAction(input: unknown): Promise<ActionR
     customers: z.array(z.object({ customer_id: z.uuid(), amount: amt, reference: z.string().trim().max(100).optional() })),
     vendors: z.array(z.object({ vendor_id: z.uuid(), amount: amt, reference: z.string().trim().max(100).optional() })),
   }).safeParse(input);
-  if (!p.success) return { ok: false, error: "validation" };
+  if (!p.success) return invalid(p.error);
   const r = await toActionResult(async () => {
     const { data, error } = await ctx.supabase.rpc("post_opening_balances", {
       p_hotel_id: ctx.hotel.id, p_date: p.data.date,

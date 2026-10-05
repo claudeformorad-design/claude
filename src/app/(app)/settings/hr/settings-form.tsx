@@ -96,7 +96,7 @@ export function HrSettingsForm({ initial, errors, canEdit }: { initial: HrSettin
           <div className="space-y-3">
             <p className="text-[15.5px] text-slate-600">{tr("أيام الأجر عن كل سنة خدمة، حسب الشريحة")}</p>
             {tiers.map((x, i) => (
-              <div key={i} className="flex items-center gap-2.5 text-[15.5px]">
+              <div key={i} className="flex flex-wrap items-center gap-x-2.5 gap-y-2 text-[15.5px]">
                 <span className="text-slate-600">{tr("من السنة")}</span>
                 <input value={x.from} disabled={!canEdit} inputMode="decimal" dir="ltr" aria-label={tr("بداية الشريحة")} className={small}
                   onChange={(e) => setTiers((t) => t.map((y, k) => (k === i ? { ...y, from: e.target.value } : y)))} />
@@ -104,7 +104,7 @@ export function HrSettingsForm({ initial, errors, canEdit }: { initial: HrSettin
                 <input value={x.days} disabled={!canEdit} inputMode="decimal" dir="ltr" aria-label={tr("أيام كل سنة")} className={small}
                   onChange={(e) => setTiers((t) => t.map((y, k) => (k === i ? { ...y, days: e.target.value } : y)))} />
                 <span className="text-slate-600">{tr("يومًا عن كل سنة")}</span>
-                {canEdit && tiers.length > 1 && <button type="button" onClick={() => setTiers((t) => t.filter((_, k) => k !== i))} className="ms-auto rounded-md p-1.5 text-slate-400 hover:bg-subtle hover:text-urgent" aria-label={tr("حذف الشريحة")}><X className="size-4" /></button>}
+                {canEdit && tiers.length > 1 && <button type="button" onClick={() => setTiers((t) => t.filter((_, k) => k !== i))} className="ms-auto flex size-9 shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-subtle hover:text-urgent" aria-label={tr("حذف الشريحة")}><X className="size-4" /></button>}
               </div>
             ))}
             {canEdit && <Button variant="ghost" size="sm" onClick={() => setTiers((t) => [...t, { from: "", days: "" }])}><Plus />{tr("شريحة")}</Button>}
@@ -112,7 +112,7 @@ export function HrSettingsForm({ initial, errors, canEdit }: { initial: HrSettin
           <div className="space-y-3">
             <p className="text-[15.5px] text-slate-600">{tr("نسبة المكافأة عند الاستقالة حسب مجموع سنوات الخدمة، وعند الإنهاء من المنشأة كاملة")}</p>
             {resign.map((x, i) => (
-              <div key={i} className="flex items-center gap-2.5 text-[15.5px]">
+              <div key={i} className="flex flex-wrap items-center gap-x-2.5 gap-y-2 text-[15.5px]">
                 <span className="text-slate-600">{tr("من")}</span>
                 <input value={x.from} disabled={!canEdit} inputMode="decimal" dir="ltr" aria-label={tr("سنوات الخدمة")} className={small}
                   onChange={(e) => setResign((t) => t.map((y, k) => (k === i ? { ...y, from: e.target.value } : y)))} />
@@ -120,7 +120,7 @@ export function HrSettingsForm({ initial, errors, canEdit }: { initial: HrSettin
                 <input value={x.pct} disabled={!canEdit} inputMode="decimal" dir="ltr" aria-label={tr("النسبة")} className={small}
                   onChange={(e) => setResign((t) => t.map((y, k) => (k === i ? { ...y, pct: e.target.value } : y)))} />
                 <span className="text-slate-600">{tr("٪")}</span>
-                {canEdit && resign.length > 1 && <button type="button" onClick={() => setResign((t) => t.filter((_, k) => k !== i))} className="ms-auto rounded-md p-1.5 text-slate-400 hover:bg-subtle hover:text-urgent" aria-label={tr("حذف")}><X className="size-4" /></button>}
+                {canEdit && resign.length > 1 && <button type="button" onClick={() => setResign((t) => t.filter((_, k) => k !== i))} className="ms-auto flex size-9 shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-subtle hover:text-urgent" aria-label={tr("حذف")}><X className="size-4" /></button>}
               </div>
             ))}
             {canEdit && <Button variant="ghost" size="sm" onClick={() => setResign((t) => [...t, { from: "", pct: "" }])}><Plus />{tr("شريحة")}</Button>}

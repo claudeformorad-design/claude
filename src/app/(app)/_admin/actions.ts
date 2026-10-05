@@ -11,7 +11,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { DEMO_DATA_SQL } from "@/lib/supabase/demo-data.sql";
 import { isDemoDataActive, loadDemoData, removeDemoData, restoreLocalBackup, wipeLocalDb } from "@/lib/supabase/local-db";
 import { describeDatabaseError } from "@/lib/accounting/errors";
-import { raise, type ActionResult, toActionResult } from "@/services/errors";
+import { raise, type ActionResult, toActionResult, invalid } from "@/services/errors";
 
 const opt = optText;
 const optAmount = z.string().trim().refine((v) => v === "" || (isValidAmount(v) && !toMoney(v).isNegative())).transform((v) => (v === "" ? null : toMoney(v).toFixed()));
@@ -27,7 +27,7 @@ export async function saveHotelAction(input: unknown): Promise<ActionResult<unde
     total_rooms: z.string().trim().transform((v) => (v === "" ? null : Number(v))).pipe(z.number().int().nonnegative().nullable()).optional(),
     journal_approval_threshold: optAmount, voucher_approval_threshold: optAmount,
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return done(await toActionResult(async () => {
     const { error } = await ctx.supabase.from("hotels").update(p.data).eq("id", ctx.hotel.id);
     raise(error);
@@ -47,7 +47,7 @@ export async function saveHotelOperationsAction(input: unknown): Promise<ActionR
     require_cashier_shift: z.boolean().optional(),
     room_access: z.enum(["card", "key"]).optional(),
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const r = await toActionResult(async () => {
     const m = await ctx.supabase.rpc("set_hotel_modules", { p_hotel_id: ctx.hotel.id, p_modules: p.data.modules });
     raise(m.error);
@@ -71,7 +71,7 @@ export async function saveDepartmentAction(input: unknown): Promise<ActionResult
     code: z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{1,20}$/), name_ar: z.string().trim().min(1), name_en: opt,
     kind: z.enum(["revenue_center", "cost_center", "service_center"]),
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   return done(await toActionResult(async () => {
     const { error } = await ctx.supabase.from("departments").insert({ ...p.data, hotel_id: ctx.hotel.id });
     raise(error);
@@ -85,7 +85,7 @@ export async function saveRoleAction(input: unknown): Promise<ActionResult<undef
     id: z.uuid().optional(), code: z.string().trim().toLowerCase().regex(/^[a-z_]{2,40}$/), name_ar: z.string().trim().min(1),
     name_en: z.string().trim().min(1), permissions: z.array(z.string()),
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const v = p.data;
   return done(await toActionResult(async () => {
     let id = v.id;
@@ -177,7 +177,7 @@ export async function saveAutoBackupAction(input: unknown): Promise<ActionResult
     time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
     keep: z.coerce.number().int().min(1).max(365),
   }).safeParse(input);
-  if (!p.success) return fail;
+  if (!p.success) return invalid(p.error);
   const { saveAutoBackupSettings } = await import("@/lib/supabase/auto-backup");
   try {
     saveAutoBackupSettings(p.data);

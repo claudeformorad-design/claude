@@ -2,6 +2,8 @@ import { localNameOf } from "@/lib/local-name";
 import { tr } from "@/i18n/tr";
 import { forbidden } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
+import Link from "@/components/link";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -49,7 +51,9 @@ export default async function HotelSettingsPage() {
   const amt = (v: string | null) => (v ? toMoney(v).toString() : "");
   return (
     <>
-      <PageHeader title={t.nav.hotelSettings} />
+      <PageHeader title={t.nav.hotelSettings} actions={
+        <Button asChild variant="outline"><Link href="/welcome?replay=1">{tr("التعريف بالنظام")}</Link></Button>
+      } />
       <div className="space-y-6">
         <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
           <Card><CardHeader><CardTitle>{localNameOf(h)}</CardTitle></CardHeader><CardContent>
