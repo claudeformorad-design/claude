@@ -66,7 +66,7 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
         <Stat currency={ctx.hotel.base_currency} icon={Wallet} tone="ink" label={t.folio.balance} value={<Money value={detail.balance} locale={locale} />} />
         <Stat currency={ctx.hotel.base_currency} icon={HandCoins} tone="teal" label={t.folio.deposits} value={<Money value={detail.deposits} locale={locale} />} />
         <Stat icon={CalendarRange} tone="clay" label={tr("الإقامة")} value={folio.arrival_date && folio.departure_date ? nightsText(Math.max(1, nightsBetween(folio.arrival_date, folio.departure_date))) : t.folio.types[folio.folio_type]}
-          hint={folio.arrival_date ? tr("من {0} إلى {1}", dayLabel(folio.arrival_date), folio.departure_date ? dayLabel(folio.departure_date) : "") : undefined} />
+          hint={folio.arrival_date ? (folio.departure_date ? tr("من {0} إلى {1}", dayLabel(folio.arrival_date), dayLabel(folio.departure_date)) : tr("من {0}", dayLabel(folio.arrival_date))) : undefined} />
         <Stat icon={UserRound} tone="neutral" label={tr("النزيل")} value={folio.guest_name} hint={folio.room_number ? `${t.folio.room} ${folio.room_number}` : undefined} />
       </StatGrid>
 

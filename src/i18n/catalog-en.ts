@@ -2446,4 +2446,5 @@ export const EN: Record<string, string> = {
   "ادخل النظام": "Enter the system",
   "هذا هو نزيل": "That is Nazeel",
   "كل قسم ذكرناه تجده في القائمة الجانبية.": "Every section we showed is in the side menu.",
+  "من {0}": "From {0}",
 };
