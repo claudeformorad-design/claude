@@ -1,7 +1,7 @@
 "use client";
 import { tr } from "@/i18n/tr";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { RotateCcw } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
@@ -20,13 +20,19 @@ export function FormatCard({ errors }: { errors: Record<string, string> }) {
   const [word, setWord] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
-  const go = () => start(async () => {
-    setError(null);
-    const r = await callAction(factoryResetAction(word));
-    if (!r.ok) return setError(actionErrorText(errors, r));
-    router.push("/onboarding");
-    router.refresh();
-  });
+  // قفل فوري ضد الضغط المزدوج قبل أن يعطَّل الزر في الرسم التالي
+  const running = useRef(false);
+  const go = () => {
+    if (running.current) return;
+    running.current = true;
+    start(async () => {
+      setError(null);
+      const r = await callAction(factoryResetAction(word));
+      if (!r.ok) { running.current = false; setError(actionErrorText(errors, r)); return; }
+      router.push("/onboarding");
+      router.refresh();
+    });
+  };
   return (
     <div className="surface flex flex-wrap items-center justify-between gap-4 border-urgent/30 p-6">
       <div className="flex min-w-0 items-start gap-4">

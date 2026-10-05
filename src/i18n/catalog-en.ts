@@ -2420,4 +2420,6 @@ export const EN: Record<string, string> = {
   "خدمة مزود الذكاء الاصطناعي متوقفة مؤقتًا. حاول بعد قليل.": "The AI provider is temporarily down. Try again shortly.",
   "تعذّر الوصول إلى مزود الذكاء الاصطناعي من الخادم. تحقق من الاتصال وحاول مرة أخرى.": "The server could not reach the AI provider. Check the connection and try again.",
   "انقطع الرد من مزود الذكاء الاصطناعي قبل اكتماله. اضغط إعادة المحاولة.": "The AI provider cut the answer off before it finished. Press retry.",
+  "لا يوجد فندق مرتبط بحسابك": "No hotel is linked to your account",
+  "قد يكون المدير أوقف دخولك أو حذف حسابك. تواصل معه ليعطيك رابط دخول جديد.": "The manager may have stopped your access or removed your account. Ask them for a new sign in link.",
 };
