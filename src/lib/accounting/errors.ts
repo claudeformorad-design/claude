@@ -406,6 +406,8 @@ const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
   [/You cannot manage an employee who has permissions you do not have/i, "لا يمكنك إدارة موظف يملك صلاحيات ليست عندك"],
   [/Only staff accounts created in the system can be reset here/i, "إعادة تعيين كلمة المرور لحسابات الموظفين المنشأة من النظام فقط"],
   [/Choose a new password different from the temporary one/i, "اختر كلمة مرور جديدة غير الكلمة المؤقتة"],
+  [/Only the system owner can format the system/i, "الفورمات لصاحب النظام فقط"],
+  [/Type the confirmation word to format the system/i, "اكتب كلمة التأكيد كما هي"],
   [/The system already has an owner/i, "النظام له صاحب بالفعل، ادخل بحسابك أو اطلب رابط دخول من المدير"],
   [/This access link is no longer valid/i, "رابط الدخول غير صالح: استُخدم من قبل أو انتهت مدته، اطلب رابطًا جديدًا من المدير"],
   // عناصر غير موجودة

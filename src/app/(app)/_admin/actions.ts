@@ -204,3 +204,16 @@ export async function runBackupNowAction(): Promise<ActionResult<string>> {
     return { ok: false, error: "unknown", message: tr("تعذر أخذ النسخة الاحتياطية: {0}", e instanceof Error ? e.message : String(e)) };
   }
 }
+
+/** فورمات النظام المنشور: يمسح كل الفنادق والحسابات عدا صاحب النظام، ويعيده لإنشاء فندق جديد. الحراسة في قاعدة البيانات */
+export async function factoryResetAction(confirm: string): Promise<ActionResult<undefined>> {
+  const ctx = await requireAppContext(PERMISSIONS.hotelManage);
+  if (!isSupabaseConfigured() || typeof confirm !== "string") return fail;
+  const r = await toActionResult(async () => {
+    const { error } = await ctx.supabase.rpc("factory_reset", { p_confirm: confirm.trim() });
+    raise(error);
+    return undefined;
+  });
+  if (r.ok) revalidatePath("/", "layout");
+  return r;
+}

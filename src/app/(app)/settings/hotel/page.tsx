@@ -10,6 +10,7 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import { toMoney } from "@/lib/accounting/money";
 import { listDepartments } from "@/services/accounts.service";
 import { getI18n } from "@/i18n/server";
+import { FormatCard } from "./format-card";
 import { saveDepartmentAction, saveHotelAction } from "../../_admin/actions";
 import { SimpleForm } from "../../_assets/simple-form";
 import { ResetHotelDataButton } from "./reset-data-button";
@@ -95,6 +96,8 @@ export default async function HotelSettingsPage() {
             modules: h.enabled_modules, check_in_time: h.check_in_time, check_out_time: h.check_out_time, weekend_nights: h.weekend_nights, require_cashier_shift: h.require_cashier_shift, room_access: h.room_access,
           }} />
         )}
+
+        {ctx.can(PERMISSIONS.hotelManage) && isSupabaseConfigured() && <FormatCard errors={t.errors} />}
 
         {ctx.can(PERMISSIONS.hotelManage) && !isSupabaseConfigured() && (
           <div className="space-y-5">

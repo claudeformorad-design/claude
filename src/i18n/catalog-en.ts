@@ -2365,4 +2365,9 @@ export const EN: Record<string, string> = {
   "تقارير لحظية لكل شيء": "Live reports for everything",
   "فندقك كله في مكان واحد": "Your whole hotel in one place",
   "من حجز الغرفة حتى التقرير المالي، كل عملية تُسجَّل مرة واحدة وتظهر في مكانها الصحيح.": "From booking the room to the financial report, every operation is recorded once and shows up in the right place.",
+  "فورمات النظام": "Format the system",
+  "يمسح كل شيء ويعيد النظام جديدًا: الفنادق والموظفون والحجوزات والقيود. يبقى حسابك أنت فقط لتنشئ فندقك من جديد. لا يمكن التراجع عنه.": "Erases everything and makes the system new: hotels, staff, reservations and entries. Only your own account stays so you can create your hotel again. This cannot be undone.",
+  "كل البيانات ستُحذف نهائيًا. للتأكيد اكتب كلمة {0} في الخانة.": "All data will be deleted permanently. To confirm, type the word {0} in the box.",
+  "كلمة التأكيد": "Confirmation word",
+  "فورمات الآن": "Format now",
 };
