@@ -26,7 +26,7 @@ import type { RoomAccess } from "@/lib/supabase/database.types";
 
 type Option = { id: string; label: string };
 /** currency: عملة أجنبية للطريقة (null = الأساسية) و rate سعرها الساري */
-type Method = Option & { kind: string; currency: string | null; rate: number | null };
+type Method = Option & { kind: string; currency: string | null; rate: number | null; ref?: boolean };
 type Bill = { due: number; balance: number; deposits: number; company: number };
 
 /**
@@ -88,7 +88,7 @@ export function StayPanel({
   const [handed, setHanded] = useState(false);
   const words = accessWords(roomAccess);
   const [bill, setBill] = useState<Bill | null>(null);
-  const [pay, setPay] = useState({ method: cashMethods[0]?.id ?? "", amount: "" });
+  const [pay, setPay] = useState({ method: cashMethods[0]?.id ?? "", amount: "", reference: "" });
 
   const field = "field-group space-y-1.5";
   const methodOf = (id: string) => methods.find((m) => m.id === id);
@@ -162,7 +162,7 @@ export function StayPanel({
                         <Label htmlFor="pay_method">{tr("طريقة التحصيل")}</Label>
                         <NativeSelect id="pay_method" value={pay.method} onChange={(e) => {
                           const m = methodOf(e.target.value);
-                          setPay({ method: e.target.value, amount: m?.currency && m.rate ? (Math.ceil((bill.due / m.rate) * 100) / 100).toString() : String(bill.due) });
+                          setPay({ method: e.target.value, amount: m?.currency && m.rate ? (Math.ceil((bill.due / m.rate) * 100) / 100).toString() : String(bill.due), reference: pay.reference });
                         }}>
                           {cashMethods.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
                           {customer && methods.filter((m) => m.kind === "city_ledger").map((m) => <option key={m.id} value={m.id}>{m.label}{" "}{tr("على")}{" "}{customer.label}</option>)}
@@ -173,21 +173,27 @@ export function StayPanel({
                         <Input id="pay_amount" inputMode="decimal" dir="ltr" value={pay.amount} onChange={(e) => setPay({ ...pay, amount: e.target.value })} />
                         {approx(pay.method, pay.amount) && <p className="num text-[13.5px] text-slate-500">{approx(pay.method, pay.amount)}</p>}
                       </div>
+                      {payMethod?.ref && (
+                        <div className={field}>
+                          <Label htmlFor="pay_ref">{tr("رقم العملية")}</Label>
+                          <Input id="pay_ref" dir="ltr" value={pay.reference} onChange={(e) => setPay({ ...pay, reference: e.target.value })} placeholder={tr("رقم العملية في المحفظة، إلزامي")} />
+                        </div>
+                      )}
                     </div>
                   )}
                   {bill.due > 0 && (payForeign || (pay.amount && Number(pay.amount) < bill.due)) ? (
-                    <Button type="button" variant="outline" className="w-full" loading={busy === "part"} disabled={pending || !pay.amount}
-                      onClick={() => run("part", () => payStayAction(reservationId, { method: pay.method, amount: pay.amount }), tr("تم تسجيل الدفعة"), (d) => {
+                    <Button type="button" variant="outline" className="w-full" loading={busy === "part"} disabled={pending || !pay.amount || (!!payMethod?.ref && !pay.reference.trim())}
+                      onClick={() => run("part", () => payStayAction(reservationId, { method: pay.method, amount: pay.amount, reference: pay.reference }), tr("تم تسجيل الدفعة"), (d) => {
                         const b = toBill(d);
                         setBill(b);
-                        setPay({ method: cashMethods.find((m) => !m.currency)?.id ?? pay.method, amount: b.due > 0 ? String(b.due) : "" });
+                        setPay({ method: cashMethods.find((m) => !m.currency)?.id ?? pay.method, amount: b.due > 0 ? String(b.due) : "", reference: "" });
                         router.refresh();
                       })}>{tr("تسجيل الدفعة")}{payForeign ? tr(" بالعملة الأجنبية") : tr(" الجزئية")}
                     </Button>
                   ) : (
-                    <Button type="button" className="w-full" loading={busy === "out"} disabled={pending || !!credit}
+                    <Button type="button" className="w-full" loading={busy === "out"} disabled={pending || !!credit || (bill.due > 0 && !!payMethod?.ref && !pay.reference.trim())}
                       onClick={() => run("out", () => settleAndCheckOutAction(reservationId, {
-                        method: pay.method, amount: bill.due > 0 ? pay.amount : "",
+                        method: pay.method, amount: bill.due > 0 ? pay.amount : "", reference: pay.reference,
                         customer_id: methodOf(pay.method)?.kind === "city_ledger" ? customer?.id : undefined,
                       }), tr("تمت المغادرة وصدرت الفاتورة"), (inv) => {
                         if (inv && canViewInvoices) router.push(`/invoices/${inv}`); else router.refresh();
@@ -311,8 +317,12 @@ export function StayPanel({
                   {approx(dep.method, dep.amount) && <p className="num text-[13px] text-slate-500">{approx(dep.method, dep.amount)}</p>}
                 </div>
                 </div>
-                <div className={field}><Label htmlFor="dep_ref">{tr("المرجع")}</Label><Input id="dep_ref" value={dep.reference} onChange={(e) => setDep({ ...dep, reference: e.target.value })} placeholder={tr("رقم الإيصال أو الحوالة")} /></div>
-                <Button type="button" variant="outline" className="w-full" loading={busy === "dep_add"} disabled={pending || !dep.amount}
+                <div className={field}>
+                  <Label htmlFor="dep_ref">{methodOf(dep.method)?.ref ? tr("رقم العملية") : tr("المرجع")}</Label>
+                  <Input id="dep_ref" dir="ltr" value={dep.reference} onChange={(e) => setDep({ ...dep, reference: e.target.value })}
+                    placeholder={methodOf(dep.method)?.ref ? tr("رقم العملية في المحفظة، إلزامي") : tr("رقم الإيصال أو الحوالة")} />
+                </div>
+                <Button type="button" variant="outline" className="w-full" loading={busy === "dep_add"} disabled={pending || !dep.amount || (!!methodOf(dep.method)?.ref && !dep.reference.trim())}
                   onClick={() => run("dep_add", () => recordDepositAction(reservationId, dep), tr("تم تسجيل العربون"), () => { setDep({ ...dep, amount: "", reference: "" }); router.refresh(); })}><Wallet className="size-4" />{tr("تسجيل العربون")}</Button>
               </div>
             )}

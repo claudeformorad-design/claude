@@ -338,19 +338,20 @@ export async function setBillingAction(reservationId: string, billTo: string) {
 /** دفعة على فوليو الحجز أثناء المغادرة (تُستخدم للعملات الأجنبية والدفع المجزأ) — الناتج ملخص المغادرة بعدها */
 export async function payStayAction(reservationId: string, input: unknown): Promise<ActionResult<CheckOutSummary>> {
   const ctx = await requireAppContext(PERMISSIONS.pmsManage);
-  const p = z.object({ method: z.uuid(), amount: moneyInput, kind: z.enum(["payment", "refund", "deposit_refund"]).default("payment") }).safeParse(input);
+  const p = z.object({ method: z.uuid(), amount: moneyInput, kind: z.enum(["payment", "refund", "deposit_refund"]).default("payment"), reference: z.string().trim().max(100).optional() }).safeParse(input);
   if (!p.success || !id.safeParse(reservationId).success) return fail;
   const r = await toActionResult(async () => {
     const prep = await ctx.supabase.rpc("prepare_check_out", { p_reservation_id: reservationId });
     raise(prep.error);
     const folio = prep.data!.folio_id;
+    const ref = p.data.reference || null;
     const pay = (await methodCurrency(ctx, p.data.method))
-      ? await ctx.supabase.rpc("post_folio_foreign_money", { p_folio_id: folio, p_txn_type: p.data.kind, p_payment_method_id: p.data.method, p_foreign_amount: p.data.amount })
+      ? await ctx.supabase.rpc("post_folio_foreign_money", { p_folio_id: folio, p_txn_type: p.data.kind, p_payment_method_id: p.data.method, p_foreign_amount: p.data.amount, p_reference: ref })
       : p.data.kind === "refund"
-        ? await ctx.supabase.rpc("post_folio_refund", { p_folio_id: folio, p_payment_method_id: p.data.method, p_amount: p.data.amount, p_description: tr("إرجاع الباقي للنزيل") })
+        ? await ctx.supabase.rpc("post_folio_refund", { p_folio_id: folio, p_payment_method_id: p.data.method, p_amount: p.data.amount, p_reference: ref, p_description: tr("إرجاع الباقي للنزيل") })
         : p.data.kind === "deposit_refund"
-          ? await ctx.supabase.rpc("refund_folio_deposit", { p_folio_id: folio, p_payment_method_id: p.data.method, p_amount: p.data.amount, p_description: tr("استرداد باقي العربون") })
-          : await ctx.supabase.rpc("post_folio_payment", { p_folio_id: folio, p_payment_method_id: p.data.method, p_amount: p.data.amount, p_description: tr("تحصيل عند المغادرة") });
+          ? await ctx.supabase.rpc("refund_folio_deposit", { p_folio_id: folio, p_payment_method_id: p.data.method, p_amount: p.data.amount, p_reference: ref, p_description: tr("استرداد باقي العربون") })
+          : await ctx.supabase.rpc("post_folio_payment", { p_folio_id: folio, p_payment_method_id: p.data.method, p_amount: p.data.amount, p_reference: ref, p_description: tr("تحصيل عند المغادرة") });
     raise(pay.error);
     const next = await ctx.supabase.rpc("prepare_check_out", { p_reservation_id: reservationId });
     raise(next.error);
@@ -397,7 +398,7 @@ export async function prepareCheckOutAction(reservationId: string): Promise<Acti
 /** تحصيل المتبقي (إن وُجد) ثم المغادرة وإصدار الفاتورة الضريبية — الناتج رقم الفاتورة */
 export async function settleAndCheckOutAction(reservationId: string, input: unknown): Promise<ActionResult<string | null>> {
   const ctx = await requireAppContext(PERMISSIONS.pmsManage);
-  const p = z.object({ method: z.string().optional(), amount: z.string().trim().optional(), customer_id: z.string().optional() }).safeParse(input);
+  const p = z.object({ method: z.string().optional(), amount: z.string().trim().optional(), customer_id: z.string().optional(), reference: z.string().trim().max(100).optional() }).safeParse(input);
   if (!p.success || !id.safeParse(reservationId).success) return fail;
   const r = await toActionResult(async () => {
     const prep = await ctx.supabase.rpc("prepare_check_out", { p_reservation_id: reservationId });
@@ -408,10 +409,11 @@ export async function settleAndCheckOutAction(reservationId: string, input: unkn
       const pay = (await methodCurrency(ctx, p.data.method!))
         ? await ctx.supabase.rpc("post_folio_foreign_money", {
             p_folio_id: prep.data!.folio_id, p_txn_type: "payment", p_payment_method_id: p.data.method!, p_foreign_amount: amount.toFixed(),
+            p_reference: p.data.reference || null,
           })
         : await ctx.supabase.rpc("post_folio_payment", {
             p_folio_id: prep.data!.folio_id, p_payment_method_id: p.data.method!, p_amount: amount.toFixed(),
-            p_description: tr("تحصيل عند المغادرة"), p_customer_id: p.data.customer_id || null,
+            p_description: tr("تحصيل عند المغادرة"), p_customer_id: p.data.customer_id || null, p_reference: p.data.reference || null,
           });
       raise(pay.error);
     }

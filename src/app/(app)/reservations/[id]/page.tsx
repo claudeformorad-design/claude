@@ -183,7 +183,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
               today={today} arrival={r.arrival_date} departure={r.departure_date}
               folio={folio && folio.status === "open" ? { id: folio.id, number: folio.number, balance: folio.balance, deposits: folio.deposits } : null}
               methods={methods.filter((m) => m.is_active).map((m) => ({
-                id: m.id, label: localNameOf(m), kind: m.kind, currency: m.currency_code,
+                id: m.id, label: localNameOf(m), kind: m.kind, currency: m.currency_code, ref: m.requires_reference,
                 rate: m.currency_code ? Number(fx.get(m.currency_code)?.rate ?? 0) || null : null,
               }))}
               baseCurrency={ctx.hotel.base_currency} billTo={r.bill_to} roomAccess={ctx.hotel.room_access} keysIssued={r.keys_issued}

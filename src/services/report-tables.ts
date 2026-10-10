@@ -53,6 +53,7 @@ export const REPORTS = {
   "reservations-report": PERMISSIONS.pmsView,
   "occupancy-monthly": PERMISSIONS.financialView,
   "currency-trial-balance": PERMISSIONS.trialBalanceView,
+  "cash-by-currency": PERMISSIONS.cashReportView,
 } as const satisfies Record<string, Permission>;
 export type ReportKey = keyof typeof REPORTS;
 
@@ -66,7 +67,7 @@ export function parseReportParams(key: ReportKey, get: (k: string) => string | n
   const today = todayInTimeZone(hotel.timezone);
   const toRaw = get("to") ?? "";
   const to = isIsoDate(toRaw) ? toRaw : today;
-  const defaultFrom = key === "income-statement" || key === "cash-flow" || key === "trial-balance" || key === "monthly-movement" || key === "occupancy-monthly"
+  const defaultFrom = key === "cash-by-currency" ? to : key === "income-statement" || key === "cash-flow" || key === "trial-balance" || key === "monthly-movement" || key === "occupancy-monthly"
     ? fiscalYearStart(to, hotel.fiscal_year_start_month) : `${to.slice(0, 7)}-01`;
   const fromRaw = get("from") ?? "";
   const from = isIsoDate(fromRaw) && fromRaw <= to ? fromRaw : defaultFrom;
@@ -327,6 +328,33 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
         columns: [r.account, tr("مدين بالعملة"), tr("دائن بالعملة"), tr("الصافي بالعملة"), tr("مدين {0}", ctx.hotel.base_currency), tr("دائن {0}", ctx.hotel.base_currency), tr("الصافي {0}", ctx.hotel.base_currency)], rows,
         note: rows.length ? { ok: true, text: tr("يعرض القيود المسجلة بعملة أجنبية فقط، بمبالغها بالعملة وما يعادلها بالعملة الأساسية.") }
           : { ok: true, text: tr("لا قيود بعملات أجنبية في هذه الفترة.") } };
+    }
+    case "cash-by-currency": {
+      const { data, error } = await ctx.supabase.rpc("cash_by_currency", { p_hotel_id: ctx.hotel.id, p_from: p.from, p_to: p.to })
+        .select("account_id, account_code, account_name, currency_code, is_base, methods, opening::text, receipts::text, payments::text, closing::text, rate::text, closing_base::text");
+      raise(error);
+      const list = data ?? [];
+      const base = ctx.hotel.base_currency;
+      const currencies = [...new Set(list.map((x) => x.currency_code))].sort((a, b) => Number(b === base) - Number(a === base) || a.localeCompare(b));
+      const rows: ReportRow[] = [];
+      let missingRate = false;
+      for (const c of currencies) {
+        const cl = list.filter((x) => x.currency_code === c);
+        rows.push(head(c === base ? tr("{0} (العملة الأساسية)", c) : c, 7));
+        for (const x of cl) {
+          if (x.closing_base == null) missingRate = true;
+          rows.push(acc({ id: x.account_id, code: x.account_code }, x.methods && x.methods !== x.account_name ? `${x.account_name}، ${x.methods}` : x.account_name,
+            toMoney(x.opening), toMoney(x.receipts), toMoney(x.payments), toMoney(x.closing),
+            x.rate == null ? "" : c === base ? "" : String(Number(x.rate)), x.closing_base == null ? "" : toMoney(x.closing_base)));
+        }
+        rows.push(sub(tr("إجمالي {0}", c), sumMoney(cl.map((x) => x.opening)), sumMoney(cl.map((x) => x.receipts)), sumMoney(cl.map((x) => x.payments)),
+          sumMoney(cl.map((x) => x.closing)), "", sumMoney(cl.map((x) => x.closing_base ?? "0"))));
+      }
+      if (rows.length) rows.push(total(tr("الإجمالي بالعملة الأساسية {0}", base), "", "", "", "", "", sumMoney(list.map((x) => x.closing_base ?? "0"))));
+      return { title: tr("النقدية بالعملات"), subtitle: p.from === p.to ? p.to : period,
+        columns: [tr("الصندوق أو المحفظة"), tr("أول المدة"), tr("المقبوض"), tr("المدفوع"), tr("الرصيد بالعملة"), tr("سعر الصرف"), tr("المعادل {0}", base)], rows,
+        note: missingRate ? { ok: false, text: tr("بعض العملات بلا سعر صرف حتى هذا التاريخ، فلم يُحسب معادلها. سجّل السعر من إعدادات العملات.") }
+          : { ok: true, text: tr("كل صندوق أو محفظة بعملته، والمعادل بسعر صرف آخر يوم في الفترة. أرصدة العملات الأجنبية بوحداتها من الدفعات والتحويلات وفروقات عدّ الورديات.") } };
     }
     case "missing-numbers": {
       const { data, error } = await ctx.supabase.rpc("document_number_gaps", { p_hotel_id: ctx.hotel.id })

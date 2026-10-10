@@ -90,6 +90,7 @@ export const ar = {
     vendorAdvances: "عربون الموردين",
     fxRevaluation: "إعادة تقييم العملات",
     currencyTrialBalance: "ميزان المراجعة بالعملات",
+    cashByCurrency: "النقدية بالعملات",
     guestBalances: "تقرير أرصدة النزلاء",
     reservationsReport: "تقرير الحجوزات",
     occupancyMonthly: "الإشغال الشهري",

@@ -16,27 +16,40 @@ import { cn } from "@/lib/utils";
 import { closeShiftAction, openShiftAction } from "./actions";
 import { useDialogClose } from "@/components/ui/dialog";
 
-export function OpenShiftForm({ errors, currency }: { errors: Record<string, string>; currency: string }) {
+export function OpenShiftForm({ errors, currency, boxes = [] }: { errors: Record<string, string>; currency: string; boxes?: { id: string; name: string; currency: string }[] }) {
   const router = useRouter();
   const closeDialog = useDialogClose();
   const [pending, start] = useTransition();
   const [amount, setAmount] = useState("");
+  const [floats, setFloats] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   return (
-    <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => {
+    <form className="space-y-3" onSubmit={(e) => {
       e.preventDefault();
       start(async () => {
         setError(null);
-        const r = await callAction(openShiftAction(amount));
+        const r = await callAction(openShiftAction(amount, boxes.map((b) => ({ payment_method_id: b.id, amount: (floats[b.id] ?? "").trim() }))));
         if (r.ok) { toast(tr("فُتحت الوردية")); closeDialog?.(); router.refresh(); } else setError(actionErrorText(errors, r));
       });
     }}>
       {error && <Alert variant="destructive" className="w-full">{error}</Alert>}
-      <div className="field-group min-w-56 flex-1 space-y-1.5">
+      <div className="field-group space-y-1.5">
         <Label htmlFor="opening_float">{tr("العهدة النقدية عند الاستلام بعملة")}{" "}{currency}</Label>
         <Input id="opening_float" inputMode="decimal" dir="ltr" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" />
       </div>
-      <Button type="submit" loading={pending}><PlayCircle className="size-4" />{tr("فتح الوردية")}</Button>
+      {boxes.length > 0 && (
+        <div className="space-y-3 rounded-lg border border-line p-3">
+          <p className="text-[14px] text-slate-500">{tr("عهدة الصناديق الأخرى، كل صندوق بعملته (اتركه فارغًا إن لم يكن فيه شيء)")}</p>
+          {boxes.map((b) => (
+            <div key={b.id} className="field-group space-y-1.5">
+              <Label htmlFor={`float_${b.id}`}>{b.name}<CodeTag>{b.currency}</CodeTag></Label>
+              <Input id={`float_${b.id}`} inputMode="decimal" dir="ltr" value={floats[b.id] ?? ""} placeholder="0"
+                onChange={(e) => setFloats({ ...floats, [b.id]: e.target.value })} />
+            </div>
+          ))}
+        </div>
+      )}
+      <Button type="submit" className="w-full" loading={pending}><PlayCircle className="size-4" />{tr("فتح الوردية")}</Button>
     </form>
   );
 }

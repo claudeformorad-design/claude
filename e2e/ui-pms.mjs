@@ -267,7 +267,7 @@ await step("exchange rate and a US-dollar cash method", async () => {
   await go("/settings/revenue?new=method");
   await page.fill("#code", "USD"); await page.fill("#name_ar", "نقدًا دولار");
   await page.selectOption("#kind", "cash"); await pick("#account_id", /الصندوق الرئيسي/); await page.selectOption("#currency_code", "USD");
-  await page.getByRole("button", { name: /حفظ/ }).first().click();
+  await page.getByRole("dialog").getByRole("button", { name: "حفظ", exact: true }).click();
   await page.waitForURL(/settings\/revenue$/); await bodyHas("نقدًا دولار", "USD");
 });
 await step("cashier shift opens with a float", async () => {

@@ -12,12 +12,18 @@ import { raise, type ActionResult, toActionResult, invalid } from "@/services/er
 const fail = { ok: false as const, error: "validation" as const };
 const amount = z.string().trim().refine((v) => v === "" || (isValidAmount(v) && !toMoney(v).isNegative()), "invalid_amount");
 
-export async function openShiftAction(openingFloat: string): Promise<ActionResult<string>> {
+/** فتح الوردية: عهدة الصندوق الرئيسي، وعهدة كل صندوق آخر بعملته (الدولار، السعودي، الطبعة القديمة...) */
+export async function openShiftAction(openingFloat: string, floats: { payment_method_id: string; amount: string }[] = []): Promise<ActionResult<string>> {
   const ctx = await requireAppContext(PERMISSIONS.cashierShifts);
   const p = amount.safeParse(openingFloat ?? "");
   if (!p.success) return invalid(p.error);
+  const f = z.array(z.object({ payment_method_id: z.uuid(), amount })).max(50).safeParse(floats ?? []);
+  if (!f.success) return invalid(f.error);
   const r = await toActionResult(async () => {
-    const { data, error } = await ctx.supabase.rpc("open_cashier_shift", { p_hotel_id: ctx.hotel.id, p_opening_float: p.data ? toMoney(p.data).toFixed() : "0" });
+    const { data, error } = await ctx.supabase.rpc("open_cashier_shift", {
+      p_hotel_id: ctx.hotel.id, p_opening_float: p.data ? toMoney(p.data).toFixed() : "0",
+      p_floats: f.data.filter((x) => x.amount !== "").map((x) => ({ payment_method_id: x.payment_method_id, amount: toMoney(x.amount).toFixed() })),
+    });
     raise(error);
     return data as string;
   });

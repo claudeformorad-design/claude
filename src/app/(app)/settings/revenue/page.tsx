@@ -1,6 +1,6 @@
 import { localNameOf } from "@/lib/local-name";
 import { tr } from "@/i18n/tr";
-import { RouteDialog } from "@/components/ui/dialog";
+import { FormDialog, RouteDialog } from "@/components/ui/dialog";
 import { CodeName, CodeTag } from "@/components/ui/code-text";
 import Link from "@/components/link";
 import { Plus } from "lucide-react";
@@ -18,6 +18,7 @@ import { listCurrencies } from "@/services/cashier.service";
 import { getI18n } from "@/i18n/server";
 import type { RevenueSettingKind } from "./actions";
 import { RevenueSettingForm } from "./settings-form";
+import { PaymentBoxForm } from "./box-form";
 
 export default async function RevenueSettingsPage({ searchParams }: { searchParams: Promise<{ edit?: string; new?: string }> }) {
   const ctx = await requireAppContext(PERMISSIONS.accountsView);
@@ -55,7 +56,7 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
   } else if (canManage && (sp.new === "method" || editKind === "method")) {
     formKind = "method";
     const x = methods.find((v) => v.id === editId);
-    initial = x ? { ...x, name_en: x.name_en ?? "", currency_code: x.currency_code ?? "" } : { code: "", name_ar: "", name_en: "", kind: "cash", account_id: "", currency_code: "", is_active: true };
+    initial = x ? { ...x, name_en: x.name_en ?? "", currency_code: x.currency_code ?? "" } : { code: "", name_ar: "", name_en: "", kind: "cash", account_id: "", currency_code: "", requires_reference: false, is_active: true };
   }
   const accountOptions = (types: string[]) =>
     accounts.filter((a) => a.is_postable && a.is_active && types.includes(a.account_type)).map((a) => ({ id: a.id, label: `${a.code} ${name(a)}` }));
@@ -78,7 +79,12 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
 
   return (
     <>
-      <PageHeader title={rs.title} />
+      <PageHeader title={rs.title} actions={canManage ? (
+        <FormDialog label={tr("صندوق أو محفظة")} title={tr("صندوق أو محفظة جديدة")} description={tr("صندوق بعملة، أو محفظة إلكترونية، أو حساب بنكي، بحساب مستقل")}>
+          <PaymentBoxForm errors={t.errors} baseCurrency={ctx.hotel.base_currency} existingCodes={methods.map((m) => m.code)}
+            currencies={currencies.filter((c) => c.code !== ctx.hotel.base_currency).map((c) => ({ id: c.code, label: `${c.code} ${localNameOf(c)}` }))} />
+        </FormDialog>
+      ) : undefined} />
       <div className="grid gap-6">
         <div className="min-w-0 space-y-6">
           {section(rs.taxes, "tax", [t.customers.code, t.customers.name, rs.kind, rs.rate, rs.account, t.common.status],
@@ -104,7 +110,7 @@ export default async function RevenueSettingsPage({ searchParams }: { searchPara
           {section(rs.paymentMethods, "method", [t.customers.code, t.customers.name, rs.kind, rs.account, t.common.status],
             methods.map((x) => (
               <TableRow key={x.id}>
-                <TableCell className="num">{x.code}</TableCell><TableCell>{name(x)}{x.currency_code && <CodeTag>{x.currency_code}</CodeTag>}</TableCell>
+                <TableCell className="num">{x.code}</TableCell><TableCell>{name(x)}{x.currency_code && <CodeTag>{x.currency_code}</CodeTag>}{x.requires_reference && <Badge variant="info" className="ms-2">{tr("برقم عملية")}</Badge>}</TableCell>
                 <TableCell>{rs.methodKinds[x.kind]}</TableCell><TableCell><CodeName label={acc(x.account_id)} /></TableCell>
                 <TableCell>{active(x.is_active)}</TableCell>{editCell("method", x.id)}
               </TableRow>

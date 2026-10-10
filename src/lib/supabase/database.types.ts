@@ -258,6 +258,8 @@ export type ChargeCodeTaxRow = { hotel_id: string; charge_code_id: string; tax_r
 export type PaymentMethodRow = Audit & {
   id: string; hotel_id: string; code: string; name_ar: string; name_en: string | null;
   kind: PaymentMethodKind; account_id: string; is_active: boolean; currency_code: string | null;
+  /** المحافظ: رقم العملية إلزامي ولا يتكرر لنفس الطريقة */
+  requires_reference: boolean;
 };
 
 export type CustomerRow = Audit & {
@@ -311,6 +313,7 @@ export type PaymentRow = {
   reference: string | null; description: string; status: VoucherStatus; journal_entry_id: string | null;
   void_reason: string | null; voided_at: string | null; voided_by: string | null;
   void_journal_entry_id: string | null; created_at: string; created_by: string | null;
+  cashier_shift_id?: string | null;
 };
 
 export type PaymentAllocationRow = {
@@ -582,8 +585,10 @@ export type ShiftReport = {
   shift: { id: string; shift_number: string; status: "open" | "closed"; business_date: string; opened_at: string; closed_at: string | null;
     opening_float: number; closing_note: string | null; user_id: string; is_mine: boolean; user_name: string; over_short_entry_id: string | null };
   methods: ShiftMethodLine[];
-  transactions: { id: string; created_at: string; txn_type: FolioTxnType; direction: 1 | -1; method: string; amount: number;
-    foreign_amount: number | null; currency_code: string | null; folio_id: string; folio_number: string; guest_name: string;
+  /** source: folio حركة فوليو، voucher سند قبض أو صرف، transfer أحد طرفي سند تحويل */
+  transactions: { id: string; source: "folio" | "voucher" | "transfer"; created_at: string;
+    txn_type: FolioTxnType | "receipt" | "disbursement" | "transfer_out" | "transfer_in"; direction: 1 | -1; method: string; amount: number;
+    foreign_amount: number | null; currency_code: string | null; folio_id: string | null; folio_number: string; guest_name: string;
     room_number: string | null; reference: string | null }[];
 };
 export type ReservationGroupRow = {
@@ -910,7 +915,16 @@ export type Database = {
       set_exchange_rate: { Args: { p_hotel_id: string; p_currency_code: string; p_rate: string; p_rate_date?: string | null }; Returns: undefined };
       post_folio_foreign_money: { Args: { p_folio_id: string; p_txn_type: "payment" | "deposit" | "refund" | "deposit_refund"; p_payment_method_id: string; p_foreign_amount: string; p_reference?: string | null }; Returns: string };
       record_reservation_deposit_fx: { Args: { p_reservation_id: string; p_payment_method_id: string; p_foreign_amount: string; p_reference?: string | null }; Returns: string };
-      open_cashier_shift: { Args: { p_hotel_id: string; p_opening_float?: string }; Returns: string };
+      open_cashier_shift: { Args: { p_hotel_id: string; p_opening_float?: string; p_floats?: { payment_method_id: string; amount: string }[] | null }; Returns: string };
+      create_payment_box: {
+        Args: { p_hotel_id: string; p_kind: "cash" | "e_wallet" | "bank_transfer"; p_code: string; p_name_ar: string; p_name_en?: string | null; p_currency_code?: string | null; p_requires_reference?: boolean };
+        Returns: string;
+      };
+      cash_by_currency: {
+        Args: { p_hotel_id: string; p_from: string; p_to: string };
+        Returns: { account_id: string; account_code: string; account_name: string; currency_code: string; is_base: boolean; methods: string | null;
+          opening: string; receipts: string; payments: string; closing: string; rate: string | null; closing_base: string | null }[];
+      };
       cashier_shift_report: { Args: { p_shift_id: string }; Returns: ShiftReport };
       close_cashier_shift: { Args: { p_shift_id: string; p_counts: { payment_method_id: string; counted: string }[]; p_note?: string | null }; Returns: ShiftReport };
       check_out_reservation: { Args: { p_reservation_id: string }; Returns: string | null };

@@ -46,7 +46,7 @@ export async function saveTaxRate(supabase: SupabaseServerClient, hotelId: strin
 }
 
 export async function savePaymentMethod(supabase: SupabaseServerClient, hotelId: string, v: PaymentMethodFormValues): Promise<void> {
-  const payload = { code: v.code, name_ar: v.name_ar, name_en: v.name_en, kind: v.kind, account_id: v.account_id, currency_code: v.currency_code, is_active: v.is_active };
+  const payload = { code: v.code, name_ar: v.name_ar, name_en: v.name_en, kind: v.kind, account_id: v.account_id, currency_code: v.currency_code, requires_reference: v.requires_reference, is_active: v.is_active };
   const { error } = v.id
     ? await supabase.from("payment_methods").update(payload).eq("id", v.id).eq("hotel_id", hotelId)
     : await supabase.from("payment_methods").insert({ ...payload, hotel_id: hotelId });

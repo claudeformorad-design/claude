@@ -76,6 +76,7 @@ export function RevenueSettingForm({
           {select("kind", rs.kind, enumOptions(rs.methodKinds))}
           {select("account_id", rs.account, accounts)}
           {currencies.length > 0 && select("currency_code", tr("العملة، واتركها فارغة للعملة الأساسية"), currencies)}
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-4" {...register("requires_reference")} />{tr("رقم العملية إلزامي ولا يتكرر (للمحافظ والحوالات)")}</label>
         </>
       )}
       {kind === "charge" && (

@@ -169,6 +169,7 @@ function allGroups(l: NavLabels): NavGroup[] {
         { href: "/reports/rooms", label: l.roomStats, icon: BedDouble, permission: "reports.financial.view" },
         { href: "/reports/occupancy-monthly", label: l.occupancyMonthly, icon: ChartColumn, permission: "reports.financial.view" },
         { href: "/reports/daily-cash", label: l.dailyCash, icon: Banknote, permission: "reports.cash.view" },
+        { href: "/reports/cash-by-currency", label: l.cashByCurrency, icon: Coins, permission: "reports.cash.view" },
         { href: "/reports/tax-return", label: l.taxReturn, icon: Percent, permission: "reports.tax.view" },
         { href: "/reports/aging", label: l.aging, icon: Clock, permission: "reports.aging.view" },
         { href: "/reports/profitability", label: l.profitability, icon: PieChart, permission: "reports.profitability.view" },

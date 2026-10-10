@@ -14,7 +14,7 @@ import { REPORTS, type ReportKey, buildReport, parseReportParams, reportQuery } 
 import { getI18n } from "@/i18n/server";
 
 /** صفحة عامة للقوائم المالية: قائمة الدخل، الميزانية، التدفقات، الإشغال، النقدية اليومية */
-const PAGES = ["income-statement", "balance-sheet", "cash-flow", "rooms", "daily-cash", "tax-return", "monthly-movement", "daily-totals", "missing-numbers", "budget-vs-actual", "item-card", "stock-balances", "count-sheet", "item-prices", "expiring-stock", "guest-balances", "reservations-report", "occupancy-monthly", "currency-trial-balance"] as const;
+const PAGES = ["income-statement", "balance-sheet", "cash-flow", "rooms", "daily-cash", "tax-return", "monthly-movement", "daily-totals", "missing-numbers", "budget-vs-actual", "item-card", "stock-balances", "count-sheet", "item-prices", "expiring-stock", "guest-balances", "reservations-report", "occupancy-monthly", "currency-trial-balance", "cash-by-currency"] as const;
 
 export default async function ReportPage({ params, searchParams }: {
   params: Promise<{ report: string }>; searchParams: Promise<{ from?: string; to?: string }>;

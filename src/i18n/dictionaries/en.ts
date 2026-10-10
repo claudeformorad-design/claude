@@ -92,6 +92,7 @@ export const en: Dictionary = {
     vendorAdvances: "Vendor advances",
     fxRevaluation: "FX revaluation",
     currencyTrialBalance: "Trial balance by currency",
+    cashByCurrency: "Cash by currency",
     guestBalances: "Guest balances",
     reservationsReport: "Reservations report",
     occupancyMonthly: "Monthly occupancy",
