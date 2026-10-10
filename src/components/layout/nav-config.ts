@@ -1,7 +1,7 @@
 import {
   BarChart3, Banknote, BedDouble, BookOpen, Boxes, Building2, CalendarCheck, CalendarDays, CalendarRange, Clock, ConciergeBell, DoorOpen,
   FileSpreadsheet, FileText, History, Hourglass, Landmark, LayoutDashboard, ListChecks, ListTree, Percent, PieChart, Receipt, Scale,
-  ClipboardList, Coins, Scale3d, MoonStar, BrushCleaning, Utensils, BadgePercent, Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
+  ArrowLeftRight, ClipboardList, Coins, Gauge, Handshake, Target, Scale3d, MoonStar, BrushCleaning, Utensils, BadgePercent, Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
   IdCard, ClipboardCheck, FileSearch, Sigma, ListX, Repeat, CalendarClock, Plane, HandCoins, Calculator, SlidersHorizontal, FileUp, Wrench, PackageSearch, WashingMachine, PartyPopper, Star,
 } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
@@ -104,6 +104,7 @@ function allGroups(l: NavLabels): NavGroup[] {
         { href: "/invoices", label: l.invoices, icon: FileText, permission: "invoices.view" },
         { href: "/vouchers", label: l.vouchers, icon: Receipt, permission: "payments.view" },
         { href: "/cheques", label: l.cheques, icon: Landmark, permission: "payments.view" },
+        { href: "/transfers", label: l.transfers, icon: ArrowLeftRight, permission: "payments.view" },
         { href: "/customers", label: l.customers, icon: Users, permission: "customers.view" },
       ],
     },
@@ -116,6 +117,7 @@ function allGroups(l: NavLabels): NavGroup[] {
         { href: "/vendors", label: l.vendors, icon: Truck, permission: "vendors.view" },
         { href: "/purchase-orders", label: l.purchaseOrders, icon: ShoppingCart, permission: "purchases.manage" },
         { href: "/bills", label: l.bills, icon: FileSpreadsheet, permission: "bills.view" },
+        { href: "/commissions", label: l.commissions, icon: Handshake, permission: "commissions.manage" },
         { href: "/payroll", label: l.payroll, icon: UserCog, permission: "payroll.manage" },
         { href: "/bank", label: l.bank, icon: Landmark, permission: "bank.reconcile" },
       ],
@@ -162,6 +164,8 @@ function allGroups(l: NavLabels): NavGroup[] {
         { href: "/reports/tax-return", label: l.taxReturn, icon: Percent, permission: "reports.tax.view" },
         { href: "/reports/aging", label: l.aging, icon: Clock, permission: "reports.aging.view" },
         { href: "/reports/profitability", label: l.profitability, icon: PieChart, permission: "reports.profitability.view" },
+        { href: "/budgets", label: l.budgets, icon: Target, permission: "budgets.manage" },
+        { href: "/reports/budget-vs-actual", label: l.budgetVsActual, icon: Gauge, permission: "reports.financial.view" },
         { href: "/reports/missing-numbers", label: l.missingNumbers, icon: ListX, permission: "audit.logs.view" },
       ],
     },

@@ -17,6 +17,7 @@ import { getI18n } from "@/i18n/server";
 import { StatusBadge } from "../status-badge";
 import { EntryActions } from "./entry-actions";
 import { RecurringFromEntry } from "../../_ledger/forms";
+import { AttachmentsCard } from "../../_ledger/attachments-card";
 
 export default async function JournalEntryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -147,6 +148,7 @@ export default async function JournalEntryPage({ params }: { params: Promise<{ i
             defaultStart={nextMonth(entry.entry_date)} />
         </div>
       )}
+      <div className="mt-4"><AttachmentsCard ctx={ctx} entity="journal_entry" entityId={entry.id} path={`/journal/${entry.id}`} errors={t.errors} /></div>
     </>
   );
 }

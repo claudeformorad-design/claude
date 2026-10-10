@@ -41,6 +41,7 @@ export const REPORTS = {
   "monthly-movement": PERMISSIONS.trialBalanceView,
   "daily-totals": PERMISSIONS.journalView,
   "missing-numbers": PERMISSIONS.auditView,
+  "budget-vs-actual": PERMISSIONS.financialView,
 } as const satisfies Record<string, Permission>;
 export type ReportKey = keyof typeof REPORTS;
 
@@ -230,6 +231,48 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
       const rows: ReportRow[] = (data ?? []).map((x) => line(x.entry_date, String(x.entries), toMoney(x.debit), toMoney(x.credit)));
       rows.push(total(t.common.total, String((data ?? []).reduce((n, x) => n + x.entries, 0)), sumMoney((data ?? []).map((x) => x.debit)), sumMoney((data ?? []).map((x) => x.credit))));
       return { title: tr("يومية الحسابات مجاميع"), subtitle: period, columns: [t.common.date, tr("عدد القيود"), t.journal.debit, t.journal.credit], rows };
+    }
+    case "budget-vs-actual": {
+      const [fy, depts] = await Promise.all([
+        ctx.supabase.from("fiscal_years").select("id, name, start_date, end_date").eq("hotel_id", ctx.hotel.id).lte("start_date", p.to).gte("end_date", p.to).maybeSingle(),
+        p.department ? listDepartments(ctx.supabase, ctx.hotel.id) : Promise.resolve([]),
+      ]);
+      raise(fy.error);
+      const cols = [r.account, tr("الموازنة"), tr("الفعلي"), tr("الانحراف"), tr("نسبة التحقيق")];
+      if (!fy.data) return { title: tr("الموازنة مقابل الفعلي"), subtitle: tr("لا توجد سنة مالية تشمل {0}", p.to), columns: cols, rows: [] };
+      const per = await ctx.supabase.from("accounting_periods").select("period_no, name").eq("fiscal_year_id", fy.data.id).lte("start_date", p.to).gte("end_date", p.to).maybeSingle();
+      raise(per.error);
+      const { data, error } = await ctx.supabase.rpc("budget_vs_actual", {
+        p_hotel_id: ctx.hotel.id, p_fiscal_year_id: fy.data.id, p_to_period: per.data?.period_no ?? null, p_department_id: p.department ?? null,
+      }).select("account_id, code, name_ar, name_en, account_type, budget::text, actual::text, variance::text");
+      raise(error);
+      const pct = (actual: Money, budget: Money) => {
+        if (budget.isZero()) return "";
+        const v = actual.div(budget).times(100);
+        return `${v.abs().lt(10) ? v.toFixed(1) : v.toFixed(0)}%`;
+      };
+      const rows: ReportRow[] = [];
+      const totals: Record<string, [Money, Money]> = {};
+      for (const type of ["revenue", "expense"] as const) {
+        const list = (data ?? []).filter((x) => x.account_type === type);
+        if (!list.length) continue;
+        rows.push(head(type === "revenue" ? tr("الإيرادات") : tr("المصروفات"), cols.length));
+        for (const x of list) {
+          rows.push(acc({ id: x.account_id, code: x.code }, (locale === "en" && x.name_en) || x.name_ar, toMoney(x.budget), toMoney(x.actual), toMoney(x.variance), pct(toMoney(x.actual), toMoney(x.budget))));
+        }
+        const b = sumMoney(list.map((x) => x.budget)), a = sumMoney(list.map((x) => x.actual));
+        totals[type] = [b, a];
+        rows.push(sub(type === "revenue" ? tr("إجمالي الإيرادات") : tr("إجمالي المصروفات"), b, a, sumMoney(list.map((x) => x.variance)), pct(a, b)));
+      }
+      const [rb, ra] = totals.revenue ?? [toMoney(0), toMoney(0)];
+      const [eb, ea] = totals.expense ?? [toMoney(0), toMoney(0)];
+      if (rows.length) rows.push(total(tr("صافي الربح"), rb.minus(eb), ra.minus(ea), ra.minus(ea).minus(rb.minus(eb)), pct(ra.minus(ea), rb.minus(eb))));
+      const dept = p.department ? depts.find((d) => d.id === p.department) : undefined;
+      return { title: tr("الموازنة مقابل الفعلي"),
+        subtitle: [fy.data.name, per.data ? tr("حتى نهاية {0}", per.data.name) : "", dept ? ((locale === "en" && dept.name_en) || dept.name_ar) : ""].filter(Boolean).join("، "),
+        columns: cols, rows,
+        note: rows.length ? { ok: true, text: tr("الانحراف الموجب في صالح الفندق: إيراد أعلى من المخطط أو مصروف أقل منه.") }
+          : { ok: false, text: tr("لا توجد موازنة ولا حركة لهذه الفترة. أدخل الموازنة من صفحة الموازنة التقديرية.") } };
     }
     case "missing-numbers": {
       const { data, error } = await ctx.supabase.rpc("document_number_gaps", { p_hotel_id: ctx.hotel.id })

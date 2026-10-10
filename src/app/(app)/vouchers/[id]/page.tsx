@@ -14,6 +14,7 @@ import { getVoucher } from "@/services/vouchers.service";
 import { getI18n } from "@/i18n/server";
 import { VoidVoucher } from "./void-voucher";
 import { RegisterChequeForm } from "../../_ledger/forms";
+import { AttachmentsCard } from "../../_ledger/attachments-card";
 
 export default async function VoucherPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -96,6 +97,7 @@ export default async function VoucherPage({ params }: { params: Promise<{ id: st
       {v.status === "posted" && (
         <VoidVoucher id={v.id} t={{ vouchers: t.vouchers, errors: t.errors }} request={!ctx.can(PERMISSIONS.paymentsVoid)} />
       )}
+      <div className="mt-4"><AttachmentsCard ctx={ctx} entity="payment" entityId={v.id} path={`/vouchers/${v.id}`} errors={t.errors} /></div>
     </>
   );
 }

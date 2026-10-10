@@ -149,3 +149,110 @@ export async function writeOffAction(invoiceId: string, amountInput: string, why
   if (r.ok) revalidatePath(`/invoices/${invoiceId}`);
   return r;
 }
+
+// ---------------------------------------------------------------- عمولات وكلاء الحجز
+const SOURCES = ["direct", "phone", "walk_in", "website", "booking_com", "expedia", "agent", "corporate", "other"] as const;
+
+export async function saveCommissionRateAction(source: string, rateInput: string): Promise<ActionResult<undefined>> {
+  const ctx = await requireAppContext(PERMISSIONS.commissionsManage);
+  const p = z.object({ source: z.enum(SOURCES), rate: z.coerce.number().min(0).max(100) }).safeParse({ source, rate: rateInput.trim() || "0" });
+  if (!p.success) return fail;
+  const r = await toActionResult(async () => {
+    const { error } = await ctx.supabase.rpc("save_channel_commission_rate", { p_hotel_id: ctx.hotel.id, p_source: p.data.source, p_rate: String(p.data.rate) });
+    raise(error);
+    return undefined;
+  });
+  if (r.ok) revalidatePath("/commissions");
+  return r;
+}
+
+export async function postCommissionsAction(reservationIds?: string[]): Promise<ActionResult<number>> {
+  const ctx = await requireAppContext(PERMISSIONS.commissionsManage);
+  const p = z.array(z.uuid()).max(500).optional().safeParse(reservationIds);
+  if (!p.success) return fail;
+  const r = await toActionResult(async () => {
+    const { data, error } = await ctx.supabase.rpc("post_channel_commissions", { p_hotel_id: ctx.hotel.id, p_reservation_ids: p.data ?? null });
+    raise(error);
+    return data ?? 0;
+  });
+  if (r.ok) revalidatePath("/commissions");
+  return r;
+}
+
+export async function reverseCommissionAction(id: string, why: string): Promise<ActionResult<undefined>> {
+  const ctx = await requireAppContext(PERMISSIONS.commissionsManage);
+  const p = z.object({ id: z.uuid(), why: reason }).safeParse({ id, why });
+  if (!p.success) return fail;
+  const r = await toActionResult(async () => {
+    const { error } = await ctx.supabase.rpc("reverse_channel_commission", { p_id: p.data.id, p_reason: p.data.why });
+    raise(error);
+    return undefined;
+  });
+  if (r.ok) revalidatePath("/commissions");
+  return r;
+}
+
+// ---------------------------------------------------------------- الموازنة التقديرية
+const budgetAmount = z.string().trim().refine((v) => v === "" || (isValidAmount(v) && !toMoney(v).isNegative()), "invalid_amount")
+  .transform((v) => toMoney(v || "0").toFixed());
+
+export async function saveBudgetAction(input: { fiscalYearId: string; accountId: string; departmentId: string | null; amounts: string[] }): Promise<ActionResult<undefined>> {
+  const ctx = await requireAppContext(PERMISSIONS.budgetsManage);
+  const p = z.object({ fiscalYearId: z.uuid(), accountId: z.uuid(), departmentId: z.uuid().nullable(), amounts: z.array(budgetAmount).min(1).max(13) }).safeParse(input);
+  if (!p.success) return fail;
+  const r = await toActionResult(async () => {
+    const { error } = await ctx.supabase.rpc("save_budget", {
+      p_hotel_id: ctx.hotel.id, p_fiscal_year_id: p.data.fiscalYearId, p_account_id: p.data.accountId, p_department_id: p.data.departmentId, p_amounts: p.data.amounts,
+    });
+    raise(error);
+    return undefined;
+  });
+  if (r.ok) revalidatePath("/budgets");
+  return r;
+}
+
+// ---------------------------------------------------------------- المرفقات
+export async function deleteAttachmentAction(id: string, path: string): Promise<ActionResult<undefined>> {
+  const ctx = await requireAppContext();
+  const p = z.object({ id: z.uuid(), path: z.string().regex(/^\/[a-z-]+\/[0-9a-f-]{36}$/) }).safeParse({ id, path });
+  if (!p.success) return fail;
+  const r = await toActionResult(async () => {
+    const { error } = await ctx.supabase.rpc("delete_attachment", { p_id: p.data.id });
+    raise(error);
+    return undefined;
+  });
+  if (r.ok) revalidatePath(p.data.path);
+  return r;
+}
+
+// ---------------------------------------------------------------- التحويل وتبديل العملة
+const positive = z.string().trim().refine((v) => isValidAmount(v) && toMoney(v).gt(0), "invalid_amount").transform((v) => toMoney(v).toFixed());
+
+export async function createTransferAction(input: { fromMethodId: string; fromAmount: string; toMethodId: string; toAmount: string; description: string; date: string }): Promise<ActionResult<string>> {
+  const ctx = await requireAppContext(PERMISSIONS.paymentsDisbursement);
+  const p = z.object({ fromMethodId: z.uuid(), fromAmount: positive, toMethodId: z.uuid(), toAmount: positive, description: z.string().trim().max(300), date }).safeParse(input);
+  if (!p.success) return fail;
+  const r = await toActionResult(async () => {
+    const { data, error } = await ctx.supabase.rpc("create_fund_transfer", {
+      p_hotel_id: ctx.hotel.id, p_from_method_id: p.data.fromMethodId, p_from_amount: p.data.fromAmount,
+      p_to_method_id: p.data.toMethodId, p_to_amount: p.data.toAmount, p_description: p.data.description || null, p_date: p.data.date,
+    });
+    raise(error);
+    return data!;
+  });
+  if (r.ok) revalidatePath("/transfers");
+  return r;
+}
+
+export async function voidTransferAction(id: string, why: string): Promise<ActionResult<undefined>> {
+  const ctx = await requireAppContext(PERMISSIONS.paymentsVoid);
+  const p = z.object({ id: z.uuid(), why: reason }).safeParse({ id, why });
+  if (!p.success) return fail;
+  const r = await toActionResult(async () => {
+    const { error } = await ctx.supabase.rpc("void_fund_transfer", { p_id: p.data.id, p_reason: p.data.why });
+    raise(error);
+    return undefined;
+  });
+  if (r.ok) revalidatePath("/transfers");
+  return r;
+}

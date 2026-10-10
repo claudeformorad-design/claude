@@ -199,6 +199,31 @@ const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
   [/Debit note must be between 0 and the outstanding amount \(([\d.]+)\)/i, (m) => `مبلغ المرتجع يجب أن يكون أكبر من صفر ولا يتجاوز المستحق للمورد (${m[1]})`],
   [/This bill has inventory lines/i, "في هذه الفاتورة بنود مخزون؛ أرجع أصناف المخزون بحركة مخزون"],
   [/Write-off must be between 0 and the outstanding amount \(([\d.]+)\)/i, (m) => `مبلغ الإعدام يجب أن يكون أكبر من صفر ولا يتجاوز المستحق على العميل (${m[1]})`],
+  // عمولات وكلاء الحجز
+  [/Commission rate must be between 0 and 100/i, "نسبة العمولة بين 0 و100"],
+  [/Commission not found/i, "العمولة غير موجودة"],
+  [/This commission is already reversed/i, "عُكست هذه العمولة من قبل"],
+  // الموازنة التقديرية
+  [/Budgets are for postable revenue and expense accounts/i, "الموازنة لحسابات الإيرادات والمصروفات التفصيلية فقط"],
+  [/Enter one amount for each of the (\d+) periods/i, (m) => `أدخل مبلغًا لكل فترة من الفترات الـ${m[1]}`],
+  [/Budget amounts must be zero or more with at most (\d+) decimals/i, (m) => `مبالغ الموازنة صفر أو أكثر، بحد أقصى ${m[1]} منازل عشرية`],
+  // المرفقات
+  [/Document not found/i, "المستند غير موجود"],
+  [/The file could not be read/i, "تعذّرت قراءة الملف"],
+  [/The file is empty/i, "الملف فارغ"],
+  [/The file is larger than 3 MB/i, "حجم الملف أكبر من 3 ميجابايت"],
+  [/A document can have at most 20 attachments/i, "الحد الأقصى 20 مرفقًا للمستند"],
+  [/Attachment not found/i, "المرفق غير موجود"],
+  // التحويل وتبديل العملة
+  [/Choose an active cash, bank or wallet method on each side/i, "اختر في كل طرف طريقة نقد أو بنك أو محفظة فعالة"],
+  [/Choose two different methods/i, "اختر طريقتين مختلفتين"],
+  [/Enter valid amounts for both sides/i, "أدخل مبلغًا صحيحًا في الطرفين"],
+  [/Both amounts must be equal when the currency is the same/i, "المبلغان يجب أن يتساويا عندما تكون العملة واحدة"],
+  [/Both methods post to the same account; there is nothing to record/i, "الطريقتان على الحساب نفسه، فلا يوجد ما يُقيَّد"],
+  [/Transfer not found/i, "التحويل غير موجود"],
+  [/This transfer is already cancelled/i, "أُلغي هذا التحويل من قبل"],
+  [/Fiscal year not found/i, "السنة المالية غير موجودة"],
+  [/Department not found/i, "القسم غير موجود"],
   // الأرصدة الافتتاحية
   [/Opening balance date is required/i, "تاريخ الأرصدة الافتتاحية مطلوب"],
   [/Opening balances were already posted/i, "رُحّلت الأرصدة الافتتاحية بالفعل"],

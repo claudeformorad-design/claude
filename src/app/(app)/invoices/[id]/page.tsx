@@ -17,6 +17,7 @@ import { PrintButton } from "./print-button";
 import { CreditNoteForm } from "./credit-note";
 import { qrSvg, qrText, zatcaRecords } from "@/services/zatca.service";
 import { AmountReasonForm } from "../../_ledger/forms";
+import { AttachmentsCard } from "../../_ledger/attachments-card";
 import { writeOffAction } from "../../_ledger/actions";
 
 /** فاتورة ضريبية قابلة للطباعة (تصدير PDF الرسمي في المرحلة 5) */
@@ -199,6 +200,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
           hint={tr("حين يتعذر تحصيل المبلغ نهائيًا: يُقيَّد مصروفًا في الديون المعدومة ويقل المستحق على العميل.")}
           run={writeOffAction.bind(null, inv.id)} />
       )}
+      <AttachmentsCard ctx={ctx} entity="invoice" entityId={inv.id} path={`/invoices/${inv.id}`} errors={t.errors} />
     </div>
   );
 }

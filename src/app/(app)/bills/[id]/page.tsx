@@ -1,5 +1,6 @@
 import { tr } from "@/i18n/tr";
 import { AmountReasonForm } from "../../_ledger/forms";
+import { AttachmentsCard } from "../../_ledger/attachments-card";
 import { debitNoteAction } from "../../_ledger/actions";
 import Link from "@/components/link";
 import { CodeName, DocText } from "@/components/ui/code-text";
@@ -89,6 +90,7 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
         <PayBillForm t={{ payables: t.payables, folio: t.folio, errors: t.errors }} billId={bill.id} vendorId={bill.vendor_id}
           outstanding={outstanding.toFixed()} methods={methods.filter((m) => m.is_active && m.kind !== "city_ledger" && !m.currency_code).map((m) => ({ id: m.id, label: (locale === "en" && m.name_en) || m.name_ar }))} />
       )}
+      <AttachmentsCard ctx={ctx} entity="vendor_bill" entityId={bill.id} path={`/bills/${bill.id}`} errors={t.errors} />
     </>
   );
 }

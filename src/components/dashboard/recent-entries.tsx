@@ -1,6 +1,6 @@
 import { tr, currentLocale } from "@/i18n/tr";
 import {
-  BedDouble, BookOpen, Boxes, Building2, FilePen, FileSpreadsheet, FileText, Flag, Lock, Receipt, Scale, Undo2, UserCog, Wallet,
+  ArrowLeftRight, BedDouble, BookOpen, Boxes, Building2, FilePen, FileSpreadsheet, FileText, Flag, Handshake, Landmark, Lock, Receipt, Scale, Undo2, UserCog, Wallet,
 } from "lucide-react";
 import Link from "@/components/link";
 import { Money } from "@/components/money";
@@ -10,7 +10,7 @@ import { plainText } from "@/lib/text";
 const SOURCE_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
   manual: FilePen, opening: Flag, reversal: Undo2, closing: Lock, adjustment: Scale, folio: BedDouble, invoice: FileText,
   payment: Receipt, vendor_bill: FileSpreadsheet, expense: Wallet, payroll: UserCog, depreciation: Building2,
-  inventory: Boxes, petty_cash: Wallet, cashier_shift: Wallet,
+  inventory: Boxes, petty_cash: Wallet, cashier_shift: Wallet, cheque: Landmark, commission: Handshake, fund_transfer: ArrowLeftRight,
 };
 
 export type RecentEntry = { id: string; entry_number: string | null; entry_date: string; description: string; source: string; total: string };

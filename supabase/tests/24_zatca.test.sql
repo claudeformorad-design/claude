@@ -6,6 +6,9 @@
 \pset tuples_only on
 \o /dev/null
 
+-- الاختبارات السابقة قد تترك التسجيل بالدعوة فقط؛ مستخدمو الاختبار يُضافون مباشرة
+delete from app.system_settings where key = 'signup_mode';
+
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-000000002401', 'gm24@hotel.test');
 
 create or replace function pg_temp.expect_error(p_sql text, p_contains text)

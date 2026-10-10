@@ -42,6 +42,8 @@ export const PERMISSIONS = {
   creditNote: "invoices.credit_note",
   invoicesWriteOff: "invoices.write_off",
   billsDebitNote: "bills.debit_note",
+  commissionsManage: "commissions.manage",
+  budgetsManage: "budgets.manage",
   agingView: "reports.aging.view",
   assetsView: "assets.view",
   assetsManage: "assets.manage",

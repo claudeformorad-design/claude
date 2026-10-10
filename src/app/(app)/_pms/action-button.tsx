@@ -1,7 +1,7 @@
 "use client";
 import { tr } from "@/i18n/tr";
 
-import { useState, useTransition } from "react";
+import { useId, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
@@ -37,6 +37,10 @@ export function ActionButton({
   const [pending, start] = useTransition();
   const [asking, setAsking] = useState(false);
   const [reason, setReason] = useState("");
+  // داخل الجداول (حاويتها تقص ما يخرج عنها) ينسدل الحقل في مكانه بدل أن يطفو فوق الصفوف
+  const [inline, setInline] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const inputId = useId();
 
   const exec = (why: string) =>
     start(async () => {
@@ -51,23 +55,23 @@ export function ActionButton({
     });
 
   const click = () => {
-    if (reasonLabel) { setAsking((x) => !x); return; }
+    if (reasonLabel) { setInline(Boolean(box.current?.closest('[data-slot="table"]'))); setAsking((x) => !x); return; }
     if (confirmText && !window.confirm(confirmText)) return;
     exec("");
   };
 
   return (
-    <div className="relative inline-flex flex-col">
+    <div ref={box} className="relative inline-flex flex-col">
       <Button type="button" variant={variant} size={size} loading={pending && !asking} onClick={click}>{icon}{label}</Button>
       <AnimatePresence>
         {asking && (
           <m.form
             initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.18 }}
             onSubmit={(e) => { e.preventDefault(); if (!reasonRequired || reason.trim()) exec(reason.trim()); }}
-            className="absolute end-0 top-full z-30 mt-2 w-80 space-y-2 rounded-lg border border-line bg-white p-3 shadow-lift"
+            className={`${inline ? "mt-2 w-72 text-start" : "absolute end-0 top-full z-30 mt-2 w-80 shadow-lift"} space-y-2 rounded-lg border border-line bg-white p-3`}
           >
-            <label className="block text-[15px] font-medium text-ink">{reasonLabel}</label>
-            <Input autoFocus value={reason} onChange={(e) => setReason(e.target.value)} />
+            <label htmlFor={inputId} className="block text-[15px] font-medium text-ink">{reasonLabel}</label>
+            <Input id={inputId} autoFocus value={reason} onChange={(e) => setReason(e.target.value)} />
             <div className="flex gap-2">
               <Button type="submit" size="sm" variant={variant === "destructive" ? "destructive" : "default"} loading={pending}
                 disabled={reasonRequired && !reason.trim()}>{label}</Button>
