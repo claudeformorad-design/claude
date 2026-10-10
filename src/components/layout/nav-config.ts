@@ -2,7 +2,7 @@ import {
   BarChart3, Banknote, BedDouble, BookOpen, Boxes, Building2, CalendarCheck, CalendarDays, CalendarRange, Clock, ConciergeBell, DoorOpen,
   FileSpreadsheet, FileText, History, Hourglass, Landmark, LayoutDashboard, ListChecks, ListTree, Percent, PieChart, Receipt, Scale,
   ClipboardList, Coins, Scale3d, MoonStar, BrushCleaning, Utensils, BadgePercent, Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
-  IdCard, ClipboardCheck, FileSearch, Sigma, ListX, CalendarClock, Plane, HandCoins, Calculator, SlidersHorizontal, FileUp, Wrench, PackageSearch, WashingMachine, PartyPopper, Star,
+  IdCard, ClipboardCheck, FileSearch, Sigma, ListX, Repeat, CalendarClock, Plane, HandCoins, Calculator, SlidersHorizontal, FileUp, Wrench, PackageSearch, WashingMachine, PartyPopper, Star,
 } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import type { HotelModule } from "@/lib/supabase/database.types";
@@ -91,6 +91,7 @@ function allGroups(l: NavLabels): NavGroup[] {
       items: [
         { href: "/accounts", label: l.accounts, icon: ListTree, permission: "coa.accounts.view" },
         { href: "/journal", label: l.journal, icon: BookOpen, permission: "gl.journal.view" },
+        { href: "/journal/recurring", label: l.recurringEntries, icon: Repeat, permission: "gl.journal.view" },
       ],
     },
     {
@@ -102,6 +103,7 @@ function allGroups(l: NavLabels): NavGroup[] {
         { href: "/folios", label: l.folios, icon: BedDouble, permission: "folio.view" },
         { href: "/invoices", label: l.invoices, icon: FileText, permission: "invoices.view" },
         { href: "/vouchers", label: l.vouchers, icon: Receipt, permission: "payments.view" },
+        { href: "/cheques", label: l.cheques, icon: Landmark, permission: "payments.view" },
         { href: "/customers", label: l.customers, icon: Users, permission: "customers.view" },
       ],
     },

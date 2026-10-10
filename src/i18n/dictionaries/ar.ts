@@ -82,6 +82,8 @@ export const ar = {
     dailyCash: "النقدية اليومية",
     roomStats: "الإشغال وADR وRevPAR",
     accountStatement: "كشف حساب",
+    recurringEntries: "القيود الدورية",
+    cheques: "الشيكات",
     monthlyMovement: "الحركة الشهرية للحسابات",
     dailyTotals: "يومية الحسابات مجاميع",
     missingNumbers: "الأرقام المفقودة",

@@ -13,6 +13,7 @@ import { toMoney, sumMoney } from "@/lib/accounting/money";
 import { getVoucher } from "@/services/vouchers.service";
 import { getI18n } from "@/i18n/server";
 import { VoidVoucher } from "./void-voucher";
+import { RegisterChequeForm } from "../../_ledger/forms";
 
 export default async function VoucherPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -21,10 +22,12 @@ export default async function VoucherPage({ params }: { params: Promise<{ id: st
   const detail = await getVoucher(ctx.supabase, ctx.hotel.id, id);
   if (!detail) notFound();
   const { voucher: v, allocations } = detail;
-  const [method, counter] = await Promise.all([
-    ctx.supabase.from("payment_methods").select("name_ar, name_en").eq("id", v.payment_method_id).single(),
+  const [method, counter, cheque] = await Promise.all([
+    ctx.supabase.from("payment_methods").select("code, name_ar, name_en").eq("id", v.payment_method_id).single(),
     v.counter_account_id ? ctx.supabase.from("chart_of_accounts").select("code, name_ar, name_en").eq("id", v.counter_account_id).single() : null,
+    ctx.supabase.from("cheques").select("cheque_number, bank_name, due_date, status").eq("payment_id", v.id).maybeSingle(),
   ]);
+  const deferredCheque = method.data?.code === "CHQ_IN" || method.data?.code === "CHQ_OUT";
   const name = (x: { name_ar: string; name_en: string | null } | null | undefined) => (x ? (locale === "en" && x.name_en) || x.name_ar : "");
   const unallocated = toMoney(v.amount).minus(sumMoney(allocations.map((a) => a.amount)));
 
@@ -76,6 +79,18 @@ export default async function VoucherPage({ params }: { params: Promise<{ id: st
             )}
           </CardContent>
         </Card>
+      )}
+
+      {cheque.data && (
+        <p className="mb-4 text-[15px] text-slate-600">
+          {tr("الشيك رقم")}{" "}<span className="num font-semibold text-ink">{cheque.data.cheque_number}</span>
+          {cheque.data.bank_name && <>{tr("،")}{" "}{cheque.data.bank_name}</>}{tr("،")}{" "}{tr("يستحق")}{" "}<span className="num">{cheque.data.due_date}</span>{tr("،")}{" "}
+          {cheque.data.status === "pending" ? tr("لم يُسوَّ بعد") : cheque.data.status === "cleared" ? tr("سُوّي") : tr("مرتد أو ملغى")}{" "}
+          <Link href="/cheques" className="text-action">{tr("صفحة الشيكات")}</Link>
+        </p>
+      )}
+      {deferredCheque && !cheque.data && v.status === "posted" && (ctx.can(PERMISSIONS.paymentsReceipt) || ctx.can(PERMISSIONS.paymentsDisbursement)) && (
+        <div className="mb-4"><RegisterChequeForm paymentId={v.id} errors={t.errors} /></div>
       )}
 
       {v.status === "posted" && (

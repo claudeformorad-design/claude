@@ -40,6 +40,8 @@ export const PERMISSIONS = {
   payrollManage: "payroll.manage",
   bankReconcile: "bank.reconcile",
   creditNote: "invoices.credit_note",
+  invoicesWriteOff: "invoices.write_off",
+  billsDebitNote: "bills.debit_note",
   agingView: "reports.aging.view",
   assetsView: "assets.view",
   assetsManage: "assets.manage",

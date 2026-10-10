@@ -16,18 +16,21 @@ import { InvoiceStatusBadge } from "../status-badge";
 import { PrintButton } from "./print-button";
 import { CreditNoteForm } from "./credit-note";
 import { qrSvg, qrText, zatcaRecords } from "@/services/zatca.service";
+import { AmountReasonForm } from "../../_ledger/forms";
+import { writeOffAction } from "../../_ledger/actions";
 
 /** فاتورة ضريبية قابلة للطباعة (تصدير PDF الرسمي في المرحلة 5) */
 export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const ctx = await requireAppContext(PERMISSIONS.invoicesView);
   const { locale, t } = await getI18n();
-  const [detail, taxes, creditNotes, folio] = await Promise.all([
+  const [detail, taxes, creditNotes, folio, writeOffs] = await Promise.all([
     getInvoice(ctx.supabase, ctx.hotel.id, id),
     listTaxRates(ctx.supabase, ctx.hotel.id),
     ctx.supabase.from("credit_notes").select("id, credit_note_number, issue_date, total::text, reason").eq("invoice_id", id),
     ctx.supabase.from("invoices").select("folio_id").eq("id", id).maybeSingle()
       .then(async ({ data }) => data?.folio_id ? (await ctx.supabase.from("guest_folios").select("folio_number, room_number").eq("id", data.folio_id).maybeSingle()).data : null),
+    ctx.supabase.from("invoice_write_offs").select("id, write_off_date, amount::text, reason, journal_entry_id").eq("invoice_id", id).order("write_off_date"),
   ]);
   if (!detail) notFound();
   const { invoice: inv, items } = detail;
@@ -162,6 +165,17 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
               </ul>
             </div>
           )}
+          {(writeOffs.data ?? []).length > 0 && (
+            <div>
+              <p className="mb-2 text-sm font-semibold">{tr("ديون معدومة")}</p>
+              <ul className="space-y-1 text-sm">
+                {(writeOffs.data ?? []).map((w) => (
+                  <li key={w.id}>{tr("بتاريخ")}{" "}<span className="num">{w.write_off_date}</span>{" "}{tr("بمبلغ")}{" "}{m(w.amount)}{tr("،")}{" "}{w.reason}
+                    {w.journal_entry_id && <>{" "}<Link href={`/journal/${w.journal_entry_id}`} className="text-action print:hidden">{t.journal.entry}</Link></>}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           {inv.notes && <p className="text-sm text-muted-foreground">{inv.notes}</p>}
           {z && (
             <div className="flex flex-wrap items-center gap-5 border-t pt-5">
@@ -179,6 +193,11 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
       </Card>
       {ctx.can(PERMISSIONS.creditNote) && toMoney(inv.amount_due).gt(toMoney(inv.amount_paid)) && (
         <CreditNoteForm invoiceId={inv.id} t={{ payables: t.payables, folio: t.folio, errors: t.errors }} />
+      )}
+      {ctx.can(PERMISSIONS.invoicesWriteOff) && inv.customer_id && toMoney(inv.amount_due).gt(toMoney(inv.amount_paid)) && (
+        <AmountReasonForm title={tr("إعدام دين معدوم")} button={tr("إعدام المبلغ")} done={tr("سُجّل الدين المعدوم")} errors={t.errors}
+          hint={tr("حين يتعذر تحصيل المبلغ نهائيًا: يُقيَّد مصروفًا في الديون المعدومة ويقل المستحق على العميل.")}
+          run={writeOffAction.bind(null, inv.id)} />
       )}
     </div>
   );

@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 export type StatementRow = { date: string; number: string; label: string; description: string; debit: Money; credit: Money; balance: Money; href?: string };
 
-const KIND_LABEL: Record<string, string> = { get invoice() { return tr("فاتورة"); }, get credit_note() { return tr("إشعار دائن"); }, get receipt() { return tr("سند قبض"); }, get refund() { return tr("سند صرف"); } };
+const KIND_LABEL: Record<string, string> = { get invoice() { return tr("فاتورة"); }, get credit_note() { return tr("إشعار دائن"); }, get write_off() { return tr("دين معدوم"); }, get receipt() { return tr("سند قبض"); }, get refund() { return tr("سند صرف"); } };
 export const statementKind = (k: string) => KIND_LABEL[k] ?? k;
 
 /**

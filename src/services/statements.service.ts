@@ -6,7 +6,7 @@ import { raise } from "./errors";
 
 export type StatementLine = {
   date: string;
-  kind: "invoice" | "credit_note" | "receipt" | "refund";
+  kind: "invoice" | "credit_note" | "write_off" | "receipt" | "refund";
   number: string;
   description: string;
   debit: Money;
@@ -51,8 +51,12 @@ export async function customerStatement(supabase: SupabaseServerClient, hotelId:
   const noteRows = (notes.data ?? []) as unknown as Note[];
   // قيمة الفاتورة الأصلية على العميل = المستحق الحالي + إشعارات الدائن التي خُصمت منها (كلها، ولو بعد نهاية الفترة)
   const allNotes = (await supabase.from("credit_notes").select("invoice_id, total::text, invoices!inner(customer_id)").eq("hotel_id", hotelId).eq("invoices.customer_id", customerId)).data as unknown as { invoice_id: string; total: string }[] | null;
+  // الديون المعدومة تخفّض المستحق مثل الإشعار الدائن، فتُضاف لقيمة الفاتورة الأصلية وتظهر سطرًا دائنًا
+  const writeOffs = (await supabase.from("invoice_write_offs").select("id, invoice_id, write_off_date, amount::text, reason, invoices!inner(customer_id, invoice_number)")
+    .eq("hotel_id", hotelId).eq("invoices.customer_id", customerId)).data as unknown as { id: string; invoice_id: string; write_off_date: string; amount: string; reason: string; invoices: { invoice_number: string } }[] | null;
   const credited = new Map<string, Money>();
   for (const n of allNotes ?? []) credited.set(n.invoice_id, (credited.get(n.invoice_id) ?? ZERO).plus(toMoney(n.total)));
+  for (const w of writeOffs ?? []) credited.set(w.invoice_id, (credited.get(w.invoice_id) ?? ZERO).plus(toMoney(w.amount)));
 
   const moves: Omit<StatementLine, "balance">[] = [];
   for (const i of (invoices.data ?? []) as unknown as Inv[]) {
@@ -63,12 +67,16 @@ export async function customerStatement(supabase: SupabaseServerClient, hotelId:
   for (const n of noteRows) {
     moves.push({ date: n.issue_date, kind: "credit_note", number: n.credit_note_number, description: n.reason, debit: ZERO, credit: toMoney(n.total), href: `/invoices/${n.invoice_id}` });
   }
+  for (const w of writeOffs ?? []) {
+    if (w.write_off_date > to) continue;
+    moves.push({ date: w.write_off_date, kind: "write_off", number: w.invoices.invoice_number, description: tr("دين معدوم: {0}", w.reason), debit: ZERO, credit: toMoney(w.amount), href: `/invoices/${w.invoice_id}` });
+  }
   for (const p of (payments.data ?? []) as unknown as Pay[]) {
     const receipt = p.voucher_type === "receipt";
     moves.push({ date: p.payment_date, kind: receipt ? "receipt" : "refund", number: p.voucher_number, description: p.description,
       debit: receipt ? ZERO : toMoney(p.amount), credit: receipt ? toMoney(p.amount) : ZERO, href: `/vouchers/${p.id}` });
   }
-  const order = { invoice: 0, refund: 1, credit_note: 2, receipt: 3 };
+  const order = { invoice: 0, refund: 1, credit_note: 2, write_off: 3, receipt: 4 };
   moves.sort((a, b) => a.date.localeCompare(b.date) || order[a.kind] - order[b.kind] || a.number.localeCompare(b.number));
 
   let opening = ZERO;

@@ -84,6 +84,8 @@ export const en: Dictionary = {
     dailyCash: "Daily cash",
     roomStats: "Occupancy, ADR and RevPAR",
     accountStatement: "Account statement",
+    recurringEntries: "Recurring entries",
+    cheques: "Cheques",
     monthlyMovement: "Monthly account movement",
     dailyTotals: "Daily journal totals",
     missingNumbers: "Missing numbers",

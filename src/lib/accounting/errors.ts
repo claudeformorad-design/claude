@@ -181,6 +181,24 @@ const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
   // تقارير الأستاذ
   [/Choose an account or a cost center/i, "اختر حسابًا أو مركز تكلفة"],
   [/^Account not found$/i, "الحساب غير موجود"],
+  // القيود الدورية
+  [/^Each line is either a debit or a credit$/i, "كل سطر مدين أو دائن فقط"],
+  [/Unknown frequency/i, "التكرار غير معروف"],
+  [/Start date is required/i, "أول موعد مطلوب"],
+  [/Recurring entry not found/i, "القيد الدوري غير موجود"],
+  // الشيكات
+  [/This voucher is not paid by a post-dated cheque/i, "هذا السند ليس بشيك مؤجل"],
+  [/Cheque number and due date are required/i, "رقم الشيك وتاريخ استحقاقه مطلوبان"],
+  [/This voucher already has a cheque/i, "سُجّل شيك لهذا السند من قبل"],
+  [/Cheque not found/i, "الشيك غير موجود"],
+  [/Only a pending cheque can be cleared/i, "يُسوّى الشيك مرة واحدة فقط وهو قائم"],
+  [/Choose an active bank account to clear the cheque/i, "اختر حسابًا بنكيًا فعالًا لتسوية الشيك"],
+  [/This cheque can no longer be bounced or cancelled/i, "لم يعد ممكنًا ارتداد هذا الشيك أو إلغاؤه"],
+  // مرتجعات المشتريات والديون المعدومة
+  [/Vendor bill not found/i, "فاتورة المورد غير موجودة"],
+  [/Debit note must be between 0 and the outstanding amount \(([\d.]+)\)/i, (m) => `مبلغ المرتجع يجب أن يكون أكبر من صفر ولا يتجاوز المستحق للمورد (${m[1]})`],
+  [/This bill has inventory lines/i, "في هذه الفاتورة بنود مخزون؛ أرجع أصناف المخزون بحركة مخزون"],
+  [/Write-off must be between 0 and the outstanding amount \(([\d.]+)\)/i, (m) => `مبلغ الإعدام يجب أن يكون أكبر من صفر ولا يتجاوز المستحق على العميل (${m[1]})`],
   // الأرصدة الافتتاحية
   [/Opening balance date is required/i, "تاريخ الأرصدة الافتتاحية مطلوب"],
   [/Opening balances were already posted/i, "رُحّلت الأرصدة الافتتاحية بالفعل"],

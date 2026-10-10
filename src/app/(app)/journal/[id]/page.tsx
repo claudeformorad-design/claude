@@ -16,6 +16,7 @@ import { getJournalEntry } from "@/services/journal.service";
 import { getI18n } from "@/i18n/server";
 import { StatusBadge } from "../status-badge";
 import { EntryActions } from "./entry-actions";
+import { RecurringFromEntry } from "../../_ledger/forms";
 
 export default async function JournalEntryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -140,6 +141,19 @@ export default async function JournalEntryPage({ params }: { params: Promise<{ i
         canReverse={ctx.can(PERMISSIONS.journalReverse)}
         today={todayInTimeZone(ctx.hotel.timezone)}
       />
+      {entry.status === "posted" && entry.source === "manual" && !entry.reversal_of_id && ctx.can(PERMISSIONS.journalCreate) && (
+        <div className="mt-4">
+          <RecurringFromEntry entryId={entry.id} defaultName={entry.description.slice(0, 120)} errors={t.errors}
+            defaultStart={nextMonth(entry.entry_date)} />
+        </div>
+      )}
     </>
   );
+}
+
+/** نفس اليوم من الشهر التالي (أو آخر يوم فيه) */
+function nextMonth(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number) as [number, number, number];
+  const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(y, m, Math.min(d, last))).toISOString().slice(0, 10);
 }
