@@ -87,6 +87,8 @@ export const ar = {
     transfers: "التحويلات وتبديل العملة",
     commissions: "عمولات وكلاء الحجز",
     budgets: "الموازنة التقديرية",
+    stockBalances: "كشف الكميات",
+    expiringStock: "الأصناف القريبة من الانتهاء",
     budgetVsActual: "الموازنة مقابل الفعلي",
     monthlyMovement: "الحركة الشهرية للحسابات",
     dailyTotals: "يومية الحسابات مجاميع",

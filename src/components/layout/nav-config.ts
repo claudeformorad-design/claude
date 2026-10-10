@@ -1,7 +1,7 @@
 import {
   BarChart3, Banknote, BedDouble, BookOpen, Boxes, Building2, CalendarCheck, CalendarDays, CalendarRange, Clock, ConciergeBell, DoorOpen,
   FileSpreadsheet, FileText, History, Hourglass, Landmark, LayoutDashboard, ListChecks, ListTree, Percent, PieChart, Receipt, Scale,
-  ArrowLeftRight, ClipboardList, Coins, Gauge, Handshake, Target, Scale3d, MoonStar, BrushCleaning, Utensils, BadgePercent, Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
+  ArrowLeftRight, CalendarX2, ClipboardList, Coins, Gauge, Handshake, Target, Scale3d, MoonStar, BrushCleaning, Utensils, BadgePercent, Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
   IdCard, ClipboardCheck, FileSearch, Sigma, ListX, Repeat, CalendarClock, Plane, HandCoins, Calculator, SlidersHorizontal, FileUp, Wrench, PackageSearch, WashingMachine, PartyPopper, Star,
 } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
@@ -144,6 +144,8 @@ function allGroups(l: NavLabels): NavGroup[] {
       items: [
         { href: "/assets", label: l.fixedAssets, icon: Building2, permission: "assets.view" },
         { href: "/inventory", label: l.stock, icon: Boxes, permission: "inventory.view" },
+        { href: "/reports/stock-balances", label: l.stockBalances, icon: ClipboardList, permission: "inventory.view" },
+        { href: "/reports/expiring-stock", label: l.expiringStock, icon: CalendarX2, permission: "inventory.view" },
       ],
     },
     {

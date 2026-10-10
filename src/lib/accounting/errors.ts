@@ -222,6 +222,13 @@ const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
   [/Both methods post to the same account; there is nothing to record/i, "الطريقتان على الحساب نفسه، فلا يوجد ما يُقيَّد"],
   [/Transfer not found/i, "التحويل غير موجود"],
   [/This transfer is already cancelled/i, "أُلغي هذا التحويل من قبل"],
+  // المخزون: الفئات والصلاحية والجرد والأسعار
+  [/Category not found/i, "الفئة غير موجودة"],
+  [/Enter the expiry date for this item/i, "أدخل تاريخ الصلاحية لهذا الصنف"],
+  [/Enter the counted quantity for at least one item/i, "أدخل الكمية المعدودة لصنف واحد على الأقل"],
+  [/Counted quantity for (\S+) must be zero or more/i, (m) => `الكمية المعدودة للصنف ${m[1]} يجب أن تكون صفرًا أو أكثر`],
+  [/Enter a percentage between -99 and 1000/i, "أدخل نسبة بين -99 و1000"],
+  [/Rounding must be greater than zero/i, "التقريب يجب أن يكون أكبر من صفر"],
   [/Fiscal year not found/i, "السنة المالية غير موجودة"],
   [/Department not found/i, "القسم غير موجود"],
   // الأرصدة الافتتاحية

@@ -374,6 +374,7 @@ export type InventoryItemRow = Audit & {
   id: string; hotel_id: string; sku: string; name_ar: string; name_en: string | null; unit: string;
   inventory_account_id: string; expense_account_id: string; reorder_level: string; quantity_on_hand: string;
   average_cost: string; stock_value: string; is_active: boolean;
+  category_id: string | null; barcode: string | null; sale_price: string | null; track_expiry: boolean;
 };
 export type InventoryTxnRow = {
   id: string; hotel_id: string; item_id: string; txn_type: "receipt" | "issue" | "adjustment"; txn_date: string;
@@ -699,6 +700,12 @@ export type Database = {
       fixed_assets: ReadOnlyTable<FixedAssetRow>;
       depreciation_schedule: ReadOnlyTable<{ id: string; hotel_id: string; asset_id: string; period_month: string; amount: string; journal_entry_id: string | null; created_at: string }>;
       inventory_items: Table<InventoryItemRow, "hotel_id" | "sku" | "name_ar" | "inventory_account_id" | "expense_account_id">;
+      inventory_categories: Table<{ id: string; hotel_id: string; code: string; name_ar: string; name_en: string | null; is_active: boolean; created_at: string }, "hotel_id" | "code" | "name_ar">;
+      inventory_units: Table<{ id: string; hotel_id: string; name_ar: string; name_en: string | null; created_at: string }, "hotel_id" | "name_ar">;
+      inventory_price_changes: ReadOnlyTable<{ id: string; hotel_id: string; item_id: string; old_price: string | null; new_price: string | null; changed_at: string; changed_by: string | null }>;
+      inventory_lots: ReadOnlyTable<{ id: string; hotel_id: string; item_id: string; receipt_txn_id: string; received_on: string; expiry_date: string | null; received_qty: string; remaining_qty: string; created_at: string }>;
+      inventory_counts: ReadOnlyTable<{ id: string; hotel_id: string; count_number: string; count_date: string; note: string | null; items_counted: number; items_changed: number; value_difference: string; created_at: string; created_by: string | null }>;
+      inventory_count_lines: ReadOnlyTable<{ count_id: string; hotel_id: string; item_id: string; system_qty: string; counted_qty: string; difference: string; value_difference: string; transaction_id: string | null }>;
       inventory_transactions: ReadOnlyTable<InventoryTxnRow>;
       purchase_orders: ReadOnlyTable<PurchaseOrderRow>;
       purchase_order_items: ReadOnlyTable<PurchaseOrderItemRow>;
@@ -968,6 +975,16 @@ export type Database = {
       };
       run_depreciation: { Args: { p_hotel_id: string; p_month: string }; Returns: number };
       dispose_fixed_asset: { Args: { p_asset_id: string; p_disposal_date: string; p_proceeds?: string; p_proceeds_account_id?: string | null }; Returns: string };
+      next_item_barcode: { Args: { p_hotel_id: string }; Returns: string };
+      bulk_change_prices: { Args: { p_hotel_id: string; p_percent: string; p_category_id?: string | null; p_round_to?: string | null }; Returns: number };
+      post_stock_count: { Args: { p_hotel_id: string; p_lines: { item_id: string; counted: string }[]; p_date?: string | null; p_note?: string | null }; Returns: string };
+      post_inventory_movement_ex: {
+        Args: {
+          p_item_id: string; p_type: "receipt" | "issue" | "adjustment"; p_quantity: string; p_date?: string | null; p_unit_cost?: string | null;
+          p_department_id?: string | null; p_vendor_bill_id?: string | null; p_description?: string | null; p_expiry_date?: string | null;
+        };
+        Returns: string;
+      };
       post_inventory_movement: {
         Args: {
           p_item_id: string; p_type: "receipt" | "issue" | "adjustment"; p_quantity: string; p_date?: string | null; p_unit_cost?: string | null;

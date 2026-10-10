@@ -42,11 +42,16 @@ export const REPORTS = {
   "daily-totals": PERMISSIONS.journalView,
   "missing-numbers": PERMISSIONS.auditView,
   "budget-vs-actual": PERMISSIONS.financialView,
+  "item-card": PERMISSIONS.inventoryView,
+  "stock-balances": PERMISSIONS.inventoryView,
+  "count-sheet": PERMISSIONS.inventoryView,
+  "item-prices": PERMISSIONS.inventoryView,
+  "expiring-stock": PERMISSIONS.inventoryView,
 } as const satisfies Record<string, Permission>;
 export type ReportKey = keyof typeof REPORTS;
 
 /** account و department لكشف الحساب فقط (حساب تفصيلي أو رئيسي، و/أو مركز تكلفة) */
-export interface ReportParams { from: string; to: string; account?: string; department?: string }
+export interface ReportParams { from: string; to: string; account?: string; department?: string; item?: string; category?: string }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -61,12 +66,17 @@ export function parseReportParams(key: ReportKey, get: (k: string) => string | n
   const from = isIsoDate(fromRaw) && fromRaw <= to ? fromRaw : defaultFrom;
   const account = get("account") ?? "";
   const department = get("department") ?? "";
-  return { from, to, account: UUID.test(account) ? account : undefined, department: UUID.test(department) ? department : undefined };
+  const item = get("item") ?? "";
+  const category = get("category") ?? "";
+  return {
+    from, to, account: UUID.test(account) ? account : undefined, department: UUID.test(department) ? department : undefined,
+    item: UUID.test(item) ? item : undefined, category: UUID.test(category) ? category : undefined,
+  };
 }
 
 /** رابط الاستعلام نفسه للتصدير والطباعة */
 export const reportQuery = (p: ReportParams) =>
-  `from=${p.from}&to=${p.to}${p.account ? `&account=${p.account}` : ""}${p.department ? `&department=${p.department}` : ""}`;
+  `from=${p.from}&to=${p.to}${p.account ? `&account=${p.account}` : ""}${p.department ? `&department=${p.department}` : ""}${p.item ? `&item=${p.item}` : ""}${p.category ? `&category=${p.category}` : ""}`;
 
 const line = (...cells: Cell[]): ReportRow => ({ kind: "line", cells });
 const acc = (a: { id: string; code: string }, label: string, ...cells: Cell[]): ReportRow => ({ kind: "line", cells: [label, ...cells], code: a.code, account: a.id });
@@ -274,6 +284,12 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
         note: rows.length ? { ok: true, text: tr("الانحراف الموجب في صالح الفندق: إيراد أعلى من المخطط أو مصروف أقل منه.") }
           : { ok: false, text: tr("لا توجد موازنة ولا حركة لهذه الفترة. أدخل الموازنة من صفحة الموازنة التقديرية.") } };
     }
+    case "item-card":
+    case "stock-balances":
+    case "count-sheet":
+    case "item-prices":
+    case "expiring-stock":
+      return inventoryReport(key, ctx, locale, p);
     case "missing-numbers": {
       const { data, error } = await ctx.supabase.rpc("document_number_gaps", { p_hotel_id: ctx.hotel.id })
         .select("doc_type, year, prefix, last_value, missing_from, missing_to");
@@ -325,4 +341,103 @@ async function accountStatement(ctx: AppContext, locale: string, p: ReportParams
   const dep = department.data as { code: string; name_ar: string; name_en: string | null } | null;
   const parts = [a ? `${a.code} ${name(a)}${a.is_postable ? "" : ` (${tr("إجمالي بكل فروعه")})`}` : "", dep ? tr("مركز التكلفة {0}", name(dep)) : ""].filter(Boolean);
   return { title: tr("كشف حساب {0}", parts.join("، ")), subtitle: tr("من {0} إلى {1}", p.from, p.to), columns: cols, rows };
+}
+
+/** تقارير المخزون: بطاقة الصنف، أرصدة الكميات، كشف الجرد للطباعة، الأسعار، والقريب انتهاؤه */
+async function inventoryReport(key: "item-card" | "stock-balances" | "count-sheet" | "item-prices" | "expiring-stock", ctx: AppContext, locale: string, p: ReportParams): Promise<ReportTable> {
+  const h = ctx.hotel.id;
+  const nm = (x: { name_ar: string; name_en: string | null }) => (locale === "en" && x.name_en) || x.name_ar;
+  const qty = (v: string | number) => toMoney(v).toDecimalPlaces(3).toString();
+  const [itemsRes, catsRes] = await Promise.all([
+    ctx.supabase.from("inventory_items").select("id, sku, name_ar, name_en, unit, category_id, barcode, quantity_on_hand::text, average_cost::text, stock_value::text, sale_price::text, reorder_level::text, is_active")
+      .eq("hotel_id", h).order("sku"),
+    ctx.supabase.from("inventory_categories").select("id, code, name_ar, name_en").eq("hotel_id", h).order("code"),
+  ]);
+  raise(itemsRes.error); raise(catsRes.error);
+  const cats = new Map((catsRes.data ?? []).map((c) => [c.id, c]));
+  const items = (itemsRes.data ?? []).filter((x) => !p.category || x.category_id === p.category);
+  const catName = (id: string | null) => (id && cats.get(id) ? nm(cats.get(id)!) : tr("بلا فئة"));
+  const catSub = p.category && cats.get(p.category) ? nm(cats.get(p.category)!) : "";
+
+  if (key === "item-card") {
+    const cols = [tr("التاريخ"), tr("الحركة"), tr("البيان"), tr("وارد"), tr("صادر"), tr("الرصيد"), tr("تكلفة الوحدة"), tr("القيمة")];
+    const item = (itemsRes.data ?? []).find((x) => x.id === p.item);
+    if (!item) return { title: tr("بطاقة صنف"), subtitle: tr("اختر صنفًا لعرض حركته."), columns: cols, rows: [] };
+    const { data, error } = await ctx.supabase.from("inventory_transactions")
+      .select("txn_date, txn_type, description, quantity::text, unit_cost::text, total_cost::text, created_at")
+      .eq("item_id", item.id).lte("txn_date", p.to).order("txn_date").order("created_at");
+    raise(error);
+    const TYPES: Record<string, string> = { receipt: tr("وارد"), issue: tr("صرف"), adjustment: tr("تسوية جرد") };
+    let bal = toMoney(0), val = toMoney(0);
+    const before = (data ?? []).filter((t) => t.txn_date < p.from);
+    for (const t of before) { bal = bal.plus(toMoney(t.quantity)); val = val.plus(toMoney(t.quantity).gt(0) ? toMoney(t.total_cost) : toMoney(t.total_cost).neg()); }
+    const rows: ReportRow[] = [{ kind: "subtotal", cells: [p.from, tr("رصيد أول المدة"), "", "", "", qty(bal.toString()), "", val] }];
+    let inQ = toMoney(0), outQ = toMoney(0);
+    for (const t of (data ?? []).filter((x) => x.txn_date >= p.from)) {
+      const q = toMoney(t.quantity);
+      bal = bal.plus(q); val = val.plus(q.gt(0) ? toMoney(t.total_cost) : toMoney(t.total_cost).neg());
+      if (q.gt(0)) inQ = inQ.plus(q); else outQ = outQ.plus(q.abs());
+      rows.push(line(t.txn_date, TYPES[t.txn_type] ?? t.txn_type, t.description ?? "", q.gt(0) ? qty(q.toString()) : "", q.lt(0) ? qty(q.abs().toString()) : "",
+        qty(bal.toString()), toMoney(t.unit_cost), val));
+    }
+    rows.push(total(tr("الإجمالي"), "", "", qty(inQ.toString()), qty(outQ.toString()), qty(bal.toString()), "", val));
+    return { title: tr("بطاقة صنف"), subtitle: [`${item.sku} ${nm(item)}`, item.unit, tr("من {0} إلى {1}", p.from, p.to)].join("، "), columns: cols, rows };
+  }
+
+  if (key === "expiring-stock") {
+    const { data, error } = await ctx.supabase.from("inventory_lots").select("item_id, expiry_date, received_on, remaining_qty::text")
+      .eq("hotel_id", h).gt("remaining_qty", 0).order("expiry_date");
+    raise(error);
+    const byId = new Map((itemsRes.data ?? []).map((x) => [x.id, x]));
+    const limit = new Date(`${p.to}T00:00:00Z`); limit.setUTCDate(limit.getUTCDate() + 60);
+    const until = limit.toISOString().slice(0, 10);
+    const rows: ReportRow[] = (data ?? []).filter((l) => l.expiry_date && l.expiry_date <= until && byId.has(l.item_id) && (!p.category || byId.get(l.item_id)!.category_id === p.category))
+      .map((l) => {
+        const it = byId.get(l.item_id)!;
+        const days = Math.round((Date.parse(`${l.expiry_date}T00:00:00Z`) - Date.parse(`${p.to}T00:00:00Z`)) / 864e5);
+        return { kind: "line" as const, code: it.sku, cells: [nm(it), l.expiry_date!, days < 0 ? tr("منتهٍ منذ {0} يوم", -days) : days === 0 ? tr("ينتهي اليوم") : tr("بعد {0} يوم", days),
+          qty(l.remaining_qty), it.unit, toMoney(l.remaining_qty).times(toMoney(it.average_cost)).toDecimalPlaces(2)] };
+      });
+    return { title: tr("الأصناف القريبة من الانتهاء"), subtitle: [tr("المنتهية وما ينتهي خلال 60 يومًا من {0}", p.to), catSub].filter(Boolean).join("، "),
+      columns: [tr("الصنف"), tr("تاريخ الانتهاء"), tr("المتبقي"), tr("الكمية"), tr("الوحدة"), tr("القيمة التقريبية")], rows,
+      note: rows.length ? { ok: false, text: tr("اصرف الأقرب انتهاءً أولًا، وسجّل التالف بتسوية جرد.") } : { ok: true, text: tr("لا أصناف منتهية أو قريبة من الانتهاء.") } };
+  }
+
+  // الأرصدة، كشف الجرد، الأسعار: مجمّعة حسب الفئة
+  const groups = new Map<string, typeof items>();
+  for (const x of items.filter((i) => i.is_active)) {
+    const k = x.category_id ?? "";
+    groups.set(k, [...(groups.get(k) ?? []), x]);
+  }
+  const ordered = [...groups.entries()].sort(([a], [b]) => catName(a || null).localeCompare(catName(b || null)));
+  const rows: ReportRow[] = [];
+  if (key === "stock-balances") {
+    const cols = [tr("الصنف"), tr("الوحدة"), tr("الكمية"), tr("متوسط التكلفة"), tr("القيمة"), tr("حد إعادة الطلب")];
+    for (const [k, list] of ordered) {
+      rows.push(head(catName(k || null), cols.length));
+      for (const x of list) rows.push({ kind: "line", code: x.sku, cells: [nm(x), x.unit, qty(x.quantity_on_hand), toMoney(x.average_cost).toDecimalPlaces(4), toMoney(x.stock_value), qty(x.reorder_level)] });
+      rows.push(sub(tr("إجمالي الفئة"), "", "", "", sumMoney(list.map((x) => x.stock_value)), ""));
+    }
+    rows.push(total(tr("إجمالي المخزون"), "", "", "", sumMoney(items.filter((i) => i.is_active).map((x) => x.stock_value)), ""));
+    return { title: tr("كشف الكميات إجمالي"), subtitle: [tr("حتى {0}", p.to), catSub].filter(Boolean).join("، "), columns: cols, rows };
+  }
+  if (key === "count-sheet") {
+    const cols = [tr("الصنف"), tr("الباركود"), tr("الوحدة"), tr("الكمية بالنظام"), tr("الكمية المعدودة"), tr("ملاحظة")];
+    for (const [k, list] of ordered) {
+      rows.push(head(catName(k || null), cols.length));
+      for (const x of list) rows.push({ kind: "line", code: x.sku, cells: [nm(x), x.barcode ?? "", x.unit, qty(x.quantity_on_hand), "", ""] });
+    }
+    return { title: tr("كشف جرد المخزون"), subtitle: [tr("تاريخ الجرد {0}", p.to), catSub].filter(Boolean).join("، "), columns: cols, rows,
+      note: { ok: true, text: tr("اطبع الكشف وعدّ الأصناف، ثم أدخل الكميات المعدودة في شاشة الجرد لترحيل الفروقات.") } };
+  }
+  const cols = [tr("الصنف"), tr("الباركود"), tr("الوحدة"), tr("متوسط التكلفة"), tr("سعر البيع"), tr("هامش الربح")];
+  for (const [k, list] of ordered) {
+    rows.push(head(catName(k || null), cols.length));
+    for (const x of list) {
+      const cost = toMoney(x.average_cost), price = x.sale_price ? toMoney(x.sale_price) : null;
+      const margin = price && price.gt(0) ? `${price.minus(cost).div(price).times(100).toFixed(1)}%` : "";
+      rows.push({ kind: "line", code: x.sku, cells: [nm(x), x.barcode ?? "", x.unit, cost.toDecimalPlaces(4), price, margin] });
+    }
+  }
+  return { title: tr("تقرير أسعار الأصناف"), subtitle: catSub, columns: cols, rows };
 }

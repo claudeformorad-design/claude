@@ -48,7 +48,7 @@ const nextConfig: NextConfig = {
   agentRules: false,
   allowedDevOrigins: previewOrigins,
   // قاعدة وضع التجربة المحلية (PostgreSQL مضمّن WASM) ومولّد PDF يعملان على الخادم فقط ولا يُحزمان
-  serverExternalPackages: ["@electric-sql/pglite", "pdfkit"],
+  serverExternalPackages: ["@electric-sql/pglite", "pdfkit", "bwip-js"],
   // ملفات الترحيل تُقرأ وقت التشغيل لبناء قاعدة التجربة المحلية، وخطوط ملف PDF وقت توليده
   outputFileTracingIncludes: {
     "/**": ["./supabase/migrations/*.sql", "./supabase/tests/supabase_shim.sql", "./src/lib/export/fonts/*.ttf"],

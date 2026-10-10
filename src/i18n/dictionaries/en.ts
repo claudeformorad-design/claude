@@ -89,6 +89,8 @@ export const en: Dictionary = {
     transfers: "Transfers and exchange",
     commissions: "Booking commissions",
     budgets: "Budgets",
+    stockBalances: "Stock quantities",
+    expiringStock: "Expiring stock",
     budgetVsActual: "Budget vs actual",
     monthlyMovement: "Monthly account movement",
     dailyTotals: "Daily journal totals",
