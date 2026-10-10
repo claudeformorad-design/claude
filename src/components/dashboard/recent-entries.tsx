@@ -10,7 +10,7 @@ import { plainText } from "@/lib/text";
 const SOURCE_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
   manual: FilePen, opening: Flag, reversal: Undo2, closing: Lock, adjustment: Scale, folio: BedDouble, invoice: FileText,
   payment: Receipt, vendor_bill: FileSpreadsheet, expense: Wallet, payroll: UserCog, depreciation: Building2,
-  inventory: Boxes, petty_cash: Wallet, cashier_shift: Wallet, cheque: Landmark, commission: Handshake, fund_transfer: ArrowLeftRight,
+  inventory: Boxes, petty_cash: Wallet, cashier_shift: Wallet, cheque: Landmark, commission: Handshake, fund_transfer: ArrowLeftRight, fx_revaluation: Scale,
 };
 
 export type RecentEntry = { id: string; entry_number: string | null; entry_date: string; description: string; source: string; total: string };

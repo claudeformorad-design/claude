@@ -7,14 +7,14 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/select";
-import { TableCell, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CodeTag } from "@/components/ui/code-text";
 import { toast } from "@/components/ui/toast";
 import { actionErrorText, callAction } from "@/lib/action-error";
 import type { ActionResult } from "@/services/errors";
 import { MoneyDecimal, isValidAmount, toMoney } from "@/lib/accounting/money";
 import {
-  clearChequeAction, createTransferAction, deleteAttachmentAction, deleteRecurringAction, postCommissionsAction, postDueRecurringAction, recurringFromEntryAction, registerChequeAction,
+  applyVendorAdvanceAction, clearChequeAction, createTransferAction, payVendorAdvanceAction, postFxRevaluationAction, deleteAttachmentAction, deleteRecurringAction, postCommissionsAction, postDueRecurringAction, recurringFromEntryAction, registerChequeAction,
   saveBudgetAction, saveCommissionRateAction, setRecurringActiveAction,
 } from "./actions";
 
@@ -382,6 +382,125 @@ export function TransferForm({ methods, base, today, errors }: {
           const r = await callAction(createTransferAction({ fromMethodId: from, fromAmount, toMethodId: to, toAmount: same ? fromAmount : toAmount, description, date }));
           if (r.ok) { toast(tr("سُجّل التحويل")); setFromAmount(""); setToAmount(""); setDescription(""); router.refresh(); } else setError(actionErrorText(errors, r));
         })}>{tr("تسجيل التحويل")}</Button>
+      </div>
+    </div>
+  );
+}
+
+/** عربون مورد جديد: دفعة مقدمة من الصندوق أو البنك قبل وصول الفاتورة */
+export function VendorAdvanceForm({ vendors, methods, today, errors }: {
+  vendors: { id: string; label: string }[]; methods: { id: string; label: string }[]; today: string; errors: Errors;
+}) {
+  const router = useRouter();
+  const [vendorId, setVendor] = useState("");
+  const [methodId, setMethod] = useState(methods[0]?.id ?? "");
+  const [amount, setAmount] = useState("");
+  const [date, setDate] = useState(today);
+  const [reference, setReference] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  return (
+    <div className="space-y-2">
+      {error && <Alert variant="destructive">{error}</Alert>}
+      <div className="flex flex-wrap items-end gap-2">
+        <NativeSelect id="adv_vendor" className="w-60" value={vendorId} onChange={(e) => setVendor(e.target.value)} aria-label={tr("المورد")}>
+          <option value="">{tr("اختر المورد")}</option>
+          {vendors.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
+        </NativeSelect>
+        <NativeSelect id="adv_method" className="w-48" value={methodId} onChange={(e) => setMethod(e.target.value)} aria-label={tr("طريقة الدفع")}>
+          {methods.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+        </NativeSelect>
+        <Input className="num w-36" dir="ltr" inputMode="decimal" placeholder={tr("المبلغ")} aria-label={tr("مبلغ العربون")} value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <Input className="w-44" type="date" dir="ltr" aria-label={tr("التاريخ")} value={date} onChange={(e) => setDate(e.target.value)} />
+        <Input className="w-44" placeholder={tr("المرجع (اختياري)")} aria-label={tr("المرجع")} value={reference} onChange={(e) => setReference(e.target.value)} />
+        <Button loading={pending} disabled={pending || !vendorId || !methodId || !amount.trim()} onClick={() => start(async () => {
+          setError(null);
+          const r = await callAction(payVendorAdvanceAction({ vendorId, methodId, amount, date, reference }));
+          if (r.ok) { toast(tr("صُرف العربون")); setAmount(""); setReference(""); router.refresh(); } else setError(actionErrorText(errors, r));
+        })}>{tr("صرف العربون")}</Button>
+      </div>
+    </div>
+  );
+}
+
+/** تطبيق عربون على فاتورة من فواتير المورد نفسه */
+export function ApplyAdvanceForm({ advanceId, bills, max, errors }: {
+  advanceId: string; bills: { id: string; label: string; outstanding: string }[]; max: string; errors: Errors;
+}) {
+  const router = useRouter();
+  const [billId, setBill] = useState(bills[0]?.id ?? "");
+  const due = (id: string) => bills.find((b) => b.id === id)?.outstanding ?? "0";
+  const suggest = (id: string) => (toMoney(due(id)).lt(toMoney(max)) ? toMoney(due(id)) : toMoney(max)).toFixed();
+  const [amount, setAmount] = useState(billId ? suggest(billId) : "");
+  const [pending, start] = useTransition();
+  if (!bills.length) return <span className="text-[13px] text-slate-500">{tr("لا فواتير مفتوحة لهذا المورد")}</span>;
+  return (
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      <NativeSelect className="w-56" value={billId} onChange={(e) => { setBill(e.target.value); setAmount(suggest(e.target.value)); }} aria-label={tr("الفاتورة")}>
+        {bills.map((b) => <option key={b.id} value={b.id}>{b.label}</option>)}
+      </NativeSelect>
+      <Input className="num w-32" dir="ltr" inputMode="decimal" aria-label={tr("مبلغ التطبيق")} value={amount} onChange={(e) => setAmount(e.target.value)} />
+      <Button size="sm" loading={pending} disabled={pending || !billId || !amount.trim()} onClick={() => start(async () => {
+        const r = await callAction(applyVendorAdvanceAction(advanceId, billId, amount));
+        if (r.ok) { toast(tr("طُبّق العربون على الفاتورة")); router.refresh(); } else toast(actionErrorText(errors, r), "error");
+      })}>{tr("تطبيق")}</Button>
+    </div>
+  );
+}
+
+/** إعادة تقييم أرصدة العملات: الرصيد الفعلي بكل عملة، والفرق بسعر اليوم */
+export function FxRevaluationForm({ rows, today, errors }: {
+  rows: { id: string; label: string; currency: string; book: string; rate: string | null; shared: boolean }[]; today: string; errors: Errors;
+}) {
+  const router = useRouter();
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [date, setDate] = useState(today);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  const entered = rows.filter((r) => !r.shared && r.rate && (values[r.id] ?? "").trim() !== "");
+  const diff = (r: (typeof rows)[number]) => {
+    const v = values[r.id];
+    if (!v || !isValidAmount(v) || !r.rate) return null;
+    return toMoney(v).times(toMoney(r.rate)).toDecimalPlaces(2).minus(toMoney(r.book));
+  };
+  return (
+    <div className="space-y-3">
+      {error && <Alert variant="destructive">{error}</Alert>}
+      <Table>
+        <TableHeader><TableRow>
+          <TableHead>{tr("الصندوق أو البنك")}</TableHead><TableHead>{tr("العملة")}</TableHead><TableHead className="text-end">{tr("الرصيد الدفتري")}</TableHead>
+          <TableHead className="text-end">{tr("سعر اليوم")}</TableHead><TableHead className="w-44">{tr("الرصيد الفعلي بالعملة")}</TableHead><TableHead className="text-end">{tr("الفرق")}</TableHead>
+        </TableRow></TableHeader>
+        <TableBody>
+          {rows.map((r) => {
+            const d = diff(r);
+            return (
+              <TableRow key={r.id}>
+                <TableCell>{r.label}</TableCell>
+                <TableCell className="num">{r.currency}</TableCell>
+                <TableCell className="num text-end">{toMoney(r.book).toFixed(2)}</TableCell>
+                <TableCell className="num text-end">{r.rate ?? tr("لا يوجد سعر")}</TableCell>
+                <TableCell>
+                  {r.shared ? <span className="text-[13px] text-urgent">{tr("الحساب مشترك مع عملة أخرى")}</span> : (
+                    <Input className="num" dir="ltr" inputMode="decimal" disabled={!r.rate} aria-label={tr("الرصيد الفعلي لـ {0}", r.label)}
+                      value={values[r.id] ?? ""} onChange={(e) => setValues({ ...values, [r.id]: e.target.value })} />
+                  )}
+                </TableCell>
+                <TableCell className={`num text-end ${d && d.lt(0) ? "text-urgent" : d && d.gt(0) ? "text-emerald-700" : "text-slate-400"}`}>
+                  {d ? (d.gt(0) ? `+${d.toFixed(2)}` : d.toFixed(2)) : ""}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+      <div className="flex flex-wrap items-end gap-2">
+        <Input className="w-44" type="date" dir="ltr" aria-label={tr("تاريخ إعادة التقييم")} value={date} onChange={(e) => setDate(e.target.value)} />
+        <Button loading={pending} disabled={pending || entered.length === 0} onClick={() => start(async () => {
+          setError(null);
+          const r = await callAction(postFxRevaluationAction({ date, lines: entered.map((x) => ({ payment_method_id: x.id, foreign_balance: values[x.id]! })) }));
+          if (r.ok) { toast(tr("رُحّلت إعادة التقييم")); setValues({}); router.refresh(); } else setError(actionErrorText(errors, r));
+        })}>{tr("ترحيل إعادة التقييم")}</Button>
       </div>
     </div>
   );

@@ -229,6 +229,17 @@ const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
   [/Counted quantity for (\S+) must be zero or more/i, (m) => `الكمية المعدودة للصنف ${m[1]} يجب أن تكون صفرًا أو أكثر`],
   [/Enter a percentage between -99 and 1000/i, "أدخل نسبة بين -99 و1000"],
   [/Rounding must be greater than zero/i, "التقريب يجب أن يكون أكبر من صفر"],
+  // عربون الموردين وإعادة تقييم العملات
+  [/Enter a valid advance amount/i, "أدخل مبلغ عربون صحيحًا"],
+  [/Advance not found/i, "العربون غير موجود"],
+  [/This advance is fully applied or cancelled/i, "هذا العربون طُبّق بالكامل أو أُلغي"],
+  [/Amount must be within the advance balance \(([\d.]+)\) and the bill outstanding \(([\d.]+)\)/i, (m) => `المبلغ يجب ألا يتجاوز المتبقي من العربون (${m[1]}) ولا المستحق على الفاتورة (${m[2]})`],
+  [/This advance is already applied to bills; it cannot be voided/i, "طُبّق هذا العربون على فواتير، فلا يمكن إلغاء سنده"],
+  [/Enter the actual balance for at least one currency account/i, "أدخل الرصيد الفعلي لصندوق أو بنك واحد على الأقل"],
+  [/Payment method not found/i, "طريقة الدفع غير موجودة"],
+  [/The account of (.+) is shared with another currency; give it its own account first/i, (m) => `حساب ${m[1]} مشترك مع عملة أخرى؛ خصّص له حسابًا مستقلًا أولًا`],
+  [/Each account can be revalued once per entry/i, "يُعاد تقييم كل حساب مرة واحدة في القيد"],
+  [/Balances already match the current rates; nothing to post/i, "الأرصدة مطابقة لأسعار اليوم، فلا يوجد ما يُرحَّل"],
   [/Fiscal year not found/i, "السنة المالية غير موجودة"],
   [/Department not found/i, "القسم غير موجود"],
   // الأرصدة الافتتاحية

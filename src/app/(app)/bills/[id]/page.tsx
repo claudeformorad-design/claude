@@ -27,12 +27,14 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
   const d = await getBill(ctx.supabase, ctx.hotel.id, id);
   if (!d) notFound();
   const { bill, lines } = d;
-  const [vendor, accounts, methods, returns] = await Promise.all([
+  const [vendor, accounts, methods, returns, advances] = await Promise.all([
     ctx.supabase.from("vendors").select("name_ar, name_en").eq("id", bill.vendor_id).single(),
     listAccounts(ctx.supabase, ctx.hotel.id),
     listPaymentMethods(ctx.supabase, ctx.hotel.id),
     ctx.supabase.from("vendor_debit_notes").select("id, debit_note_number, issue_date, total::text, reason, journal_entry_id").eq("bill_id", id).order("issue_date"),
+    ctx.supabase.from("vendor_advances").select("amount::text, applied_amount::text").eq("vendor_id", bill.vendor_id).eq("status", "open"),
   ]);
+  const openAdvance = (advances.data ?? []).reduce((a, x) => a.plus(toMoney(x.amount).minus(toMoney(x.applied_amount))), toMoney("0"));
   const returned = (returns.data ?? []).reduce((a, r) => a.plus(toMoney(r.total)), toMoney("0"));
   const acc = new Map(accounts.map((a) => [a.id, `${a.code} ${(locale === "en" && a.name_en) || a.name_ar}`]));
   const outstanding = toMoney(bill.total).minus(toMoney(bill.amount_paid));
@@ -80,6 +82,12 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
               {r.journal_entry_id && <>{" "}<Link className="text-action" href={`/journal/${r.journal_entry_id}`}>{t.journal.entry}</Link></>}</p>
           ))}
         </Card>
+      )}
+      {outstanding.gt(0) && openAdvance.gt(0) && (
+        <p className="rounded-lg border border-line bg-white p-3 text-[15px] print:hidden">
+          {tr("لهذا المورد عربون لم يُطبَّق بقيمة")}{" "}<Money value={openAdvance} locale={locale} />{tr("،")}{" "}
+          <Link href="/vendor-advances" className="text-action">{tr("طبّقه على الفاتورة")}</Link>
+        </p>
       )}
       {outstanding.gt(0) && ctx.can(PERMISSIONS.billsDebitNote) && (
         <AmountReasonForm title={tr("مرتجع مشتريات")} button={tr("إصدار إشعار مدين")} done={tr("صدر إشعار المرتجع")} errors={t.errors}

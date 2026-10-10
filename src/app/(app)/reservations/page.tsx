@@ -24,7 +24,7 @@ import { nightsBetween, nightsText, shortDate, timeRange } from "@/lib/pms/dates
 import { listReservations, type ReservationListItem } from "@/services/pms.service";
 import { getI18n } from "@/i18n/server";
 
-type Tab = "upcoming" | "arrivals" | "inhouse" | "tentative" | "closed" | "all";
+type Tab = "upcoming" | "arrivals" | "inhouse" | "tentative" | "overdue" | "closed" | "all";
 
 export default async function ReservationsPage({ searchParams }: {
   searchParams: Promise<{ tab?: string; q?: string; page?: string; group?: string; series?: string }>;
@@ -41,6 +41,9 @@ export default async function ReservationsPage({ searchParams }: {
     arrivals: (r: ReservationListItem) => r.arrival_date === today && (r.status === "confirmed" || r.status === "tentative"),
     inhouse: (r: ReservationListItem) => r.status === "checked_in",
     tentative: (r: ReservationListItem) => r.status === "tentative",
+    // تجاوز موعده: مقيم بعد تاريخ مغادرته، أو مؤكد لم يصل وقد فات وصوله
+    overdue: (r: ReservationListItem) => (r.status === "checked_in" && r.departure_date < today)
+      || ((r.status === "confirmed" || r.status === "tentative") && r.arrival_date < today),
     closed: (r: ReservationListItem) => ["cancelled", "no_show", "checked_out"].includes(r.status),
     all: () => true,
   } satisfies Record<Tab, (r: ReservationListItem) => boolean>;
@@ -90,6 +93,7 @@ export default async function ReservationsPage({ searchParams }: {
           { key: "arrivals", href: qs({ tab: "arrivals" }), label: tr("وصول اليوم"), count: scoped.filter(is.arrivals).length },
           { key: "inhouse", href: qs({ tab: "inhouse" }), label: tr("المقيمون"), count: scoped.filter(is.inhouse).length },
           { key: "tentative", href: qs({ tab: "tentative" }), label: tr("المبدئية"), count: scoped.filter(is.tentative).length },
+          { key: "overdue", href: qs({ tab: "overdue" }), label: tr("تجاوزت موعدها"), count: scoped.filter(is.overdue).length },
           { key: "closed", href: qs({ tab: "closed" }), label: tr("المنتهية والملغاة") },
           { key: "all", href: qs({ tab: "all" }), label: tr("الكل"), count: scoped.length },
         ]} />

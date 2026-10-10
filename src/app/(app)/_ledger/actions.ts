@@ -256,3 +256,48 @@ export async function voidTransferAction(id: string, why: string): Promise<Actio
   if (r.ok) revalidatePath("/transfers");
   return r;
 }
+
+// ---------------------------------------------------------------- عربون الموردين وإعادة تقييم العملات
+export async function payVendorAdvanceAction(input: { vendorId: string; methodId: string; amount: string; date: string; reference: string }): Promise<ActionResult<string>> {
+  const ctx = await requireAppContext(PERMISSIONS.paymentsDisbursement);
+  const p = z.object({ vendorId: z.uuid(), methodId: z.uuid(), amount, date, reference: z.string().trim().max(80) }).safeParse(input);
+  if (!p.success) return fail;
+  const r = await toActionResult(async () => {
+    const { data, error } = await ctx.supabase.rpc("pay_vendor_advance", {
+      p_hotel_id: ctx.hotel.id, p_vendor_id: p.data.vendorId, p_payment_method_id: p.data.methodId, p_amount: p.data.amount,
+      p_payment_date: p.data.date, p_reference: p.data.reference || null,
+    });
+    raise(error);
+    return data!;
+  });
+  if (r.ok) revalidatePath("/vendor-advances");
+  return r;
+}
+
+export async function applyVendorAdvanceAction(advanceId: string, billId: string, amountInput: string): Promise<ActionResult<string>> {
+  const ctx = await requireAppContext(PERMISSIONS.paymentsDisbursement);
+  const p = z.object({ advanceId: z.uuid(), billId: z.uuid(), amount }).safeParse({ advanceId, billId, amount: amountInput });
+  if (!p.success) return fail;
+  const r = await toActionResult(async () => {
+    const { data, error } = await ctx.supabase.rpc("apply_vendor_advance", { p_advance_id: p.data.advanceId, p_bill_id: p.data.billId, p_amount: p.data.amount });
+    raise(error);
+    return data!;
+  });
+  if (r.ok) { revalidatePath("/vendor-advances"); revalidatePath(`/bills/${billId}`); }
+  return r;
+}
+
+export async function postFxRevaluationAction(input: { date: string; lines: { payment_method_id: string; foreign_balance: string }[] }): Promise<ActionResult<string>> {
+  const ctx = await requireAppContext(PERMISSIONS.journalPost);
+  const p = z.object({
+    date, lines: z.array(z.object({ payment_method_id: z.uuid(), foreign_balance: z.string().trim().refine((v) => isValidAmount(v) && !toMoney(v).isNegative()).transform((v) => toMoney(v).toFixed()) })).min(1).max(100),
+  }).safeParse(input);
+  if (!p.success) return fail;
+  const r = await toActionResult(async () => {
+    const { data, error } = await ctx.supabase.rpc("post_fx_revaluation", { p_hotel_id: ctx.hotel.id, p_lines: p.data.lines, p_date: p.data.date });
+    raise(error);
+    return data!;
+  });
+  if (r.ok) revalidatePath("/fx-revaluation");
+  return r;
+}

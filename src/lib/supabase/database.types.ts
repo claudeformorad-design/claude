@@ -13,7 +13,7 @@ export type JournalStatus = "draft" | "posted";
 export type JournalSource =
   | "manual" | "opening" | "reversal" | "closing" | "adjustment" | "folio" | "invoice"
   | "payment" | "vendor_bill" | "expense" | "payroll" | "depreciation" | "inventory" | "petty_cash" | "cashier_shift"
-  | "cheque" | "commission" | "fund_transfer";
+  | "cheque" | "commission" | "fund_transfer" | "fx_revaluation";
 export type PeriodStatus = "open" | "closed";
 export type DepartmentKind = "revenue_center" | "cost_center" | "service_center";
 
@@ -239,7 +239,7 @@ export type FolioStatus = "open" | "closed" | "cancelled";
 export type InvoiceType = "folio" | "direct" | "opening";
 export type InvoiceStatus = "issued" | "partially_paid" | "paid";
 export type VoucherType = "receipt" | "disbursement";
-export type VoucherParty = "customer" | "account";
+export type VoucherParty = "customer" | "account" | "vendor";
 export type VoucherStatus = "posted" | "voided";
 
 export type TaxRateRow = Audit & {
@@ -723,6 +723,9 @@ export type Database = {
       reservation_commissions: ReadOnlyTable<{ id: string; hotel_id: string; reservation_id: string; confirmation_number: string; guest_name: string | null; source: ReservationSource; base_amount: string; rate: string; amount: string; posting_date: string; status: "posted" | "reversed"; reversal_reason: string | null; journal_entry_id: string | null; reversal_entry_id: string | null; created_at: string }>;
       budgets: ReadOnlyTable<{ id: string; hotel_id: string; fiscal_year_id: string; account_id: string; department_id: string | null; amounts: string[]; updated_at: string; updated_by: string | null }>;
       attachments: ReadOnlyTable<{ id: string; hotel_id: string; entity_type: "journal_entry" | "payment" | "vendor_bill" | "invoice"; entity_id: string; file_name: string; mime_type: string; size_bytes: number; created_at: string; created_by: string | null }>;
+      vendor_advances: ReadOnlyTable<{ id: string; hotel_id: string; vendor_id: string; payment_id: string; amount: string; applied_amount: string; status: "open" | "applied" | "voided"; created_at: string }>;
+      vendor_advance_applications: ReadOnlyTable<{ id: string; hotel_id: string; advance_id: string; bill_id: string; amount: string; applied_on: string; journal_entry_id: string | null; created_at: string; created_by: string | null }>;
+      fx_revaluations: ReadOnlyTable<{ id: string; hotel_id: string; revaluation_date: string; total_gain: string; total_loss: string; journal_entry_id: string | null; lines: unknown; created_at: string; created_by: string | null }>;
       fund_transfers: ReadOnlyTable<{ id: string; hotel_id: string; transfer_number: string; transfer_date: string; from_method_id: string; from_currency: string; from_amount: string; from_rate: string; to_method_id: string; to_currency: string; to_amount: string; to_rate: string; base_from: string; base_to: string; difference: string; description: string | null; status: "posted" | "voided"; void_reason: string | null; journal_entry_id: string | null; reversal_entry_id: string | null; created_at: string }>;
       zatca_documents: ReadOnlyTable<{ id: string; hotel_id: string; doc_kind: "invoice" | "credit_note"; doc_id: string; doc_number: string; icv: number; uuid: string;
         invoice_type: "standard" | "simplified"; seller_vat: string; buyer_vat: string | null; issued_at: string; total: string; tax_total: string; pih: string; hash: string; created_at: string }>;
@@ -956,6 +959,11 @@ export type Database = {
       add_attachment: { Args: { p_hotel_id: string; p_entity_type: string; p_entity_id: string; p_file_name: string; p_mime_type: string; p_content_base64: string }; Returns: string };
       attachment_content: { Args: { p_id: string }; Returns: { file_name: string; mime_type: string; content_base64: string }[] };
       delete_attachment: { Args: { p_id: string }; Returns: undefined };
+      pay_vendor_advance: { Args: { p_hotel_id: string; p_vendor_id: string; p_payment_method_id: string; p_amount: string; p_payment_date?: string | null; p_reference?: string | null; p_description?: string | null }; Returns: string };
+      apply_vendor_advance: { Args: { p_advance_id: string; p_bill_id: string; p_amount: string; p_date?: string | null }; Returns: string };
+      fx_revaluation_preview: { Args: { p_hotel_id: string; p_date?: string | null }; Returns: { payment_method_id: string; method_name: string; currency_code: string; account_id: string; account_code: string; account_name: string; book_balance: string; rate: string | null; shared: boolean }[] };
+      post_fx_revaluation: { Args: { p_hotel_id: string; p_lines: { payment_method_id: string; foreign_balance: string }[]; p_date?: string | null }; Returns: string };
+      currency_trial_balance: { Args: { p_hotel_id: string; p_from: string; p_to: string }; Returns: { account_id: string; currency_code: string; debit: string; credit: string; base_debit: string; base_credit: string }[] };
       create_fund_transfer: { Args: { p_hotel_id: string; p_from_method_id: string; p_from_amount: string; p_to_method_id: string; p_to_amount: string; p_description?: string | null; p_date?: string | null }; Returns: string };
       void_fund_transfer: { Args: { p_id: string; p_reason: string }; Returns: undefined };
       zatca_verify_chain: { Args: { p_hotel_id: string }; Returns: { icv: number; doc_number: string; problem: string }[] };

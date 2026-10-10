@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/select";
 import { listDepartments } from "@/services/accounts.service";
+import { RESERVATION_SOURCE, RESERVATION_STATUS } from "@/lib/pms/labels";
 import { requireAppContext } from "@/lib/auth/context";
 import { toPlainReport } from "@/lib/export/plain-report";
 import { REPORTS, type ReportKey, buildReport, parseReportParams, reportQuery } from "@/services/report-tables";
 import { getI18n } from "@/i18n/server";
 
 /** صفحة عامة للقوائم المالية: قائمة الدخل، الميزانية، التدفقات، الإشغال، النقدية اليومية */
-const PAGES = ["income-statement", "balance-sheet", "cash-flow", "rooms", "daily-cash", "tax-return", "monthly-movement", "daily-totals", "missing-numbers", "budget-vs-actual", "item-card", "stock-balances", "count-sheet", "item-prices", "expiring-stock"] as const;
+const PAGES = ["income-statement", "balance-sheet", "cash-flow", "rooms", "daily-cash", "tax-return", "monthly-movement", "daily-totals", "missing-numbers", "budget-vs-actual", "item-card", "stock-balances", "count-sheet", "item-prices", "expiring-stock", "guest-balances", "reservations-report", "occupancy-monthly", "currency-trial-balance"] as const;
 
 export default async function ReportPage({ params, searchParams }: {
   params: Promise<{ report: string }>; searchParams: Promise<{ from?: string; to?: string }>;
@@ -28,7 +29,7 @@ export default async function ReportPage({ params, searchParams }: {
   const { from, to } = params_;
   const table = await buildReport(key, ctx, t, locale, params_);
   const inventory = key === "item-card" || key === "stock-balances" || key === "count-sheet" || key === "item-prices" || key === "expiring-stock";
-  const pointInTime = key === "balance-sheet" || key === "daily-cash" || key === "budget-vs-actual" || (inventory && key !== "item-card");
+  const pointInTime = key === "balance-sheet" || key === "daily-cash" || key === "budget-vs-actual" || key === "guest-balances" || (inventory && key !== "item-card");
   const [invItems, invCats] = inventory ? await Promise.all([
     ctx.supabase.from("inventory_items").select("id, sku, name_ar, name_en").eq("hotel_id", ctx.hotel.id).eq("is_active", true).order("sku"),
     ctx.supabase.from("inventory_categories").select("id, name_ar, name_en").eq("hotel_id", ctx.hotel.id).eq("is_active", true).order("code"),
@@ -54,6 +55,16 @@ export default async function ReportPage({ params, searchParams }: {
             {(invCats?.data ?? []).map((c) => <option key={c.id} value={c.id}>{(locale === "en" && c.name_en) || c.name_ar}</option>)}
           </NativeSelect>
         )}
+        {key === "reservations-report" && (<>
+          <NativeSelect name="status" defaultValue={params_.status ?? ""} className="w-44" aria-label={tr("الحالة")}>
+            <option value="">{tr("كل الحالات")}</option>
+            {(Object.keys(RESERVATION_STATUS) as (keyof typeof RESERVATION_STATUS)[]).map((k) => <option key={k} value={k}>{RESERVATION_STATUS[k].label}</option>)}
+          </NativeSelect>
+          <NativeSelect name="source" defaultValue={params_.source ?? ""} className="w-44" aria-label={tr("المصدر")}>
+            <option value="">{tr("كل المصادر")}</option>
+            {(Object.keys(RESERVATION_SOURCE) as (keyof typeof RESERVATION_SOURCE)[]).map((k) => <option key={k} value={k}>{RESERVATION_SOURCE[k]}</option>)}
+          </NativeSelect>
+        </>)}
         {departments.length > 0 && (
           <NativeSelect name="department" defaultValue={params_.department ?? ""} className="w-56" aria-label={tr("القسم")}>
             <option value="">{tr("كل الأقسام")}</option>

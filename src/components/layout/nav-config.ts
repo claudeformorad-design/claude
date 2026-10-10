@@ -1,7 +1,7 @@
 import {
   BarChart3, Banknote, BedDouble, BookOpen, Boxes, Building2, CalendarCheck, CalendarDays, CalendarRange, Clock, ConciergeBell, DoorOpen,
   FileSpreadsheet, FileText, History, Hourglass, Landmark, LayoutDashboard, ListChecks, ListTree, Percent, PieChart, Receipt, Scale,
-  ArrowLeftRight, CalendarX2, ClipboardList, Coins, Gauge, Handshake, Target, Scale3d, MoonStar, BrushCleaning, Utensils, BadgePercent, Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
+  ArrowLeftRight, CalendarSearch, CalendarX2, ChartColumn, WalletCards, ClipboardList, Coins, Gauge, Handshake, Target, Scale3d, MoonStar, BrushCleaning, Utensils, BadgePercent, Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
   IdCard, ClipboardCheck, FileSearch, Sigma, ListX, Repeat, CalendarClock, Plane, HandCoins, Calculator, SlidersHorizontal, FileUp, Wrench, PackageSearch, WashingMachine, PartyPopper, Star,
 } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
@@ -56,6 +56,8 @@ function allGroups(l: NavLabels): NavGroup[] {
         { href: "/cashier", label: l.cashier, icon: Banknote, permission: ["cashier.shifts", "cashier.shifts.manage"] },
         { href: "/night-audit", label: l.nightAudit, icon: MoonStar, permission: "pms.reports.view" },
         { href: "/guest-register", label: l.guestRegister, icon: ClipboardList, permission: "pms.reports.view" },
+        { href: "/reports/reservations-report", label: l.reservationsReport, icon: CalendarSearch, permission: "pms.reservations.view" },
+        { href: "/reports/guest-balances", label: l.guestBalances, icon: WalletCards, permission: "folio.view" },
       ],
     },
     {
@@ -92,6 +94,7 @@ function allGroups(l: NavLabels): NavGroup[] {
         { href: "/accounts", label: l.accounts, icon: ListTree, permission: "coa.accounts.view" },
         { href: "/journal", label: l.journal, icon: BookOpen, permission: "gl.journal.view" },
         { href: "/journal/recurring", label: l.recurringEntries, icon: Repeat, permission: "gl.journal.view" },
+        { href: "/fx-revaluation", label: l.fxRevaluation, icon: Coins, permission: "gl.journal.post" },
       ],
     },
     {
@@ -118,6 +121,7 @@ function allGroups(l: NavLabels): NavGroup[] {
         { href: "/purchase-orders", label: l.purchaseOrders, icon: ShoppingCart, permission: "purchases.manage" },
         { href: "/bills", label: l.bills, icon: FileSpreadsheet, permission: "bills.view" },
         { href: "/commissions", label: l.commissions, icon: Handshake, permission: "commissions.manage" },
+        { href: "/vendor-advances", label: l.vendorAdvances, icon: HandCoins, permission: "payments.view" },
         { href: "/payroll", label: l.payroll, icon: UserCog, permission: "payroll.manage" },
         { href: "/bank", label: l.bank, icon: Landmark, permission: "bank.reconcile" },
       ],
@@ -160,8 +164,10 @@ function allGroups(l: NavLabels): NavGroup[] {
         { href: "/reports/trial-balance", label: l.trialBalance, icon: ListChecks, permission: "reports.trial_balance.view" },
         { href: "/reports/account-statement", label: l.accountStatement, icon: FileSearch, permission: "gl.journal.view" },
         { href: "/reports/monthly-movement", label: l.monthlyMovement, icon: CalendarRange, permission: "reports.trial_balance.view" },
+        { href: "/reports/currency-trial-balance", label: l.currencyTrialBalance, icon: Coins, permission: "reports.trial_balance.view" },
         { href: "/reports/daily-totals", label: l.dailyTotals, icon: Sigma, permission: "gl.journal.view" },
         { href: "/reports/rooms", label: l.roomStats, icon: BedDouble, permission: "reports.financial.view" },
+        { href: "/reports/occupancy-monthly", label: l.occupancyMonthly, icon: ChartColumn, permission: "reports.financial.view" },
         { href: "/reports/daily-cash", label: l.dailyCash, icon: Banknote, permission: "reports.cash.view" },
         { href: "/reports/tax-return", label: l.taxReturn, icon: Percent, permission: "reports.tax.view" },
         { href: "/reports/aging", label: l.aging, icon: Clock, permission: "reports.aging.view" },

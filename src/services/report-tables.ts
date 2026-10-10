@@ -13,6 +13,8 @@ import { agingReport } from "./payables.service";
 import { getTrialBalance } from "./reports.service";
 import { raise } from "./errors";
 import { fiscalYearStart, isIsoDate, todayInTimeZone } from "@/lib/accounting/fiscal";
+import { roomKpis } from "@/lib/accounting/kpi";
+import type { ReservationSource, ReservationStatus } from "@/lib/supabase/database.types";
 
 /**
  * جدول تقرير موحّد: تعرضه الصفحات ويُصدّر كما هو إلى Excel (ما تراه هو ما تصدّره).
@@ -47,11 +49,15 @@ export const REPORTS = {
   "count-sheet": PERMISSIONS.inventoryView,
   "item-prices": PERMISSIONS.inventoryView,
   "expiring-stock": PERMISSIONS.inventoryView,
+  "guest-balances": PERMISSIONS.folioView,
+  "reservations-report": PERMISSIONS.pmsView,
+  "occupancy-monthly": PERMISSIONS.financialView,
+  "currency-trial-balance": PERMISSIONS.trialBalanceView,
 } as const satisfies Record<string, Permission>;
 export type ReportKey = keyof typeof REPORTS;
 
 /** account و department لكشف الحساب فقط (حساب تفصيلي أو رئيسي، و/أو مركز تكلفة) */
-export interface ReportParams { from: string; to: string; account?: string; department?: string; item?: string; category?: string }
+export interface ReportParams { from: string; to: string; account?: string; department?: string; item?: string; category?: string; status?: string; source?: string }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -60,23 +66,26 @@ export function parseReportParams(key: ReportKey, get: (k: string) => string | n
   const today = todayInTimeZone(hotel.timezone);
   const toRaw = get("to") ?? "";
   const to = isIsoDate(toRaw) ? toRaw : today;
-  const defaultFrom = key === "income-statement" || key === "cash-flow" || key === "trial-balance" || key === "monthly-movement"
+  const defaultFrom = key === "income-statement" || key === "cash-flow" || key === "trial-balance" || key === "monthly-movement" || key === "occupancy-monthly"
     ? fiscalYearStart(to, hotel.fiscal_year_start_month) : `${to.slice(0, 7)}-01`;
   const fromRaw = get("from") ?? "";
   const from = isIsoDate(fromRaw) && fromRaw <= to ? fromRaw : defaultFrom;
   const account = get("account") ?? "";
   const department = get("department") ?? "";
   const item = get("item") ?? "";
+  const status = get("status") ?? "";
+  const source = get("source") ?? "";
   const category = get("category") ?? "";
   return {
     from, to, account: UUID.test(account) ? account : undefined, department: UUID.test(department) ? department : undefined,
     item: UUID.test(item) ? item : undefined, category: UUID.test(category) ? category : undefined,
+    status: /^[a-z_]{1,20}$/.test(status) ? status : undefined, source: /^[a-z_]{1,20}$/.test(source) ? source : undefined,
   };
 }
 
 /** رابط الاستعلام نفسه للتصدير والطباعة */
 export const reportQuery = (p: ReportParams) =>
-  `from=${p.from}&to=${p.to}${p.account ? `&account=${p.account}` : ""}${p.department ? `&department=${p.department}` : ""}${p.item ? `&item=${p.item}` : ""}${p.category ? `&category=${p.category}` : ""}`;
+  `from=${p.from}&to=${p.to}${p.account ? `&account=${p.account}` : ""}${p.department ? `&department=${p.department}` : ""}${p.item ? `&item=${p.item}` : ""}${p.category ? `&category=${p.category}` : ""}${p.status ? `&status=${p.status}` : ""}${p.source ? `&source=${p.source}` : ""}`;
 
 const line = (...cells: Cell[]): ReportRow => ({ kind: "line", cells });
 const acc = (a: { id: string; code: string }, label: string, ...cells: Cell[]): ReportRow => ({ kind: "line", cells: [label, ...cells], code: a.code, account: a.id });
@@ -290,6 +299,35 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
     case "item-prices":
     case "expiring-stock":
       return inventoryReport(key, ctx, locale, p);
+    case "guest-balances":
+    case "reservations-report":
+    case "occupancy-monthly":
+      return hotelReport(key, ctx, t, locale, p);
+    case "currency-trial-balance": {
+      const [res, accounts] = await Promise.all([
+        ctx.supabase.rpc("currency_trial_balance", { p_hotel_id: ctx.hotel.id, p_from: p.from, p_to: p.to }).select("account_id, currency_code, debit::text, credit::text, base_debit::text, base_credit::text"),
+        ctx.supabase.from("chart_of_accounts").select("id, code, name_ar, name_en").eq("hotel_id", ctx.hotel.id),
+      ]);
+      raise(res.error); raise(accounts.error);
+      const accBy = new Map((accounts.data ?? []).map((a) => [a.id, a]));
+      const list = (res.data ?? []).filter((x) => accBy.has(x.account_id));
+      const currencies = [...new Set(list.map((x) => x.currency_code))].sort();
+      const rows: ReportRow[] = [];
+      for (const c of currencies) {
+        rows.push(head(c, 7));
+        const cl = list.filter((x) => x.currency_code === c).sort((a, b) => accBy.get(a.account_id)!.code.localeCompare(accBy.get(b.account_id)!.code));
+        for (const x of cl) {
+          const a = accBy.get(x.account_id)!;
+          const net = toMoney(x.debit).minus(toMoney(x.credit));
+          rows.push(acc(a, (locale === "en" && a.name_en) || a.name_ar, toMoney(x.debit), toMoney(x.credit), net, toMoney(x.base_debit), toMoney(x.base_credit), toMoney(x.base_debit).minus(toMoney(x.base_credit))));
+        }
+        rows.push(sub(tr("إجمالي {0}", c), sumMoney(cl.map((x) => x.debit)), sumMoney(cl.map((x) => x.credit)), "", sumMoney(cl.map((x) => x.base_debit)), sumMoney(cl.map((x) => x.base_credit)), ""));
+      }
+      return { title: tr("ميزان المراجعة بالعملات"), subtitle: period,
+        columns: [r.account, tr("مدين بالعملة"), tr("دائن بالعملة"), tr("الصافي بالعملة"), tr("مدين {0}", ctx.hotel.base_currency), tr("دائن {0}", ctx.hotel.base_currency), tr("الصافي {0}", ctx.hotel.base_currency)], rows,
+        note: rows.length ? { ok: true, text: tr("يعرض القيود المسجلة بعملة أجنبية فقط، بمبالغها بالعملة وما يعادلها بالعملة الأساسية.") }
+          : { ok: true, text: tr("لا قيود بعملات أجنبية في هذه الفترة.") } };
+    }
     case "missing-numbers": {
       const { data, error } = await ctx.supabase.rpc("document_number_gaps", { p_hotel_id: ctx.hotel.id })
         .select("doc_type, year, prefix, last_value, missing_from, missing_to");
@@ -440,4 +478,60 @@ async function inventoryReport(key: "item-card" | "stock-balances" | "count-shee
     }
   }
   return { title: tr("تقرير أسعار الأصناف"), subtitle: catSub, columns: cols, rows };
+}
+
+/** تقارير الفندق: أرصدة النزلاء، تقرير الحجوزات بفلاتره، والإشغال الشهري */
+async function hotelReport(key: "guest-balances" | "reservations-report" | "occupancy-monthly", ctx: AppContext, t: Dictionary, locale: string, p: ReportParams): Promise<ReportTable> {
+  const h = ctx.hotel.id;
+  if (key === "guest-balances") {
+    const [folios, balances] = await Promise.all([
+      ctx.supabase.from("guest_folios").select("id, folio_number, guest_name, room_number, arrival_date, departure_date").eq("hotel_id", h).eq("status", "open").order("room_number"),
+      ctx.supabase.from("folio_balances").select("folio_id, balance::text, deposit_balance::text").eq("hotel_id", h),
+    ]);
+    raise(folios.error); raise(balances.error);
+    const bal = new Map((balances.data ?? []).map((b) => [b.folio_id, b]));
+    const list = (folios.data ?? []).map((f) => ({ f, b: toMoney(bal.get(f.id)?.balance), d: toMoney(bal.get(f.id)?.deposit_balance) }))
+      .filter((x) => !x.b.isZero() || !x.d.isZero());
+    const rows: ReportRow[] = list.map(({ f, b, d }) => line(f.folio_number, f.guest_name, f.room_number ?? "", f.arrival_date ?? "", f.departure_date ?? "", b, d, b.minus(d)));
+    const tb = sumMoney(list.map((x) => x.b.toString())), td = sumMoney(list.map((x) => x.d.toString()));
+    rows.push(total(tr("الإجمالي"), tr("{0} فوليو", list.length), "", "", "", tb, td, tb.minus(td)));
+    return { title: tr("تقرير أرصدة النزلاء"), subtitle: tr("الفوليوهات المفتوحة حتى {0}", p.to),
+      columns: [tr("الفوليو"), tr("النزيل"), tr("الغرفة"), tr("الوصول"), tr("المغادرة"), tr("الرصيد"), tr("العربون"), tr("الصافي المستحق")], rows,
+      note: { ok: true, text: tr("الصافي المستحق هو الرصيد بعد خصم العربون غير المطبّق. الموجب على النزيل والسالب له.") } };
+  }
+  if (key === "reservations-report") {
+    let q = ctx.supabase.from("reservations")
+      .select("confirmation_number, arrival_date, departure_date, status, source, total_amount::text, adults, children, guest:guests(full_name, phone), room:rooms(room_number), room_type:room_types(code, name_ar)")
+      .eq("hotel_id", h).gte("arrival_date", p.from).lte("arrival_date", p.to);
+    if (p.status) q = q.eq("status", p.status as ReservationStatus);
+    if (p.source) q = q.eq("source", p.source as ReservationSource);
+    const { data, error } = await q.order("arrival_date").order("confirmation_number").limit(5000);
+    raise(error);
+    const { RESERVATION_SOURCE, RESERVATION_STATUS } = await import("@/lib/pms/labels");
+    type Row = { confirmation_number: string; arrival_date: string; departure_date: string; status: keyof typeof RESERVATION_STATUS; source: keyof typeof RESERVATION_SOURCE; total_amount: string; adults: number; children: number;
+      guest: { full_name: string; phone: string | null } | null; room: { room_number: string } | null; room_type: { code: string; name_ar: string } | null };
+    const list = (data ?? []) as unknown as Row[];
+    const nights = (r: Row) => Math.max(0, Math.round((Date.parse(`${r.departure_date}T00:00:00Z`) - Date.parse(`${r.arrival_date}T00:00:00Z`)) / 864e5));
+    const rows: ReportRow[] = list.map((r) => line(r.confirmation_number, r.guest?.full_name ?? "", r.guest?.phone ?? "", r.room_type?.code ?? "", r.room?.room_number ?? "",
+      r.arrival_date, r.departure_date, String(nights(r)), RESERVATION_SOURCE[r.source] ?? r.source, RESERVATION_STATUS[r.status]?.label ?? r.status, toMoney(r.total_amount)));
+    rows.push(total(tr("الإجمالي"), tr("{0} حجز", list.length), "", "", "", "", "", String(list.reduce((n, r) => n + nights(r), 0)), "", "", sumMoney(list.map((r) => r.total_amount))));
+    const sub = [tr("الوصول من {0} إلى {1}", p.from, p.to), p.status ? RESERVATION_STATUS[p.status as keyof typeof RESERVATION_STATUS]?.label : "", p.source ? RESERVATION_SOURCE[p.source as keyof typeof RESERVATION_SOURCE] : ""].filter(Boolean).join("، ");
+    return { title: tr("تقرير الحجوزات"), subtitle: sub,
+      columns: [tr("الحجز"), tr("النزيل"), tr("الجوال"), tr("النوع"), tr("الغرفة"), tr("الوصول"), tr("المغادرة"), tr("الليالي"), tr("المصدر"), tr("الحالة"), tr("المبلغ")], rows };
+  }
+  // الإشغال الشهري: من إحصاءات الغرف اليومية مجمّعة بالشهر
+  const { days } = await getRoomStats(ctx.supabase, h, p.from, p.to);
+  const months = new Map<string, typeof days>();
+  for (const d of days) months.set(d.business_date.slice(0, 7), [...(months.get(d.business_date.slice(0, 7)) ?? []), d]);
+  const pct = (m: Money | null) => (m ? `${m.toFixed(1)}%` : "");
+  const rows: ReportRow[] = [...months.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([m, list]) => {
+    const k = roomKpis(list);
+    return line(m, k.roomNightsSold.toString(), k.roomNightsAvailable.toString(), pct(k.occupancy), k.roomRevenue, k.adr, k.revpar);
+  });
+  const all = roomKpis(days);
+  rows.push(total(t.common.total, all.roomNightsSold.toString(), all.roomNightsAvailable.toString(), pct(all.occupancy), all.roomRevenue, all.adr, all.revpar));
+  const r = t.reports;
+  return { title: tr("تقرير الإشغال الشهري"), subtitle: tr("من {0} إلى {1}", p.from, p.to),
+    columns: [tr("الشهر"), r.roomNights, r.available, r.occupancy, r.roomRevenue, r.adr, r.revpar], rows,
+    note: ctx.hotel.total_rooms ? undefined : { ok: false, text: r.setRooms } };
 }
