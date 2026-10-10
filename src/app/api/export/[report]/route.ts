@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { getAppContext, type AppContext } from "@/lib/auth/context";
-import { fiscalYearStart, formatDateTime, isIsoDate, todayInTimeZone } from "@/lib/accounting/fiscal";
+import { formatDateTime } from "@/lib/accounting/fiscal";
 import { reportWorkbook } from "@/lib/export/excel";
 import { docMeta, toPlainReport } from "@/lib/export/plain-report";
 import { reportPdf } from "@/lib/export/pdf-report";
-import { REPORTS, type ReportKey, buildReport } from "@/services/report-tables";
+import { REPORTS, type ReportKey, buildReport, parseReportParams } from "@/services/report-tables";
 import { getI18n } from "@/i18n/server";
 
 /**
@@ -22,11 +22,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ repo
 
   const { locale, t } = await getI18n();
   const url = new URL(request.url);
-  const today = todayInTimeZone(app.hotel.timezone);
-  const to = isIsoDate(url.searchParams.get("to") ?? "") ? url.searchParams.get("to")! : today;
-  const fromParam = url.searchParams.get("from") ?? "";
-  const from = isIsoDate(fromParam) && fromParam <= to ? fromParam : fiscalYearStart(to, app.hotel.fiscal_year_start_month);
-  const table = await buildReport(key, app, t, locale, { from, to });
+  const params_ = parseReportParams(key, (k) => url.searchParams.get(k), app.hotel);
+  const { to } = params_;
+  const table = await buildReport(key, app, t, locale, params_);
   const generatedAt = formatDateTime(new Date().toISOString(), app.hotel.timezone);
   const fileName = `${table.title} ${to}`;
 

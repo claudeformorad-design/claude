@@ -18,6 +18,8 @@ import { InvoiceStatusBadge } from "./status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AlarmClock, FileText, Hourglass, Receipt } from "lucide-react";
 import { Stat, StatGrid } from "@/components/ui/stat";
+import { ShieldAlert, ShieldCheck } from "lucide-react";
+import { verifyChain } from "@/services/zatca.service";
 import { EntityCell } from "@/components/ui/entity";
 import { FilterTabs } from "@/components/ui/filter-tabs";
 import { Pager, pageSlice } from "@/components/ui/pager";
@@ -26,7 +28,10 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   const ctx = await requireAppContext(PERMISSIONS.invoicesView);
   const { locale, t } = await getI18n();
   const sp = await searchParams;
-  const invoices = await listInvoices(ctx.supabase, ctx.hotel.id, { status: sp.status, q: sp.q, customerId: sp.customer });
+  const [invoices, chain] = await Promise.all([
+    listInvoices(ctx.supabase, ctx.hotel.id, { status: sp.status, q: sp.q, customerId: sp.customer }),
+    verifyChain(ctx.supabase, ctx.hotel.id),
+  ]);
 
   const today = todayInTimeZone(ctx.hotel.timezone);
   const outstanding = (i: (typeof invoices)[number]) => toMoney(i.amount_due).minus(toMoney(i.amount_paid));
@@ -59,6 +64,11 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
         <Stat icon={AlarmClock} tone="neutral" label={tr("متأخرة السداد")} value={<span className="num">{overdue.length}</span>}
           hint={overdue.length ? <>{tr("بقيمة")}{" "}<Money value={overdue.reduce((a, i) => a.plus(outstanding(i)), ZERO)} locale={locale} /></> : tr("لا يوجد تأخير")} />
       </StatGrid>
+      <p className={chain.ok ? "flex items-center gap-2 text-[14.5px] text-success" : "flex items-center gap-2 text-[14.5px] text-urgent"}>
+        {chain.ok ? <ShieldCheck className="size-4" /> : <ShieldAlert className="size-4" />}
+        {chain.ok ? tr("سلسلة الفوترة الإلكترونية سليمة: كل الفواتير مختومة بتسلسل متصل ولم يُعدَّل أي منها.")
+          : tr("سلسلة الفوترة الإلكترونية منكسرة عند المستند {0} ({1}). راجع سجل التدقيق.", chain.problems[0]!.doc_number, chain.problems[0]!.problem)}
+      </p>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <FilterTabs active={sp.status ?? "all"} items={[

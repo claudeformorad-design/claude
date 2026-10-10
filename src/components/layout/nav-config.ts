@@ -2,7 +2,7 @@ import {
   BarChart3, Banknote, BedDouble, BookOpen, Boxes, Building2, CalendarCheck, CalendarDays, CalendarRange, Clock, ConciergeBell, DoorOpen,
   FileSpreadsheet, FileText, History, Hourglass, Landmark, LayoutDashboard, ListChecks, ListTree, Percent, PieChart, Receipt, Scale,
   ClipboardList, Coins, Scale3d, MoonStar, BrushCleaning, Utensils, BadgePercent, Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
-  IdCard, ClipboardCheck, CalendarClock, Plane, HandCoins, Calculator, SlidersHorizontal, FileUp, Wrench, PackageSearch, WashingMachine, PartyPopper, Star,
+  IdCard, ClipboardCheck, FileSearch, Sigma, ListX, CalendarClock, Plane, HandCoins, Calculator, SlidersHorizontal, FileUp, Wrench, PackageSearch, WashingMachine, PartyPopper, Star,
 } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import type { HotelModule } from "@/lib/supabase/database.types";
@@ -152,11 +152,15 @@ function allGroups(l: NavLabels): NavGroup[] {
         { href: "/reports/balance-sheet", label: l.balanceSheet, icon: Scale, permission: "reports.financial.view" },
         { href: "/reports/cash-flow", label: l.cashFlow, icon: Waves, permission: "reports.financial.view" },
         { href: "/reports/trial-balance", label: l.trialBalance, icon: ListChecks, permission: "reports.trial_balance.view" },
+        { href: "/reports/account-statement", label: l.accountStatement, icon: FileSearch, permission: "gl.journal.view" },
+        { href: "/reports/monthly-movement", label: l.monthlyMovement, icon: CalendarRange, permission: "reports.trial_balance.view" },
+        { href: "/reports/daily-totals", label: l.dailyTotals, icon: Sigma, permission: "gl.journal.view" },
         { href: "/reports/rooms", label: l.roomStats, icon: BedDouble, permission: "reports.financial.view" },
         { href: "/reports/daily-cash", label: l.dailyCash, icon: Banknote, permission: "reports.cash.view" },
         { href: "/reports/tax-return", label: l.taxReturn, icon: Percent, permission: "reports.tax.view" },
         { href: "/reports/aging", label: l.aging, icon: Clock, permission: "reports.aging.view" },
         { href: "/reports/profitability", label: l.profitability, icon: PieChart, permission: "reports.profitability.view" },
+        { href: "/reports/missing-numbers", label: l.missingNumbers, icon: ListX, permission: "audit.logs.view" },
       ],
     },
     {

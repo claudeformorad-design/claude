@@ -12,6 +12,7 @@ import { getBalanceSheet, getCashFlow, getDailyCash, getIncomeStatement, getRoom
 import { agingReport } from "./payables.service";
 import { getTrialBalance } from "./reports.service";
 import { raise } from "./errors";
+import { fiscalYearStart, isIsoDate, todayInTimeZone } from "@/lib/accounting/fiscal";
 
 /**
  * جدول تقرير موحّد: تعرضه الصفحات ويُصدّر كما هو إلى Excel (ما تراه هو ما تصدّره).
@@ -36,10 +37,35 @@ export const REPORTS = {
   "aging-payable": PERMISSIONS.agingView,
   profitability: PERMISSIONS.profitabilityView,
   "tax-return": PERMISSIONS.taxReportView,
+  "account-statement": PERMISSIONS.journalView,
+  "monthly-movement": PERMISSIONS.trialBalanceView,
+  "daily-totals": PERMISSIONS.journalView,
+  "missing-numbers": PERMISSIONS.auditView,
 } as const satisfies Record<string, Permission>;
 export type ReportKey = keyof typeof REPORTS;
 
-export interface ReportParams { from: string; to: string }
+/** account و department لكشف الحساب فقط (حساب تفصيلي أو رئيسي، و/أو مركز تكلفة) */
+export interface ReportParams { from: string; to: string; account?: string; department?: string }
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/** قراءة معاملات التقرير من الرابط بنفس القواعد في الصفحة والتصدير والطباعة */
+export function parseReportParams(key: ReportKey, get: (k: string) => string | null | undefined, hotel: { timezone: string; fiscal_year_start_month: number }): ReportParams {
+  const today = todayInTimeZone(hotel.timezone);
+  const toRaw = get("to") ?? "";
+  const to = isIsoDate(toRaw) ? toRaw : today;
+  const defaultFrom = key === "income-statement" || key === "cash-flow" || key === "trial-balance" || key === "monthly-movement"
+    ? fiscalYearStart(to, hotel.fiscal_year_start_month) : `${to.slice(0, 7)}-01`;
+  const fromRaw = get("from") ?? "";
+  const from = isIsoDate(fromRaw) && fromRaw <= to ? fromRaw : defaultFrom;
+  const account = get("account") ?? "";
+  const department = get("department") ?? "";
+  return { from, to, account: UUID.test(account) ? account : undefined, department: UUID.test(department) ? department : undefined };
+}
+
+/** رابط الاستعلام نفسه للتصدير والطباعة */
+export const reportQuery = (p: ReportParams) =>
+  `from=${p.from}&to=${p.to}${p.account ? `&account=${p.account}` : ""}${p.department ? `&department=${p.department}` : ""}`;
 
 const line = (...cells: Cell[]): ReportRow => ({ kind: "line", cells });
 const acc = (a: { id: string; code: string }, label: string, ...cells: Cell[]): ReportRow => ({ kind: "line", cells: [label, ...cells], code: a.code, account: a.id });
@@ -167,5 +193,93 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
       rows.push(total(t.common.total, ...cells(tt)));
       return { title: t.nav.profitability, subtitle: period, columns: [t.folio.department, pr.revenue, pr.cos, pr.gross, pr.opex, pr.net, pr.margin], rows };
     }
+    case "account-statement": {
+      const st = await accountStatement(ctx, locale, p);
+      return st;
+    }
+    case "monthly-movement": {
+      const [res, accounts] = await Promise.all([
+        ctx.supabase.rpc("monthly_account_movement", { p_hotel_id: ctx.hotel.id, p_from: p.from, p_to: p.to }).select("account_id, month, debit::text, credit::text"),
+        ctx.supabase.from("chart_of_accounts").select("id, code, name_ar, name_en").eq("hotel_id", ctx.hotel.id),
+      ]);
+      raise(res.error); raise(accounts.error);
+      const months: string[] = [];
+      for (let d = new Date(`${p.from.slice(0, 7)}-01T00:00:00Z`); d.toISOString().slice(0, 10) <= p.to; d.setUTCMonth(d.getUTCMonth() + 1)) months.push(d.toISOString().slice(0, 10));
+      const byAcc = new Map<string, Map<string, Money>>();
+      for (const x of res.data ?? []) {
+        const m = byAcc.get(x.account_id) ?? new Map<string, Money>();
+        m.set(x.month, toMoney(x.debit).minus(toMoney(x.credit)));
+        byAcc.set(x.account_id, m);
+      }
+      const accs = (accounts.data ?? []).filter((a) => byAcc.has(a.id)).sort((a, b) => a.code.localeCompare(b.code));
+      const rows: ReportRow[] = accs.map((a) => {
+        const m = byAcc.get(a.id)!;
+        const vals = months.map((mo) => m.get(mo) ?? null);
+        return acc(a, (locale === "en" && a.name_en) || a.name_ar, ...vals, sumMoney(vals.filter((v): v is Money => v !== null).map((v) => v.toString())));
+      });
+      const colTotal = months.map((mo) => sumMoney(accs.map((a) => byAcc.get(a.id)!.get(mo)?.toString() ?? "0")));
+      rows.push(total(t.common.total, ...colTotal, sumMoney(colTotal.map((v) => v.toString()))));
+      return { title: tr("الحركة الشهرية للحسابات"), subtitle: period,
+        columns: [r.account, ...months.map((mo) => mo.slice(0, 7)), t.common.total], rows,
+        note: { ok: true, text: tr("الرقم الموجب حركة مدينة صافية، والسالب حركة دائنة صافية.") } };
+    }
+    case "daily-totals": {
+      const { data, error } = await ctx.supabase.rpc("daily_journal_totals", { p_hotel_id: ctx.hotel.id, p_from: p.from, p_to: p.to })
+        .select("entry_date, entries, debit::text, credit::text");
+      raise(error);
+      const rows: ReportRow[] = (data ?? []).map((x) => line(x.entry_date, String(x.entries), toMoney(x.debit), toMoney(x.credit)));
+      rows.push(total(t.common.total, String((data ?? []).reduce((n, x) => n + x.entries, 0)), sumMoney((data ?? []).map((x) => x.debit)), sumMoney((data ?? []).map((x) => x.credit))));
+      return { title: tr("يومية الحسابات مجاميع"), subtitle: period, columns: [t.common.date, tr("عدد القيود"), t.journal.debit, t.journal.credit], rows };
+    }
+    case "missing-numbers": {
+      const { data, error } = await ctx.supabase.rpc("document_number_gaps", { p_hotel_id: ctx.hotel.id })
+        .select("doc_type, year, prefix, last_value, missing_from, missing_to");
+      raise(error);
+      const names: Record<string, string> = {
+        journal_entry: tr("القيود اليومية"), invoice: tr("الفواتير"), credit_note: tr("إشعارات الدائن"),
+        voucher_receipt: tr("سندات القبض"), voucher_disbursement: tr("سندات الصرف"), vendor_bill: tr("فواتير الموردين"),
+      };
+      const num = (x: { prefix: string; year: number }, n: number) => `${x.prefix}-${x.year}-${String(n).padStart(6, "0")}`;
+      const rows: ReportRow[] = (data ?? []).map((x) => line(names[x.doc_type] ?? x.doc_type, num(x, x.missing_from),
+        x.missing_to === x.missing_from ? "" : num(x, x.missing_to), String(x.missing_to - x.missing_from + 1), num(x, x.last_value)));
+      return { title: tr("تقرير الأرقام المفقودة"), subtitle: tr("حتى {0}", p.to),
+        columns: [tr("المستند"), tr("من الرقم"), tr("إلى الرقم"), tr("العدد"), tr("آخر رقم صدر")], rows,
+        note: rows.length ? { ok: false, text: tr("توجد أرقام مفقودة في التسلسل، راجع سجل التدقيق لمعرفة سببها.") }
+          : { ok: true, text: tr("لا توجد أرقام مفقودة: كل الأرقام من الأول حتى آخر رقم صدر موجودة.") } };
+    }
   }
+}
+
+/** كشف الحساب: افتتاحي، ثم الحركة بالرصيد الجاري، ثم المجاميع والختامي */
+async function accountStatement(ctx: AppContext, locale: string, p: ReportParams): Promise<ReportTable> {
+  const name = (a: { name_ar: string; name_en: string | null } | null | undefined) => (a && ((locale === "en" && a.name_en) || a.name_ar)) || "";
+  const cols = [tr("التاريخ"), tr("رقم القيد"), tr("البيان"), tr("مدين"), tr("دائن"), tr("الرصيد"), tr("طبيعته")];
+  if (!p.account && !p.department) {
+    return { title: tr("كشف حساب"), subtitle: tr("اختر حسابًا أو مركز تكلفة لعرض الكشف."), columns: cols, rows: [] };
+  }
+  const [res, account, department] = await Promise.all([
+    ctx.supabase.rpc("account_statement", { p_hotel_id: ctx.hotel.id, p_account_id: p.account ?? null, p_department_id: p.department ?? null, p_from: p.from, p_to: p.to })
+      .select("is_opening, entry_number, entry_date, reference, description, debit::text, credit::text"),
+    p.account ? ctx.supabase.from("chart_of_accounts").select("code, name_ar, name_en, is_postable").eq("hotel_id", ctx.hotel.id).eq("id", p.account).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    p.department ? ctx.supabase.from("departments").select("code, name_ar, name_en").eq("hotel_id", ctx.hotel.id).eq("id", p.department).maybeSingle() : Promise.resolve({ data: null, error: null }),
+  ]);
+  raise(res.error);
+  type Row = { is_opening: boolean; entry_number: string | null; entry_date: string; reference: string | null; description: string | null; debit: string; credit: string };
+  const data = (res.data ?? []) as unknown as Row[];
+  const opening = data.find((x) => x.is_opening);
+  const moves = data.filter((x) => !x.is_opening).sort((a, b) => a.entry_date.localeCompare(b.entry_date) || (a.entry_number ?? "").localeCompare(b.entry_number ?? ""));
+  const side = (m: Money) => (m.isZero() ? "" : m.isPositive() ? tr("مدين") : tr("دائن"));
+  let bal = toMoney(opening?.debit ?? "0").minus(toMoney(opening?.credit ?? "0"));
+  const rows: ReportRow[] = [line(p.from, null, tr("الرصيد الافتتاحي"), null, null, bal.abs(), side(bal))];
+  let dr = toMoney("0"), cr = toMoney("0");
+  for (const x of moves) {
+    const d = toMoney(x.debit), c = toMoney(x.credit);
+    bal = bal.plus(d).minus(c); dr = dr.plus(d); cr = cr.plus(c);
+    rows.push(line(x.entry_date, x.entry_number, [x.description, x.reference].filter(Boolean).join("، "), d.isZero() ? null : d, c.isZero() ? null : c, bal.abs(), side(bal)));
+  }
+  rows.push(total(tr("مجموع الحركة"), null, null, dr, cr, null, null), total(tr("الرصيد الختامي"), null, null, null, null, bal.abs(), side(bal)));
+  const a = account.data as { code: string; name_ar: string; name_en: string | null; is_postable: boolean } | null;
+  const dep = department.data as { code: string; name_ar: string; name_en: string | null } | null;
+  const parts = [a ? `${a.code} ${name(a)}${a.is_postable ? "" : ` (${tr("إجمالي بكل فروعه")})`}` : "", dep ? tr("مركز التكلفة {0}", name(dep)) : ""].filter(Boolean);
+  return { title: tr("كشف حساب {0}", parts.join("، ")), subtitle: tr("من {0} إلى {1}", p.from, p.to), columns: cols, rows };
 }

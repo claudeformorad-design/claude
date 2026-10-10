@@ -15,6 +15,7 @@ import { getI18n } from "@/i18n/server";
 import { InvoiceStatusBadge } from "../status-badge";
 import { PrintButton } from "./print-button";
 import { CreditNoteForm } from "./credit-note";
+import { qrSvg, qrText, zatcaRecords } from "@/services/zatca.service";
 
 /** فاتورة ضريبية قابلة للطباعة (تصدير PDF الرسمي في المرحلة 5) */
 export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
@@ -30,6 +31,9 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   ]);
   if (!detail) notFound();
   const { invoice: inv, items } = detail;
+  const sealed = await zatcaRecords(ctx.supabase, ctx.hotel.id, [inv.id, ...(creditNotes.data ?? []).map((c) => c.id)]);
+  const z = sealed.get(inv.id);
+  const qr = z ? await qrSvg(qrText(ctx.hotel, z)) : null;
   const taxById = new Map(taxes.map((x) => [x.id, x]));
   const hotel = ctx.hotel;
   const m = (v: string) => <Money value={v} locale={locale} />;
@@ -51,7 +55,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
               {hotel.address && <p className="text-sm text-muted-foreground">{hotel.address}</p>}
             </div>
             <div className="text-end">
-              <p className="text-2xl font-bold text-ink">{t.invoices.taxInvoice}</p>
+              <p className="text-2xl font-bold text-ink">{z?.invoice_type === "simplified" ? tr("فاتورة ضريبية مبسطة") : t.invoices.taxInvoice}</p>
               <p className="num text-lg font-semibold text-accent1">{inv.invoice_number}</p>
               <p className="text-sm text-muted-foreground">{t.invoices.issueDate}: <span className="num">{inv.issue_date}</span></p>
               {inv.due_date && <p className="text-sm text-muted-foreground">{t.invoices.dueDate}: <span className="num">{inv.due_date}</span></p>}
@@ -152,12 +156,25 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
               <p className="mb-2 text-sm font-semibold">{t.payables.creditNote}</p>
               <ul className="space-y-1 text-sm">
                 {(creditNotes.data ?? []).map((c) => (
-                  <li key={c.id}><span className="num">{c.credit_note_number}</span>{" "}{tr("بتاريخ")}{" "}<span className="num">{c.issue_date}</span>{" "}{tr("بمبلغ")}{" "}{m(c.total)}{tr("،")}{" "}{c.reason}</li>
+                  <li key={c.id}><span className="num">{c.credit_note_number}</span>{" "}{tr("بتاريخ")}{" "}<span className="num">{c.issue_date}</span>{" "}{tr("بمبلغ")}{" "}{m(c.total)}{tr("،")}{" "}{c.reason}
+                    {sealed.has(c.id) && <>{" "}<a href={`/api/zatca/${c.id}`} className="text-action print:hidden">{tr("ملف XML")}</a></>}</li>
                 ))}
               </ul>
             </div>
           )}
           {inv.notes && <p className="text-sm text-muted-foreground">{inv.notes}</p>}
+          {z && (
+            <div className="flex flex-wrap items-center gap-5 border-t pt-5">
+              {qr && <div className="size-28 shrink-0 [&>svg]:size-full" role="img" aria-label={tr("رمز الفاتورة الإلكترونية")} dangerouslySetInnerHTML={{ __html: qr }} />}
+              <div className="min-w-0 space-y-1 text-[13px] text-slate-500">
+                <p className="font-medium text-ink">{tr("فاتورة إلكترونية")}</p>
+                <p>{tr("الرقم التسلسلي")}: <span className="num">{z.icv}</span></p>
+                <p className="break-all">{tr("المعرّف")}: <span className="num">{z.uuid}</span></p>
+                {!z.seller_vat && <p className="text-urgent print:hidden">{tr("أضف الرقم الضريبي للمنشأة في إعدادات الفندق حتى يظهر في رمز الفاتورة.")}</p>}
+                <a href={`/api/zatca/${inv.id}`} className="inline-block text-action print:hidden">{tr("تنزيل ملف XML")}</a>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
       {ctx.can(PERMISSIONS.creditNote) && toMoney(inv.amount_due).gt(toMoney(inv.amount_paid)) && (

@@ -40,7 +40,7 @@ export function toPlainReport(table: ReportTable, locale: string): PlainReport {
       account: r.account,
       cells: r.cells.map((c) => c instanceof MoneyDecimal
         ? { text: c.isZero() ? "" : formatMoney(c, { locale }), num: true }
-        : { text: plainText(c), num: false }),
+        : { text: plainText(c), num: typeof c === "string" && /^(\d{4}-\d{2}(-\d{2})?|[A-Z]{1,4}-\d{4}-\d+|\d+)$/.test(c) }),
     })),
   };
 }

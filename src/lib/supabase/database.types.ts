@@ -705,6 +705,8 @@ export type Database = {
       vendor_bill_lines: ReadOnlyTable<VendorBillLineRow>;
       payroll_runs: ReadOnlyTable<PayrollRunRow>;
       payroll_lines: ReadOnlyTable<PayrollLineRow>;
+      zatca_documents: ReadOnlyTable<{ id: string; hotel_id: string; doc_kind: "invoice" | "credit_note"; doc_id: string; doc_number: string; icv: number; uuid: string;
+        invoice_type: "standard" | "simplified"; seller_vat: string; buyer_vat: string | null; issued_at: string; total: string; tax_total: string; pih: string; hash: string; created_at: string }>;
       credit_notes: ReadOnlyTable<{ id: string; hotel_id: string; credit_note_number: string; invoice_id: string; issue_date: string; net_amount: string; tax_amount: string; total: string; reason: string; created_at: string }>;
       bank_statement_lines: Table<BankStatementLineRow, "hotel_id" | "account_id" | "txn_date" | "description" | "amount">;
       floors: Table<FloorRow, "hotel_id" | "name">;
@@ -910,6 +912,18 @@ export type Database = {
         Returns: { control: LedgerControl; gl_balance: string; subledger_balance: string; reconciling_items: string; difference: string }[];
       };
       monthly_pnl: { Args: { p_hotel_id: string; p_from: string; p_to: string }; Returns: { month: string; revenue: string; expenses: string }[] };
+      account_statement: {
+        Args: { p_hotel_id: string; p_account_id: string | null; p_department_id: string | null; p_from: string; p_to: string };
+        Returns: { is_opening: boolean; entry_id: string | null; entry_number: string | null; entry_date: string; source: string | null; source_id: string | null;
+          reference: string | null; description: string | null; account_id: string | null; department_id: string | null; debit: string; credit: string }[];
+      };
+      zatca_verify_chain: { Args: { p_hotel_id: string }; Returns: { icv: number; doc_number: string; problem: string }[] };
+      monthly_account_movement: { Args: { p_hotel_id: string; p_from: string; p_to: string }; Returns: { account_id: string; month: string; debit: string; credit: string }[] };
+      daily_journal_totals: { Args: { p_hotel_id: string; p_from: string; p_to: string }; Returns: { entry_date: string; entries: number; debit: string; credit: string }[] };
+      document_number_gaps: {
+        Args: { p_hotel_id: string };
+        Returns: { doc_type: string; year: number; prefix: string; last_value: number; missing_from: number; missing_to: number }[];
+      };
       register_fixed_asset: {
         Args: {
           p_hotel_id: string; p_name: string; p_category: string; p_asset_account_id: string; p_cost: string; p_useful_life_months: number;

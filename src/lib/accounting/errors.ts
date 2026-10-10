@@ -178,6 +178,9 @@ const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
   [/Rate plans apply to standard nightly pricing only/i, "خطط الأسعار للتسعير الليلي القياسي فقط"],
   [/This rate plan is reserved for another company/i, "خطة السعر هذه مخصصة لشركة أخرى"],
   [/This rate plan is for another room type/i, "خطة السعر هذه لنوع غرفة آخر"],
+  // تقارير الأستاذ
+  [/Choose an account or a cost center/i, "اختر حسابًا أو مركز تكلفة"],
+  [/^Account not found$/i, "الحساب غير موجود"],
   // الأرصدة الافتتاحية
   [/Opening balance date is required/i, "تاريخ الأرصدة الافتتاحية مطلوب"],
   [/Opening balances were already posted/i, "رُحّلت الأرصدة الافتتاحية بالفعل"],

@@ -51,7 +51,7 @@ export function ReportView({ report, from, to, actions }: {
                 codes && lineRow && <TableCell key="code" className="text-slate-500">{mark}<span className="num">{row.code}</span></TableCell>,
                 ...row.cells.map((c, ci) => (
                   <TableCell key={ci} colSpan={codes && ci === 0 && !lineRow ? 2 : undefined}
-                    className={cn(ci > 0 && "text-end", c.num && "num", lineRow && ci === 0 && (codes ? "text-slate-700" : "ps-9 text-slate-700"))}>
+                    className={cn(ci > 0 && "text-end", c.num && "num whitespace-nowrap", lineRow && ci === 0 && (codes ? "text-slate-700" : "ps-9 text-slate-700"))}>
                     {ci === 0 && !(codes && lineRow) && mark}
                     {c.text}
                   </TableCell>
