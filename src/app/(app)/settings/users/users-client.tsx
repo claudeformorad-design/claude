@@ -1,4 +1,5 @@
 "use client";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 import { localNameOf } from "@/lib/local-name";
 import { tr } from "@/i18n/tr";
 
@@ -82,6 +83,7 @@ function AccessLinkBox({ token, username }: { token: string; username?: string }
       <div className="flex gap-2">
         <Input readOnly dir="ltr" value={url} aria-label={tr("رابط الدخول")} onFocus={(e) => e.currentTarget.select()} />
         <Button type="button" variant="outline" onClick={() => { void navigator.clipboard?.writeText(url); toast(tr("نُسخ الرابط")); }}><Copy className="size-4" />{tr("نسخ")}</Button>
+        <WhatsAppButton phone={null} size="default" label={tr("واتساب")} text={tr("أهلًا، هذا رابط دخولك إلى النظام. افتحه من جوالك أو جهازك واضغط دخول: {0}", url)} />
       </div>
       <p className="text-[14.5px] text-slate-500">
         {tr("يفتحه الموظف ويضغط دخول فيبقى جهازه مسجّلًا. يعمل مرة واحدة خلال 7 أيام.")}

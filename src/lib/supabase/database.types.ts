@@ -786,6 +786,7 @@ export type Database = {
       event_items: ReadOnlyTable<EventItemRow>;
       event_tasks: Table<EventTaskRow, "hotel_id" | "event_id" | "due_at" | "task">;
       guest_surveys: ReadOnlyTable<GuestSurveyRow>;
+      message_templates: ReadOnlyTable<{ hotel_id: string; key: string; body: string; updated_at: string; updated_by: string | null }>;
     };
     Views: {
       linen_balances: {
@@ -916,6 +917,7 @@ export type Database = {
       post_folio_foreign_money: { Args: { p_folio_id: string; p_txn_type: "payment" | "deposit" | "refund" | "deposit_refund"; p_payment_method_id: string; p_foreign_amount: string; p_reference?: string | null }; Returns: string };
       record_reservation_deposit_fx: { Args: { p_reservation_id: string; p_payment_method_id: string; p_foreign_amount: string; p_reference?: string | null }; Returns: string };
       open_cashier_shift: { Args: { p_hotel_id: string; p_opening_float?: string; p_floats?: { payment_method_id: string; amount: string }[] | null }; Returns: string };
+      save_message_template: { Args: { p_hotel_id: string; p_key: string; p_body: string }; Returns: undefined };
       create_payment_box: {
         Args: { p_hotel_id: string; p_kind: "cash" | "e_wallet" | "bank_transfer"; p_code: string; p_name_ar: string; p_name_en?: string | null; p_currency_code?: string | null; p_requires_reference?: boolean };
         Returns: string;

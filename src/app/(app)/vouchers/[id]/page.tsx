@@ -3,6 +3,8 @@ import Link from "@/components/link";
 import { CodeName, DocText } from "@/components/ui/code-text";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
+import { messageBuilder } from "@/services/messages.service";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 import { PrintLink } from "@/components/print-link";
 import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +33,10 @@ export default async function VoucherPage({ params }: { params: Promise<{ id: st
   const deferredCheque = method.data?.code === "CHQ_IN" || method.data?.code === "CHQ_OUT";
   const name = (x: { name_ar: string; name_en: string | null } | null | undefined) => (x ? (locale === "en" && x.name_en) || x.name_ar : "");
   const unallocated = toMoney(v.amount).minus(sumMoney(allocations.map((a) => a.amount)));
+  // إيصال سند القبض بواتساب لرقم العميل (أو يختار الموظف المستلم)
+  const msg = v.voucher_type === "receipt" && v.status === "posted" ? await messageBuilder(ctx.supabase, ctx.hotel) : null;
+  const customerPhone = msg && v.customer_id
+    ? (await ctx.supabase.from("customers").select("phone").eq("id", v.customer_id).maybeSingle()).data?.phone ?? null : null;
 
   const meta: [string, React.ReactNode][] = [
     [t.common.date, <span key="d" className="num">{v.payment_date}</span>],
@@ -46,7 +52,10 @@ export default async function VoucherPage({ params }: { params: Promise<{ id: st
     <>
       <PageHeader
         title={`${t.vouchers.types[v.voucher_type]} ${v.voucher_number}`}
-        actions={<div className="flex items-center gap-2"><Badge variant={v.status === "voided" ? "destructive" : "success"}>{t.vouchers.statuses[v.status]}</Badge><PrintLink href={`/print/voucher/${v.id}`} label={tr("طباعة السند")} /></div>}
+        actions={<div className="flex items-center gap-2"><Badge variant={v.status === "voided" ? "destructive" : "success"}>{t.vouchers.statuses[v.status]}</Badge><PrintLink href={`/print/voucher/${v.id}`} label={tr("طباعة السند")} />
+          {msg && <WhatsAppButton phone={msg.phone(customerPhone)} label={tr("إيصال واتساب")} size="default" text={msg.text("payment_receipt", {
+            guest: v.party_name, amount: msg.money(v.amount), method: name(method.data), reference: v.reference, document: v.voucher_number, date: v.payment_date,
+          })} />}</div>}
       />
       <Card className="mb-6">
         <CardContent className="grid gap-x-8 gap-y-5 p-6 text-sm sm:grid-cols-3">

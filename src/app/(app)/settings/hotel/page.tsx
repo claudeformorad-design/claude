@@ -23,6 +23,8 @@ import { DemoDataCard } from "./demo-data-card";
 import { BackupCard } from "./backup-card";
 import { AutoBackupCard } from "./auto-backup-card";
 import { OperationsCard } from "./operations-card";
+import { MessagesCard } from "./messages-card";
+import { loadTemplates } from "@/services/messages.service";
 import { isDemoDataActive } from "@/lib/supabase/local-db";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -106,6 +108,8 @@ export default async function HotelSettingsPage() {
             modules: h.enabled_modules, check_in_time: h.check_in_time, check_out_time: h.check_out_time, weekend_nights: h.weekend_nights, require_cashier_shift: h.require_cashier_shift, room_access: h.room_access,
           }} />
         )}
+
+        {ctx.can(PERMISSIONS.hotelManage) && <MessagesCard custom={await loadTemplates(ctx.supabase, h.id)} errors={t.errors} />}
 
         {admin && (
           <AssistantCard errors={t.errors} state={ai

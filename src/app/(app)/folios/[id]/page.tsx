@@ -21,6 +21,8 @@ import { CalendarRange, HandCoins, UserRound, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Stat, StatGrid } from "@/components/ui/stat";
 import { dayLabel, nightsBetween, nightsText } from "@/lib/pms/dates";
+import { messageBuilder } from "@/services/messages.service";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 
 export default async function FolioPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -46,6 +48,23 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
   const decimals = currency?.data?.decimals ?? 2;
 
   const effective = transactions.filter((x) => x.direction === 1 && !x.voided_by_id);
+
+  // إيصال واتساب لكل دفعة أو عربون قائم: رقم النزيل من حجزه
+  const receipts = effective.filter((x) => x.payment_method_id && (x.txn_type === "payment" || x.txn_type === "deposit"));
+  const [msg, guestPhone, methodNames] = receipts.length
+    ? await Promise.all([
+        messageBuilder(ctx.supabase, ctx.hotel),
+        ctx.supabase.from("reservations").select("guest:guests(phone)").eq("hotel_id", ctx.hotel.id).eq("folio_id", id).maybeSingle()
+          .then((x) => (x.data as { guest: { phone: string | null } | null } | null)?.guest?.phone ?? null),
+        ctx.supabase.from("payment_methods").select("id, name_ar").eq("hotel_id", ctx.hotel.id)
+          .then((x) => new Map(((x.data ?? []) as { id: string; name_ar: string }[]).map((m) => [m.id, m.name_ar]))),
+      ])
+    : [null, null, new Map<string, string>()];
+  const receiptText = (x: (typeof transactions)[number]) => msg!.text("payment_receipt", {
+    guest: folio.guest_name,
+    amount: x.foreign_amount ? msg!.money(x.foreign_amount, x.currency_code ?? undefined) : msg!.money(x.total_amount),
+    method: methodNames.get(x.payment_method_id!) ?? "", reference: x.reference, document: `${folio.folio_number}`, date: x.business_date,
+  });
   const summary = (x: (typeof transactions)[number]) =>
     tr("{0}، {1}، {2}", t.folio.txnTypes[x.txn_type], plainText(x.description), formatMoney(x.total_amount, { locale }));
 
@@ -118,7 +137,12 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
               <TableRow key={x.id} className={cn((x.voided_by_id || x.direction === -1) && "text-muted-foreground line-through decoration-muted-foreground/40")}>
                 <TableCell className="num">{x.business_date}</TableCell>
                 <TableCell><Badge variant="outline">{t.folio.txnTypes[x.txn_type]}</Badge></TableCell>
-                <TableCell><DocText text={x.description} />{x.reference && <CodeTag>{x.reference}</CodeTag>}</TableCell>
+                <TableCell>
+                  <DocText text={x.description} />{x.reference && <CodeTag>{x.reference}</CodeTag>}
+                  {msg && receipts.includes(x) && (
+                    <WhatsAppButton phone={msg.phone(guestPhone)} label={tr("إيصال")} variant="ghost" className="ms-2 h-7 px-2 text-[14px]" text={receiptText(x)} />
+                  )}
+                </TableCell>
                 <TableCell className="text-end"><Money value={x.net_amount} locale={locale} blankZero /></TableCell>
                 <TableCell className="text-end"><Money value={x.tax_amount} locale={locale} blankZero /></TableCell>
                 <TableCell className={cn("text-end", toMoney(x.ledger_effect).isNegative() && "text-success")}><Money value={x.ledger_effect} locale={locale} blankZero /></TableCell>

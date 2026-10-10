@@ -163,6 +163,8 @@ const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
   [/Invalid billing option/i, "خيار فوترة غير صالح"],
   [/Cashier shift not found/i, "الوردية غير موجودة"],
   [/Each cash box has one opening float/i, "لكل صندوق عهدة واحدة عند فتح الوردية"],
+  [/Unknown message template/i, "نوع الرسالة غير معروف"],
+  [/The message is longer than 2000 characters/i, "الرسالة أطول من 2000 حرف"],
   [/A box is a cash box, an e-wallet or a bank account/i, "اختر صندوقًا نقديًا أو محفظة إلكترونية أو حسابًا بنكيًا"],
   [/Code must be 1 to 20 English capital letters, digits, dash or underscore/i, "الرمز من 1 إلى 20 حرفًا إنجليزيًا كبيرًا أو رقمًا أو شرطة"],
   [/A payment method with code (\S+) already exists/i, (m) => `يوجد طريقة دفع بالرمز ${m[1]}، اختر رمزًا آخر`],

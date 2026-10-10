@@ -28,6 +28,8 @@ import { StayPanel } from "./stay-panel";
 import { BillingSelect } from "./billing-select";
 import { RatePlanSelect } from "./rate-plan-select";
 import { listRatePlans } from "@/services/operations.service";
+import { messageBuilder } from "@/services/messages.service";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 
 export default async function ReservationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -93,6 +95,22 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
     && (!p.customer_id || p.customer_id === r.customer_id) && (!p.room_type_id || p.room_type_id === r.room_type_id))
     .map((p) => ({ id: p.id, label: `${localNameOf(p)}${p.includes_breakfast ? tr(" مع الإفطار") : ""}` }));
   const planName = plans.find((p) => p.id === r.rate_plan_id)?.name_ar;
+
+  // مراسلة النزيل بواتساب: تأكيد وتذكير قبل الوصول، وشكر مع رابط التقييم بعد المغادرة
+  const msg = await messageBuilder(ctx.supabase, ctx.hotel);
+  const waPhone = msg.phone(r.guest?.phone);
+  const [survey, invoice] = r.status === "checked_out"
+    ? await Promise.all([
+        ctx.supabase.from("guest_surveys").select("token, status").eq("hotel_id", ctx.hotel.id).eq("reservation_id", r.id).maybeSingle().then((x) => x.data as { token: string; status: string } | null),
+        r.folio_id ? ctx.supabase.from("invoices").select("invoice_number, total::text").eq("hotel_id", ctx.hotel.id).eq("folio_id", r.folio_id).maybeSingle().then((x) => x.data as { invoice_number: string; total: string } | null) : Promise.resolve(null),
+      ])
+    : [null, null];
+  const waVars = {
+    guest: r.guest?.full_name, confirmation: r.confirmation_number,
+    arrival: hourly ? `${dayLabel(r.arrival_date, { weekday: "long", day: "numeric", month: "long" })} ${timeRange(r.starts_at, r.ends_at)}` : dayLabel(r.arrival_date, { weekday: "long", day: "numeric", month: "long" }),
+    departure: hourly ? null : dayLabel(r.departure_date, { weekday: "long", day: "numeric", month: "long" }),
+    nights: hourly ? null : nights, room_type: r.room_type?.name_ar, room: r.room?.room_number, total: msg.money(r.total_amount),
+  };
 
   return (
     <>
@@ -177,6 +195,30 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
         </div>
 
         <div className="space-y-6">
+          {r.status !== "cancelled" && r.status !== "no_show" && (
+            <Card>
+              <CardHeader><CardTitle>{tr("مراسلة النزيل")}</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {(r.status === "tentative" || r.status === "confirmed" || r.status === "checked_in") && (
+                    <WhatsAppButton phone={waPhone} label={tr("تأكيد الحجز")} text={msg.text("reservation_confirm", waVars)} />
+                  )}
+                  {(r.status === "tentative" || r.status === "confirmed") && (
+                    <WhatsAppButton phone={waPhone} label={tr("تذكير بالوصول")} text={msg.text("arrival_reminder", waVars)} />
+                  )}
+                  {r.status === "checked_out" && (
+                    <WhatsAppButton phone={waPhone} label={tr("شكر بعد المغادرة")} text={msg.text("checkout_thanks", {
+                      ...waVars, total: invoice ? msg.money(invoice.total) : waVars.total, invoice: invoice?.invoice_number,
+                      survey_link: survey?.status === "pending" ? `{origin}/survey/${survey.token}` : null,
+                    })} />
+                  )}
+                </div>
+                <p className="text-[14px] text-slate-500">
+                  {waPhone ? tr("يفتح واتساب برسالة جاهزة على رقم النزيل، راجعها ثم اضغط إرسال.") : tr("لا يوجد رقم جوال صالح للنزيل؛ سيفتح واتساب لتختار المستلم بنفسك.")}
+                </p>
+              </CardContent>
+            </Card>
+          )}
           {canStay && (
             <StayPanel
               reservationId={r.id} status={r.status} hourly={hourly} canCheckIn={r.arrival_date <= today && (hourly || r.departure_date > today)}

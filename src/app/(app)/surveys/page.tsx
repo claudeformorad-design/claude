@@ -19,6 +19,8 @@ import { listSurveys } from "@/services/guest-services.service";
 import { getI18n } from "@/i18n/server";
 import { SimpleForm } from "../_assets/simple-form";
 import { recordPaperSurveyAction } from "../_services/actions";
+import { messageBuilder } from "@/services/messages.service";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 
 const PERIODS = { "30": 30, "90": 90, "365": 365 } as const;
 type Period = keyof typeof PERIODS;
@@ -56,6 +58,17 @@ export default async function SurveysPage({ searchParams }: { searchParams: Prom
   const canManage = ctx.can(PERMISSIONS.feedbackManage);
   const q = (p: string, tb = tab) => `/surveys?period=${p}${tb === "pending" ? "&tab=pending" : ""}`;
   const ratingOptions = [5, 4, 3, 2, 1].map((n) => ({ id: String(n), label: String(n) }));
+  // إرسال رابط الاستبيان بواتساب: رقم النزيل من حجزه
+  const pendingRes = tab === "pending" ? pending.map((s) => s.reservation_id).filter((x): x is string => !!x) : [];
+  const [msg, phones] = tab === "pending" && pending.length
+    ? await Promise.all([
+        messageBuilder(ctx.supabase, ctx.hotel),
+        pendingRes.length
+          ? ctx.supabase.from("reservations").select("id, guest:guests(phone)").eq("hotel_id", ctx.hotel.id).in("id", pendingRes)
+              .then((x) => new Map(((x.data ?? []) as unknown as { id: string; guest: { phone: string | null } | null }[]).map((r) => [r.id, r.guest?.phone ?? null])))
+          : Promise.resolve(new Map<string, string | null>()),
+      ])
+    : [null, new Map<string, string | null>()];
 
   return (
     <>
@@ -151,7 +164,11 @@ export default async function SurveysPage({ searchParams }: { searchParams: Prom
                   <TableCell className="cell-fluid">{s.guest_name || tr("نزيل")}{s.room_number && <span className="block text-[14px] text-slate-500">{tr("غرفة {0}", s.room_number)}</span>}</TableCell>
                   <TableCell className="whitespace-nowrap text-slate-600">{dayLabel(formatDateTime(s.created_at, ctx.hotel.timezone).slice(0, 10))}</TableCell>
                   <TableCell className="text-end">
-                    <a href={`/survey/${s.token}`} target="_blank" rel="noopener" className="font-medium text-ink underline-offset-4 hover:underline">{tr("فتح الاستبيان للنزيل")}</a>
+                    <span className="inline-flex flex-wrap items-center justify-end gap-3">
+                      {msg && <WhatsAppButton phone={msg.phone(s.reservation_id ? phones.get(s.reservation_id) : null)} label={tr("إرسال الرابط")}
+                        text={msg.text("checkout_thanks", { guest: s.guest_name, survey_link: `{origin}/survey/${s.token}` })} />}
+                      <a href={`/survey/${s.token}`} target="_blank" rel="noopener" className="font-medium text-ink underline-offset-4 hover:underline">{tr("فتح الاستبيان للنزيل")}</a>
+                    </span>
                   </TableCell>
                 </TableRow>
               ))}

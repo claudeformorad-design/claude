@@ -16,6 +16,8 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isIsoDate, todayInTimeZone } from "@/lib/accounting/fiscal";
 import { plainText } from "@/lib/text";
 import { customerStatement } from "@/services/statements.service";
+import { messageBuilder } from "@/services/messages.service";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 
 /** كشف حساب العميل لفترة، مع طباعته */
 export default async function CustomerStatementPage({ params, searchParams }: {
@@ -31,6 +33,9 @@ export default async function CustomerStatementPage({ params, searchParams }: {
   if (!s) notFound();
   const decimals = (await ctx.supabase.from("currencies").select("decimals").eq("code", ctx.hotel.base_currency).single()).data?.decimals ?? 2;
   const cur = ctx.hotel.base_currency;
+  // تذكير بالرصيد المستحق بواتساب (عند وجود رصيد على العميل)
+  const due = s.closing.plus(s.pendingFolios);
+  const msg = due.gt(0) ? await messageBuilder(ctx.supabase, ctx.hotel) : null;
 
   return (
     <>
@@ -38,6 +43,8 @@ export default async function CustomerStatementPage({ params, searchParams }: {
         <div className="flex flex-wrap gap-2">
           {ctx.can(PERMISSIONS.invoicesView) && <Button asChild variant="outline"><Link href={`/invoices?customer=${id}`}>{tr("فواتير العميل")}</Link></Button>}
           <PrintLink href={`/print/customer-statement/${id}?from=${from}&to=${to}`} label={tr("طباعة الكشف")} />
+          {msg && <WhatsAppButton phone={msg.phone(s.customer.phone)} label={tr("تذكير بالرصيد")} size="default"
+            text={msg.text("balance_reminder", { customer: s.customer.name_ar, balance: msg.money(due) })} />}
         </div>
       } />
       <form className="toolbar print:hidden">
