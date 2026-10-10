@@ -6,9 +6,11 @@ import { isBlankLine, validateJournalEntry } from "@/lib/accounting/journal";
 const amount = z
   .string()
   .trim()
-  .refine((v) => v === "" || isValidAmount(v), "invalid_amount");
+  .refine((v) => v === "" || isValidAmount(v), "invalid_amount")
+  // «١٬٥٠٠٫٥» ⇒ «1500.5» قبل الإرسال لقاعدة البيانات
+  .transform((v) => (v === "" ? "" : toMoney(v).toFixed()));
 
-export const journalLineSchema = z.object({
+const journalLineSchema = z.object({
   account_id: z.string(),
   department_id: z.string(),
   description: z.string().max(500),
@@ -21,7 +23,7 @@ const journalEntryBaseSchema = z.object({
   description: z.string().trim().min(1, "required").max(1000),
   reference: z.string().trim().max(100),
   currency_code: z.string().regex(/^[A-Z]{3}$/),
-  exchange_rate: z.string().trim().refine((v) => isValidAmount(v) && toMoney(v).gt(0), "invalid_amount"),
+  exchange_rate: z.string().trim().refine((v) => isValidAmount(v) && toMoney(v).gt(0), "invalid_amount").transform((v) => toMoney(v).toFixed()),
   lines: z.array(journalLineSchema),
 });
 

@@ -1,14 +1,17 @@
 "use client";
+import { tr } from "@/i18n/tr";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/components/link";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import type { ActionResult } from "@/services/errors";
 import { deleteDraftAction, postJournalEntryAction, reverseJournalEntryAction } from "../actions";
+import { actionErrorText, callAction } from "@/lib/action-error";
+import { toast } from "@/components/ui/toast";
 
 export function EntryActions({
   t,
@@ -32,12 +35,12 @@ export function EntryActions({
   const [error, setError] = useState<string | null>(null);
   const [reversalDate, setReversalDate] = useState(today);
 
-  const run = <T,>(fn: () => Promise<ActionResult<T>>, onOk: (data: T) => void) => {
+  const run = <T,>(fn: () => Promise<ActionResult<T>>, onOk: (data: T) => void, done = tr("تمت العملية بنجاح")) => {
     setError(null);
     startTransition(async () => {
-      const result = await fn();
-      if (result.ok) onOk(result.data);
-      else setError(result.error === "validation" ? t.errors.validation : t.errors[result.error]);
+      const result = await callAction(fn());
+      if (result.ok) { toast(done); onOk(result.data); }
+      else setError(actionErrorText(t.errors, result));
     });
   };
 
@@ -51,14 +54,14 @@ export function EntryActions({
           </Button>
         )}
         {status === "draft" && canPost && (
-          <Button disabled={pending} onClick={() => run(() => postJournalEntryAction(entryId), () => router.refresh())}>
+          <Button loading={pending} onClick={() => run(() => postJournalEntryAction(entryId), () => router.refresh(), tr("تم ترحيل القيد"))}>
             {t.journal.post}
           </Button>
         )}
         {status === "draft" && canCreate && (
           <Button
             variant="destructive"
-            disabled={pending}
+            loading={pending}
             onClick={() => {
               if (confirm(t.journal.deleteDraft + "?")) run(() => deleteDraftAction(entryId), () => router.push("/journal"));
             }}
@@ -78,7 +81,7 @@ export function EntryActions({
             />
             <Button
               variant="outline"
-              disabled={pending}
+              loading={pending}
               onClick={() => {
                 if (confirm(t.journal.reverseConfirm))
                   run(() => reverseJournalEntryAction(entryId, reversalDate), (id) => router.push(`/journal/${id}`));

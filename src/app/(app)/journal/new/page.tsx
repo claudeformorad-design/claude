@@ -15,7 +15,7 @@ export default async function NewJournalEntryPage() {
 
   return (
     <>
-      <PageHeader title={t.journal.newEntry} description={t.journal.subtitle} />
+      <PageHeader title={t.journal.newEntry} />
       <Card>
         <CardContent className="p-5">
           <JournalForm

@@ -1,0 +1,10 @@
+# النشر على Netlify (النسخة المرتبطة بـ Supabase). المتغيرات في إعدادات الموقع، لا في المستودع:
+#   NEXT_PUBLIC_SUPABASE_URL و NEXT_PUBLIC_SUPABASE_ANON_KEY (عامة بطبيعتها)، و GEMINI_API_KEY (سرّي، للمساعد الذكي)
+[build]
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NEXT_TELEMETRY_DISABLED = "1"
+  # النسخة المنشورة لا تأخذ نسخًا احتياطية محلية (قاعدة البيانات على Supabase)
+  AUTO_BACKUP = "off"

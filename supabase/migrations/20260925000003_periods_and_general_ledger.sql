@@ -762,7 +762,8 @@ begin
   returning id into v_hotel_id;
 
   select id into v_gm_role from public.roles where is_system and code = 'general_manager';
-  insert into public.hotel_members (hotel_id, user_id, role_id) values (v_hotel_id, auth.uid(), v_gm_role);
+  insert into public.hotel_members (hotel_id, user_id) values (v_hotel_id, auth.uid());
+  insert into public.user_hotel_roles (hotel_id, user_id, role_id) values (v_hotel_id, auth.uid(), v_gm_role);
 
   update public.users_profiles set default_hotel_id = v_hotel_id
    where id = auth.uid() and default_hotel_id is null;

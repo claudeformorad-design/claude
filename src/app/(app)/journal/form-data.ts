@@ -21,13 +21,13 @@ export async function loadJournalFormData(
     currencies: [ctx.hotel.base_currency, ...(currencies.data ?? []).map((c) => c.code).filter((c) => c !== ctx.hotel.base_currency)],
     accounts: flattenAccountTree(buildAccountTree(accounts.filter((a) => a.is_active))).map((a) => ({
       id: a.id,
-      label: `${a.code} — ${name(a)}`,
+      label: `${a.code} ${name(a)}`,
       postable: a.is_postable,
       depth: a.depth,
       departmentId: a.department_id,
     })),
     departments: departments
       .filter((d) => d.is_active)
-      .map((d) => ({ id: d.id, label: `${d.code} — ${(locale === "en" && d.name_en) || d.name_ar}` })),
+      .map((d) => ({ id: d.id, label: `${d.code} ${(locale === "en" && d.name_en) || d.name_ar}` })),
   };
 }

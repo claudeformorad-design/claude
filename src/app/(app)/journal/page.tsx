@@ -1,4 +1,8 @@
-import Link from "next/link";
+import { tr } from "@/i18n/tr";
+import { ExpandableRow, ExpandMark } from "@/components/ui/expandable-row";
+import { CurrencyTag } from "@/components/ui/currency-tag";
+import { DocText } from "@/components/ui/code-text";
+import Link from "@/components/link";
 import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Money } from "@/components/money";
@@ -6,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { NativeSelect } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
@@ -14,11 +17,16 @@ import { isIsoDate } from "@/lib/accounting/fiscal";
 import { listJournalEntries } from "@/services/journal.service";
 import { getI18n } from "@/i18n/server";
 import { StatusBadge } from "./status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { BookOpen, FilePen, CheckCircle2, Undo2 } from "lucide-react";
+import { Stat, StatGrid } from "@/components/ui/stat";
+import { FilterTabs } from "@/components/ui/filter-tabs";
+import { Pager, pageSlice } from "@/components/ui/pager";
 
 export default async function JournalPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; from?: string; to?: string; q?: string }>;
+  searchParams: Promise<{ status?: string; from?: string; to?: string; q?: string; page?: string }>;
 }) {
   const ctx = await requireAppContext(PERMISSIONS.journalView);
   const { locale, t } = await getI18n();
@@ -32,11 +40,25 @@ export default async function JournalPage({
     search: sp.q,
   });
 
+  const drafts = entries.filter((e) => e.status === "draft").length;
+  const posted = entries.filter((e) => e.status === "posted").length;
+  const reversed = entries.filter((e) => !!e.reversed_by_id).length;
+  const qs = (st?: string) => {
+    const p = new URLSearchParams();
+    if (st) p.set("status", st);
+    if (sp.q) p.set("q", sp.q);
+    if (sp.from) p.set("from", sp.from);
+    if (sp.to) p.set("to", sp.to);
+    const q = p.toString();
+    return q ? `/journal?${q}` : "/journal";
+  };
+
+  const shown = pageSlice(entries, sp.page);
+
   return (
     <>
       <PageHeader
         title={t.journal.title}
-        description={t.journal.subtitle}
         actions={
           ctx.can(PERMISSIONS.journalCreate) && (
             <Button asChild>
@@ -46,15 +68,24 @@ export default async function JournalPage({
         }
       />
 
-      <form className="mb-4 flex flex-wrap items-end gap-2">
-        <Input name="q" defaultValue={sp.q} placeholder={t.common.search} className="w-56" />
-        <NativeSelect name="status" defaultValue={status ?? ""} className="w-36">
-          <option value="">{t.common.status}</option>
-          <option value="draft">{t.journal.status.draft}</option>
-          <option value="posted">{t.journal.status.posted}</option>
-        </NativeSelect>
-        <Input type="date" name="from" defaultValue={sp.from} dir="ltr" className="w-40" aria-label={t.common.from} />
-        <Input type="date" name="to" defaultValue={sp.to} dir="ltr" className="w-40" aria-label={t.common.to} />
+      <StatGrid>
+        <Stat icon={BookOpen} tone="ink" label={tr("قيود في القائمة")} value={<span className="num">{entries.length}</span>} />
+        <Stat icon={CheckCircle2} tone="teal" label={t.journal.status.posted} value={<span className="num">{posted}</span>} hint={tr("تؤثر على الأرصدة")} />
+        <Stat icon={FilePen} tone="clay" label={tr("مسودات")} value={<span className="num">{drafts}</span>} hint={tr("لا تؤثر حتى الترحيل")} />
+        <Stat icon={Undo2} tone="neutral" label={tr("قيود معكوسة")} value={<span className="num">{reversed}</span>} />
+      </StatGrid>
+
+      <FilterTabs className="mb-4" active={status ?? "all"} items={[
+        { key: "all", href: qs(), label: tr("الكل") },
+        { key: "posted", href: qs("posted"), label: t.journal.status.posted },
+        { key: "draft", href: qs("draft"), label: t.journal.status.draft },
+      ]} />
+
+      <form className="toolbar">
+        {status && <input type="hidden" name="status" value={status} />}
+        <Input name="q" defaultValue={sp.q} placeholder={tr("ابحث بالوصف أو رقم القيد")} className="w-64" />
+        <Input type="date" name="from" defaultValue={sp.from} dir="ltr" className="w-52" aria-label={t.common.from} />
+        <Input type="date" name="to" defaultValue={sp.to} dir="ltr" className="w-52" aria-label={t.common.to} />
         <Button type="submit" variant="outline">{t.common.apply}</Button>
       </form>
 
@@ -73,32 +104,41 @@ export default async function JournalPage({
           <TableBody>
             {entries.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">{t.common.noData}</TableCell>
+                <TableCell colSpan={6} className="py-8">
+                  <EmptyState
+                    title={tr("دفتر القيود فارغ")}
+                    description={tr("لم يتم إدخال أي قيود محاسبية بعد. يمكنك إنشاء قيد جديد كبدء لميزانيتك الفندقية.")}
+                    actionHref="/journal/new"
+                    actionLabel={tr("تسجيل قيد جديد")}
+                    icon={BookOpen}
+                  />
+                </TableCell>
               </TableRow>
             )}
-            {entries.map((e) => (
-              <TableRow key={e.id}>
-                <TableCell>
-                  <Link href={`/journal/${e.id}`} className="num font-medium text-primary hover:underline">
+            {shown.rows.map((e) => (
+              <ExpandableRow kind="journal" id={e.id} colSpan={6} key={e.id}>
+                <TableCell><ExpandMark />
+                  <Link href={`/journal/${e.id}`} className="num font-semibold text-ink">
                     {e.entry_number ?? t.journal.draftNumber}
                   </Link>
                 </TableCell>
                 <TableCell className="num">{e.entry_date}</TableCell>
-                <TableCell className="max-w-md truncate">{e.description}</TableCell>
+                <TableCell className="cell-fluid font-medium"><DocText text={e.description} /></TableCell>
                 <TableCell>
                   <Badge variant="outline">{t.journal.sources[e.source]}</Badge>
                 </TableCell>
-                <TableCell className="text-end">
-                  <Money value={e.total_debit} locale={locale} /> <span className="text-xs text-muted-foreground">{e.currency_code}</span>
+                <TableCell className="whitespace-nowrap text-end font-semibold">
+                  <Money value={e.total_debit} locale={locale} />{e.currency_code !== ctx.hotel.base_currency && <CurrencyTag code={e.currency_code} className="ms-2" />}
                 </TableCell>
                 <TableCell>
                   <StatusBadge status={e.status} reversed={!!e.reversed_by_id} labels={t.journal.status} />
                 </TableCell>
-              </TableRow>
+              </ExpandableRow>
             ))}
           </TableBody>
         </Table>
       </Card>
+      <Pager page={shown.page} pages={shown.pages} total={entries.length} basePath="/journal" params={{ status: sp.status, from: sp.from, to: sp.to, q: sp.q }} />
     </>
   );
 }

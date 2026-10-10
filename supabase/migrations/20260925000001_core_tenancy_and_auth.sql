@@ -192,11 +192,12 @@ create table public.role_permissions (
   primary key (role_id, permission_code)
 );
 
--- عضوية المستخدم في فندق بدور محدد (مستخدم واحد قد يعمل في عدة فنادق بسلسلة)
+-- عضوية المستخدم في فندق (مستخدم واحد قد يعمل في عدة فنادق بسلسلة)
+-- الأدوار منفصلة في user_hotel_roles: للمستخدم عدة أدوار في نفس الفندق،
+-- وصلاحياته = اتحاد صلاحيات كل أدواره.
 create table public.hotel_members (
   hotel_id    uuid not null references public.hotels(id) on delete cascade,
   user_id     uuid not null references auth.users(id) on delete cascade,
-  role_id     uuid not null references public.roles(id),
   is_active   boolean not null default true,
   created_at  timestamptz not null default now(),
   created_by  uuid references auth.users(id),
@@ -211,6 +212,23 @@ create trigger hotel_members_set_created before insert on public.hotel_members
   for each row execute function app.set_created_by();
 create trigger hotel_members_set_updated before update on public.hotel_members
   for each row execute function app.set_updated_at();
+
+-- أدوار المستخدم في الفندق (متعدد لمتعدد). يشترط أن يكون المستخدم عضوًا في الفندق أولًا.
+create table public.user_hotel_roles (
+  hotel_id    uuid not null,
+  user_id     uuid not null,
+  role_id     uuid not null references public.roles(id) on delete cascade,
+  created_at  timestamptz not null default now(),
+  created_by  uuid references auth.users(id),
+  primary key (hotel_id, user_id, role_id),
+  foreign key (hotel_id, user_id) references public.hotel_members (hotel_id, user_id) on delete cascade
+);
+
+create index user_hotel_roles_user_idx on public.user_hotel_roles (user_id, hotel_id);
+create index user_hotel_roles_role_idx on public.user_hotel_roles (role_id);
+
+create trigger user_hotel_roles_set_created before insert on public.user_hotel_roles
+  for each row execute function app.set_created_by();
 
 -- الدور المخصص لفندق يجب أن يكون من نفس الفندق أو دورًا نظاميًا
 create or replace function app.check_member_role_scope()
@@ -229,8 +247,66 @@ begin
 end;
 $$;
 
-create trigger hotel_members_role_scope before insert or update on public.hotel_members
+create trigger user_hotel_roles_role_scope before insert or update on public.user_hotel_roles
   for each row execute function app.check_member_role_scope();
+
+-- حماية من قفل الفندق: لا يُزال آخر مدير عام فعّال (بحذف الدور أو تعطيل العضوية أو حذفها)
+create or replace function app.has_other_active_general_manager(p_hotel_id uuid, p_user_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.user_hotel_roles uhr
+    join public.roles r on r.id = uhr.role_id and r.is_system and r.code = 'general_manager'
+    join public.hotel_members m on m.hotel_id = uhr.hotel_id and m.user_id = uhr.user_id and m.is_active
+    where uhr.hotel_id = p_hotel_id and uhr.user_id <> p_user_id
+  );
+$$;
+
+create or replace function app.protect_last_general_manager()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_is_gm boolean;
+begin
+  -- سياق النظام (حذف فندق متتالٍ، ترحيلات) مسموح له
+  if auth.uid() is null or not exists (select 1 from public.hotels h where h.id = old.hotel_id) then
+    return coalesce(new, old);
+  end if;
+
+  if tg_table_name = 'user_hotel_roles' then
+    select exists (select 1 from public.roles r where r.id = old.role_id and r.is_system and r.code = 'general_manager')
+      into v_is_gm;
+  else
+    -- hotel_members: الحذف أو التعطيل فقط يهمّنا
+    if tg_op = 'UPDATE' and (new.is_active or not old.is_active) then
+      return new;
+    end if;
+    select exists (
+      select 1 from public.user_hotel_roles uhr
+      join public.roles r on r.id = uhr.role_id and r.is_system and r.code = 'general_manager'
+      where uhr.hotel_id = old.hotel_id and uhr.user_id = old.user_id
+    ) into v_is_gm;
+  end if;
+
+  if v_is_gm and not app.has_other_active_general_manager(old.hotel_id, old.user_id) then
+    raise exception 'Cannot remove the last active general manager of the hotel' using errcode = '23514';
+  end if;
+  return coalesce(new, old);
+end;
+$$;
+
+create trigger user_hotel_roles_protect_last_gm before delete or update on public.user_hotel_roles
+  for each row execute function app.protect_last_general_manager();
+create trigger hotel_members_protect_last_gm before delete or update of is_active on public.hotel_members
+  for each row execute function app.protect_last_general_manager();
 
 -- لا يمكن تعديل صلاحيات الأدوار النظامية إلا عبر الترحيلات
 create or replace function app.protect_system_role_permissions()
@@ -256,7 +332,7 @@ create trigger role_permissions_protect_system
 
 -- -----------------------------------------------------------------------------
 -- دوال التحقق من العضوية والصلاحيات (أساس سياسات RLS)
--- SECURITY DEFINER لتفادي التكرار اللانهائي لسياسات RLS على hotel_members
+-- SECURITY DEFINER لتفادي التكرار اللانهائي لسياسات RLS على hotel_members / user_hotel_roles
 -- -----------------------------------------------------------------------------
 create or replace function app.is_hotel_member(p_hotel_id uuid)
 returns boolean
@@ -287,7 +363,8 @@ as $$
     select 1
     from public.hotel_members m
     join public.hotels h on h.id = m.hotel_id
-    join public.role_permissions rp on rp.role_id = m.role_id
+    join public.user_hotel_roles uhr on uhr.hotel_id = m.hotel_id and uhr.user_id = m.user_id
+    join public.role_permissions rp on rp.role_id = uhr.role_id
     where m.hotel_id = p_hotel_id
       and m.user_id = auth.uid()
       and m.is_active
@@ -323,10 +400,12 @@ stable
 security definer
 set search_path = ''
 as $$
-  select rp.permission_code
+  -- اتحاد صلاحيات كل أدوار المستخدم في الفندق
+  select distinct rp.permission_code
   from public.hotel_members m
   join public.hotels h on h.id = m.hotel_id
-  join public.role_permissions rp on rp.role_id = m.role_id
+  join public.user_hotel_roles uhr on uhr.hotel_id = m.hotel_id and uhr.user_id = m.user_id
+  join public.role_permissions rp on rp.role_id = uhr.role_id
   where m.hotel_id = p_hotel_id
     and m.user_id = auth.uid()
     and m.is_active

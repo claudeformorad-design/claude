@@ -4,14 +4,16 @@ import { ACCOUNT_CODE_PATTERN, ACCOUNT_TYPES, ALL_ACCOUNT_SUBTYPES, subtypeMatch
 const optionalUuid = z
   .string()
   .trim()
-  .transform((v) => (v === "" ? null : v))
+  .optional()
+  .transform((v) => (v === undefined || v === "" ? null : v))
   .pipe(z.uuid().nullable());
 
 const optionalText = z
   .string()
   .trim()
   .max(500)
-  .transform((v) => (v === "" ? null : v));
+  .optional()
+  .transform((v) => (v === undefined || v === "" ? null : v));
 
 export const accountFormSchema = z
   .object({

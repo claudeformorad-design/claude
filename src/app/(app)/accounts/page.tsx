@@ -1,20 +1,25 @@
-import Link from "next/link";
+import { tr } from "@/i18n/tr";
+import { RouteDialog } from "@/components/ui/dialog";
+import Link from "@/components/link";
 import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { buildAccountTree, flattenAccountTree } from "@/lib/accounting/accounts";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import type { AccountFormInput } from "@/lib/validation/account";
 import { listAccounts, listDepartments } from "@/services/accounts.service";
 import { getI18n } from "@/i18n/server";
-import { cn } from "@/lib/utils";
 import { AccountForm } from "./account-form";
+import { HandCoins, Landmark, PieChart, TrendingDown, TrendingUp } from "lucide-react";
+import { Stat, StatGrid } from "@/components/ui/stat";
+import { cookies } from "next/headers";
+import { AccountsTree } from "./accounts-tree";
 
-export const metadata = { title: "Chart of Accounts" };
+export const metadata = { get title() { return tr("دليل الحسابات"); } };
+
+const TYPE_ORDER = ["asset", "liability", "equity", "revenue", "expense"] as const;
+const TYPE_ICON = { asset: Landmark, liability: HandCoins, equity: PieChart, revenue: TrendingUp, expense: TrendingDown } as const;
 
 export default async function AccountsPage({
   searchParams,
@@ -31,6 +36,7 @@ export default async function AccountsPage({
   const rows = flattenAccountTree(buildAccountTree(accounts));
   const name = (a: { name_ar: string; name_en: string | null }) => (locale === "en" && a.name_en) || a.name_ar;
   const canManage = ctx.can(PERMISSIONS.accountsManage);
+  const density = (await cookies()).get("table_density")?.value === "compact" ? "compact" : "comfortable";
 
   // نموذج الإنشاء/التعديل
   let formInitial: AccountFormInput | null = null;
@@ -56,7 +62,6 @@ export default async function AccountsPage({
     <>
       <PageHeader
         title={t.accounts.title}
-        description={t.accounts.subtitle}
         actions={
           canManage && (
             <Button asChild>
@@ -65,69 +70,42 @@ export default async function AccountsPage({
           )
         }
       />
-      <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
-        <Card className="overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t.accounts.code}</TableHead>
-                <TableHead>{locale === "ar" ? t.accounts.nameAr : t.accounts.nameEn}</TableHead>
-                <TableHead>{t.accounts.type}</TableHead>
-                <TableHead>{t.accounts.normalBalance}</TableHead>
-                <TableHead>{t.common.status}</TableHead>
-                {canManage && <TableHead className="text-end">{t.common.actions}</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((a) => (
-                <TableRow key={a.id} className={cn(!a.is_postable && "bg-muted/30 font-semibold", !a.is_active && "opacity-50")}>
-                  <TableCell className="num">{a.code}</TableCell>
-                  <TableCell>
-                    <span style={{ paddingInlineStart: `${a.depth * 1.25}rem` }}>{name(a)}</span>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{t.accounts.subtypes[a.account_subtype]}</TableCell>
-                  <TableCell>{t.accounts.sides[a.normal_balance]}</TableCell>
-                  <TableCell>
-                    <Badge variant={a.is_postable ? "secondary" : "outline"}>
-                      {a.is_postable ? t.accounts.detail : t.accounts.header}
-                    </Badge>
-                  </TableCell>
-                  {canManage && (
-                    <TableCell className="space-x-1 text-end whitespace-nowrap rtl:space-x-reverse">
-                      {!a.is_postable && (
-                        <Button asChild variant="ghost" size="sm">
-                          <Link href={`/accounts?new=1&parent=${a.id}`}><Plus /></Link>
-                        </Button>
-                      )}
-                      <Button asChild variant="ghost" size="sm">
-                        <Link href={`/accounts?edit=${a.id}`}>{t.common.edit}</Link>
-                      </Button>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+      <StatGrid className="lg:grid-cols-5">
+        {TYPE_ORDER.map((ty) => (
+          <Stat key={ty} icon={TYPE_ICON[ty]} tone={ty === "asset" ? "ink" : ty === "revenue" ? "teal" : ty === "expense" ? "clay" : "neutral"}
+            label={t.accounts.types[ty]} value={<span className="num">{accounts.filter((x) => x.account_type === ty && x.is_postable).length}</span>} hint={tr("حساب تفصيلي")} />
+        ))}
+      </StatGrid>
+      <div className="grid gap-6">
+        <div className="min-w-0">
+          <AccountsTree
+            canManage={canManage}
+            density={density}
+            rows={rows.map((a) => ({
+              id: a.id, code: a.code, name: name(a), depth: a.depth, parentId: a.parent_id, isPostable: a.is_postable, isActive: a.is_active,
+              typeLabel: t.accounts.types[a.account_type], sideLabel: t.accounts.sides[a.normal_balance],
+            }))}
+            labels={{
+              code: t.accounts.code, name: locale === "ar" ? t.accounts.nameAr : t.accounts.nameEn, type: t.accounts.type,
+              side: t.accounts.normalBalance, status: t.common.status, actions: t.common.actions,
+              header: t.accounts.header, detail: t.accounts.detail, edit: t.common.edit,
+            }}
+          />
+        </div>
 
         {formInitial && (
-          <Card className="h-fit xl:sticky xl:top-0">
-            <CardHeader>
-              <CardTitle>{formInitial.id ? t.accounts.editAccount : t.accounts.newAccount}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AccountForm
-                key={formInitial.id ?? `new-${params.parent ?? ""}`}
-                t={{ accounts: t.accounts, common: t.common, errors: t.errors }}
-                initial={formInitial}
-                accounts={rows.map((a) => ({
-                  id: a.id, code: a.code, name: name(a), account_type: a.account_type,
-                  is_postable: a.is_postable, parent_id: a.parent_id, depth: a.depth,
-                }))}
-                departments={departments.map((d) => ({ id: d.id, label: `${d.code} — ${(locale === "en" && d.name_en) || d.name_ar}` }))}
-              />
-            </CardContent>
-          </Card>
+          <RouteDialog closeHref="/accounts" title={formInitial.id ? t.accounts.editAccount : t.accounts.newAccount}>
+            <AccountForm
+              key={formInitial.id ?? `new-${params.parent ?? ""}`}
+              t={{ accounts: t.accounts, common: t.common, errors: t.errors }}
+              initial={formInitial}
+              accounts={rows.map((a) => ({
+                id: a.id, code: a.code, name: name(a), account_type: a.account_type,
+                is_postable: a.is_postable, parent_id: a.parent_id, depth: a.depth,
+              }))}
+              departments={departments.map((d) => ({ id: d.id, label: `${d.code} ${(locale === "en" && d.name_en) || d.name_ar}` }))}
+            />
+          </RouteDialog>
         )}
       </div>
     </>
