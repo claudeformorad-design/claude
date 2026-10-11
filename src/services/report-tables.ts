@@ -292,7 +292,7 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
       if (rows.length) rows.push(total(tr("صافي الربح"), rb.minus(eb), ra.minus(ea), ra.minus(ea).minus(rb.minus(eb)), pct(ra.minus(ea), rb.minus(eb))));
       const dept = p.department ? depts.find((d) => d.id === p.department) : undefined;
       return { title: tr("الموازنة مقابل الفعلي"),
-        subtitle: [fy.data.name, per.data ? tr("حتى نهاية {0}", per.data.name) : "", dept ? ((locale === "en" && dept.name_en) || dept.name_ar) : ""].filter(Boolean).join("، "),
+        subtitle: [fy.data.name, per.data ? tr("حتى نهاية {0}", per.data.name) : "", dept ? ((locale === "en" && dept.name_en) || dept.name_ar) : ""].filter(Boolean).join(tr("، ")),
         columns: cols, rows,
         note: rows.length ? { ok: true, text: tr("الانحراف الموجب في صالح الفندق: إيراد أعلى من المخطط أو مصروف أقل منه.") }
           : { ok: false, text: tr("لا توجد موازنة ولا حركة لهذه الفترة. أدخل الموازنة من صفحة الموازنة التقديرية.") } };
@@ -415,13 +415,13 @@ async function accountStatement(ctx: AppContext, locale: string, p: ReportParams
   for (const x of moves) {
     const d = toMoney(x.debit), c = toMoney(x.credit);
     bal = bal.plus(d).minus(c); dr = dr.plus(d); cr = cr.plus(c);
-    rows.push(line(x.entry_date, x.entry_number, [x.description, x.reference].filter(Boolean).join("، "), d.isZero() ? null : d, c.isZero() ? null : c, bal.abs(), side(bal)));
+    rows.push(line(x.entry_date, x.entry_number, [x.description, x.reference].filter(Boolean).join(tr("، ")), d.isZero() ? null : d, c.isZero() ? null : c, bal.abs(), side(bal)));
   }
   rows.push(total(tr("مجموع الحركة"), null, null, dr, cr, null, null), total(tr("الرصيد الختامي"), null, null, null, null, bal.abs(), side(bal)));
   const a = account.data as { code: string; name_ar: string; name_en: string | null; is_postable: boolean } | null;
   const dep = department.data as { code: string; name_ar: string; name_en: string | null } | null;
   const parts = [a ? `${a.code} ${name(a)}${a.is_postable ? "" : ` (${tr("إجمالي بكل فروعه")})`}` : "", dep ? tr("مركز التكلفة {0}", name(dep)) : ""].filter(Boolean);
-  return { title: tr("كشف حساب {0}", parts.join("، ")), subtitle: tr("من {0} إلى {1}", p.from, p.to), columns: cols, rows };
+  return { title: tr("كشف حساب {0}", parts.join(tr("، "))), subtitle: tr("من {0} إلى {1}", p.from, p.to), columns: cols, rows };
 }
 
 /** تقارير المخزون: بطاقة الصنف، أرصدة الكميات، كشف الجرد للطباعة، الأسعار، والقريب انتهاؤه */
@@ -462,7 +462,7 @@ async function inventoryReport(key: "item-card" | "stock-balances" | "count-shee
         qty(bal.toString()), toMoney(t.unit_cost), val));
     }
     rows.push(total(tr("الإجمالي"), "", "", qty(inQ.toString()), qty(outQ.toString()), qty(bal.toString()), "", val));
-    return { title: tr("بطاقة صنف"), subtitle: [`${item.sku} ${nm(item)}`, item.unit, tr("من {0} إلى {1}", p.from, p.to)].join("، "), columns: cols, rows };
+    return { title: tr("بطاقة صنف"), subtitle: [`${item.sku} ${nm(item)}`, item.unit, tr("من {0} إلى {1}", p.from, p.to)].join(tr("، ")), columns: cols, rows };
   }
 
   if (key === "expiring-stock") {
@@ -479,7 +479,7 @@ async function inventoryReport(key: "item-card" | "stock-balances" | "count-shee
         return { kind: "line" as const, code: it.sku, cells: [nm(it), l.expiry_date!, days < 0 ? tr("منتهٍ منذ {0} يوم", -days) : days === 0 ? tr("ينتهي اليوم") : tr("بعد {0} يوم", days),
           qty(l.remaining_qty), it.unit, toMoney(l.remaining_qty).times(toMoney(it.average_cost)).toDecimalPlaces(2)] };
       });
-    return { title: tr("الأصناف القريبة من الانتهاء"), subtitle: [tr("المنتهية وما ينتهي خلال 60 يومًا من {0}", p.to), catSub].filter(Boolean).join("، "),
+    return { title: tr("الأصناف القريبة من الانتهاء"), subtitle: [tr("المنتهية وما ينتهي خلال 60 يومًا من {0}", p.to), catSub].filter(Boolean).join(tr("، ")),
       columns: [tr("الصنف"), tr("تاريخ الانتهاء"), tr("المتبقي"), tr("الكمية"), tr("الوحدة"), tr("القيمة التقريبية")], rows,
       note: rows.length ? { ok: false, text: tr("اصرف الأقرب انتهاءً أولًا، وسجّل التالف بتسوية جرد.") } : { ok: true, text: tr("لا أصناف منتهية أو قريبة من الانتهاء.") } };
   }
@@ -500,7 +500,7 @@ async function inventoryReport(key: "item-card" | "stock-balances" | "count-shee
       rows.push(sub(tr("إجمالي الفئة"), "", "", "", sumMoney(list.map((x) => x.stock_value)), ""));
     }
     rows.push(total(tr("إجمالي المخزون"), "", "", "", sumMoney(items.filter((i) => i.is_active).map((x) => x.stock_value)), ""));
-    return { title: tr("كشف الكميات إجمالي"), subtitle: [tr("حتى {0}", p.to), catSub].filter(Boolean).join("، "), columns: cols, rows };
+    return { title: tr("كشف الكميات إجمالي"), subtitle: [tr("حتى {0}", p.to), catSub].filter(Boolean).join(tr("، ")), columns: cols, rows };
   }
   if (key === "count-sheet") {
     const cols = [tr("الصنف"), tr("الباركود"), tr("الوحدة"), tr("الكمية بالنظام"), tr("الكمية المعدودة"), tr("ملاحظة")];
@@ -508,7 +508,7 @@ async function inventoryReport(key: "item-card" | "stock-balances" | "count-shee
       rows.push(head(catName(k || null), cols.length));
       for (const x of list) rows.push({ kind: "line", code: x.sku, cells: [nm(x), x.barcode ?? "", x.unit, qty(x.quantity_on_hand), "", ""] });
     }
-    return { title: tr("كشف جرد المخزون"), subtitle: [tr("تاريخ الجرد {0}", p.to), catSub].filter(Boolean).join("، "), columns: cols, rows,
+    return { title: tr("كشف جرد المخزون"), subtitle: [tr("تاريخ الجرد {0}", p.to), catSub].filter(Boolean).join(tr("، ")), columns: cols, rows,
       note: { ok: true, text: tr("اطبع الكشف وعدّ الأصناف، ثم أدخل الكميات المعدودة في شاشة الجرد لترحيل الفروقات.") } };
   }
   const cols = [tr("الصنف"), tr("الباركود"), tr("الوحدة"), tr("متوسط التكلفة"), tr("سعر البيع"), tr("هامش الربح")];
@@ -558,7 +558,7 @@ async function hotelReport(key: "guest-balances" | "reservations-report" | "occu
     const rows: ReportRow[] = list.map((r) => line(r.confirmation_number, r.guest?.full_name ?? "", r.guest?.phone ?? "", r.room_type?.code ?? "", r.room?.room_number ?? "",
       r.arrival_date, r.departure_date, String(nights(r)), RESERVATION_SOURCE[r.source] ?? r.source, RESERVATION_STATUS[r.status]?.label ?? r.status, toMoney(r.total_amount)));
     rows.push(total(tr("الإجمالي"), tr("{0} حجز", list.length), "", "", "", "", "", String(list.reduce((n, r) => n + nights(r), 0)), "", "", sumMoney(list.map((r) => r.total_amount))));
-    const sub = [tr("الوصول من {0} إلى {1}", p.from, p.to), p.status ? RESERVATION_STATUS[p.status as keyof typeof RESERVATION_STATUS]?.label : "", p.source ? RESERVATION_SOURCE[p.source as keyof typeof RESERVATION_SOURCE] : ""].filter(Boolean).join("، ");
+    const sub = [tr("الوصول من {0} إلى {1}", p.from, p.to), p.status ? RESERVATION_STATUS[p.status as keyof typeof RESERVATION_STATUS]?.label : "", p.source ? RESERVATION_SOURCE[p.source as keyof typeof RESERVATION_SOURCE] : ""].filter(Boolean).join(tr("، "));
     return { title: tr("تقرير الحجوزات"), subtitle: sub,
       columns: [tr("الحجز"), tr("النزيل"), tr("الجوال"), tr("النوع"), tr("الغرفة"), tr("الوصول"), tr("المغادرة"), tr("الليالي"), tr("المصدر"), tr("الحالة"), tr("المبلغ")], rows };
   }

@@ -63,7 +63,7 @@ export default async function GuestRegisterPage({ searchParams }: { searchParams
       {missing.length > 0 && (
         <Alert variant="warning" className="mb-5 print:hidden">
           {tr("{0} بدون هوية مسجلة، أكمل بياناتهم قبل تسليم الكشف:", missing.length)}{" "}
-          {missing.map((r, i) => <span key={r.reservation_id}>{i > 0 && "، "}<Link href={`/reservations/${r.reservation_id}`} className="font-semibold underline-offset-4 hover:underline">{r.full_name}</Link></span>)}
+          {missing.map((r, i) => <span key={r.reservation_id}>{i > 0 && tr("، ")}<Link href={`/reservations/${r.reservation_id}`} className="font-semibold underline-offset-4 hover:underline">{r.full_name}</Link></span>)}
         </Alert>
       )}
       <Properties items={[

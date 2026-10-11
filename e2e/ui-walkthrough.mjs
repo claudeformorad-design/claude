@@ -62,13 +62,13 @@ await step("revenue settings: add VAT 15% and apply to ROOM", async () => {
   await page.fill("#name_ar", "ضريبة القيمة المضافة");
   await page.fill("#rate", "15");
   await pick("#account_id", /2110/);
-  await page.getByRole("button", { name: "حفظ" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "حفظ" }).click();
   await page.waitForURL(/settings\/revenue$/, { timeout: 10000 });
   const roomRow = page.locator("tr", { has: page.locator('td:text-is("ROOM")') });
   await roomRow.getByRole("link", { name: "تعديل" }).click();
   await page.waitForLoadState("networkidle");
   await page.getByLabel(/VAT/).check();
-  await page.getByRole("button", { name: "حفظ" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "حفظ" }).click();
   await page.waitForURL(/settings\/revenue$/, { timeout: 10000 });
   if (!(await page.locator("tr", { has: page.locator('td:text-is("ROOM")') }).innerText()).includes("VAT")) throw new Error("tax not linked");
 });
