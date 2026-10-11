@@ -165,6 +165,10 @@ export const seasonSchema = z.object({
   date_from: date,
   date_to: date,
   adjust_pct: pct(-100, 500),
+  // أقل عدد ليالٍ لحجز يمر بالموسم (فارغ = بلا حد)
+  min_nights: z.union([z.string(), z.number()]).optional()
+    .transform((v) => (v === undefined || String(v).trim() === "" ? null : Number(normalizeDigits(String(v)).trim())))
+    .pipe(z.number().int().min(1).max(60).nullable()),
   is_active: z.boolean(),
   notes: optText(500),
   prices: z.array(z.object({ room_type_id: z.uuid(), nightly_rate: optAmount, weekend_rate: optAmount })),

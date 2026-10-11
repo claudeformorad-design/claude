@@ -23,6 +23,7 @@ import { SimpleForm } from "../_assets/simple-form";
 import { ActionButton } from "../_pms/action-button";
 import { deleteLastMinuteAction, deleteSeasonAction, saveLastMinuteAction } from "../_pms/actions";
 import { SeasonForm } from "./season-form";
+import { BookingPolicyForm } from "./policy-form";
 
 const DAYS = 14;
 
@@ -89,6 +90,7 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
                     ...(editingSeason ? { id: editingSeason.id } : {}),
                     name: editingSeason?.name ?? "", date_from: editingSeason?.date_from ?? today, date_to: editingSeason?.date_to ?? addDays(today, 30),
                     adjust_pct: editingSeason?.adjust_pct ? String(Number(editingSeason.adjust_pct)) : "", is_active: editingSeason?.is_active ?? true,
+                    min_nights: editingSeason?.min_nights ? String(editingSeason.min_nights) : "",
                     notes: editingSeason?.notes ?? "",
                     prices: (editingSeason?.prices ?? []).map((p) => ({ room_type_id: p.room_type_id, nightly_rate: String(Number(p.nightly_rate)), weekend_rate: p.weekend_rate ? String(Number(p.weekend_rate)) : "" })),
                   }} />
@@ -180,6 +182,7 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
                   <TableCell className="text-[14.5px] text-slate-600">
                     {s.prices.map((p) => <span key={p.room_type_id} className="block">{typeName.get(p.room_type_id)}: <span className="num font-semibold text-ink">{formatMoney(p.nightly_rate, { locale })}</span></span>)}
                     {s.adjust_pct && <span className="block">{tr("البقية:")}{" "}<span className="num">{Number(s.adjust_pct) > 0 ? "+" : ""}{Number(s.adjust_pct)}%</span></span>}
+                    {s.min_nights && <span className="block">{tr("أقل حجز")}{" "}<span className="num font-semibold text-ink">{s.min_nights}</span>{" "}{tr("ليالٍ")}</span>}
                   </TableCell>
                   <TableCell className="text-end">
                     {canManage && (
@@ -196,6 +199,22 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
         </Card>
 
         <div className="space-y-6">
+          {canManage && (
+            <Card>
+              <CardHeader>
+                <CardTitle>{tr("سياسة الحجز")}</CardTitle>
+                <CardDescription>{tr("العربون الإلزامي ورسوم الإلغاء وعدم الحضور للحجوزات الليلية.")}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <BookingPolicyForm errors={t.errors} initial={{
+                  deposit_pct: String(Number(ctx.hotel.deposit_pct ?? 0)), deposit_hold_days: String(ctx.hotel.deposit_hold_days ?? 2),
+                  free_cancel_hours: String(ctx.hotel.free_cancel_hours ?? 24), cancel_fee: ctx.hotel.cancel_fee ?? "none",
+                  cancel_fee_pct: String(Number(ctx.hotel.cancel_fee_pct ?? 0)), no_show_fee: ctx.hotel.no_show_fee ?? "none",
+                  no_show_fee_pct: String(Number(ctx.hotel.no_show_fee_pct ?? 0)),
+                }} />
+              </CardContent>
+            </Card>
+          )}
           <Card className="overflow-hidden">
             <CardHeader><CardTitle>{tr("عروض اللحظة الأخيرة")}</CardTitle></CardHeader>
             <Table>

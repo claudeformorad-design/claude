@@ -51,6 +51,10 @@ export function SeasonForm({ initial, types, errors }: {
         <Label htmlFor="adjust_pct">{tr("نسبة تعديل للأنواع الأخرى %")}</Label>
         <Input id="adjust_pct" inputMode="decimal" dir="ltr" value={v.adjust_pct ?? ""} onChange={(e) => setV({ ...v, adjust_pct: e.target.value })} placeholder={tr("مثل 20 أو -15")} />
       </div>
+      <div className={field}>
+        <Label htmlFor="min_nights">{tr("أقل عدد ليالٍ للحجز في الموسم")}</Label>
+        <Input id="min_nights" inputMode="numeric" dir="ltr" value={v.min_nights ?? ""} onChange={(e) => setV({ ...v, min_nights: e.target.value })} placeholder={tr("فارغ يعني بلا حد")} />
+      </div>
       <div className="space-y-2">
         <p className="text-[16px] font-bold text-slate-700">{tr("سعر كل نوع في الموسم")}</p>
         <div className="overflow-hidden rounded-lg border border-line">

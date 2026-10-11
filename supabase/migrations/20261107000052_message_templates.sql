@@ -14,7 +14,7 @@ create table public.message_templates (
 );
 alter table public.message_templates enable row level security;
 create policy message_templates_read on public.message_templates for select to authenticated
-  using (app.is_hotel_member(hotel_id));
+  using (hotel_id in (select app.member_hotels()));
 create trigger audit_message_templates after insert or update or delete on public.message_templates
   for each row execute function app.audit_trigger();
 

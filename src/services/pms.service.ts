@@ -58,7 +58,7 @@ export type ReservationListItem = ReservationRow & {
 };
 
 const RES_COLS =
-  "id, hotel_id, confirmation_number, guest_id, customer_id, room_type_id, room_id, booking_mode, arrival_date, departure_date, starts_at, ends_at, adults, children, status, source, pricing, fixed_rate::text, rate_reason, last_minute_pct::text, total_amount::text, group_id, series_id, tentative_until, special_requests, notes, cancelled_at, cancelled_by, cancellation_reason, folio_id, checked_in_at, checked_out_at, keys_issued, keys_issued_by, bill_to, rate_plan_id, created_at, created_by, updated_at, updated_by";
+  "id, hotel_id, confirmation_number, guest_id, customer_id, room_type_id, room_id, booking_mode, arrival_date, departure_date, starts_at, ends_at, adults, children, status, source, pricing, fixed_rate::text, rate_reason, last_minute_pct::text, total_amount::text, group_id, series_id, tentative_until, special_requests, notes, cancelled_at, cancelled_by, cancellation_reason, policy_fee::text, folio_id, checked_in_at, checked_out_at, keys_issued, keys_issued_by, bill_to, rate_plan_id, created_at, created_by, updated_at, updated_by";
 const RES_EMBED = `${RES_COLS}, guest:guests(full_name, phone), room:rooms(room_number), room_type:room_types(code, name_ar)`;
 
 export async function listReservations(
@@ -147,7 +147,7 @@ export type SeasonWithPrices = RateSeasonRow & { prices: RateSeasonPriceRow[] };
 
 export async function listSeasons(supabase: SupabaseServerClient, hotelId: string): Promise<SeasonWithPrices[]> {
   const [seasons, prices] = await Promise.all([
-    supabase.from("rate_seasons").select("id, hotel_id, name, date_from, date_to, adjust_pct::text, is_active, notes, created_at, created_by, updated_at, updated_by").eq("hotel_id", hotelId).order("date_from"),
+    supabase.from("rate_seasons").select("id, hotel_id, name, date_from, date_to, adjust_pct::text, min_nights, is_active, notes, created_at, created_by, updated_at, updated_by").eq("hotel_id", hotelId).order("date_from"),
     supabase.from("rate_season_prices").select("season_id, hotel_id, room_type_id, nightly_rate::text, weekend_rate::text").eq("hotel_id", hotelId),
   ]);
   raise(seasons.error);

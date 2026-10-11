@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { formatDateTime, todayInTimeZone } from "@/lib/accounting/fiscal";
-import { ZERO, toMoney } from "@/lib/accounting/money";
+import { ZERO, formatMoney, toMoney } from "@/lib/accounting/money";
 import { ACTIVE_STATUSES, BILL_TO, PRICING_LABEL, RESERVATION_SOURCE, RESERVATION_STATUS, WEEKDAYS } from "@/lib/pms/labels";
 import { dayLabel, nightsBetween, nightsText, timeRange } from "@/lib/pms/dates";
 import { folioSnapshot, getReservation, listReservations, listRoomTypes, listRooms } from "@/services/pms.service";
@@ -22,7 +22,8 @@ import { latestRates, listExchangeRates } from "@/services/cashier.service";
 import { getI18n } from "@/i18n/server";
 import { ActionButton } from "../../_pms/action-button";
 import { requestReservationCancelAction } from "../../approvals/actions";
-import { cancelReservationAction, cancelSeriesAction, confirmReservationAction, noShowAction } from "../../_pms/actions";
+import { cancelReservationAction, cancelSeriesAction, cancelWaivedAction, confirmReservationAction, noShowAction, noShowWaivedAction } from "../../_pms/actions";
+import type { ReservationPolicy } from "@/lib/supabase/database.types";
 import { AssignRoom } from "./assign-room";
 import { StayPanel } from "./stay-panel";
 import { BillingSelect } from "./billing-select";
@@ -96,6 +97,13 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
     .map((p) => ({ id: p.id, label: `${localNameOf(p)}${p.includes_breakfast ? tr(" مع الإفطار") : ""}` }));
   const planName = plans.find((p) => p.id === r.rate_plan_id)?.name_ar;
 
+  // سياسة الحجز: العربون المطلوب، ورسم الإلغاء أو عدم الحضور لو نُفّذ الآن (بحد العربون المدفوع)
+  const policy = editable
+    ? ((await ctx.supabase.rpc("reservation_policy_status", { p_reservation_id: r.id })).data as ReservationPolicy | null)
+    : null;
+  const canWaive = ctx.can(PERMISSIONS.pmsRatesOverride);
+  const money = (v: number) => formatMoney(v, { locale }) + " " + ctx.hotel.base_currency;
+
   // مراسلة النزيل بواتساب: تأكيد وتذكير قبل الوصول، وشكر مع رابط التقييم بعد المغادرة
   const msg = await messageBuilder(ctx.supabase, ctx.hotel);
   const waPhone = msg.phone(r.guest?.phone);
@@ -121,14 +129,23 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
             <Badge variant={status.variant} className="text-[16px]">{status.label}</Badge>
             <Button asChild variant="outline" size="sm"><Link href={`/reservations/${r.id}/card`}>{tr("بطاقة التسجيل")}</Link></Button>
             {canManage && <Button asChild variant="outline" size="sm"><Link href={`/reservations/${r.id}/edit`}><Pencil className="size-4" />{tr("تعديل")}</Link></Button>}
-            {canManage && r.status === "tentative" && (
-              <ActionButton variant="default" label={tr("تأكيد الحجز")} done={tr("تم تأكيد الحجز")} errors={t.errors} run={confirmReservationAction.bind(null, r.id)} />
+            {canManage && r.status === "tentative" && (!policy || policy.deposit_due === 0 || canWaive) && (
+              <ActionButton variant="default" label={tr("تأكيد الحجز")} done={tr("تم تأكيد الحجز")} errors={t.errors} run={confirmReservationAction.bind(null, r.id)}
+                confirmText={policy && policy.deposit_due > 0 ? tr("لم يُدفع العربون المطلوب ({0}). تأكيده الآن تجاوز للسياسة.", money(policy.deposit_due)) : undefined} />
             )}
             {canCancel && r.arrival_date <= today && (
-              <ActionButton label={tr("لم يحضر")} done={tr("سُجّل عدم الحضور")} errors={t.errors} reasonLabel={tr("ملاحظة")} reasonRequired={false} run={noShowAction.bind(null, r.id)} />
+              <ActionButton label={tr("لم يحضر")} done={tr("سُجّل عدم الحضور")} errors={t.errors} reasonLabel={tr("ملاحظة")} reasonRequired={false} run={noShowAction.bind(null, r.id)}
+                confirmText={policy && policy.no_show_charge > 0 ? tr("سيُخصم رسم عدم الحضور {0} من العربون المدفوع.", money(policy.no_show_charge)) : undefined} />
+            )}
+            {canCancel && r.arrival_date <= today && canWaive && policy && policy.no_show_charge > 0 && (
+              <ActionButton label={tr("لم يحضر بدون رسوم")} done={tr("سُجّل عدم الحضور بدون رسوم")} errors={t.errors} reasonLabel={tr("سبب الإعفاء")} run={noShowWaivedAction.bind(null, r.id)} />
             )}
             {canCancel && (
-              <ActionButton variant="destructive" label={tr("إلغاء الحجز")} done={tr("أُلغي الحجز")} errors={t.errors} reasonLabel={tr("سبب الإلغاء")} run={cancelReservationAction.bind(null, r.id)} />
+              <ActionButton variant="destructive" label={tr("إلغاء الحجز")} done={tr("أُلغي الحجز")} errors={t.errors} reasonLabel={tr("سبب الإلغاء")} run={cancelReservationAction.bind(null, r.id)}
+                confirmText={policy && policy.cancel_charge > 0 ? tr("الإلغاء الآن عليه رسم {0} يُخصم من العربون المدفوع.", money(policy.cancel_charge)) : undefined} />
+            )}
+            {canCancel && canWaive && policy && policy.cancel_charge > 0 && (
+              <ActionButton variant="destructive" label={tr("إلغاء بدون رسوم")} done={tr("أُلغي الحجز بدون رسوم")} errors={t.errors} reasonLabel={tr("سبب الإعفاء")} run={cancelWaivedAction.bind(null, r.id)} />
             )}
             {canManage && !canCancel && (
               <ActionButton label={tr("طلب إلغاء")} done={tr("أُرسل طلب الإلغاء للمدير")} errors={t.errors} reasonLabel={tr("سبب الإلغاء")} run={requestReservationCancelAction.bind(null, r.id)} />
@@ -195,6 +212,32 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
         </div>
 
         <div className="space-y-6">
+          {policy && (policy.required_deposit > 0 || policy.free_cancel_until) && (
+            <Card>
+              <CardHeader><CardTitle>{tr("سياسة الحجز")}</CardTitle></CardHeader>
+              <CardContent>
+                <dl className="space-y-3 text-[16px]">
+                  {policy.required_deposit > 0 && (
+                    <>
+                      <Row label={tr("العربون المطلوب")}><span className="num font-semibold">{money(policy.required_deposit)}</span></Row>
+                      <Row label={tr("المدفوع")}><span className="num">{money(policy.deposit_paid)}</span></Row>
+                      {policy.deposit_due > 0
+                        ? <Row label={tr("المتبقي")}><Badge variant="warning"><span className="num">{money(policy.deposit_due)}</span></Badge>
+                            {r.status === "tentative" && <span className="mt-1 block text-[14px] text-slate-500">{tr("يتأكد الحجز تلقائيًا عند اكتمال العربون.")}</span>}</Row>
+                        : <Row label={tr("الحالة")}><Badge variant="success">{tr("العربون مكتمل")}</Badge></Row>}
+                    </>
+                  )}
+                  {policy.free_cancel_until && (
+                    <Row label={tr("الإلغاء المجاني")}>
+                      {policy.cancel_fee > 0
+                        ? <span>{tr("انتهت مهلته. رسم الإلغاء الآن {0}", money(policy.cancel_charge))}{policy.cancel_charge < policy.cancel_fee && <span className="block text-[14px] text-slate-500">{tr("بحد العربون المدفوع، والرسم الكامل {0}", money(policy.cancel_fee))}</span>}</span>
+                        : <span>{tr("حتى {0}", formatDateTime(policy.free_cancel_until, ctx.hotel.timezone))}</span>}
+                    </Row>
+                  )}
+                </dl>
+              </CardContent>
+            </Card>
+          )}
           {r.status !== "cancelled" && r.status !== "no_show" && (
             <Card>
               <CardHeader><CardTitle>{tr("مراسلة النزيل")}</CardTitle></CardHeader>
@@ -260,6 +303,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
                 {r.checked_out_at && <Row label={tr("المغادرة")}><span className="num">{formatDateTime(r.checked_out_at, ctx.hotel.timezone)}</span></Row>}
                 {folio && folio.status !== "open" && ctx.can(PERMISSIONS.folioView) && <Row label={tr("الفوليو")}><Link href={`/folios/${folio.id}`} className="num font-semibold text-action">{folio.number}</Link></Row>}
                 {r.cancellation_reason && <Row label={r.status === "no_show" ? tr("عدم الحضور") : tr("سبب الإلغاء")}>{r.cancellation_reason}</Row>}
+                {r.policy_fee && <Row label={r.status === "no_show" ? tr("رسم عدم الحضور") : tr("رسم الإلغاء")}><span className="num font-semibold">{money(Number(r.policy_fee))}</span></Row>}
                 <Row label={tr("أُنشئ")}><span className="num">{formatDateTime(r.created_at, ctx.hotel.timezone)}</span></Row>
               </dl>
             </CardContent>

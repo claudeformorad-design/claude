@@ -10,7 +10,7 @@ import {
   roomSchema, roomStatusSchema, roomTypeSchema, seasonSchema, waitlistSchema,
 } from "@/lib/validation/pms";
 import type { CheckOutSummary, ReservationQuote } from "@/lib/supabase/database.types";
-import { isValidAmount, toMoney } from "@/lib/accounting/money";
+import { isValidAmount, normalizeDigits, toMoney } from "@/lib/accounting/money";
 import { quoteReservation } from "@/services/pms.service";
 import { raise, type ActionResult, toActionResult, invalid } from "@/services/errors";
 
@@ -275,9 +275,41 @@ export async function cancelReservationAction(reservationId: string, reason: str
   return reservationOp(PERMISSIONS.pmsCancel, reservationId, (ctx) =>
     ctx.supabase.rpc("cancel_reservation", { p_reservation_id: reservationId, p_reason: reason }));
 }
+/** إلغاء مع الإعفاء من رسم الإلغاء (صلاحية تجاوز الأسعار) */
+export async function cancelWaivedAction(reservationId: string, reason: string) {
+  return reservationOp(PERMISSIONS.pmsCancel, reservationId, (ctx) =>
+    ctx.supabase.rpc("cancel_reservation", { p_reservation_id: reservationId, p_reason: reason, p_waive_fee: true }));
+}
 export async function noShowAction(reservationId: string, reason: string) {
   return reservationOp(PERMISSIONS.pmsCancel, reservationId, (ctx) =>
     ctx.supabase.rpc("mark_reservation_no_show", { p_reservation_id: reservationId, p_reason: reason || null }));
+}
+export async function noShowWaivedAction(reservationId: string, reason: string) {
+  return reservationOp(PERMISSIONS.pmsCancel, reservationId, (ctx) =>
+    ctx.supabase.rpc("mark_reservation_no_show", { p_reservation_id: reservationId, p_reason: reason || null, p_waive_fee: true }));
+}
+
+/** سياسة الحجز: العربون الإلزامي ورسوم الإلغاء وعدم الحضور */
+export async function saveBookingPolicyAction(input: unknown): Promise<ActionResult<undefined>> {
+  const ctx = await requireAppContext(PERMISSIONS.pmsRatesManage);
+  const num = (min: number, max: number) => z.union([z.string(), z.number()]).transform((v) => Number(normalizeDigits(String(v)).trim() || "0")).pipe(z.number().min(min).max(max));
+  const fee = z.enum(["none", "first_night", "percent", "full"]);
+  const p = z.object({
+    deposit_pct: num(0, 100), deposit_hold_days: num(0, 60).pipe(z.number().int()), free_cancel_hours: num(0, 8760).pipe(z.number().int()),
+    cancel_fee: fee, cancel_fee_pct: num(0, 100), no_show_fee: fee, no_show_fee_pct: num(0, 100),
+  }).safeParse(input);
+  if (!p.success) return invalid(p.error);
+  const r = await toActionResult(async () => {
+    const { error } = await ctx.supabase.rpc("save_booking_policy", {
+      p_hotel_id: ctx.hotel.id, p_deposit_pct: p.data.deposit_pct, p_deposit_hold_days: p.data.deposit_hold_days,
+      p_free_cancel_hours: p.data.free_cancel_hours, p_cancel_fee: p.data.cancel_fee, p_cancel_fee_pct: p.data.cancel_fee_pct,
+      p_no_show_fee: p.data.no_show_fee, p_no_show_fee_pct: p.data.no_show_fee_pct,
+    });
+    raise(error);
+    return undefined;
+  });
+  if (r.ok) refreshPms("/rates");
+  return r;
 }
 
 /** إلغاء بقية مواعيد الحجز المتكرر من تاريخ (افتراضيًا اليوم بتوقيت الفندق) */

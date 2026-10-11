@@ -46,6 +46,9 @@ export type HotelRow = Audit & {
   default_locale: "ar" | "en";
   total_rooms: number | null;
   require_cashier_shift: boolean;
+  /** سياسة الحجز: نسبة العربون الإلزامي ومهلة الحجز المبدئي، والإلغاء المجاني ورسوم الإلغاء وعدم الحضور */
+  deposit_pct: string; deposit_hold_days: number; free_cancel_hours: number;
+  cancel_fee: PolicyFee; cancel_fee_pct: string; no_show_fee: PolicyFee; no_show_fee_pct: string;
   /** طريقة دخول الغرف التي تُسلَّم للنزيل عند التسكين */
   room_access: RoomAccess;
   address: string | null;
@@ -254,6 +257,12 @@ export type ChargeCodeRow = Audit & {
 };
 
 export type ChargeCodeTaxRow = { hotel_id: string; charge_code_id: string; tax_rate_id: string };
+
+export type PolicyFee = "none" | "first_night" | "percent" | "full";
+export type ReservationPolicy = {
+  required_deposit: number; deposit_paid: number; deposit_due: number; free_cancel_until: string | null;
+  cancel_fee: number; cancel_charge: number; no_show_fee: number; no_show_charge: number; exempt: boolean;
+};
 
 export type PaymentMethodRow = Audit & {
   id: string; hotel_id: string; code: string; name_ar: string; name_en: string | null;
@@ -496,6 +505,8 @@ export type GuestRow = Audit & {
 };
 export type RateSeasonRow = Audit & {
   id: string; hotel_id: string; name: string; date_from: string; date_to: string; adjust_pct: string | null; is_active: boolean; notes: string | null;
+  /** أقل عدد ليالٍ لحجز يمر بالموسم */
+  min_nights: number | null;
 };
 export type RateSeasonPriceRow = { season_id: string; hotel_id: string; room_type_id: string; nightly_rate: string; weekend_rate: string | null };
 export type LastMinuteRuleRow = Audit & {
@@ -508,7 +519,7 @@ export type ReservationRow = Audit & {
   source: ReservationSource; pricing: ReservationPricing; fixed_rate: string | null; rate_reason: string | null;
   last_minute_pct: string | null; total_amount: string; group_id: string | null; series_id: string | null;
   tentative_until: string | null; special_requests: string | null; notes: string | null;
-  cancelled_at: string | null; cancelled_by: string | null; cancellation_reason: string | null; folio_id: string | null;
+  cancelled_at: string | null; cancelled_by: string | null; cancellation_reason: string | null; folio_id: string | null; policy_fee?: string | null;
   checked_in_at: string | null; checked_out_at: string | null; bill_to: BillTo; rate_plan_id: string | null;
   keys_issued: number | null; keys_issued_by: string | null;
 };
@@ -839,8 +850,13 @@ export type Database = {
       };
       assign_reservation_room: { Args: { p_reservation_id: string; p_room_id: string | null }; Returns: undefined };
       confirm_reservation: { Args: { p_reservation_id: string }; Returns: undefined };
-      cancel_reservation: { Args: { p_reservation_id: string; p_reason: string }; Returns: undefined };
-      mark_reservation_no_show: { Args: { p_reservation_id: string; p_reason?: string | null }; Returns: undefined };
+      cancel_reservation: { Args: { p_reservation_id: string; p_reason: string; p_waive_fee?: boolean }; Returns: undefined };
+      mark_reservation_no_show: { Args: { p_reservation_id: string; p_reason?: string | null; p_waive_fee?: boolean }; Returns: undefined };
+      save_booking_policy: {
+        Args: { p_hotel_id: string; p_deposit_pct: number; p_deposit_hold_days: number; p_free_cancel_hours: number; p_cancel_fee: string; p_cancel_fee_pct: number; p_no_show_fee: string; p_no_show_fee_pct: number };
+        Returns: undefined;
+      };
+      reservation_policy_status: { Args: { p_reservation_id: string }; Returns: ReservationPolicy };
       quote_reservation: {
         Args: {
           p_hotel_id: string; p_room_type_id: string; p_arrival_date?: string | null; p_departure_date?: string | null;

@@ -70,6 +70,7 @@ export function ActionButton({
             onSubmit={(e) => { e.preventDefault(); if (!reasonRequired || reason.trim()) exec(reason.trim()); }}
             className={`${inline ? "mt-2 w-72 text-start" : "absolute end-0 top-full z-30 mt-2 w-80 shadow-lift"} space-y-2 rounded-lg border border-line bg-white p-3`}
           >
+            {confirmText && <p className="rounded-md bg-amber-tint px-2.5 py-2 text-[14.5px] leading-relaxed text-amber">{confirmText}</p>}
             <label htmlFor={inputId} className="block text-[15px] font-medium text-ink">{reasonLabel}</label>
             <Input id={inputId} autoFocus value={reason} onChange={(e) => setReason(e.target.value)} />
             <div className="flex gap-2">
