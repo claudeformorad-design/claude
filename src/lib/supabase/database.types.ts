@@ -555,8 +555,9 @@ export type NightAuditRow = { id: string; hotel_id: string; business_date: strin
 export type GuestRegisterRow = {
   reservation_id: string; confirmation_number: string; room_number: string | null; full_name: string; nationality: string | null;
   id_type: GuestIdType | null; id_number: string | null; date_of_birth: string | null; phone: string | null; adults: number; children: number;
-  arrival_date: string; departure_date: string; checked_in_at: string | null; company: string | null;
+  arrival_date: string; departure_date: string; checked_in_at: string | null; company: string | null; checked_out_at?: string | null;
 };
+export type GuestListKind = "in_house" | "arrivals" | "departures";
 
 export type PosOutletRow = { id: string; hotel_id: string; code: string; name_ar: string; is_active: boolean; sort_order: number; created_at: string; created_by: string | null };
 export type PosItemRow = {
@@ -914,6 +915,7 @@ export type Database = {
       night_audit_status: { Args: { p_hotel_id: string; p_date?: string | null }; Returns: NightAuditStatus };
       run_night_audit: { Args: { p_hotel_id: string; p_date?: string | null }; Returns: AuditSummary };
       guest_register: { Args: { p_hotel_id: string; p_date?: string | null }; Returns: GuestRegisterRow[] };
+      guest_movements: { Args: { p_hotel_id: string; p_date?: string | null; p_kind?: GuestListKind }; Returns: GuestRegisterRow[] };
       post_opening_balances: {
         Args: { p_hotel_id: string; p_date: string; p_accounts?: { account_id: string; debit?: string; credit?: string }[];
           p_customers?: { customer_id: string; amount: string; reference?: string }[]; p_vendors?: { vendor_id: string; amount: string; reference?: string }[] };

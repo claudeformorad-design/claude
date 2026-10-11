@@ -1,10 +1,7 @@
 import { localNameOf } from "@/lib/local-name";
 import "server-only";
 import type { SupabaseServerClient } from "@/lib/supabase/server";
-import type {
-  FloorRow, FrontDeskSummary, GuestRegisterRow, GuestRow, NightAuditRow, NightAuditStatus, LastMinuteRuleRow, RateSeasonPriceRow, RateSeasonRow, ReservationNightRow, ReservationQuote,
-  ReservationRow, ReservationStatus, RoomRow, RoomTypeRow, WaitlistEntryRow,
-} from "@/lib/supabase/database.types";
+import type { FloorRow, FrontDeskSummary, GuestRegisterRow, GuestRow, NightAuditRow, NightAuditStatus, LastMinuteRuleRow, RateSeasonPriceRow, RateSeasonRow, ReservationNightRow, ReservationQuote, ReservationRow, ReservationStatus, RoomRow, RoomTypeRow, WaitlistEntryRow, GuestListKind } from "@/lib/supabase/database.types";
 import { raise } from "./errors";
 import { searchTerm } from "@/lib/search-term";
 
@@ -181,6 +178,13 @@ export async function listNightAudits(supabase: SupabaseServerClient, hotelId: s
 
 export async function guestRegister(supabase: SupabaseServerClient, hotelId: string, date: string): Promise<GuestRegisterRow[]> {
   const { data, error } = await supabase.rpc("guest_register", { p_hotel_id: hotelId, p_date: date });
+  raise(error);
+  return (data ?? []) as GuestRegisterRow[];
+}
+
+/** كشف الجهات الأمنية: المقيمون تلك الليلة، أو الواصلون، أو المغادرون في اليوم */
+export async function guestMovements(supabase: SupabaseServerClient, hotelId: string, date: string, kind: GuestListKind): Promise<GuestRegisterRow[]> {
+  const { data, error } = await supabase.rpc("guest_movements", { p_hotel_id: hotelId, p_date: date, p_kind: kind });
   raise(error);
   return (data ?? []) as GuestRegisterRow[];
 }

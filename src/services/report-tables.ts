@@ -14,7 +14,9 @@ import { getTrialBalance } from "./reports.service";
 import { raise } from "./errors";
 import { fiscalYearStart, isIsoDate, todayInTimeZone } from "@/lib/accounting/fiscal";
 import { roomKpis } from "@/lib/accounting/kpi";
-import type { ReservationSource, ReservationStatus } from "@/lib/supabase/database.types";
+import type { GuestListKind, ReservationSource, ReservationStatus } from "@/lib/supabase/database.types";
+import { ID_TYPES } from "@/lib/pms/labels";
+import { guestMovements } from "./pms.service";
 
 /**
  * جدول تقرير موحّد: تعرضه الصفحات ويُصدّر كما هو إلى Excel (ما تراه هو ما تصدّره).
@@ -54,6 +56,7 @@ export const REPORTS = {
   "occupancy-monthly": PERMISSIONS.financialView,
   "currency-trial-balance": PERMISSIONS.trialBalanceView,
   "cash-by-currency": PERMISSIONS.cashReportView,
+  "police-register": PERMISSIONS.pmsReports,
 } as const satisfies Record<string, Permission>;
 export type ReportKey = keyof typeof REPORTS;
 
@@ -328,6 +331,18 @@ export async function buildReport(key: ReportKey, ctx: AppContext, t: Dictionary
         columns: [r.account, tr("مدين بالعملة"), tr("دائن بالعملة"), tr("الصافي بالعملة"), tr("مدين {0}", ctx.hotel.base_currency), tr("دائن {0}", ctx.hotel.base_currency), tr("الصافي {0}", ctx.hotel.base_currency)], rows,
         note: rows.length ? { ok: true, text: tr("يعرض القيود المسجلة بعملة أجنبية فقط، بمبالغها بالعملة وما يعادلها بالعملة الأساسية.") }
           : { ok: true, text: tr("لا قيود بعملات أجنبية في هذه الفترة.") } };
+    }
+    case "police-register": {
+      const kind: GuestListKind = p.status === "arrivals" || p.status === "departures" ? p.status : "in_house";
+      const rows = await guestMovements(ctx.supabase, ctx.hotel.id, p.to, kind);
+      const title = kind === "arrivals" ? tr("كشف الواصلين") : kind === "departures" ? tr("كشف المغادرين") : tr("كشف النزلاء المقيمين");
+      const missing = rows.filter((r) => !r.id_number).length;
+      return { title, subtitle: tr("{0}، {1}", ctx.hotel.name_ar, p.to),
+        columns: ["#", tr("الغرفة"), tr("الاسم"), tr("الجنسية"), tr("نوع الهوية"), tr("رقم الهوية"), tr("تاريخ الميلاد"), tr("الجوال"), tr("الأشخاص"), tr("الوصول"), tr("المغادرة"), tr("الجهة")],
+        rows: rows.map((r, i) => line(String(i + 1), r.room_number ?? "", r.full_name, r.nationality ?? "", r.id_type ? ID_TYPES[r.id_type] : tr("غير مسجلة"),
+          r.id_number ?? "", r.date_of_birth ?? "", r.phone ?? "", String(r.adults + r.children), r.arrival_date, r.departure_date, r.company ?? "")),
+        note: missing ? { ok: false, text: tr("{0} بدون هوية مسجلة، أكمل بياناتهم قبل تسليم الكشف.", missing) }
+          : { ok: true, text: tr("الإجمالي {0} حجز، {1} شخص.", rows.length, rows.reduce((a, r) => a + r.adults + r.children, 0)) } };
     }
     case "cash-by-currency": {
       const { data, error } = await ctx.supabase.rpc("cash_by_currency", { p_hotel_id: ctx.hotel.id, p_from: p.from, p_to: p.to })

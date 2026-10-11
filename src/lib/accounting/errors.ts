@@ -165,6 +165,7 @@ const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
   [/Each cash box has one opening float/i, "لكل صندوق عهدة واحدة عند فتح الوردية"],
   [/Unknown message template/i, "نوع الرسالة غير معروف"],
   [/Unknown fee type/i, "نوع الرسم غير معروف"],
+  [/Unknown register list/i, "نوع الكشف غير معروف"],
   [/Enter the fee percentage/i, "اكتب نسبة الرسم"],
   [/A deposit of (\S+) is required before confirming \(paid (\S+)\)/i, (m) => `يلزم عربون ${m[1]} قبل تأكيد الحجز، والمدفوع ${m[2]}`],
   [/The minimum stay in season (.+) is (\d+) nights/i, (m) => `أقل حجز في موسم ${m[1]} هو ${m[2]} ليالٍ`],
