@@ -13,6 +13,7 @@ import type { CheckOutSummary, ReservationQuote } from "@/lib/supabase/database.
 import { isValidAmount, normalizeDigits, toMoney } from "@/lib/accounting/money";
 import { quoteReservation } from "@/services/pms.service";
 import { raise, type ActionResult, toActionResult, invalid } from "@/services/errors";
+import { assertFeature } from "@/lib/features/server";
 
 /**
  * عمليات قسم إدارة الفندق. كل قاعدة (السعة، التداخل، الأسعار، الحالات، الصلاحيات)
@@ -176,6 +177,10 @@ export async function createReservationAction(input: unknown): Promise<ActionRes
   if (!p.success) return invalid(p.error);
   const v = p.data;
   const r = await toActionResult(async () => {
+    // ما أطفأه تخصيص النظام يُرفض هنا أيضًا، لا في الواجهة فقط
+    if (v.kind === "group") assertFeature(ctx, "reservations.group");
+    if (v.kind === "series") assertFeature(ctx, "reservations.series");
+    if (v.pricing && v.pricing !== "standard") assertFeature(ctx, "reservations.manual_rate");
     const newGuest = async (): Promise<string> => {
       if (!v.new_guest_name) raise({ message: "Guest name is required" });
       const { data, error } = await ctx.supabase.from("guests").insert({
@@ -277,16 +282,20 @@ export async function cancelReservationAction(reservationId: string, reason: str
 }
 /** إلغاء مع الإعفاء من رسم الإلغاء (صلاحية تجاوز الأسعار) */
 export async function cancelWaivedAction(reservationId: string, reason: string) {
-  return reservationOp(PERMISSIONS.pmsCancel, reservationId, (ctx) =>
-    ctx.supabase.rpc("cancel_reservation", { p_reservation_id: reservationId, p_reason: reason, p_waive_fee: true }));
+  return reservationOp(PERMISSIONS.pmsCancel, reservationId, (ctx) => {
+    assertFeature(ctx, "reservations.waive_fees");
+    return ctx.supabase.rpc("cancel_reservation", { p_reservation_id: reservationId, p_reason: reason, p_waive_fee: true });
+  });
 }
 export async function noShowAction(reservationId: string, reason: string) {
   return reservationOp(PERMISSIONS.pmsCancel, reservationId, (ctx) =>
     ctx.supabase.rpc("mark_reservation_no_show", { p_reservation_id: reservationId, p_reason: reason || null }));
 }
 export async function noShowWaivedAction(reservationId: string, reason: string) {
-  return reservationOp(PERMISSIONS.pmsCancel, reservationId, (ctx) =>
-    ctx.supabase.rpc("mark_reservation_no_show", { p_reservation_id: reservationId, p_reason: reason || null, p_waive_fee: true }));
+  return reservationOp(PERMISSIONS.pmsCancel, reservationId, (ctx) => {
+    assertFeature(ctx, "reservations.waive_fees");
+    return ctx.supabase.rpc("mark_reservation_no_show", { p_reservation_id: reservationId, p_reason: reason || null, p_waive_fee: true });
+  });
 }
 
 /** سياسة الحجز: العربون الإلزامي ورسوم الإلغاء وعدم الحضور */

@@ -25,7 +25,7 @@ function roleOf(ctx: AppContext): string {
  * وأجزاء الدليل التي يجلبها بالأدوات. الأرقام الحية تأتي من الأدوات فقط، لا من الذاكرة.
  */
 export function systemPrompt(ctx: AppContext, t: Dictionary, page: PageContext, instructions = ""): string {
-  const groups = navGroups(t.nav, { modules: ctx.hotel.enabled_modules ?? ["accounting", "pms"], permissions: [...ctx.permissions] });
+  const groups = navGroups(t.nav, ctx.access);
   const items = groups.flatMap((g) => g.items.map((i) => ({ ...i, group: g.title })));
   const current = items.filter((i) => isActivePath(page.path, i.href)).sort((a, b) => b.href.length - a.href.length)[0];
   const sitemap = groups.map((g) => `${g.title ?? "عام"}: ${g.items.map((i) => `${i.label} ${i.href}`).join("، ")}`).join("\n");

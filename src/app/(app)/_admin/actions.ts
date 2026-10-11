@@ -35,12 +35,11 @@ export async function saveHotelAction(input: unknown): Promise<ActionResult<unde
   }), "/settings/hotel");
 }
 
-/** الأقسام المفعّلة وإعدادات التشغيل الفندقي (أوقات الوصول والمغادرة، ليالي نهاية الأسبوع) */
+/** إعدادات التشغيل الفندقي (أوقات الوصول والمغادرة، ليالي نهاية الأسبوع) */
 export async function saveHotelOperationsAction(input: unknown): Promise<ActionResult<undefined>> {
   const ctx = await requireAppContext(PERMISSIONS.hotelManage);
   const time = z.string().trim().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
   const p = z.object({
-    modules: z.array(z.enum(["accounting", "pms"])).min(1),
     check_in_time: time,
     check_out_time: time,
     weekend_nights: z.array(z.coerce.number().int().min(0).max(6)).max(7),
@@ -49,8 +48,6 @@ export async function saveHotelOperationsAction(input: unknown): Promise<ActionR
   }).safeParse(input);
   if (!p.success) return invalid(p.error);
   const r = await toActionResult(async () => {
-    const m = await ctx.supabase.rpc("set_hotel_modules", { p_hotel_id: ctx.hotel.id, p_modules: p.data.modules });
-    raise(m.error);
     const { error } = await ctx.supabase.from("hotels").update({
       check_in_time: p.data.check_in_time, check_out_time: p.data.check_out_time,
       weekend_nights: [...new Set(p.data.weekend_nights)].sort(),

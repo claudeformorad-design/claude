@@ -1,6 +1,7 @@
 "use client";
 import { tr } from "@/i18n/tr";
 
+import { useFeature } from "@/components/features/feature";
 import { Button } from "@/components/ui/button";
 import { whatsappLink } from "@/lib/whatsapp";
 
@@ -20,6 +21,9 @@ function WhatsAppIcon() {
 export function WhatsAppButton({ phone, text, label, size = "sm", variant = "outline", className }: {
   phone: string | null; text: string; label: string; size?: "sm" | "default"; variant?: "outline" | "ghost" | "secondary"; className?: string;
 }) {
+  // أزرار واتساب يمكن إطفاؤها كلها من تخصيص النظام
+  const on = useFeature("general.whatsapp");
+  if (!on) return null;
   return (
     <Button type="button" size={size} variant={variant} className={className}
       title={phone ? `+${phone}` : tr("لا يوجد رقم؛ اختر المستلم من واتساب")}

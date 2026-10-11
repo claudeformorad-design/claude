@@ -69,8 +69,11 @@ export default async function HotelSettingsPage() {
                 }}
                 fields={[
                   { name: "name_ar", label: t.onboarding.nameAr }, { name: "name_en", label: t.onboarding.nameEn, ltr: true },
-                  { name: "legal_name", label: a.legalName }, { name: "tax_number", label: a.taxNumber, ltr: true },
-                  { name: "commercial_registration", label: a.cr, ltr: true }, { name: "phone", label: a.phone, ltr: true },
+                  // ما أطفأه تخصيص النظام لا يظهر، وقيمته الحالية تُرسل كما هي فلا تُمسح
+                  ...(ctx.on("hotel.legal_name") ? [{ name: "legal_name", label: a.legalName }] : []),
+                  ...(ctx.on("hotel.tax_number") ? [{ name: "tax_number", label: a.taxNumber, ltr: true }] : []),
+                  ...(ctx.on("hotel.cr") ? [{ name: "commercial_registration", label: a.cr, ltr: true }] : []),
+                  { name: "phone", label: a.phone, ltr: true },
                   { name: "email", label: a.email, ltr: true }, { name: "address", label: a.address },
                   { name: "timezone", label: a.timezone, ltr: true },
                   ...(autoRooms ? [] : [{ name: "total_rooms", label: a.totalRooms, type: "number" as const }]),
@@ -105,11 +108,11 @@ export default async function HotelSettingsPage() {
 
         {ctx.can(PERMISSIONS.hotelManage) && (
           <OperationsCard errors={t.errors} initial={{
-            modules: h.enabled_modules, check_in_time: h.check_in_time, check_out_time: h.check_out_time, weekend_nights: h.weekend_nights, require_cashier_shift: h.require_cashier_shift, room_access: h.room_access,
+            check_in_time: h.check_in_time, check_out_time: h.check_out_time, weekend_nights: h.weekend_nights, require_cashier_shift: h.require_cashier_shift, room_access: h.room_access,
           }} />
         )}
 
-        {ctx.can(PERMISSIONS.hotelManage) && <MessagesCard custom={await loadTemplates(ctx.supabase, h.id)} errors={t.errors} />}
+        {ctx.can(PERMISSIONS.hotelManage) && ctx.on("general.whatsapp") && <MessagesCard custom={await loadTemplates(ctx.supabase, h.id)} errors={t.errors} />}
 
         {admin && (
           <AssistantCard errors={t.errors} state={ai

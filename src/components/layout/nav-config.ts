@@ -2,7 +2,7 @@ import {
   BarChart3, Banknote, BedDouble, BookOpen, Boxes, Building2, CalendarCheck, CalendarDays, CalendarRange, Clock, ConciergeBell, DoorOpen,
   FileSpreadsheet, FileText, History, Hourglass, Landmark, LayoutDashboard, ListChecks, ListTree, Percent, PieChart, Receipt, Scale,
   ArrowLeftRight, CalendarSearch, CalendarX2, ChartColumn, WalletCards, ClipboardList, Coins, Gauge, Handshake, Target, Scale3d, MoonStar, BrushCleaning, Utensils, BadgePercent, Settings, ShieldCheck, ShoppingCart, Tags, TrendingUp, Truck, UserCog, UserRound, Users, Wallet, Waves,
-  IdCard, ClipboardCheck, FileSearch, Sigma, ListX, Repeat, CalendarClock, Plane, HandCoins, Calculator, SlidersHorizontal, FileUp, Wrench, PackageSearch, WashingMachine, PartyPopper, Star,
+  IdCard, ToggleRight, ClipboardCheck, FileSearch, Sigma, ListX, Repeat, CalendarClock, Plane, HandCoins, Calculator, SlidersHorizontal, FileUp, Wrench, PackageSearch, WashingMachine, PartyPopper, Star,
 } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
 import type { HotelModule } from "@/lib/supabase/database.types";
@@ -13,7 +13,8 @@ export type NavItem = { href: string; label: string; icon: React.ComponentType<{
 /** color: لون المجموعة (محايد في نظام التصميم الحالي؛ عنصر نشط واحد فقط يتميّز) */
 export type NavGroup = { title?: string; icon: NavItem["icon"]; color: string; items: NavItem[]; module?: HotelModule };
 /** ما يحق للمستخدم رؤيته: الأقسام المفعّلة للفندق وصلاحياته فيه */
-export type NavAccess = { modules: readonly string[]; permissions: readonly string[] };
+/** hidden: صفحات أطفأها تخصيص النظام للفندق */
+export type NavAccess = { modules: readonly string[]; permissions: readonly string[]; hidden?: readonly string[] };
 
 /** شجرة التنقل الوحيدة في النظام (الشريط الجانبي + البحث السريع)، مفلترة بالأقسام والصلاحيات */
 /** لوحة التحكم مالية بالكامل: تظهر لمن يرى القوائم المالية، وغيره يبدأ من أول صفحة مسموحة له */
@@ -34,7 +35,7 @@ export function navGroups(l: NavLabels, access?: NavAccess): NavGroup[] {
   const on = (m?: HotelModule) => !m || access.modules.includes(m);
   return all
     .filter((g) => on(g.module))
-    .map((g) => ({ ...g, items: g.items.filter((i) => on(i.module) && allowed(i.permission, perms)) }))
+    .map((g) => ({ ...g, items: g.items.filter((i) => on(i.module) && allowed(i.permission, perms) && !access.hidden?.some((h) => isActivePath(i.href, h))) }))
     .filter((g) => g.items.length > 0);
 }
 
@@ -184,6 +185,7 @@ function allGroups(l: NavLabels): NavGroup[] {
       color: "#312f2e",
       items: [
         { href: "/settings/hotel", label: l.hotelSettings, icon: Settings, permission: ["settings.hotel.manage", "coa.accounts.view"] },
+        { href: "/settings/features", label: l.features, icon: ToggleRight, permission: "settings.hotel.manage" },
         { href: "/settings/revenue", label: l.revenueSettings, icon: Wallet, permission: "coa.accounts.view" },
         { href: "/settings/currencies", label: l.currencies, icon: Coins, permission: "settings.currencies.manage" },
         { href: "/settings/hr", label: l.hrSettings, icon: SlidersHorizontal, permission: "hr.manage", module: "accounting" },

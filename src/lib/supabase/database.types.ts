@@ -60,6 +60,11 @@ export type HotelRow = Audit & {
   voucher_approval_threshold: string | null;
   /** الأقسام المفعّلة بالترخيص */
   enabled_modules: HotelModule[];
+  /** تخصيص النظام: الأقسام التي أطفأها صاحب النظام، والأجزاء والخانات والأزرار التي أطفأها المدير، وما يسقط معها من صلاحيات */
+  blocked_sections: string[];
+  section_permissions: string[];
+  disabled_features: string[];
+  feature_permissions: string[];
   check_in_time: string;
   check_out_time: string;
   /** ليالي نهاية الأسبوع (0 = الأحد … 6 = السبت) */
@@ -829,6 +834,9 @@ export type Database = {
     };
     Functions: {
       set_hotel_modules: { Args: { p_hotel_id: string; p_modules: HotelModule[] }; Returns: undefined };
+      can_manage_sections: { Args: { p_hotel_id: string }; Returns: boolean };
+      save_hotel_sections: { Args: { p_hotel_id: string; p_modules: HotelModule[]; p_blocked: string[]; p_permissions: string[] }; Returns: undefined };
+      save_hotel_features: { Args: { p_hotel_id: string; p_disabled: string[]; p_permissions: string[] }; Returns: undefined };
       create_reservation: {
         Args: {
           p_hotel_id: string; p_guest_id: string; p_room_type_id: string; p_arrival_date?: string | null; p_departure_date?: string | null;

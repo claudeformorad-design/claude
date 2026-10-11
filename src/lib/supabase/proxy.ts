@@ -35,6 +35,8 @@ function securityPolicy(request: NextRequest) {
 function forward(request: NextRequest, policy: ReturnType<typeof securityPolicy>): NextResponse {
   const headers = new Headers(request.headers);
   headers.set("x-nonce", policy.nonce);
+  // مسار الصفحة للخادم: تُمنع به الصفحات التي أطفأها تخصيص النظام
+  headers.set("x-pathname", request.nextUrl.pathname);
   headers.set("content-security-policy", policy.csp);
   return withSecurityHeaders(NextResponse.next({ request: { headers } }), policy);
 }

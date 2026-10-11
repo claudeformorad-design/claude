@@ -20,6 +20,7 @@ import { formatMoney } from "@/lib/accounting/money";
 import { addDays, dayLabel, nightsBetween, weekdayOf } from "@/lib/pms/dates";
 import { ID_TYPES, PRICING_LABEL, RESERVATION_SOURCE, WEEKDAYS } from "@/lib/pms/labels";
 import { cn } from "@/lib/utils";
+import { Feature, useFeature } from "@/components/features/feature";
 import type { BookingMode, ReservationPricing, ReservationQuote, ReservationSource } from "@/lib/supabase/database.types";
 import { createReservationAction, quoteAction, updateReservationAction } from "../_pms/actions";
 
@@ -76,6 +77,12 @@ export function ReservationForm({
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const set = <K extends keyof ReservationFormValues>(k: K, value: ReservationFormValues[K]) => setV((x) => ({ ...x, [k]: value }));
+  // ما أطفأه تخصيص النظام: أنواع الحجز، والشركة، والسعر اليدوي
+  const groupOn = useFeature("reservations.group");
+  const seriesOn = useFeature("reservations.series");
+  const kinds = KINDS.filter((k) => (k.key !== "group" || groupOn) && (k.key !== "series" || seriesOn));
+  const useCompany = useFeature("reservations.company");
+  const manualRate = useFeature("reservations.manual_rate");
 
   const type = roomTypes.find((x) => x.id === v.room_type_id);
   const hourly = type?.mode === "hourly";
@@ -149,10 +156,10 @@ export function ReservationForm({
       <div className="space-y-6">
         {error && <Alert variant="destructive">{error}</Alert>}
 
-        {mode === "create" && !lockedKind && (
+        {mode === "create" && !lockedKind && kinds.length > 1 && (
           <LayoutGroup id="kind">
-            <div className="grid gap-3 sm:grid-cols-3">
-              {KINDS.map((k) => {
+            <div className={cn("grid gap-3", kinds.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2")}>
+              {kinds.map((k) => {
                 const on = v.kind === k.key;
                 return (
                   <button key={k.key} type="button" onClick={() => set("kind", k.key)}
@@ -277,13 +284,13 @@ export function ReservationForm({
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className={field}><Label htmlFor="adults">{tr("بالغون")}{type ? tr("، حتى {0}", type.maxAdults) : ""}</Label><Input id="adults" inputMode="numeric" dir="ltr" value={v.adults} onChange={(e) => set("adults", e.target.value)} /></div>
               <div className={field}><Label htmlFor="children">{tr("أطفال")}{type ? tr("، حتى {0}", type.maxChildren) : ""}</Label><Input id="children" inputMode="numeric" dir="ltr" value={v.children} onChange={(e) => set("children", e.target.value)} /></div>
-              <div className={field}>
+              <Feature k="reservations.source"><div className={field}>
                 <Label htmlFor="source">{tr("مصدر الحجز")}</Label>
                 <NativeSelect id="source" value={v.source} onChange={(e) => set("source", e.target.value as ReservationSource)}>
                   {Object.entries(RESERVATION_SOURCE).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
                 </NativeSelect>
-              </div>
-              {companies.length > 0 && (
+              </div></Feature>
+              {companies.length > 0 && useCompany && (
                 <div className={field}>
                   <Label htmlFor="customer_id">{tr("الشركة أو جهة الفوترة")}</Label>
                   <NativeSelect id="customer_id" value={v.customer_id} onChange={(e) => set("customer_id", e.target.value)}>
@@ -301,7 +308,7 @@ export function ReservationForm({
           </CardContent>
         </Card>
 
-        {v.kind === "single" && canOverride && (
+        {v.kind === "single" && canOverride && manualRate && (
           <Card>
             <CardHeader>
               <CardTitle>{tr("التسعير")}</CardTitle>
@@ -359,8 +366,8 @@ export function ReservationForm({
               <div className={cn(field, "max-w-xs")}><Label htmlFor="tentative_until">{tr("يُحجز مبدئيًا حتى")}</Label><Input id="tentative_until" type="date" dir="ltr" value={v.tentative_until} onChange={(e) => set("tentative_until", e.target.value)} /></div>
             )}
             <div className="grid gap-4 md:grid-cols-2">
-              <div className={field}><Label htmlFor="special_requests">{tr("طلبات النزيل")}</Label><Textarea id="special_requests" value={v.special_requests} onChange={(e) => set("special_requests", e.target.value)} placeholder={tr("سرير إضافي، طابق مرتفع، وصول متأخر…")} /></div>
-              <div className={field}><Label htmlFor="notes">{tr("ملاحظات داخلية")}</Label><Textarea id="notes" value={v.notes} onChange={(e) => set("notes", e.target.value)} /></div>
+              <Feature k="reservations.special_requests"><div className={field}><Label htmlFor="special_requests">{tr("طلبات النزيل")}</Label><Textarea id="special_requests" value={v.special_requests} onChange={(e) => set("special_requests", e.target.value)} placeholder={tr("سرير إضافي، طابق مرتفع، وصول متأخر…")} /></div></Feature>
+              <Feature k="reservations.notes"><div className={field}><Label htmlFor="notes">{tr("ملاحظات داخلية")}</Label><Textarea id="notes" value={v.notes} onChange={(e) => set("notes", e.target.value)} /></div></Feature>
             </div>
           </CardContent>
         </Card>
@@ -440,16 +447,16 @@ function GuestPicker({ guests, value, onChange }: {
       ) : (
         <div className="grid gap-4 rounded-lg border border-dashed border-line-strong p-4 sm:grid-cols-2">
           <div className={field}><Label htmlFor="new_guest_name">{tr("اسم النزيل")}</Label><Input id="new_guest_name" value={value.new_guest_name} onChange={(e) => onChange({ new_guest_name: e.target.value })} /></div>
-          <div className={field}><Label htmlFor="new_guest_phone">{tr("الجوال")}</Label><Input id="new_guest_phone" dir="ltr" value={value.new_guest_phone} onChange={(e) => onChange({ new_guest_phone: e.target.value })} /></div>
-          <div className={field}>
+          <Feature k="guests.phone"><div className={field}><Label htmlFor="new_guest_phone">{tr("الجوال")}</Label><Input id="new_guest_phone" dir="ltr" value={value.new_guest_phone} onChange={(e) => onChange({ new_guest_phone: e.target.value })} /></div></Feature>
+          <Feature k="guests.id"><div className={field}>
             <Label htmlFor="new_guest_id_type">{tr("نوع الهوية")}</Label>
             <NativeSelect id="new_guest_id_type" value={value.new_guest_id_type} onChange={(e) => onChange({ new_guest_id_type: e.target.value })}>
               <option value="">{tr("اختر")}</option>
               {Object.entries(ID_TYPES).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
             </NativeSelect>
           </div>
-          <div className={field}><Label htmlFor="new_guest_id_number">{tr("رقم الهوية")}</Label><Input id="new_guest_id_number" dir="ltr" value={value.new_guest_id_number} onChange={(e) => onChange({ new_guest_id_number: e.target.value })} /></div>
-          <div className={cn(field, "sm:col-span-2")}><Label htmlFor="new_guest_nationality">{tr("الجنسية")}</Label><Input id="new_guest_nationality" value={value.new_guest_nationality} onChange={(e) => onChange({ new_guest_nationality: e.target.value })} /></div>
+          <div className={field}><Label htmlFor="new_guest_id_number">{tr("رقم الهوية")}</Label><Input id="new_guest_id_number" dir="ltr" value={value.new_guest_id_number} onChange={(e) => onChange({ new_guest_id_number: e.target.value })} /></div></Feature>
+          <Feature k="guests.nationality"><div className={cn(field, "sm:col-span-2")}><Label htmlFor="new_guest_nationality">{tr("الجنسية")}</Label><Input id="new_guest_nationality" value={value.new_guest_nationality} onChange={(e) => onChange({ new_guest_nationality: e.target.value })} /></div></Feature>
         </div>
       )}
     </div>

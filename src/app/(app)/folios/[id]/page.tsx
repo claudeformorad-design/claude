@@ -111,6 +111,7 @@ export default async function FolioPage({ params }: { params: Promise<{ id: stri
               manage: ctx.can(PERMISSIONS.folioManage), allowance: ctx.can(PERMISSIONS.folioAllowance),
               void: ctx.can(PERMISSIONS.folioVoid), checkout: ctx.can(PERMISSIONS.folioCheckout),
             }}
+            features={{ allowance: ctx.on("folio.allowance"), void: ctx.on("folio.void") }}
           />
         </CardContent></Card>
       )}

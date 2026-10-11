@@ -36,9 +36,11 @@ const friendly = (e: unknown) => problemText(classifyProviderError(e));
 export async function POST(request: Request) {
   const ctx = await getAppContext();
   if (!ctx.user || !ctx.hotel) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const app = ctx as AppContext;
+  // المساعد قسم يمكن إطفاؤه من تخصيص النظام
+  if (!app.on("assistant")) return NextResponse.json({ error: "permission_denied" }, { status: 403 });
   const cfg = await getAssistantConfig();
   if (!cfg) return NextResponse.json({ error: "not_configured" }, { status: 503 });
-  const app = ctx as AppContext;
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success || (!parsed.data.question && !parsed.data.retry)) return NextResponse.json({ error: "validation" }, { status: 400 });
   const { conversationId, question, retry, page } = parsed.data;

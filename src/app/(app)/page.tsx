@@ -84,7 +84,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const sp = await searchParams;
   // الصفحة الأولى: بعد الدخول تُفتح صفحة الموظف المحددة له، ومن لا تخصه اللوحة يذهب لأول صفحة مسموحة له
   const modules = ctx.hotel.enabled_modules ?? ["accounting", "pms"];
-  const pages = navGroups(t.nav, { modules, permissions: [...ctx.permissions] }).flatMap((g) => g.items.map((i) => i.href));
+  const pages = navGroups(t.nav, ctx.access).flatMap((g) => g.items.map((i) => i.href));
   const dashboard = modules.includes("accounting") && allowed(DASHBOARD_PERMISSIONS, ctx.permissions);
   const home = ctx.ui.home_path && ctx.ui.home_path !== "/" && pages.includes(ctx.ui.home_path) ? ctx.ui.home_path : null;
   if (sp.home && home) redirect(home);

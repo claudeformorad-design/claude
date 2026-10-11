@@ -34,6 +34,8 @@ export interface FolioActionsProps {
   voidable: { id: string; label: string }[];
   openFolios: { id: string; label: string }[];
   can: { manage: boolean; allowance: boolean; void: boolean; checkout: boolean };
+  /** ما أطفأه تخصيص النظام: لا يظهر حتى بطلب موافقة */
+  features: { allowance: boolean; void: boolean };
 }
 
 type FormValues = Record<string, string>;
@@ -48,8 +50,8 @@ export function FolioActions(p: FolioActionsProps) {
 
   const kinds = ([
     p.can.manage && "charge", p.can.manage && "payment", p.can.manage && "deposit",
-    (p.can.allowance || p.can.manage) && "allowance", p.can.manage && "refund", p.can.manage && "depositRefund",
-    p.can.manage && "transfer", (p.can.void || p.can.manage) && "void",
+    p.features.allowance && (p.can.allowance || p.can.manage) && "allowance", p.can.manage && "refund", p.can.manage && "depositRefund",
+    p.can.manage && "transfer", p.features.void && (p.can.void || p.can.manage) && "void",
   ].filter(Boolean) as Kind[]);
   const [kind, setKind] = useState<Kind | null>(kinds[0] ?? null);
 

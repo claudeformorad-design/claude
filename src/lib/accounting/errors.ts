@@ -166,6 +166,8 @@ const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
   [/Unknown message template/i, "نوع الرسالة غير معروف"],
   [/Unknown fee type/i, "نوع الرسم غير معروف"],
   [/Unknown register list/i, "نوع الكشف غير معروف"],
+  [/Only the system owner can turn sections on or off/i, "الأقسام يتحكم فيها صاحب النظام حسب ما اشتراه الفندق"],
+  [/This part is turned off for the hotel/i, "هذا الجزء مطفأ في تخصيص النظام"],
   [/Enter the fee percentage/i, "اكتب نسبة الرسم"],
   [/A deposit of (\S+) is required before confirming \(paid (\S+)\)/i, (m) => `يلزم عربون ${m[1]} قبل تأكيد الحجز، والمدفوع ${m[2]}`],
   [/The minimum stay in season (.+) is (\d+) nights/i, (m) => `أقل حجز في موسم ${m[1]} هو ${m[2]} ليالٍ`],

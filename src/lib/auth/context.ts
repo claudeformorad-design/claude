@@ -1,8 +1,10 @@
 import "@/i18n/locale-server";
 import "server-only";
 import { cache } from "react";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { forbidden, redirect } from "next/navigation";
+import type { NavAccess } from "@/components/layout/nav-config";
+import { type FeatureState, featureState, underHref } from "@/lib/features/state";
 import { createClient, type SupabaseServerClient } from "@/lib/supabase/server";
 import type { HotelRow, UserProfileRow } from "@/lib/supabase/database.types";
 import type { Permission } from "./permissions";
@@ -23,6 +25,12 @@ export interface AppContext {
   can: (permission: Permission) => boolean;
   /** واجهة المستخدم حسب دوره وإعداداته: الصفحة الأولى، الإجراءات السريعة، ما يُخفى من اللوحة، والحدود */
   ui: AccessInterface;
+  /** تخصيص النظام للفندق: ما أُطفئ من أقسام وأجزاء وخانات وأزرار */
+  features: FeatureState;
+  /** هل هذا الجزء أو الخانة أو الزر مفعّل في الفندق؟ */
+  on: (key: string) => boolean;
+  /** ما يظهر في التنقل: الأقسام المفعّلة والصلاحيات والصفحات المطفأة */
+  access: NavAccess;
 }
 
 /**
@@ -56,6 +64,11 @@ export const getAppContext = cache(async (): Promise<AppContext | { user: Sessio
     supabase.rpc("my_interface", { p_hotel_id: hotel.id }),
   ]);
   const permissions = new Set<string>(perms ?? []);
+  const features = featureState({
+    enabled_modules: hotel.enabled_modules ?? ["accounting", "pms"],
+    blocked_sections: hotel.blocked_sections ?? [],
+    disabled_features: hotel.disabled_features ?? [],
+  });
 
   return {
     supabase,
@@ -66,6 +79,9 @@ export const getAppContext = cache(async (): Promise<AppContext | { user: Sessio
     permissions,
     can: (permission: Permission) => permissions.has(permission),
     ui: { ...EMPTY_INTERFACE, ...((ui ?? {}) as Partial<AccessInterface>) },
+    features,
+    on: (key: string) => !features.off.has(key),
+    access: { modules: hotel.enabled_modules ?? ["accounting", "pms"], permissions: [...permissions].sort(), hidden: features.hiddenHrefs },
   };
 });
 
@@ -75,6 +91,9 @@ export async function requireAppContext(permission?: Permission): Promise<AppCon
   if (!ctx.user) redirect("/login");
   if (!ctx.hotel) redirect("/onboarding");
   const full = ctx as AppContext;
+  // صفحة أطفأها تخصيص النظام تُمنع حتى لو فُتحت برابطها (الوكيل يمرر مسار الطلب)
+  const path = (await headers()).get("x-pathname");
+  if (path && full.features.hiddenHrefs.some((h) => underHref(path, h))) redirect("/feature-off");
   if (permission && !full.can(permission)) forbidden();
   return full;
 }

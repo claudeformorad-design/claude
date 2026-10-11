@@ -103,7 +103,7 @@ export default async function VoucherPage({ params }: { params: Promise<{ id: st
         <div className="mb-4"><RegisterChequeForm paymentId={v.id} errors={t.errors} /></div>
       )}
 
-      {v.status === "posted" && (
+      {v.status === "posted" && ctx.on("payments.void") && (
         <VoidVoucher id={v.id} t={{ vouchers: t.vouchers, errors: t.errors }} request={!ctx.can(PERMISSIONS.paymentsVoid)} />
       )}
       <div className="mt-4"><AttachmentsCard ctx={ctx} entity="payment" entityId={v.id} path={`/vouchers/${v.id}`} errors={t.errors} /></div>

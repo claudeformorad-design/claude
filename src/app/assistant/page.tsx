@@ -21,7 +21,7 @@ export default async function AssistantPage({ searchParams }: { searchParams: Pr
     listConversations(ctx.supabase, ctx.hotel.id), getSettings(ctx.supabase, ctx.hotel.id), getAssistantConfig().catch(() => null),
   ]);
   const canSetup = config === null && (await isSystemAdmin(ctx));
-  const access = { modules: ctx.hotel.enabled_modules ?? ["accounting", "pms"], permissions: [...ctx.permissions] };
+  const access = ctx.access;
   const sections = navGroups(t.nav, access).flatMap((g) => g.items.map((i) => ({ label: i.label, group: g.title ?? tr("عام") })));
   const initial = sp.c && /^[0-9a-f-]{36}$/.test(sp.c) ? sp.c : undefined;
   return (

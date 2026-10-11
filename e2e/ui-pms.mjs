@@ -408,16 +408,15 @@ await step("backup downloads and restores the whole database", async () => {
   await go("/guests"); await bodyHas("نزيل التسكين", "نزيل سريع");
 });
 await step("modules: disabling hotel management hides it and blocks its pages", async () => {
-  await go("/settings/hotel");
-  await page.locator("label", { hasText: "إدارة الفندق" }).locator("input[type=checkbox]").uncheck();
-  await page.getByRole("button", { name: "حفظ إعدادات التشغيل" }).click();
-  await page.waitForTimeout(1500);
+  await go("/settings/features");
+  await page.getByRole("switch", { name: "الحجوزات والاستقبال" }).click();
+  await page.getByRole("button", { name: "إطفاء رغم ذلك" }).click();
+  await bodyHas("أُطفئ الحجوزات والاستقبال");
   await go("/"); await bodyLacks("الاستقبال والحجوزات");
-  await go("/front-desk"); await bodyHas("403");
-  await go("/settings/hotel");
-  await page.locator("label", { hasText: "إدارة الفندق" }).locator("input[type=checkbox]").check();
-  await page.getByRole("button", { name: "حفظ إعدادات التشغيل" }).click();
-  await page.waitForTimeout(1500);
+  await go("/front-desk"); await bodyHas("هذا الجزء مطفأ في هذا الفندق");
+  await go("/settings/features");
+  await page.getByRole("switch", { name: "الحجوزات والاستقبال" }).click();
+  await bodyHas("شُغّل الحجوزات والاستقبال");
   await go("/front-desk"); await bodyHas("لوحة الاستقبال");
 });
 

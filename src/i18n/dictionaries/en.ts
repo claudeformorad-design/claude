@@ -105,6 +105,7 @@ export const en: Dictionary = {
     taxReturn: "Tax return",
     periods: "Periods and closing",
     hotelSettings: "Hotel settings",
+    features: "Customize system",
     users: "Users and roles",
     approvals: "Approvals",
     dataImport: "Data import",

@@ -67,6 +67,11 @@ export async function requestApprovalAction(input: unknown): Promise<ActionResul
   if (!p.success) return invalid(p.error);
   // يطلب الموافقة من يعمل على هذا النوع من العمليات فقط
   if (!ctx.can(REQUESTER_PERMISSION[p.data.kind])) return { ok: false, error: "permission_denied" };
+  // لا يُطلب ما أطفأه تخصيص النظام
+  const feature = p.data.kind === "voucher_void" ? "payments.void"
+    : p.data.kind === "folio_action" && p.data.payload.action.kind === "void" ? "folio.void"
+    : p.data.kind === "folio_action" && p.data.payload.action.kind === "allowance" ? "folio.allowance" : null;
+  if (feature && !ctx.on(feature)) return { ok: false, error: "permission_denied" };
   const r = await toActionResult(async () => {
     const d = await describe(ctx, p.data);
     const { data, error } = await ctx.supabase.from("approval_requests").insert({

@@ -9,6 +9,7 @@ import { TopBar } from "@/components/layout/top-bar";
 import { Toaster } from "@/components/ui/toast";
 import { HoverPrefetch } from "@/components/layout/hover-prefetch";
 import { PageFrame } from "@/components/layout/page-frame";
+import { FeaturesProvider } from "@/components/features/feature";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -38,7 +39,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (isSupabaseConfigured() && ctx.profile?.must_change_password) redirect("/account/password");
   const signOut = isSupabaseConfigured() ? signOutAction : localMulti ? localSignOutAction : undefined;
   // ما يظهر في التنقل: الأقسام المفعّلة للفندق وصلاحيات المستخدم فيه
-  const access = { modules: ctx.hotel.enabled_modules ?? ["accounting", "pms"], permissions: [...ctx.permissions].sort() };
+  const access = ctx.access;
   // الإجراءات السريعة: ما اختاره المدير لدور الموظف، وإن لم يختر شيئًا فكل ما تسمح به صلاحياته
   const quickAllowed = QUICK_ACTIONS.filter((q) => ctx.can(q.permission) && !EDITION.hiddenQuickActions.has(q.key)
     && (q.module === "core" || access.modules.includes(q.module)));
@@ -46,7 +47,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const quickActions = (ctx.ui.quick_actions.length ? chosen : quickAllowed).map(({ href, label }) => ({ href, label }));
   // في التثبيت المحلي يظهر اسم الدخول بدل البريد الداخلي
   const login = localMulti ? (await usernamesOf([ctx.user.id])).get(ctx.user.id) : undefined;
-  const assistantOn = (await getAssistantConfig().catch(() => null)) !== null;
+  const assistantOn = ctx.on("assistant") && (await getAssistantConfig().catch(() => null)) !== null;
 
   return (
     // ملء الشاشة بلا حدود في الأطراف
@@ -78,7 +79,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             assistant={assistantOn}
             quickActions={quickActions}
           />
-          <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-12 pt-1 md:px-10"><PageFrame>{children}</PageFrame></main>
+          <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-12 pt-1 md:px-10"><PageFrame><FeaturesProvider off={[...ctx.features.off]}>{children}</FeaturesProvider></PageFrame></main>
         </div>
       </div>
     </div>

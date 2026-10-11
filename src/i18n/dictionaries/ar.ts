@@ -103,6 +103,7 @@ export const ar = {
     taxReturn: "الإقرار الضريبي",
     periods: "الفترات والإقفال",
     hotelSettings: "إعدادات الفندق",
+    features: "تخصيص النظام",
     users: "المستخدمون والأدوار",
     approvals: "الموافقات",
     dataImport: "استيراد البيانات",

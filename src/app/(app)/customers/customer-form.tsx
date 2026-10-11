@@ -14,6 +14,7 @@ import type { Dictionary } from "@/i18n/dictionaries/ar";
 import { saveCustomerAction } from "./actions";
 import { actionErrorText, callAction } from "@/lib/action-error";
 import { toast } from "@/components/ui/toast";
+import { Feature } from "@/components/features/feature";
 
 export function CustomerForm({ t, initial }: { t: Pick<Dictionary, "customers" | "common" | "errors">; initial: CustomerFormInput }) {
   const router = useRouter();
@@ -46,19 +47,21 @@ export function CustomerForm({ t, initial }: { t: Pick<Dictionary, "customers" |
         </div>
       </div>
       {f("name_ar", t.customers.name, { dir: "rtl" })}
-      {f("name_en", tr("{0} بالإنجليزية", t.customers.name), { dir: "ltr" })}
+      <Feature k="customers.name_en">{f("name_en", tr("{0} بالإنجليزية", t.customers.name), { dir: "ltr" })}</Feature>
       <div className="grid grid-cols-2 gap-3">
-        {f("tax_number", t.customers.taxNumber, { dir: "ltr" })}
-        {f("commercial_registration", t.customers.cr, { dir: "ltr" })}
+        <Feature k="customers.tax_number">{f("tax_number", t.customers.taxNumber, { dir: "ltr" })}</Feature>
+        <Feature k="customers.cr">{f("commercial_registration", t.customers.cr, { dir: "ltr" })}</Feature>
         {f("phone", t.customers.phone, { dir: "ltr" })}
         {f("email", t.customers.email, { dir: "ltr" })}
       </div>
       {f("address", t.customers.address)}
-      <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-4" {...register("allow_credit")} />{t.customers.allowCredit}</label>
-      <div className="grid grid-cols-2 gap-3">
-        {f("credit_limit", t.customers.creditLimit, { dir: "ltr", inputMode: "decimal" })}
-        {f("payment_terms_days", t.customers.paymentTerms, { dir: "ltr", inputMode: "numeric" })}
-      </div>
+      <Feature k="customers.credit">
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-4" {...register("allow_credit")} />{t.customers.allowCredit}</label>
+        <div className="grid grid-cols-2 gap-3">
+          {f("credit_limit", t.customers.creditLimit, { dir: "ltr", inputMode: "decimal" })}
+          {f("payment_terms_days", t.customers.paymentTerms, { dir: "ltr", inputMode: "numeric" })}
+        </div>
+      </Feature>
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-4" {...register("is_active")} />{t.common.active}</label>
       <div className="flex gap-2">
         <Button type="submit" loading={pending}>{t.common.save}</Button>

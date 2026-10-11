@@ -102,6 +102,8 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
     ? ((await ctx.supabase.rpc("reservation_policy_status", { p_reservation_id: r.id })).data as ReservationPolicy | null)
     : null;
   const canWaive = ctx.can(PERMISSIONS.pmsRatesOverride);
+  // زرا الإعفاء من الرسوم يمكن إطفاؤهما من تخصيص النظام
+  const waiveButtons = canWaive && ctx.on("reservations.waive_fees");
   const money = (v: number) => formatMoney(v, { locale }) + " " + ctx.hotel.base_currency;
 
   // مراسلة النزيل بواتساب: تأكيد وتذكير قبل الوصول، وشكر مع رابط التقييم بعد المغادرة
@@ -137,14 +139,14 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
               <ActionButton label={tr("لم يحضر")} done={tr("سُجّل عدم الحضور")} errors={t.errors} reasonLabel={tr("ملاحظة")} reasonRequired={false} run={noShowAction.bind(null, r.id)}
                 confirmText={policy && policy.no_show_charge > 0 ? tr("سيُخصم رسم عدم الحضور {0} من العربون المدفوع.", money(policy.no_show_charge)) : undefined} />
             )}
-            {canCancel && r.arrival_date <= today && canWaive && policy && policy.no_show_charge > 0 && (
+            {canCancel && r.arrival_date <= today && waiveButtons && policy && policy.no_show_charge > 0 && (
               <ActionButton label={tr("لم يحضر بدون رسوم")} done={tr("سُجّل عدم الحضور بدون رسوم")} errors={t.errors} reasonLabel={tr("سبب الإعفاء")} run={noShowWaivedAction.bind(null, r.id)} />
             )}
             {canCancel && (
               <ActionButton variant="destructive" label={tr("إلغاء الحجز")} done={tr("أُلغي الحجز")} errors={t.errors} reasonLabel={tr("سبب الإلغاء")} run={cancelReservationAction.bind(null, r.id)}
                 confirmText={policy && policy.cancel_charge > 0 ? tr("الإلغاء الآن عليه رسم {0} يُخصم من العربون المدفوع.", money(policy.cancel_charge)) : undefined} />
             )}
-            {canCancel && canWaive && policy && policy.cancel_charge > 0 && (
+            {canCancel && waiveButtons && policy && policy.cancel_charge > 0 && (
               <ActionButton variant="destructive" label={tr("إلغاء بدون رسوم")} done={tr("أُلغي الحجز بدون رسوم")} errors={t.errors} reasonLabel={tr("سبب الإعفاء")} run={cancelWaivedAction.bind(null, r.id)} />
             )}
             {canManage && !canCancel && (
@@ -238,7 +240,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ id
               </CardContent>
             </Card>
           )}
-          {r.status !== "cancelled" && r.status !== "no_show" && (
+          {r.status !== "cancelled" && r.status !== "no_show" && ctx.on("general.whatsapp") && (
             <Card>
               <CardHeader><CardTitle>{tr("مراسلة النزيل")}</CardTitle></CardHeader>
               <CardContent className="space-y-3">

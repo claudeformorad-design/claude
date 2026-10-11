@@ -11,13 +11,10 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/toast";
 import { actionErrorText, callAction } from "@/lib/action-error";
 import { cn } from "@/lib/utils";
-import type { HotelModule, RoomAccess } from "@/lib/supabase/database.types";
+import type { RoomAccess } from "@/lib/supabase/database.types";
+import Link from "@/components/link";
 import { saveHotelOperationsAction } from "../../_admin/actions";
 
-const MODULES: { value: HotelModule; title: string; description: string }[] = [
-  { value: "accounting", get title() { return tr("المحاسبة"); }, get description() { return tr("الحسابات والقيود، الفوليو والفواتير، المشتريات، الأصول والمخزون، التقارير المالية."); } },
-  { value: "pms", get title() { return tr("إدارة الفندق"); }, get description() { return tr("الحجوزات والنزلاء، الغرف وحالاتها، الأسعار والمواسم، قائمة الانتظار، القاعات بالساعة."); } },
-];
 /** ما يُسلَّم للنزيل عند التسكين ليدخل غرفته */
 const ACCESS: { value: RoomAccess; title: string; description: string }[] = [
   { value: "card", get title() { return tr("بطاقة"); }, get description() { return tr("يؤكد الموظف تسليم بطاقة الغرفة للنزيل عند التسكين"); } },
@@ -27,17 +24,15 @@ const ACCESS: { value: RoomAccess; title: string; description: string }[] = [
 const NIGHTS: [number, string][] = [[6, "السبت"], [0, "الأحد"], [1, "الاثنين"], [2, "الثلاثاء"], [3, "الأربعاء"], [4, "الخميس"], [5, "الجمعة"]];
 
 /**
- * أقسام النظام المفعّلة لهذا الفندق وإعدادات التشغيل الفندقي.
- * إيقاف قسم يخفي صفحاته ويمنع عملياته في قاعدة البيانات، دون حذف أي بيانات.
+ * إعدادات التشغيل الفندقي. الأقسام نفسها في صفحة تخصيص النظام.
  */
 export function OperationsCard({ initial, errors }: {
-  initial: { modules: HotelModule[]; check_in_time: string; check_out_time: string; weekend_nights: number[]; require_cashier_shift: boolean; room_access: RoomAccess };
+  initial: { check_in_time: string; check_out_time: string; weekend_nights: number[]; require_cashier_shift: boolean; room_access: RoomAccess };
   errors: Record<string, string>;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [modules, setModules] = useState<HotelModule[]>(initial.modules);
   const [checkIn, setCheckIn] = useState(initial.check_in_time.slice(0, 5));
   const [checkOut, setCheckOut] = useState(initial.check_out_time.slice(0, 5));
   const [weekend, setWeekend] = useState<number[]>(initial.weekend_nights);
@@ -48,8 +43,7 @@ export function OperationsCard({ initial, errors }: {
   const save = () =>
     start(async () => {
       setError(null);
-      if (modules.length === 0) { setError(tr("فعّل قسمًا واحدًا على الأقل")); return; }
-      const r = await callAction(saveHotelOperationsAction({ modules, check_in_time: checkIn, check_out_time: checkOut, weekend_nights: weekend, require_cashier_shift: requireShift, room_access: access }));
+      const r = await callAction(saveHotelOperationsAction({ check_in_time: checkIn, check_out_time: checkOut, weekend_nights: weekend, require_cashier_shift: requireShift, room_access: access }));
       if (r.ok) { toast(tr("تم حفظ إعدادات التشغيل")); router.refresh(); }
       else setError(actionErrorText(errors, r));
     });
@@ -57,26 +51,13 @@ export function OperationsCard({ initial, errors }: {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{tr("أقسام النظام والتشغيل")}</CardTitle>
-        <CardDescription>{tr("النظام واحد وقاعدة بياناته واحدة؛ فعّل الأقسام التي يستخدمها الفندق. إيقاف قسم يخفي صفحاته ولا يحذف بياناته.")}</CardDescription>
+        <CardTitle>{tr("إعدادات التشغيل")}</CardTitle>
+        <CardDescription>{tr("أوقات الوصول والمغادرة وليالي نهاية الأسبوع والوردية وتسليم الغرف.")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         {error && <Alert variant="destructive">{error}</Alert>}
-        <div className="grid gap-3 md:grid-cols-2">
-          {MODULES.map((m) => {
-            const on = modules.includes(m.value);
-            return (
-              <label key={m.value} className={cn("flex cursor-pointer items-start gap-3 rounded-lg border bg-white p-4 transition-colors",
-                on ? "border-action bg-accent1-tint/40" : "border-line hover:border-line-strong")}>
-                <input type="checkbox" checked={on} onChange={() => setModules((x) => toggle(x, m.value))} className="mt-1 size-4" />
-                <span className="min-w-0">
-                  <span className="block text-[16.5px] font-semibold text-ink">{m.title}</span>
-                  <span className="mt-0.5 block text-[15px] leading-relaxed text-slate-600">{m.description}</span>
-                </span>
-              </label>
-            );
-          })}
-        </div>
+        <p className="text-[15.5px] text-slate-600">{tr("تشغيل الأقسام وإطفاؤها، وإطفاء أي جزء أو خانة أو زر، من")}{" "}
+          <Link href="/settings/features" className="font-semibold text-action underline-offset-4 hover:underline">{tr("تخصيص النظام")}</Link></p>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="field-group space-y-1.5">
             <Label htmlFor="check_in_time">{tr("وقت تسجيل الوصول")}</Label>
