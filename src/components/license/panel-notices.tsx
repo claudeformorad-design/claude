@@ -9,7 +9,7 @@ type Notice = { id: string; title: string; body: string; level: "info" | "import
 const KEY = "nazeel-dismissed-notices";
 
 /**
- * إشعارات صاحب النظام من لوحة نزيل: شريط أعلى الصفحة.
+ * إشعارات صاحب النظام من لوحة هوتيلنا: شريط أعلى الصفحة.
  * العادي يخفيه المستخدم على جهازه، والمهم يبقى حتى تنتهي مدته من اللوحة.
  */
 export function PanelNotices({ notices }: { notices: Notice[] }) {
@@ -30,7 +30,7 @@ export function PanelNotices({ notices }: { notices: Notice[] }) {
     try { localStorage.setItem(KEY, JSON.stringify(next.slice(-50))); } catch { /* تخزين المتصفح غير متاح */ }
   };
   return (
-    <div className="mb-4 space-y-2" role="region" aria-label={tr("إشعارات نزيل")}>
+    <div className="mb-4 space-y-2" role="region" aria-label={tr("إشعارات هوتيلنا")}>
       {shown.map((n) => (
         <div key={n.id} data-notice={n.id}
           className={cn("flex items-start gap-3 rounded-lg px-4 py-3", n.level === "important" ? "bg-amber-tint text-amber" : "bg-sky-tint text-sky")}>

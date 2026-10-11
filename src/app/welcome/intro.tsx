@@ -8,7 +8,7 @@ import * as m from "motion/react-m";
 import {
   BarChart3, BedDouble, CalendarCheck, KeyRound, Landmark, Link2, ShieldCheck, type LucideIcon,
 } from "lucide-react";
-import { BRAND_N } from "@/components/brand-mark";
+import { BRAND_H } from "@/components/brand-mark";
 import { AssistantMark } from "@/components/assistant/mark";
 
 export const INTRO_SEEN_KEY = "nazeel:intro-seen";
@@ -16,7 +16,7 @@ export const INTRO_SEEN_KEY = "nazeel:intro-seen";
 type Scene = { icon?: LucideIcon | "assistant"; title: string; text: string };
 
 const scenes = (): Scene[] => [
-  { title: tr("أهلًا بك في نزيل"), text: tr("نظام واحد يدير فندقك ويحسب كل ريال فيه.") },
+  { title: tr("أهلًا بك في هوتيلنا"), text: tr("نظام واحد يدير فندقك ويحسب كل ريال فيه.") },
   { icon: CalendarCheck, title: tr("الحجوزات"), text: tr("احجز في ثوانٍ، والنظام يمنع حجز الغرفة نفسها مرتين.") },
   { icon: BedDouble, title: tr("النزلاء والغرف"), text: tr("ملف لكل نزيل، وحالة كل غرفة أمامك لحظة بلحظة.") },
   { icon: KeyRound, title: tr("التسكين والمغادرة"), text: tr("سلّم المفتاح بضغطة، وعند المغادرة تصدر الفاتورة وحدها.") },
@@ -111,7 +111,7 @@ export function Intro({ next, replay = false }: { next: string; replay?: boolean
               {i === 0 ? (
                 <svg viewBox="0 0 100 100" aria-hidden className="size-[84px] overflow-visible">
                   <rect className="mark-room" width="100" height="100" rx="24" fill="#312F2E" />
-                  <path className="mark-letter" fill="#FFFFFF" d={BRAND_N} />
+                  <path className="mark-letter" fill="#FFFFFF" d={BRAND_H} />
                   <circle className="mark-guest" cx="69.94" cy="69.75" r="5.25" fill="#2483E1" />
                 </svg>
               ) : (
@@ -133,7 +133,7 @@ export function Intro({ next, replay = false }: { next: string; replay?: boolean
           ) : (
             <m.div key="go" className="flex w-full max-w-[360px] flex-col items-center"
               initial={{ opacity: 0, y: reduce ? 0 : 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduce ? 0 : 0.6, ease }}>
-              <h1 className="text-[38px] font-bold leading-tight tracking-tight text-ink sm:text-[44px]">{replay ? tr("هذا هو نزيل") : tr("فندقك جاهز للبدء")}</h1>
+              <h1 className="text-[38px] font-bold leading-tight tracking-tight text-ink sm:text-[44px]">{replay ? tr("هذا هو هوتيلنا") : tr("فندقك جاهز للبدء")}</h1>
               <p className="mt-4 text-[18px] leading-relaxed text-slate-500">{replay ? tr("كل قسم ذكرناه تجده في القائمة الجانبية.") : tr("أنشئ ملف الفندق في دقيقة، ثم ابدأ أول حجز.")}</p>
               <button type="button" onClick={finish} autoFocus
                 className="mt-10 h-[52px] w-full rounded-xl bg-ink text-[18px] font-semibold text-white transition-colors hover:bg-black">

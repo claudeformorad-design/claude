@@ -32,7 +32,7 @@ export interface AppContext {
   on: (key: string) => boolean;
   /** ما يظهر في التنقل: الأقسام المفعّلة والصلاحيات والصفحات المطفأة */
   access: NavAccess;
-  /** ترخيص النظام من لوحة نزيل (حين يُطلب) */
+  /** ترخيص النظام من لوحة هوتيلنا (حين يُطلب) */
   license: LicenseStatus;
 }
 

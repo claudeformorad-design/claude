@@ -3,7 +3,7 @@ import { BadgeCheck } from "lucide-react";
 import type { LicenseStatus } from "@/lib/license/client";
 import { RecheckButton } from "./recheck-button";
 
-/** حالة الترخيص من لوحة نزيل: الفندق، الربط، آخر تواصل */
+/** حالة الترخيص من لوحة هوتيلنا: الفندق، الربط، آخر تواصل */
 export function LicenseCard({ license }: { license: Extract<LicenseStatus, { ok: true }> }) {
   const last = license.lastCheckin ? license.lastCheckin.slice(0, 16).replace("T", " ") : null;
   return (
@@ -13,7 +13,7 @@ export function LicenseCard({ license }: { license: Extract<LicenseStatus, { ok:
         <p className="text-[17px] font-semibold text-ink">{tr("مرخّص لـ {0}", license.license.hotel_name)}</p>
         <p className="text-[15px] text-slate-600">
           {license.linked
-            ? last ? tr("مربوط بلوحة نزيل، آخر تواصل {0}", last) : tr("مربوط بلوحة نزيل")
+            ? last ? tr("مربوط بلوحة هوتيلنا، آخر تواصل {0}", last) : tr("مربوط بلوحة هوتيلنا")
             : tr("مفعّل بمفتاح يدوي على هذا الجهاز")}
           {"، "}{tr("التحديثات مجانية للأبد")}
         </p>

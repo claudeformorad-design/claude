@@ -14,7 +14,7 @@ export function RecheckButton() {
   return (
     <Button variant="outline" loading={pending} onClick={() => start(async () => {
       const r = await recheckAction();
-      if (r.ok) { toast(tr("تم التحقق من لوحة نزيل")); router.refresh(); } else toast(r.message);
+      if (r.ok) { toast(tr("تم التحقق من لوحة هوتيلنا")); router.refresh(); } else toast(r.message);
     })}><RefreshCw />{tr("تحقق الآن")}</Button>
   );
 }

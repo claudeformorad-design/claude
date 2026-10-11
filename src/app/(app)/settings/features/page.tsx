@@ -18,7 +18,7 @@ export default async function FeaturesPage() {
   const { t } = await getI18n();
   const [tree, owner] = await Promise.all([localizedTree(), canManageSections(ctx)]);
   const s = settingsOf(ctx.hotel);
-  // نظام مرخّص من لوحة نزيل: ما لم يُشترَ من الأقسام مقفل
+  // نظام مرخّص من لوحة هوتيلنا: ما لم يُشترَ من الأقسام مقفل
   const sold = ctx.license.required && ctx.license.ok ? new Set(ctx.license.license.sections) : null;
   const unsold = (n: FeatureNode) => sold !== null && n.kind === "section" && n.key !== "general" && !sold.has(n.key);
   const view = (n: FeatureNode): ViewNode => ({

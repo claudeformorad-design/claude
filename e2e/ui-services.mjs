@@ -267,8 +267,8 @@ await step("automatic backup: back up now, list, download, bad folder refused", 
   await go("/settings/hotel");
   await has("النسخ الاحتياطي التلقائي", "مفعّل يوميًا 03:00");
   await page.getByRole("button", { name: "نسخة الآن" }).click();
-  await page.locator("text=/nazeel-backup-\\d{4}-\\d{2}-\\d{2}-\\d{4}\\.tar\\.gz/").first().waitFor();
-  const href = await page.getByRole("link", { name: /تنزيل nazeel-backup/ }).first().getAttribute("href");
+  await page.locator("text=/hotelna-backup-\\d{4}-\\d{2}-\\d{2}-\\d{4}\\.tar\\.gz/").first().waitFor();
+  const href = await page.getByRole("link", { name: /تنزيل hotelna-backup/ }).first().getAttribute("href");
   const res = await page.request.get(BASE + href);
   if (res.status() !== 200 || (await res.body()).length < 1000) throw new Error(`download ${res.status()}`);
   const bad = await page.request.get(BASE + "/api/backup?file=" + encodeURIComponent("../auto-backup.json"));

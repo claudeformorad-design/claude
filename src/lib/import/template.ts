@@ -13,7 +13,7 @@ const FONT = "Segoe UI";
  */
 export async function importTemplate(title: string, columns: ImportColumn[]): Promise<ArrayBuffer> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = tr("نزيل");
+  wb.creator = tr("هوتيلنا");
   const ws = wb.addWorksheet(tr("البيانات"), { views: [{ rightToLeft: currentLocale() === "ar", state: "frozen", ySplit: 1 }] });
   ws.columns = columns.map((c) => ({ header: c.required ? `${tr(c.header)} *` : tr(c.header), key: c.key, width: Math.max(16, tr(c.header).length + 8) }));
   const head = ws.getRow(1);

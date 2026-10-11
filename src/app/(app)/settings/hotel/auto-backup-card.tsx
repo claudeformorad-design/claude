@@ -98,7 +98,7 @@ export function AutoBackupCard({ settings, status, stale, files, errors }: {
           <Input id="backup_keep" inputMode="numeric" dir="ltr" value={v.keep} onChange={(e) => setV({ ...v, keep: e.target.value })} /></div>
       </div>
       <div className="space-y-1.5"><Label htmlFor="backup_mirror">{tr("مجلد ثانٍ لنسخة إضافية (فلاشة أو قرص خارجي)، اختياري")}</Label>
-        <Input id="backup_mirror" dir="ltr" value={v.mirror} onChange={(e) => setV({ ...v, mirror: e.target.value })} placeholder={tr("مثل: E:\\نسخ نزيل")} />
+        <Input id="backup_mirror" dir="ltr" value={v.mirror} onChange={(e) => setV({ ...v, mirror: e.target.value })} placeholder={tr("مثل: E:\\نسخ هوتيلنا")} />
         <p className="text-[14px] text-slate-500">{tr("كل نسخة تُحفظ في المجلدين. لو تعطل الجهاز تبقى النسخة على الفلاشة.")}</p>
       </div>
       <div className="flex flex-wrap items-center gap-4">

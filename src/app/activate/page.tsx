@@ -9,7 +9,7 @@ import { ActivateForm } from "./activate-form";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "تفعيل النظام" };
 
-/** شاشة التفعيل: كود الربط من لوحة نزيل، أو مفتاح يدوي لجهاز بلا إنترنت */
+/** شاشة التفعيل: كود الربط من لوحة هوتيلنا، أو مفتاح يدوي لجهاز بلا إنترنت */
 export default async function ActivatePage() {
   const ctx = await getAppContext();
   if (!ctx.user) redirect("/login");
@@ -21,7 +21,7 @@ export default async function ActivatePage() {
     <main className="flex min-h-screen items-center justify-center bg-content px-4 py-12">
       <div className="surface w-full max-w-lg space-y-6 p-8">
         <div className="space-y-1.5">
-          <h1 className="text-[26px] font-bold text-ink">{tr("تفعيل نزيل")}</h1>
+          <h1 className="text-[26px] font-bold text-ink">{tr("تفعيل هوتيلنا")}</h1>
           <p className="text-[16.5px] leading-relaxed text-slate-600">
             {reason === "suspended" ? tr("هذا الفندق موقوف من صاحب النظام. تواصل معه، وبعد إعادة التفعيل اضغط تحقق الآن.")
               : reason === "other_machine" ? tr("ترخيص هذا النظام لجهاز آخر. أرسل رقم هذا الجهاز لصاحب النظام ليعطيك مفتاحًا جديدًا.")

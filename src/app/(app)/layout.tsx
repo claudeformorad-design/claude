@@ -51,7 +51,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const quickActions = (ctx.ui.quick_actions.length ? chosen : quickAllowed).map(({ href, label }) => ({ href, label }));
   // في التثبيت المحلي يظهر اسم الدخول بدل البريد الداخلي
   const login = localMulti ? (await usernamesOf([ctx.user.id])).get(ctx.user.id) : undefined;
-  // ترخيص لوحة نزيل: المدير يطبّق أي تغيير وصل على قاعدة البيانات، ثم يُجدَّد التواصل بعد إرسال الصفحة
+  // ترخيص لوحة هوتيلنا: المدير يطبّق أي تغيير وصل على قاعدة البيانات، ثم يُجدَّد التواصل بعد إرسال الصفحة
   const notices = ctx.license.required && ctx.license.ok
     ? ctx.license.notices.map(({ id, title, body, level }) => ({ id, title, body, level })) : [];
   if (ctx.license.required && ctx.can(PERMISSIONS.hotelManage)) {

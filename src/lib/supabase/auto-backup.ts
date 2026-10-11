@@ -22,7 +22,9 @@ export const DEFAULT_BACKUP_FOLDER = path.join(LOCAL_DATA_ROOT, "backups");
 const DEFAULTS: AutoBackupSettings = { enabled: true, folder: DEFAULT_BACKUP_FOLDER, time: "03:00", keep: 14, mirror: "" };
 const EMPTY_STATUS: AutoBackupStatus = { last_success_at: null, last_file: null, last_error: null, last_attempt_at: null };
 /** أسماء ملفات النسخ التلقائية فقط (لا يُحذف أو يُنزَّل غيرها من المجلد) */
-export const BACKUP_FILE = /^nazeel-backup-\d{4}-\d{2}-\d{2}-\d{4}\.tar\.gz$/;
+export const BACKUP_FILE = /^(hotelna|nazeel)-backup-\d{4}-\d{2}-\d{2}-\d{4}\.tar\.gz$/;
+/** ترتيب النسخ بتاريخها لا باسمها: النسخ القديمة قبل تغيير اسم النظام تحمل بادئة أخرى */
+const newestFirst = (a: string, b: string) => b.replace(/^\w+-backup-/, "").localeCompare(a.replace(/^\w+-backup-/, ""));
 /** تُعد النسخة متأخرة إن مر على آخر نجاح أكثر من يوم وساعتين */
 const STALE_MS = 26 * 3600_000;
 
@@ -101,7 +103,7 @@ function copyToMirror(source: string, name: string, s: AutoBackupSettings): { at
     const target = path.join(s.mirror, name);
     copyFileSync(/*turbopackIgnore: true*/ source, `${target}.part`);
     renameSync(/*turbopackIgnore: true*/ `${target}.part`, target);
-    const old = readdirSync(/*turbopackIgnore: true*/ s.mirror).filter((f) => BACKUP_FILE.test(f)).sort((a, b) => b.localeCompare(a)).slice(Math.max(1, s.keep));
+    const old = readdirSync(/*turbopackIgnore: true*/ s.mirror).filter((f) => BACKUP_FILE.test(f)).sort(newestFirst).slice(Math.max(1, s.keep));
     for (const f of old) rmSync(/*turbopackIgnore: true*/ path.join(s.mirror, f), { force: true });
     return { at: new Date().toISOString(), error: null };
   } catch (e) {
@@ -118,7 +120,7 @@ export function listBackupFiles(): BackupFile[] {
       const st = statSync(/*turbopackIgnore: true*/ path.join(folder, name));
       return { name, size: st.size, created_at: st.mtime.toISOString() };
     })
-    .sort((a, b) => b.name.localeCompare(a.name));
+    .sort((a, b) => newestFirst(a.name, b.name));
 }
 
 /** مسار ملف نسخة في المجلد الحالي (لتنزيله)، أو null إن لم يكن من ملفات النسخ */
@@ -143,7 +145,7 @@ export function runBackupNow(): Promise<BackupFile> {
     try {
       ensureDir(v.settings.folder);
       const blob = await exportLocalBackup();
-      const name = `nazeel-backup-${stamp(now)}.tar.gz`;
+      const name = `hotelna-backup-${stamp(now)}.tar.gz`;
       const target = path.join(v.settings.folder, name);
       // كتابة لملف مؤقت ثم إعادة تسمية: لا تبقى نسخة ناقصة باسم صحيح إن انقطع التشغيل
       writeFileSync(/*turbopackIgnore: true*/ `${target}.part`, Buffer.from(await blob.arrayBuffer()));

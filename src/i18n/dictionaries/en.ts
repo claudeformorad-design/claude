@@ -3,8 +3,8 @@ import type { Dictionary } from "./ar";
 /** القاموس الإنجليزي بنفس بنية القاموس العربي (يفرضه TypeScript) */
 export const en: Dictionary = {
   app: {
-    name: "Nazeel Hotel System",
-    shortName: "Nazeel",
+    name: "Hotelna",
+    shortName: "Hotelna",
   },
   common: {
     save: "Save",
