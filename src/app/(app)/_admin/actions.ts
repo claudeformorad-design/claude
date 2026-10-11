@@ -176,6 +176,7 @@ export async function saveAutoBackupAction(input: unknown): Promise<ActionResult
     folder: z.string().trim().min(1).max(500),
     time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
     keep: z.coerce.number().int().min(1).max(365),
+    mirror: z.string().trim().max(500).optional().default(""),
   }).safeParse(input);
   if (!p.success) return invalid(p.error);
   const { saveAutoBackupSettings } = await import("@/lib/supabase/auto-backup");
@@ -183,10 +184,38 @@ export async function saveAutoBackupAction(input: unknown): Promise<ActionResult
     saveAutoBackupSettings(p.data);
   } catch (e) {
     console.error(e);
-    return { ok: false, error: "unknown", message: tr("لا يمكن الكتابة في هذا المجلد، اختر مجلدًا آخر") };
+    return { ok: false, error: "unknown", message: e instanceof Error && e.message === "same folder"
+      ? tr("المجلد الثاني يجب أن يكون غير مجلد النسخ")
+      : tr("لا يمكن الكتابة في أحد المجلدين، تأكد من توصيل الفلاشة أو اختر مجلدًا آخر") };
   }
   revalidatePath("/settings/hotel");
   return { ok: true, data: undefined };
+}
+
+/** فحص نسخة احتياطية دون استعادتها: ملف يرفعه المدير، أو إحدى النسخ التلقائية بالاسم */
+export async function verifyBackupAction(form: FormData): Promise<ActionResult<import("@/lib/supabase/local-db").BackupSummary>> {
+  await requireAppContext(PERMISSIONS.hotelManage);
+  if (isSupabaseConfigured()) return { ok: false, error: "permission_denied" };
+  const name = form.get("name");
+  let blob: Blob | null = null;
+  if (typeof name === "string" && name) {
+    const { backupFilePath } = await import("@/lib/supabase/auto-backup");
+    const p = backupFilePath(name);
+    if (!p) return { ok: false, error: "unknown", message: tr("الملف غير موجود في مجلد النسخ") };
+    const { readFileSync } = await import("node:fs");
+    blob = new Blob([readFileSync(/*turbopackIgnore: true*/ p)]);
+  } else {
+    const file = form.get("file");
+    if (file instanceof Blob && file.size > 0) blob = file;
+  }
+  if (!blob) return { ok: false, error: "unknown", message: tr("اختر ملف النسخة الاحتياطية") };
+  try {
+    const { verifyBackupBlob } = await import("@/lib/supabase/local-db");
+    return { ok: true, data: await verifyBackupBlob(blob) };
+  } catch (e) {
+    console.error(e);
+    return { ok: false, error: "unknown", message: tr("الملف تالف أو ليس نسخة احتياطية من هذا النظام") };
+  }
 }
 
 /** نسخة احتياطية فورية في مجلد النسخ */

@@ -220,6 +220,28 @@ export async function exportLocalBackup(): Promise<Blob> {
   return next;
 }
 
+export type BackupSummary = { hotels: string[]; reservations: number; entries: number; last_entry_date: string | null; last_activity: string | null; migrations: number };
+
+/**
+ * فحص ملف نسخة احتياطية دون استعادته: يُفتح في قاعدة مؤقتة في الذاكرة ويُقرأ ملخصه،
+ * فيُعرف أن الملف سليم ومن هذا النظام وما فيه، والبيانات الحالية لا تُمس.
+ */
+export async function verifyBackupBlob(file: Blob): Promise<BackupSummary> {
+  const db = new PGlite({ extensions: { btree_gist, pgcrypto }, loadDataDir: file });
+  try {
+    await db.waitReady;
+    const one = async <T,>(sql: string) => (await db.query<T>(sql)).rows[0]!;
+    const m = await one<{ n: number }>("select count(*)::int as n from local_meta.applied_migrations");
+    const h = await db.query<{ name_ar: string }>("select name_ar from public.hotels order by name_ar");
+    const r = await one<{ n: number }>("select count(*)::int as n from public.reservations");
+    const j = await one<{ n: number; last: string | null; at: string | null }>(
+      "select count(*)::int as n, max(entry_date)::text as last, max(created_at)::text as at from public.journal_entries");
+    return { hotels: h.rows.map((x) => x.name_ar), reservations: r.n, entries: j.n, last_entry_date: j.last, last_activity: j.at, migrations: m.n };
+  } finally {
+    await db.close().catch(() => undefined);
+  }
+}
+
 export function restoreLocalBackup(file: Blob): Promise<void> {
   const aside = `${LOCAL_DATA_DIR}-before-restore`;
   const run = async () => {

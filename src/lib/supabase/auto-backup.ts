@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { exportLocalBackup, LOCAL_DATA_ROOT } from "./local-db";
 
@@ -8,13 +8,18 @@ import { exportLocalBackup, LOCAL_DATA_ROOT } from "./local-db";
  * إن كان الجهاز مطفأً وقت النسخ تُؤخذ النسخة عند أول تشغيل بعده. الإعدادات والحالة في ملف خارج القاعدة،
  * فلا تتغير عند استعادة نسخة قديمة.
  */
-export type AutoBackupSettings = { enabled: boolean; folder: string; time: string; keep: number };
-export type AutoBackupStatus = { last_success_at: string | null; last_file: string | null; last_error: string | null; last_attempt_at: string | null };
+/** mirror: مجلد ثانٍ تُنسخ إليه كل نسخة (فلاشة أو قرص خارجي)، فارغ = بلا نسخة ثانية */
+export type AutoBackupSettings = { enabled: boolean; folder: string; time: string; keep: number; mirror: string };
+export type AutoBackupStatus = {
+  last_success_at: string | null; last_file: string | null; last_error: string | null; last_attempt_at: string | null;
+  /** آخر نسخ للمجلد الثاني، وخطؤه إن فشل (لا يُفشل النسخة الأساسية) */
+  mirror_at?: string | null; mirror_error?: string | null;
+};
 export type BackupFile = { name: string; size: number; created_at: string };
 
 const SETTINGS_FILE = path.join(LOCAL_DATA_ROOT, "auto-backup.json");
 export const DEFAULT_BACKUP_FOLDER = path.join(LOCAL_DATA_ROOT, "backups");
-const DEFAULTS: AutoBackupSettings = { enabled: true, folder: DEFAULT_BACKUP_FOLDER, time: "03:00", keep: 14 };
+const DEFAULTS: AutoBackupSettings = { enabled: true, folder: DEFAULT_BACKUP_FOLDER, time: "03:00", keep: 14, mirror: "" };
 const EMPTY_STATUS: AutoBackupStatus = { last_success_at: null, last_file: null, last_error: null, last_attempt_at: null };
 /** أسماء ملفات النسخ التلقائية فقط (لا يُحذف أو يُنزَّل غيرها من المجلد) */
 export const BACKUP_FILE = /^nazeel-backup-\d{4}-\d{2}-\d{2}-\d{4}\.tar\.gz$/;
@@ -65,14 +70,39 @@ export function getAutoBackup(): Stored & { stale: boolean } {
 }
 
 /** يحفظ الإعدادات بعد التأكد من إمكانية الكتابة في المجلد */
-export function saveAutoBackupSettings(next: AutoBackupSettings): void {
-  const folder = path.resolve(next.folder);
+function probeWritable(folder: string): void {
   ensureDir(folder);
   const probe = path.join(folder, `.nazeel-write-test-${process.pid}`);
   writeFileSync(/*turbopackIgnore: true*/ probe, "ok");
   rmSync(/*turbopackIgnore: true*/ probe, { force: true });
+}
+
+export function saveAutoBackupSettings(next: AutoBackupSettings): void {
+  const folder = path.resolve(next.folder);
+  probeWritable(folder);
+  const mirror = next.mirror.trim() ? path.resolve(next.mirror.trim()) : "";
+  if (mirror) {
+    if (mirror === folder) throw new Error("same folder");
+    probeWritable(mirror);
+  }
   const v = read();
-  write({ ...v, settings: { ...next, folder } });
+  write({ ...v, settings: { ...next, folder, mirror } });
+}
+
+/** نسخ الملف للمجلد الثاني وحذف ما زاد فيه على العدد المحفوظ؛ الفشل يُسجَّل ولا يُفشل النسخة الأساسية */
+function copyToMirror(source: string, name: string, s: AutoBackupSettings): { at: string | null; error: string | null } {
+  if (!s.mirror) return { at: null, error: null };
+  try {
+    ensureDir(s.mirror);
+    const target = path.join(s.mirror, name);
+    copyFileSync(/*turbopackIgnore: true*/ source, `${target}.part`);
+    renameSync(/*turbopackIgnore: true*/ `${target}.part`, target);
+    const old = readdirSync(/*turbopackIgnore: true*/ s.mirror).filter((f) => BACKUP_FILE.test(f)).sort((a, b) => b.localeCompare(a)).slice(Math.max(1, s.keep));
+    for (const f of old) rmSync(/*turbopackIgnore: true*/ path.join(s.mirror, f), { force: true });
+    return { at: new Date().toISOString(), error: null };
+  } catch (e) {
+    return { at: null, error: e instanceof Error ? e.message : String(e) };
+  }
 }
 
 export function listBackupFiles(): BackupFile[] {
@@ -115,7 +145,11 @@ export function runBackupNow(): Promise<BackupFile> {
       writeFileSync(/*turbopackIgnore: true*/ `${target}.part`, Buffer.from(await blob.arrayBuffer()));
       renameSync(/*turbopackIgnore: true*/ `${target}.part`, target);
       for (const old of listBackupFiles().slice(Math.max(1, v.settings.keep))) rmSync(/*turbopackIgnore: true*/ path.join(v.settings.folder, old.name), { force: true });
-      write({ ...read(), status: { last_success_at: now.toISOString(), last_file: name, last_error: null, last_attempt_at: now.toISOString() } });
+      const mirror = copyToMirror(target, name, v.settings);
+      write({ ...read(), status: {
+        last_success_at: now.toISOString(), last_file: name, last_error: null, last_attempt_at: now.toISOString(),
+        mirror_at: mirror.at ?? read().status.mirror_at ?? null, mirror_error: mirror.error,
+      } });
       return { name, size: blob.size, created_at: now.toISOString() };
     } catch (e) {
       const cur = read();

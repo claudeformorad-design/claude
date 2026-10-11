@@ -28,6 +28,7 @@ import { roomKpis } from "@/lib/accounting/kpi";
 import { type Money as MoneyValue, ZERO, toMoney } from "@/lib/accounting/money";
 import { summarizeProfitability } from "@/lib/accounting/profitability";
 import type { LedgerControl } from "@/lib/supabase/database.types";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { cn } from "@/lib/utils";
 import { listDepartments } from "@/services/accounts.service";
 import { raise } from "@/services/errors";
@@ -221,6 +222,18 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   if (unreconciled.length > 0) alerts.push({ title: tr("فرق في المطابقة"), text: tr("{0} من حسابات المراقبة لا تطابق دفاترها.", unreconciled.length), href: show("controls") ? "#reconciliation" : "/reports/trial-balance", tone: "red" });
   if (canFin && cashBalance.isNegative()) alerts.push({ title: tr("رصيد النقدية سالب"), text: tr("راجع السندات والمدفوعات أو سجّل التمويل."), href: "/reports/daily-cash", tone: "red" });
   if (canFin && totalRooms <= 0) alerts.push({ title: tr("عدد الغرف غير محدد"), text: tr("مطلوب لحساب الإشغال وRevPAR."), href: "/settings/hotel", tone: "amber" });
+  // التشغيل المحلي: البيانات على هذا الجهاز وحده، فتأخر النسخ الاحتياطي يظهر للمدير هنا
+  if (!isSupabaseConfigured() && ctx.can(PERMISSIONS.hotelManage)) {
+    const backup = (await import("@/lib/supabase/auto-backup")).getAutoBackup();
+    const href = "/settings/hotel#auto-backup";
+    if (!backup.settings.enabled) alerts.push({ title: tr("النسخ الاحتياطي التلقائي متوقف"), text: tr("فعّله حتى لا تضيع البيانات إن تعطل الجهاز."), href, tone: "amber" });
+    else if (backup.stale) alerts.push({
+      title: backup.status.last_success_at ? tr("لا توجد نسخة احتياطية منذ أكثر من يوم") : tr("لم تؤخذ أي نسخة احتياطية بعد"),
+      text: backup.status.last_error ? tr("فشلت آخر محاولة: {0}", backup.status.last_error) : tr("خذ نسخة الآن وتأكد من مجلد النسخ."),
+      href, tone: "red",
+    });
+    else if (backup.settings.mirror && backup.status.mirror_error) alerts.push({ title: tr("لم تُنسخ آخر نسخة للمجلد الثاني"), text: tr("تأكد من توصيل الفلاشة أو القرص الخارجي."), href, tone: "amber" });
+  }
   if (draftCount > 0) alerts.push({ title: tr("{0} قيد مسودة", draftCount), text: tr("لا تؤثر على الأرصدة حتى ترحيلها."), href: "/journal?status=draft", tone: "blue" });
 
   const invoiceSegments = [
