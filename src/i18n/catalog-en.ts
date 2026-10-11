@@ -2893,7 +2893,7 @@ export const EN: Record<string, string> = {
   "الإجمالي {0} حجز، {1} شخص.": "Total {0} reservations, {1} people.",
   // Backup reliability
   "المجلد الثاني يجب أن يكون غير مجلد النسخ": "The second folder must be different from the backup folder",
-  "لا يمكن الكتابة في أحد المجلدين، تأكد من توصيل الفلاشة أو اختر مجلدًا آخر": "Cannot write to one of the folders. Check that the USB drive is connected or choose another folder",
+  "لا يمكن الكتابة في المجلد الثاني، تأكد من توصيل الفلاشة أو اختر مجلدًا آخر": "Cannot write to the second folder. Check that the USB drive is connected or choose another folder",
   "الملف غير موجود في مجلد النسخ": "The file is not in the backup folder",
   "الملف تالف أو ليس نسخة احتياطية من هذا النظام": "The file is damaged or is not a backup from this system",
   "النسخ الاحتياطي التلقائي متوقف": "Automatic backup is off",

@@ -184,9 +184,10 @@ export async function saveAutoBackupAction(input: unknown): Promise<ActionResult
     saveAutoBackupSettings(p.data);
   } catch (e) {
     console.error(e);
-    return { ok: false, error: "unknown", message: e instanceof Error && e.message === "same folder"
-      ? tr("المجلد الثاني يجب أن يكون غير مجلد النسخ")
-      : tr("لا يمكن الكتابة في أحد المجلدين، تأكد من توصيل الفلاشة أو اختر مجلدًا آخر") };
+    const why = e instanceof Error ? e.message : "";
+    return { ok: false, error: "unknown", message: why === "same folder" ? tr("المجلد الثاني يجب أن يكون غير مجلد النسخ")
+      : why === "mirror not writable" ? tr("لا يمكن الكتابة في المجلد الثاني، تأكد من توصيل الفلاشة أو اختر مجلدًا آخر")
+      : tr("لا يمكن الكتابة في هذا المجلد، اختر مجلدًا آخر") };
   }
   revalidatePath("/settings/hotel");
   return { ok: true, data: undefined };

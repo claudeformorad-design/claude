@@ -83,7 +83,11 @@ export function saveAutoBackupSettings(next: AutoBackupSettings): void {
   const mirror = next.mirror.trim() ? path.resolve(next.mirror.trim()) : "";
   if (mirror) {
     if (mirror === folder) throw new Error("same folder");
-    probeWritable(mirror);
+    try {
+      probeWritable(mirror);
+    } catch (e) {
+      throw new Error("mirror not writable", { cause: e });
+    }
   }
   const v = read();
   write({ ...v, settings: { ...next, folder, mirror } });
