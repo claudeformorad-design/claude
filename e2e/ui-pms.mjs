@@ -411,12 +411,12 @@ await step("modules: disabling hotel management hides it and blocks its pages", 
   await go("/settings/features");
   await page.getByRole("switch", { name: "الحجوزات والاستقبال" }).click();
   await page.getByRole("button", { name: "إطفاء رغم ذلك" }).click();
-  await bodyHas("أُطفئ الحجوزات والاستقبال");
+  await page.locator("[role=switch][aria-label='الحجوزات والاستقبال'][aria-checked=false]").waitFor();
   await go("/"); await bodyLacks("الاستقبال والحجوزات");
   await go("/front-desk"); await bodyHas("هذا الجزء مطفأ في هذا الفندق");
   await go("/settings/features");
   await page.getByRole("switch", { name: "الحجوزات والاستقبال" }).click();
-  await bodyHas("شُغّل الحجوزات والاستقبال");
+  await page.locator("[role=switch][aria-label='الحجوزات والاستقبال'][aria-checked=true]").waitFor();
   await go("/front-desk"); await bodyHas("لوحة الاستقبال");
 });
 
