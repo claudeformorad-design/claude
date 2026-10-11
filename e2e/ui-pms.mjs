@@ -179,7 +179,7 @@ await step("new season prices future nights; existing bookings keep their rates"
 });
 await step("last-minute deal applies to arrivals within a day", async () => {
   await go("/rates?rule=new");
-  await page.getByRole("button", { name: "حفظ" }).click();
+  await page.getByRole("button", { name: "حفظ", exact: true }).click();
   await page.waitForURL(/rates$/); await bodyHas("عرض الليلة");
   await go("/reservations/new"); await newGuest("نزيل الليلة");
   await pick("#room_type_id", /مزدوجة/); await page.fill("#arrival_date", plus(1)); await page.fill("#nights", "1");
