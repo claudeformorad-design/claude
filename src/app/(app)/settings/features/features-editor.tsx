@@ -15,6 +15,8 @@ import { toggleFeatureAction } from "./actions";
 
 export type ViewNode = {
   key: string; kind: FeatureKind; label: string; hint: string | null; locked: string | null; on: boolean; children: ViewNode[];
+  /** قسم غير مشمول في ترخيص الفندق */
+  unsold?: boolean;
 };
 
 const KIND: Record<Exclude<FeatureKind, "section">, () => string> = {
@@ -47,6 +49,7 @@ export function FeaturesEditor({ tree, owner, errors }: { tree: ViewNode[]; owne
     <div className="space-y-4">
       {tree.map((section) => {
         const ownerOnly = !owner && !section.locked;
+        // قسم غير مشمول: لا تُعرض أجزاؤه
         const expanded = open.has(section.key);
         const count = countItems(section);
         return (
@@ -58,11 +61,12 @@ export function FeaturesEditor({ tree, owner, errors }: { tree: ViewNode[]; owne
                 <span className="min-w-0 space-y-1">
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="text-[18.5px] font-semibold text-ink">{section.label}</span>
-                    {!section.on && <Badge variant="secondary">{tr("مطفأ")}</Badge>}
+                    {!section.on && !section.unsold && <Badge variant="secondary">{tr("مطفأ")}</Badge>}
                     {ownerOnly && <Badge variant="outline">{tr("يتحكم فيه صاحب النظام")}</Badge>}
                     {count > 0 && <span className="text-[14px] text-slate-500">{tr("{0} عنصر", count)}</span>}
                   </span>
                   {section.hint && <span className="block text-[15.5px] text-slate-600">{section.hint}</span>}
+                  {section.unsold && <span className="block text-[14.5px] text-slate-500">{section.locked}</span>}
                 </span>
               </button>
               <Control node={section} disabled={ownerOnly || pending} busy={busy === section.key} onChange={(v) => toggle(section, v)} />
@@ -133,7 +137,7 @@ function Row({ node, parentOn, depth, pending, busy, onToggle }: {
 /** مفتاح التشغيل، أو قفل لما لا يُطفأ */
 function Control({ node, disabled, busy, onChange }: { node: ViewNode; disabled: boolean; busy: boolean; onChange: (v: boolean) => void }) {
   if (node.locked) {
-    return <span className="flex items-center gap-1.5 text-[14px] text-slate-500" title={node.locked}><Lock className="size-4" />{tr("أساسي")}</span>;
+    return <span className="flex items-center gap-1.5 text-[14px] text-slate-500" title={node.locked}><Lock className="size-4" />{node.unsold ? tr("غير مشمول") : tr("أساسي")}</span>;
   }
   return (
     <button type="button" role="switch" aria-checked={node.on} aria-label={node.label} disabled={disabled || busy}

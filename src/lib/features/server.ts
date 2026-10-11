@@ -6,6 +6,7 @@ import { type FeatureCheck, type FeatureNode, featureTree, flatten } from "./reg
 import { type FeatureSettings, maskedPermissions } from "./state";
 import { getI18n } from "@/i18n/server";
 import { ServiceError } from "@/services/errors";
+import { sectionPermissions } from "@/lib/license/sync";
 
 export type CheckResult = { level: "block" | "warn"; text: string };
 
@@ -104,6 +105,9 @@ export async function toggleFeature(ctx: AppContext, key: string, on: boolean, c
   const { node, parents } = entry;
   if (node.locked) return { ok: false, level: "block", messages: [node.locked] };
   const section = node.kind === "section";
+  if (section && on && ctx.license.required && ctx.license.ok && !ctx.license.license.sections.includes(key)) {
+    return { ok: false, level: "block", messages: [tr("هذا القسم غير مشمول في ترخيص الفندق. يُضاف من صاحب النظام.")] };
+  }
   if (section && !(await canManageSections(ctx))) {
     return { ok: false, level: "block", messages: [tr("الأقسام يتحكم فيها صاحب النظام حسب ما اشتراه الفندق.")] };
   }
@@ -135,7 +139,7 @@ export async function toggleFeature(ctx: AppContext, key: string, on: boolean, c
   const r = section
     ? await ctx.supabase.rpc("save_hotel_sections", {
         p_hotel_id: ctx.hotel.id, p_modules: next.enabled_modules as HotelModule[], p_blocked: [...next.blocked_sections],
-        p_permissions: maskedPermissions(next, "section", tree),
+        p_permissions: await sectionPermissions(ctx, next),
       })
     : await ctx.supabase.rpc("save_hotel_features", {
         p_hotel_id: ctx.hotel.id, p_disabled: [...next.disabled_features], p_permissions: maskedPermissions(next, "feature", tree),

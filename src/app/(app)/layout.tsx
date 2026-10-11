@@ -1,6 +1,6 @@
 import { currentLocale, tr } from "@/i18n/tr";
 import { Suspense } from "react";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { SIDEBAR_COOKIE } from "@/components/layout/nav-config";
 import { PointerEffects } from "@/components/layout/pointer-effects";
 import { RouteProgress } from "@/components/layout/route-progress";
@@ -10,6 +10,10 @@ import { Toaster } from "@/components/ui/toast";
 import { HoverPrefetch } from "@/components/layout/hover-prefetch";
 import { PageFrame } from "@/components/layout/page-frame";
 import { FeaturesProvider } from "@/components/features/feature";
+import { PanelNotices } from "@/components/license/panel-notices";
+import { checkin } from "@/lib/license/client";
+import { syncLicenseToDatabase } from "@/lib/license/sync";
+import { after } from "next/server";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -47,6 +51,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const quickActions = (ctx.ui.quick_actions.length ? chosen : quickAllowed).map(({ href, label }) => ({ href, label }));
   // في التثبيت المحلي يظهر اسم الدخول بدل البريد الداخلي
   const login = localMulti ? (await usernamesOf([ctx.user.id])).get(ctx.user.id) : undefined;
+  // ترخيص لوحة نزيل: المدير يطبّق أي تغيير وصل على قاعدة البيانات، ثم يُجدَّد التواصل بعد إرسال الصفحة
+  const notices = ctx.license.required && ctx.license.ok
+    ? ctx.license.notices.map(({ id, title, body, level }) => ({ id, title, body, level })) : [];
+  if (ctx.license.required && ctx.can(PERMISSIONS.hotelManage)) {
+    await syncLicenseToDatabase(ctx).catch(() => undefined);
+    const h = await headers();
+    const host = h.get("x-forwarded-host") ?? h.get("host");
+    const url = host ? `${h.get("x-forwarded-proto") ?? "https"}://${host}` : null;
+    after(() => checkin(false, url).then(() => undefined).catch(() => undefined));
+  }
   const assistantOn = ctx.on("assistant") && (await getAssistantConfig().catch(() => null)) !== null;
 
   return (
@@ -79,7 +93,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             assistant={assistantOn}
             quickActions={quickActions}
           />
-          <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-12 pt-1 md:px-10"><PageFrame><FeaturesProvider off={[...ctx.features.off]}>{children}</FeaturesProvider></PageFrame></main>
+          <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-12 pt-1 md:px-10"><PageFrame>{notices.length > 0 && <PanelNotices notices={notices} />}<FeaturesProvider off={[...ctx.features.off]}>{children}</FeaturesProvider></PageFrame></main>
         </div>
       </div>
     </div>

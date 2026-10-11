@@ -56,6 +56,9 @@ export function maskedPermissions(s: FeatureSettings, tier: "section" | "feature
   return [...out].sort();
 }
 
+/** مفاتيح الأقسام كلها */
+export const sectionKeys = (tree: FeatureNode[] = keysTree()) => tree.map((n) => n.key);
+
 export const findNode = (key: string, tree: FeatureNode[] = keysTree()) => flatten(tree).find((x) => x.node.key === key);
 
 /** نفس قاعدة القائمة الجانبية: الرابط نفسه أو صفحة تحته */
