@@ -1,6 +1,8 @@
 import "server-only";
+import { execFileSync } from "node:child_process";
 import { createHash, createHmac, createPublicKey, verify } from "node:crypto";
-import { hostname, networkInterfaces, platform, arch } from "node:os";
+import { readFileSync } from "node:fs";
+import { hostname, platform, arch } from "node:os";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { readSecret, writeSecret } from "@/lib/server-secrets";
 import pkg from "../../../package.json";
@@ -62,11 +64,34 @@ async function writeState(next: State): Promise<void> {
   cache = { at: Date.now(), state: next };
 }
 
-/** بصمة الجهاز لنسخة التثبيت: من اسم الجهاز ونظامه وعنوان بطاقة الشبكة، بصيغة سهلة الإملاء */
+/**
+ * معرّف الجهاز الثابت من نظام التشغيل: لا يتغير بفصل الشبكة أو تبديل الواي فاي أو تركيب برنامج VPN
+ * (عنوان بطاقة الشبكة كان يتغير بهذه كلها فيُقفل النظام على الفندق).
+ */
+function osMachineGuid(): string | null {
+  const opts = { encoding: "utf8" as const, timeout: 5000, windowsHide: true, stdio: ["ignore", "pipe", "ignore"] as ["ignore", "pipe", "ignore"] };
+  try {
+    if (platform() === "win32") {
+      const out = execFileSync("reg", ["query", "HKLM\\SOFTWARE\\Microsoft\\Cryptography", "/v", "MachineGuid"], opts);
+      return out.match(/MachineGuid\s+REG_SZ\s+(\S+)/i)?.[1] ?? null;
+    }
+    if (platform() === "darwin") {
+      return execFileSync("ioreg", ["-rd1", "-c", "IOPlatformExpertDevice"], opts).match(/"IOPlatformUUID"\s*=\s*"([^"]+)"/)?.[1] ?? null;
+    }
+    for (const f of ["/etc/machine-id", "/var/lib/dbus/machine-id"]) {
+      try { const v = readFileSync(/*turbopackIgnore: true*/ f, "utf8").trim(); if (v) return v; } catch { /* التالي */ }
+    }
+  } catch { /* بلا معرّف من النظام */ }
+  return null;
+}
+
+let machine: string | null = null;
+/** بصمة الجهاز لنسخة التثبيت بصيغة سهلة الإملاء. تُحسب مرة واحدة لكل تشغيل */
 export function machineId(): string {
-  const macs = Object.values(networkInterfaces()).flat().filter((n) => n && !n.internal && n.mac && n.mac !== "00:00:00:00:00:00").map((n) => n!.mac).sort();
-  const hex = createHash("sha256").update([hostname(), platform(), arch(), macs[0] ?? ""].join("|")).digest("hex").slice(0, 16).toUpperCase();
-  return hex.match(/.{4}/g)!.join("-");
+  if (machine) return machine;
+  const source = osMachineGuid() ?? [hostname(), platform(), arch()].join("|");
+  const hex = createHash("sha256").update(`hotelna|${source.toLowerCase()}`).digest("hex").slice(0, 16).toUpperCase();
+  return (machine = hex.match(/.{4}/g)!.join("-"));
 }
 
 const mode = (): "cloud" | "installer" => (isSupabaseConfigured() ? "cloud" : "installer");
@@ -154,14 +179,22 @@ export async function checkin(force = false, siteUrl: string | null = null): Pro
   if (!s.instance_id || !s.secret) return false;
   if (!force && s.last_checkin && Date.now() - Date.parse(s.last_checkin) < CHECKIN_EVERY) return false;
   const raw = JSON.stringify({ version: APP_VERSION, url: siteUrl });
-  const ts = String(Date.now());
-  try {
-    const res = await fetch(`${panelUrl()}/api/v1/checkin`, {
+  const send = (now: number) => {
+    const ts = String(now);
+    return fetch(`${panelUrl()}/api/v1/checkin`, {
       method: "POST", signal: AbortSignal.timeout(8000), body: raw,
-      headers: { "content-type": "application/json", "x-instance-id": s.instance_id, "x-timestamp": ts, "x-signature": createHmac("sha256", s.secret).update(`${ts}.${raw}`).digest("base64url") },
+      headers: { "content-type": "application/json", "x-instance-id": s.instance_id!, "x-timestamp": ts, "x-signature": createHmac("sha256", s.secret!).update(`${ts}.${raw}`).digest("base64url") },
     });
-    const j = (await res.json().catch(() => ({}))) as { license?: string; notices?: PanelNotice[] };
-    if (!res.ok || !verifyLicense(j.license)) throw new Error(`panel answered ${res.status}`);
+  };
+  try {
+    let res = await send(Date.now());
+    let j = (await res.json().catch(() => ({}))) as { license?: string; notices?: PanelNotice[]; error?: string; now?: number };
+    // ساعة الجهاز خاطئة (أو منطقته الزمنية): يُعاد التوقيع مرة بوقت اللوحة
+    if (res.status === 401 && j.error === "clock" && typeof j.now === "number") {
+      res = await send(j.now);
+      j = (await res.json().catch(() => ({}))) as typeof j;
+    }
+    if (!res.ok || !verifyLicense(j.license)) throw new Error(j.error === "clock" ? "device clock is wrong" : `panel answered ${res.status}`);
     await writeState({ ...s, license: j.license!, notices: j.notices ?? [], last_checkin: new Date().toISOString(), last_error: null });
     return j.license !== s.license;
   } catch (e) {
