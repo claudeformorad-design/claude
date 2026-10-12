@@ -85,6 +85,7 @@ export const en: Dictionary = {
     roomStats: "Occupancy, ADR and RevPAR",
     accountStatement: "Account statement",
     recurringEntries: "Recurring entries",
+    prepaidExpenses: "Prepaid expenses",
     cheques: "Cheques",
     transfers: "Transfers and exchange",
     commissions: "Booking commissions",

@@ -14,7 +14,7 @@ import { formatMoney, sumMoney, toMoney } from "@/lib/accounting/money";
 import { listAccounts } from "@/services/accounts.service";
 import { listBankLines, listLedgerLines } from "@/services/payables.service";
 import { getI18n } from "@/i18n/server";
-import { AddBankLine, AutoMatch, LineActions } from "./bank-client";
+import { AddBankLine, AutoMatch, BankImport, LineActions } from "./bank-client";
 import { CheckCircle2, FileText, Landmark, Link2Off } from "lucide-react";
 import { Stat, StatGrid } from "@/components/ui/stat";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -35,6 +35,7 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
   const glBalance = sumMoney(ledger.map((l) => toMoney(l.base_debit).minus(toMoney(l.base_credit))));
   const net = (l: (typeof ledger)[number]) => toMoney(l.base_debit).minus(toMoney(l.base_credit));
   const tt = { payables: t.payables, common: t.common, errors: t.errors, folio: t.folio };
+  const decimals = (await ctx.supabase.from("currencies").select("decimals").eq("code", ctx.hotel.base_currency).single()).data?.decimals ?? 2;
 
   return (
     <>
@@ -54,7 +55,10 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
             <Stat currency={ctx.hotel.base_currency} icon={Link2Off} tone="clay" label={t.payables.unmatchedLedger} value={<Money value={sumMoney(unmatchedLedger.map(net))} locale={locale} />} hint={tr("{0} حركة", unmatchedLedger.length)} />
             <Stat icon={CheckCircle2} tone="neutral" label={tr("أسطر مطابقة")} value={<span className="num">{lines.filter((l) => l.matched_line_id).length} / {lines.length}</span>} />
           </StatGrid>
-          <Card className="mb-4"><CardContent className="p-4"><AddBankLine t={tt} accountId={accountId} today={todayInTimeZone(ctx.hotel.timezone)} /></CardContent></Card>
+          <Card className="mb-4"><CardContent className="space-y-4 p-4">
+            <BankImport accountId={accountId} decimals={decimals} />
+            <div className="border-t border-line pt-4"><AddBankLine t={tt} accountId={accountId} today={todayInTimeZone(ctx.hotel.timezone)} /></div>
+          </CardContent></Card>
           <Card className="overflow-hidden">
             <Table>
               <TableHeader><TableRow>

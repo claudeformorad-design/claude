@@ -126,6 +126,7 @@ export function featureTree(l: NavLabels): FeatureNode[] {
         page("accounting.accounts", "/accounts", l.accounts, { locked: tr("أساس المحاسبة") }),
         page("accounting.journal", "/journal", l.journal, { locked: tr("أساس المحاسبة") }),
         page("accounting.recurring", "/journal/recurring", l.recurringEntries),
+        page("accounting.prepaid", "/prepaid-expenses", l.prepaidExpenses),
         page("accounting.fx_revaluation", "/fx-revaluation", l.fxRevaluation),
         page("accounting.folios", "/folios", l.folios, {
           locked: tr("فوليو النزيل أساس الحساب بين الحجز والمحاسبة"),

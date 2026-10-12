@@ -322,7 +322,7 @@ export type InvoiceTaxRow = { invoice_id: string; hotel_id: string; tax_rate_id:
 
 export type PaymentRow = {
   id: string; hotel_id: string; voucher_number: string; voucher_type: VoucherType; party_type: VoucherParty;
-  payment_date: string; payment_method_id: string; amount: string; customer_id: string | null;
+  payment_date: string; payment_method_id: string; amount: string; customer_id: string | null; vendor_id: string | null;
   counter_account_id: string | null; department_id: string | null; party_name: string | null;
   reference: string | null; description: string; status: VoucherStatus; journal_entry_id: string | null;
   void_reason: string | null; voided_at: string | null; voided_by: string | null;
@@ -735,6 +735,9 @@ export type Database = {
       vendor_bill_lines: ReadOnlyTable<VendorBillLineRow>;
       payroll_runs: ReadOnlyTable<PayrollRunRow>;
       payroll_lines: ReadOnlyTable<PayrollLineRow>;
+      prepaid_expenses: ReadOnlyTable<{ id: string; hotel_id: string; name: string; prepaid_account_id: string; expense_account_id: string; department_id: string | null;
+        total_amount: string; months: number; start_date: string; posted_months: number; amortized_amount: string; status: "active" | "completed" | "stopped";
+        last_entry_id: string | null; notes: string | null; created_at: string; created_by: string | null }>;
       recurring_entries: ReadOnlyTable<{ id: string; hotel_id: string; name: string; description: string; lines: unknown; frequency: "weekly" | "monthly" | "quarterly" | "yearly";
         start_date: string; end_date: string | null; total_count: number | null; posted_count: number; is_active: boolean; last_entry_id: string | null; created_at: string; created_by: string | null; updated_at: string }>;
       cheques: ReadOnlyTable<{ id: string; hotel_id: string; direction: "in" | "out"; payment_id: string; cheque_number: string; bank_name: string | null; due_date: string; amount: string;
@@ -983,6 +986,10 @@ export type Database = {
       };
       recurring_from_entry: { Args: { p_entry_id: string; p_name: string; p_frequency: string; p_start_date: string; p_end_date?: string | null; p_total_count?: number | null }; Returns: string };
       post_due_recurring_entries: { Args: { p_hotel_id: string }; Returns: number };
+      create_prepaid_expense: { Args: { p_hotel_id: string; p_name: string; p_expense_account_id: string; p_department_id: string | null; p_amount: string; p_months: number;
+        p_start_date: string; p_prepaid_account_id?: string | null; p_notes?: string | null }; Returns: string };
+      post_due_prepaid_expenses: { Args: { p_hotel_id: string }; Returns: number };
+      stop_prepaid_expense: { Args: { p_id: string }; Returns: undefined };
       set_recurring_entry_active: { Args: { p_id: string; p_active: boolean }; Returns: undefined };
       delete_recurring_entry: { Args: { p_id: string }; Returns: undefined };
       recurring_entries_due: { Args: { p_hotel_id: string }; Returns: { id: string; next_date: string | null; due_count: number }[] };

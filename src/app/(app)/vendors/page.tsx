@@ -67,7 +67,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
               {vendors.map((v) => (
                 <ExpandableRow kind="vendor" id={v.id} colSpan={can ? 6 : 5} key={v.id}>
                   <TableCell className="text-slate-600"><ExpandMark /><span className="num">{v.code}</span></TableCell>
-                  <TableCell><EntityCell name={(locale === "en" && v.name_en) || v.name_ar} sub={v.phone ?? v.email ?? undefined} href={`/bills?vendor=${v.id}`} /></TableCell>
+                  <TableCell><EntityCell name={(locale === "en" && v.name_en) || v.name_ar} sub={v.phone ?? v.email ?? undefined} href={ctx.can(PERMISSIONS.billsView) ? `/vendors/${v.id}` : undefined} /></TableCell>
                   <TableCell className="num">{v.tax_number ?? ""}</TableCell>
                   <TableCell><span className="num">{v.payment_terms_days}</span> <span className="text-slate-500">{tr("يومًا")}</span></TableCell>
                   <TableCell><Badge variant={v.is_active ? "success" : "secondary"}>{v.is_active ? t.common.active : t.common.inactive}</Badge></TableCell>

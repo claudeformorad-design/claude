@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { tr } from "@/i18n/tr";
 import { optDate, optText } from "@/lib/validation/common";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
@@ -162,5 +163,67 @@ export async function bankMatchAction(op: "auto" | "match" | "unmatch" | "delete
     return 1;
   });
   if (r.ok) revalidatePath("/bank");
+  return r;
+}
+
+export type BankImportCheck = {
+  columns: { date: string; description: string | null; reference: string | null; amount: string };
+  fresh: number;
+  duplicates: number;
+  skipped: number;
+  deposits: string;
+  withdrawals: string;
+  errors: { line: number; message: string }[];
+  sample: { line: number; txn_date: string; description: string; reference: string | null; amount: string; duplicate: boolean }[];
+};
+
+/**
+ * استيراد كشف البنك من ملف البنك نفسه: «check» يقرأ ويعرض دون حفظ، و«run» يعيد القراءة ويحفظ الأسطر الجديدة
+ * ثم يطابقها تلقائيًا. السطر الموجود من استيراد سابق لا يتكرر، ولا يُحفظ شيء ما دام في الملف خطأ.
+ */
+export async function importBankStatementAction(formData: FormData): Promise<ActionResult<BankImportCheck | { inserted: number; matched: number }>> {
+  const ctx = await requireAppContext(PERMISSIONS.bankReconcile);
+  const accountId = z.uuid().safeParse(formData.get("account_id"));
+  const file = formData.get("file");
+  const mode = formData.get("mode") === "run" ? "run" : "check";
+  if (!accountId.success || !(file instanceof File) || !file.size) return fail;
+  const { readSheet, ImportFileError } = await import("@/lib/import/parse");
+  const { bankLineKey, parseBankStatement } = await import("@/lib/import/bank-statement");
+  const refuse = (message: string) => ({ ok: false as const, error: "unknown" as const, message });
+  let sheet;
+  try { sheet = await readSheet(file); } catch (e) { return e instanceof ImportFileError ? refuse(e.message) : { ok: false, error: "unknown" }; }
+  const parsed = parseBankStatement(sheet);
+  if ("error" in parsed) return refuse(parsed.error);
+  if (mode === "run" && parsed.errors.length) return refuse(tr("صحّح أخطاء الملف أولًا، فلا يُستورد شيء ما دام فيه خطأ"));
+  const r = await toActionResult(async () => {
+    const dates = parsed.lines.map((l) => l.txn_date).sort();
+    const existing = dates.length
+      ? (await ctx.supabase.from("bank_statement_lines").select("txn_date, amount::text, reference, description")
+          .eq("hotel_id", ctx.hotel.id).eq("account_id", accountId.data).gte("txn_date", dates[0]!).lte("txn_date", dates.at(-1)!)).data ?? []
+      : [];
+    const seen = new Set((existing as unknown as { txn_date: string; amount: string; reference: string | null; description: string }[]).map(bankLineKey));
+    const lines = parsed.lines.map((l) => {
+      const key = bankLineKey(l);
+      const duplicate = seen.has(key);
+      seen.add(key);
+      return { ...l, duplicate };
+    });
+    const fresh = lines.filter((l) => !l.duplicate);
+    if (mode === "check") {
+      const sum = (out: boolean) => fresh.reduce((a, l) => (toMoney(l.amount).isNegative() === out ? a.plus(toMoney(l.amount).abs()) : a), toMoney("0")).toFixed();
+      return {
+        columns: parsed.columns, fresh: fresh.length, duplicates: lines.length - fresh.length, skipped: parsed.skipped,
+        deposits: sum(false), withdrawals: sum(true), errors: parsed.errors.slice(0, 50), sample: lines.slice(0, 8),
+      } satisfies BankImportCheck;
+    }
+    if (!fresh.length) return { inserted: 0, matched: 0 };
+    const { error } = await ctx.supabase.from("bank_statement_lines").insert(fresh.map((l) => ({
+      hotel_id: ctx.hotel.id, account_id: accountId.data, txn_date: l.txn_date, description: l.description, reference: l.reference, amount: l.amount,
+    })));
+    raise(error);
+    const m = await ctx.supabase.rpc("auto_match_bank_lines", { p_hotel_id: ctx.hotel.id, p_account_id: accountId.data });
+    return { inserted: fresh.length, matched: m.error ? 0 : Number(m.data ?? 0) };
+  });
+  if (r.ok && mode === "run") revalidatePath("/bank");
   return r;
 }

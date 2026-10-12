@@ -95,6 +95,7 @@ function allGroups(l: NavLabels): NavGroup[] {
         { href: "/accounts", label: l.accounts, icon: ListTree, permission: "coa.accounts.view" },
         { href: "/journal", label: l.journal, icon: BookOpen, permission: "gl.journal.view" },
         { href: "/journal/recurring", label: l.recurringEntries, icon: Repeat, permission: "gl.journal.view" },
+        { href: "/prepaid-expenses", label: l.prepaidExpenses, icon: CalendarRange, permission: "gl.journal.view" },
         { href: "/fx-revaluation", label: l.fxRevaluation, icon: Coins, permission: "gl.journal.post" },
       ],
     },

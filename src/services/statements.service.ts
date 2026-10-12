@@ -98,3 +98,72 @@ export async function customerStatement(supabase: SupabaseServerClient, hotelId:
     pendingFolios: folioCredit.error ? ZERO : toMoney(String(folioCredit.data ?? 0)),
   };
 }
+
+export type VendorStatementLine = Omit<StatementLine, "kind"> & { kind: "bill" | "debit_note" | "payment" | "vendor_receipt" };
+
+export type VendorStatement = {
+  vendor: { id: string; code: string; name_ar: string; name_en: string | null; phone: string | null; address: string | null; tax_number: string | null };
+  opening: Money;
+  lines: VendorStatementLine[];
+  debit: Money;
+  credit: Money;
+  /** المستحق للمورد (دائن)، وسالبه رصيد مدين على المورد (عربون أو دفعة زائدة) */
+  closing: Money;
+};
+
+/**
+ * كشف حساب المورد لفترة من جهة حسابه عندنا: فواتيره دائنة (علينا)، ومرتجعات المشتريات وسندات الصرف له
+ * (ومنها العربون) مدينة، وسند قبض منه دائن. الرصيد الجاري = الدائن ناقص المدين، فيساوي ما علينا للمورد.
+ * تطبيق العربون على فاتورة لا يظهر سطرًا: لا يغير رصيده، وإنما ينقل المدفوع مقدمًا إلى الفاتورة.
+ */
+export async function vendorStatement(supabase: SupabaseServerClient, hotelId: string, vendorId: string, from: string, to: string): Promise<VendorStatement | null> {
+  const { data: vendor, error } = await supabase.from("vendors")
+    .select("id, code, name_ar, name_en, phone, address, tax_number").eq("hotel_id", hotelId).eq("id", vendorId).maybeSingle();
+  raise(error);
+  if (!vendor) return null;
+  const [bills, notes, payments] = await Promise.all([
+    supabase.from("vendor_bills").select("id, bill_number, vendor_invoice_no, bill_date, total::text, notes").eq("hotel_id", hotelId).eq("vendor_id", vendorId).lte("bill_date", to),
+    supabase.from("vendor_debit_notes").select("id, debit_note_number, issue_date, total::text, reason, bill_id, vendor_bills!inner(vendor_id)")
+      .eq("hotel_id", hotelId).eq("vendor_bills.vendor_id", vendorId).lte("issue_date", to),
+    supabase.from("payments").select("id, voucher_number, voucher_type, payment_date, amount::text, description").eq("hotel_id", hotelId).eq("vendor_id", vendorId)
+      .eq("status", "posted").lte("payment_date", to),
+  ]);
+  raise(bills.error); raise(notes.error); raise(payments.error);
+  type Bill = { id: string; bill_number: string; vendor_invoice_no: string | null; bill_date: string; total: string; notes: string | null };
+  type Note = { id: string; debit_note_number: string; issue_date: string; total: string; reason: string; bill_id: string };
+  type Pay = { id: string; voucher_number: string; voucher_type: "receipt" | "disbursement"; payment_date: string; amount: string; description: string };
+
+  const moves: Omit<VendorStatementLine, "balance">[] = [];
+  for (const b of (bills.data ?? []) as unknown as Bill[]) {
+    const total = toMoney(b.total);
+    if (total.isZero()) continue;
+    moves.push({ date: b.bill_date, kind: "bill", number: b.bill_number,
+      description: b.vendor_invoice_no ? tr("فاتورة المورد رقم {0}", b.vendor_invoice_no) : (b.notes ?? tr("فاتورة مورد")),
+      debit: ZERO, credit: total, href: `/bills/${b.id}` });
+  }
+  for (const n of (notes.data ?? []) as unknown as Note[]) {
+    moves.push({ date: n.issue_date, kind: "debit_note", number: n.debit_note_number, description: n.reason, debit: toMoney(n.total), credit: ZERO, href: `/bills/${n.bill_id}` });
+  }
+  for (const p of (payments.data ?? []) as unknown as Pay[]) {
+    const paid = p.voucher_type === "disbursement";
+    moves.push({ date: p.payment_date, kind: paid ? "payment" : "vendor_receipt", number: p.voucher_number, description: p.description,
+      debit: paid ? toMoney(p.amount) : ZERO, credit: paid ? ZERO : toMoney(p.amount), href: `/vouchers/${p.id}` });
+  }
+  const order = { bill: 0, vendor_receipt: 1, debit_note: 2, payment: 3 };
+  moves.sort((a, b) => a.date.localeCompare(b.date) || order[a.kind] - order[b.kind] || a.number.localeCompare(b.number));
+
+  let opening = ZERO;
+  const lines: VendorStatementLine[] = [];
+  let running = ZERO;
+  let debit = ZERO;
+  let credit = ZERO;
+  for (const m of moves) {
+    if (m.date < from) { opening = opening.plus(m.credit).minus(m.debit); continue; }
+    if (!lines.length) running = opening;
+    running = running.plus(m.credit).minus(m.debit);
+    debit = debit.plus(m.debit);
+    credit = credit.plus(m.credit);
+    lines.push({ ...m, balance: running });
+  }
+  return { vendor: vendor as unknown as VendorStatement["vendor"], opening, lines, debit, credit, closing: opening.plus(credit).minus(debit) };
+}

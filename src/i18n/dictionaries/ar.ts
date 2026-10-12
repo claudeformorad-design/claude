@@ -83,6 +83,7 @@ export const ar = {
     roomStats: "الإشغال وADR وRevPAR",
     accountStatement: "كشف حساب",
     recurringEntries: "القيود الدورية",
+    prepaidExpenses: "المصروفات المقدمة",
     cheques: "الشيكات",
     transfers: "التحويلات وتبديل العملة",
     commissions: "عمولات وكلاء الحجز",

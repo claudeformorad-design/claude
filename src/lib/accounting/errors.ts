@@ -123,6 +123,10 @@ const MESSAGES: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
   [/Employee not found/i, "الموظف غير موجود"],
   [/Unknown end of service reason/i, "سبب نهاية الخدمة غير معروف، اختر الاستقالة أو الإنهاء من المنشأة"],
   [/^Amount must be positive$/i, "المبلغ يجب أن يكون أكبر من صفر"],
+  [/Months must be between 1 and 120/i, "عدد الأشهر من 1 إلى 120"],
+  [/Department does not belong to this hotel/i, "القسم لا ينتمي لهذا الفندق"],
+  [/Prepaid expense not found/i, "المصروف المقدم غير موجود"],
+  [/Prepaid expense is not active/i, "توزيع هذا المصروف متوقف أو مكتمل"],
   [/^Payment method not found$/i, "طريقة الدفع غير موجودة"],
   // إدارة الفندق: الأقسام والغرف
   [/At least one module must be enabled/i, "فعّل قسمًا واحدًا على الأقل (المحاسبة أو إدارة الفندق)"],

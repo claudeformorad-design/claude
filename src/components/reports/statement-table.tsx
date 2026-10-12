@@ -5,15 +5,22 @@ import { cn } from "@/lib/utils";
 
 export type StatementRow = { date: string; number: string; label: string; description: string; debit: Money; credit: Money; balance: Money; href?: string };
 
-const KIND_LABEL: Record<string, string> = { get invoice() { return tr("فاتورة"); }, get credit_note() { return tr("إشعار دائن"); }, get write_off() { return tr("دين معدوم"); }, get receipt() { return tr("سند قبض"); }, get refund() { return tr("سند صرف"); } };
+const KIND_LABEL: Record<string, string> = {
+  get invoice() { return tr("فاتورة"); }, get credit_note() { return tr("إشعار دائن"); }, get write_off() { return tr("دين معدوم"); },
+  get receipt() { return tr("سند قبض"); }, get refund() { return tr("سند صرف"); },
+  get bill() { return tr("فاتورة مورد"); }, get debit_note() { return tr("مرتجع مشتريات"); },
+  get payment() { return tr("سند صرف"); }, get vendor_receipt() { return tr("سند قبض"); },
+};
 export const statementKind = (k: string) => KIND_LABEL[k] ?? k;
 
 /**
  * جدول كشف الحساب: رصيد افتتاحي، حركات مدينة ودائنة برصيد جارٍ، ثم المجاميع والرصيد الختامي.
  * يُستخدم في الشاشة وفي نسخة الطباعة؛ الروابط تظهر في الشاشة فقط.
  */
-export function StatementTable({ rows, opening, debit, credit, closing, decimals, links = false }: {
+export function StatementTable({ rows, opening, debit, credit, closing, decimals, links = false, party = "customer" }: {
   rows: StatementRow[]; opening: Money; debit: Money; credit: Money; closing: Money; decimals: number; links?: boolean;
+  /** المورد: الرصيد دائن (المستحق له)، وسالبه مدين على المورد */
+  party?: "customer" | "vendor";
 }) {
   const m = (v: Money, blank = true) => (blank && v.isZero() ? "" : formatMoney(v, { locale: "ar", decimals }));
   const cell = "border-b border-line px-3.5 py-2.5";
@@ -53,7 +60,9 @@ export function StatementTable({ rows, opening, debit, credit, closing, decimals
             <td className="border-t-2 border-ink px-3.5 py-3" />
           </tr>
           <tr className="font-bold text-white">
-            <td colSpan={5} className="bg-ink px-3.5 py-3.5 text-[14.5px]">{closing.isNegative() ? tr("الرصيد الختامي دائن للعميل") : tr("الرصيد الختامي المستحق")}</td>
+            <td colSpan={5} className="bg-ink px-3.5 py-3.5 text-[14.5px]">{party === "vendor"
+              ? (closing.isNegative() ? tr("الرصيد الختامي مدين على المورد") : tr("الرصيد الختامي المستحق للمورد"))
+              : (closing.isNegative() ? tr("الرصيد الختامي دائن للعميل") : tr("الرصيد الختامي المستحق"))}</td>
             <td className="num bg-ink px-3.5 py-3.5 text-end text-[14.5px]">{m(closing.abs(), false)}</td>
           </tr>
         </tbody>

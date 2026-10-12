@@ -301,3 +301,55 @@ export async function postFxRevaluationAction(input: { date: string; lines: { pa
   if (r.ok) revalidatePath("/fx-revaluation");
   return r;
 }
+
+// ---------------------------------------------------------------- المصروفات المقدمة
+const prepaidSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  amount,
+  months: z.coerce.number().int().min(1).max(120),
+  startDate: date,
+  expenseAccountId: z.uuid(),
+  prepaidAccountId: z.union([z.literal(""), z.uuid()]),
+  departmentId: z.union([z.literal(""), z.uuid()]),
+  notes: z.string().trim().max(500),
+});
+
+export async function createPrepaidAction(input: z.input<typeof prepaidSchema>): Promise<ActionResult<string>> {
+  const ctx = await requireAppContext(PERMISSIONS.journalCreate);
+  const p = prepaidSchema.safeParse(input);
+  if (!p.success) return fail;
+  const r = await toActionResult(async () => {
+    const { data, error } = await ctx.supabase.rpc("create_prepaid_expense", {
+      p_hotel_id: ctx.hotel.id, p_name: p.data.name, p_expense_account_id: p.data.expenseAccountId, p_department_id: p.data.departmentId || null,
+      p_amount: p.data.amount, p_months: p.data.months, p_start_date: p.data.startDate, p_prepaid_account_id: p.data.prepaidAccountId || null,
+      p_notes: p.data.notes || null,
+    });
+    raise(error);
+    return data!;
+  });
+  if (r.ok) revalidatePath("/prepaid-expenses");
+  return r;
+}
+
+export async function postDuePrepaidAction(): Promise<ActionResult<number>> {
+  const ctx = await requireAppContext(PERMISSIONS.journalPost);
+  const r = await toActionResult(async () => {
+    const { data, error } = await ctx.supabase.rpc("post_due_prepaid_expenses", { p_hotel_id: ctx.hotel.id });
+    raise(error);
+    return data ?? 0;
+  });
+  if (r.ok) { revalidatePath("/prepaid-expenses"); revalidatePath("/journal"); }
+  return r;
+}
+
+export async function stopPrepaidAction(id: string): Promise<ActionResult<undefined>> {
+  const ctx = await requireAppContext(PERMISSIONS.journalCreate);
+  if (!z.uuid().safeParse(id).success) return fail;
+  const r = await toActionResult(async () => {
+    const { error } = await ctx.supabase.rpc("stop_prepaid_expense", { p_id: id });
+    raise(error);
+    return undefined;
+  });
+  if (r.ok) revalidatePath("/prepaid-expenses");
+  return r;
+}
