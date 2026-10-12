@@ -2,11 +2,10 @@
 -- ترحيل أقساط المصروفات المقدمة بلا توقف كامل: إن تعذّر قسط (فترة مقفلة، لا سنة مالية لتاريخه، حساب أُوقف)
 -- يتوقف ذلك الجدول عند قسطه ويُذكر السبب، وتُرحَّل أقساط الجداول الأخرى كما هي.
 -- النتيجة: {"posted": عدد القيود، "failed": [{"name", "date", "error"}]}
+-- دالة جديدة بجانب القديمة (post_due_prepaid_expenses تبقى كما هي لمن يستدعيها)، فلا يُحذف شيء من القاعدة.
 -- =============================================================================
 
-drop function if exists public.post_due_prepaid_expenses(uuid);
-
-create function public.post_due_prepaid_expenses(p_hotel_id uuid)
+create or replace function public.run_prepaid_amortization(p_hotel_id uuid)
 returns jsonb
 language plpgsql
 security definer
@@ -60,5 +59,5 @@ begin
 end;
 $$;
 
-revoke all on function public.post_due_prepaid_expenses(uuid) from public, anon;
-grant execute on function public.post_due_prepaid_expenses(uuid) to authenticated;
+revoke all on function public.run_prepaid_amortization(uuid) from public, anon;
+grant execute on function public.run_prepaid_amortization(uuid) to authenticated;

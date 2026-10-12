@@ -988,7 +988,8 @@ export type Database = {
       post_due_recurring_entries: { Args: { p_hotel_id: string }; Returns: number };
       create_prepaid_expense: { Args: { p_hotel_id: string; p_name: string; p_expense_account_id: string; p_department_id: string | null; p_amount: string; p_months: number;
         p_start_date: string; p_prepaid_account_id?: string | null; p_notes?: string | null }; Returns: string };
-      post_due_prepaid_expenses: { Args: { p_hotel_id: string }; Returns: { posted: number; failed: { name: string; date: string; error: string }[] } };
+      post_due_prepaid_expenses: { Args: { p_hotel_id: string }; Returns: number };
+      run_prepaid_amortization: { Args: { p_hotel_id: string }; Returns: { posted: number; failed: { name: string; date: string; error: string }[] } };
       stop_prepaid_expense: { Args: { p_id: string }; Returns: undefined };
       set_recurring_entry_active: { Args: { p_id: string; p_active: boolean }; Returns: undefined };
       delete_recurring_entry: { Args: { p_id: string }; Returns: undefined };

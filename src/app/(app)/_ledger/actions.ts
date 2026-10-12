@@ -338,7 +338,7 @@ export async function postDuePrepaidAction(): Promise<ActionResult<PrepaidRun>> 
   const ctx = await requireAppContext(PERMISSIONS.journalPost);
   const { describeDatabaseError } = await import("@/lib/accounting/errors");
   const r = await toActionResult(async () => {
-    const { data, error } = await ctx.supabase.rpc("post_due_prepaid_expenses", { p_hotel_id: ctx.hotel.id });
+    const { data, error } = await ctx.supabase.rpc("run_prepaid_amortization", { p_hotel_id: ctx.hotel.id });
     raise(error);
     return {
       posted: data?.posted ?? 0,
