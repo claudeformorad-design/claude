@@ -7,6 +7,7 @@ import { type FeatureSettings, maskedPermissions } from "./state";
 import { getI18n } from "@/i18n/server";
 import { ServiceError } from "@/services/errors";
 import { sectionPermissions } from "@/lib/license/sync";
+import { ownerBlocked } from "@/lib/license/client";
 
 export type CheckResult = { level: "block" | "warn"; text: string };
 
@@ -104,6 +105,12 @@ export async function toggleFeature(ctx: AppContext, key: string, on: boolean, c
   if (!entry) return { ok: false, level: "block", messages: [tr("عنصر غير معروف")] };
   const { node, parents } = entry;
   if (node.locked) return { ok: false, level: "block", messages: [node.locked] };
+  if (ctx.license.required && ctx.license.ok) {
+    const byOwner = new Set(ownerBlocked(ctx.license.license));
+    if ([node, ...parents].some((n) => byOwner.has(n.key))) {
+      return { ok: false, level: "block", messages: [tr("أوقفه صاحب النظام من لوحة التحكم، ولا يُشغَّل إلا منها.")] };
+    }
+  }
   const section = node.kind === "section";
   if (section && on && ctx.license.required && ctx.license.ok && !ctx.license.license.sections.includes(key)) {
     return { ok: false, level: "block", messages: [tr("هذا القسم غير مشمول في ترخيص الفندق. يُضاف من صاحب النظام.")] };

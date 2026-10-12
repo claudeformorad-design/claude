@@ -5,6 +5,7 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import type { FeatureNode } from "@/lib/features/registry";
 import { canManageSections, localizedTree, settingsOf } from "@/lib/features/server";
 import { selfOff } from "@/lib/features/state";
+import { ownerBlocked } from "@/lib/license/client";
 import { getI18n } from "@/i18n/server";
 import { FeaturesEditor, type ViewNode } from "./features-editor";
 import { LicenseCard } from "./license-card";
@@ -21,10 +22,15 @@ export default async function FeaturesPage() {
   // نظام مرخّص من لوحة هوتيلنا: ما لم يُشترَ من الأقسام مقفل
   const sold = ctx.license.required && ctx.license.ok ? new Set(ctx.license.license.sections) : null;
   const unsold = (n: FeatureNode) => sold !== null && n.kind === "section" && n.key !== "general" && !sold.has(n.key);
+  // ما أوقفه صاحب النظام من الأجزاء والخانات والأزرار: مقفل عند مدير الفندق
+  const byOwner = new Set(ctx.license.required && ctx.license.ok ? ownerBlocked(ctx.license.license) : []);
+  const ownerOff = (n: FeatureNode) => !n.locked && byOwner.has(n.key);
   const view = (n: FeatureNode): ViewNode => ({
     key: n.key, kind: n.kind, label: n.label, hint: n.hint ?? null,
-    locked: unsold(n) ? tr("غير مشمول في ترخيص الفندق. يُضاف من صاحب النظام.") : n.locked ?? null,
-    on: !unsold(n) && !selfOff(n, s), unsold: unsold(n), children: unsold(n) ? [] : (n.children ?? []).map(view),
+    locked: unsold(n) ? tr("غير مشمول في ترخيص الفندق. يُضاف من صاحب النظام.")
+      : ownerOff(n) ? tr("أوقفه صاحب النظام من لوحة التحكم.") : n.locked ?? null,
+    on: !unsold(n) && !ownerOff(n) && !selfOff(n, s), unsold: unsold(n) || ownerOff(n),
+    children: unsold(n) || ownerOff(n) ? [] : (n.children ?? []).map(view),
   });
   return (
     <>

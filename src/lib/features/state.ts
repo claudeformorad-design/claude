@@ -56,6 +56,16 @@ export function maskedPermissions(s: FeatureSettings, tier: "section" | "feature
   return [...out].sort();
 }
 
+/** صلاحيات العناصر المذكورة وكل ما تحتها (لما يوقفه صاحب النظام من الأجزاء والخانات والأزرار) */
+export function permissionsUnder(keys: readonly string[], tree: FeatureNode[] = keysTree()): string[] {
+  const roots = new Set(keys);
+  const out = new Set<string>();
+  for (const { node, parents } of flatten(tree)) {
+    if (!node.locked && (roots.has(node.key) || parents.some((p) => roots.has(p.key)))) for (const p of node.permissions ?? []) out.add(p);
+  }
+  return [...out].sort();
+}
+
 /** مفاتيح الأقسام كلها */
 export const sectionKeys = (tree: FeatureNode[] = keysTree()) => tree.map((n) => n.key);
 

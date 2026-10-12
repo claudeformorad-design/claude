@@ -1,3 +1,4 @@
+import { ownerMaskedPermissions } from "@/lib/license/sync";
 import { tr } from "@/i18n/tr";
 import "server-only";
 import type { AppContext } from "@/lib/auth/context";
@@ -12,7 +13,9 @@ import { localName } from "@/lib/local-name";
 export async function accessData(ctx: AppContext, t: Dictionary) {
   const modules = ctx.hotel.enabled_modules ?? ["accounting", "pms"];
   // صلاحيات ما أُطفئ في تخصيص النظام لا تُعرض: منحها لا يفيد ما دام مطفأً
-  const masked = new Set([...(ctx.hotel.section_permissions ?? []), ...(ctx.hotel.feature_permissions ?? [])]);
+  const masked = new Set([...(ctx.hotel.section_permissions ?? []), ...(ctx.hotel.feature_permissions ?? []),
+    // ما أوقفه صاحب النظام لا يُعرض للمنح حتى قبل أول مزامنة مع القاعدة
+    ...(ctx.license.required && ctx.license.ok ? ownerMaskedPermissions(ctx.license.license) : [])]);
   const [roles, perms, rolePerms] = await Promise.all([
     ctx.supabase.from("roles").select("id, code, name_ar, name_en, is_system").order("is_system", { ascending: false }).order("code"),
     ctx.supabase.from("permissions").select("code, module, name_ar, name_en, product, sort_order").order("sort_order"),

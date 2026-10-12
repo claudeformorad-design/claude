@@ -66,6 +66,28 @@ describe("license client", () => {
     expect(lic.licensedSettings({ enabled_modules: ["pms"], blocked_sections: [], disabled_features: [] }, license, all).enabled_modules).toEqual(["accounting"]);
   });
 
+  it("owner blocks from the panel turn off parts and drop permissions for everyone", async () => {
+    const { ownerMaskedPermissions } = await import("./sync");
+    const { featureState } = await import("@/lib/features/state");
+    const license = lic.verifyLicense(issue({
+      blocked: ["folio.void", "pms.cashier", "accounting.journal", "bad key!"],
+      blocked_permissions: ["invoices.write_off", "settings.users.manage"],
+    }))!;
+    expect(lic.ownerBlocked(license)).toEqual(["folio.void", "pms.cashier", "accounting.journal"]);
+    const out = lic.licensedSettings({ enabled_modules: ["accounting", "pms"], blocked_sections: [], disabled_features: ["reservations.notes"] }, license, ["pms", "accounting", "laundry"]);
+    expect([...out.disabled_features].sort()).toEqual(["accounting.journal", "folio.void", "pms.cashier", "reservations.notes"]);
+    const off = featureState(out).off;
+    expect(off.has("folio.void") && off.has("pms.cashier")).toBe(true);
+    // الأساسي المقفول لا يُطفأ حتى لو طلبه صاحب النظام
+    expect(off.has("accounting.journal")).toBe(false);
+    // صلاحيات الزر والصفحة الموقوفين + الصلاحية الموقوفة مباشرة، وإدارة المستخدمين لا تُوقف أبدًا
+    expect(ownerMaskedPermissions(license)).toEqual(["cashier.shifts", "cashier.shifts.manage", "folio.void", "invoices.write_off"]);
+    // ترخيص قديم بلا هذه الحقول لا يغير شيئًا
+    const plain = lic.verifyLicense(issue())!;
+    expect(ownerMaskedPermissions(plain)).toEqual([]);
+    expect(lic.licensedSettings({ enabled_modules: ["pms"], blocked_sections: [], disabled_features: [] }, plain, ["pms"]).disabled_features).toEqual([]);
+  });
+
   it("check-in fixes a wrong device clock with the panel time", async () => {
     process.env.NAZEEL_PANEL_URL = "http://panel.test";
     const panelNow = Date.now() + 3 * 3600_000;

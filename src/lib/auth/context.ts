@@ -6,6 +6,7 @@ import { forbidden, redirect } from "next/navigation";
 import type { NavAccess } from "@/components/layout/nav-config";
 import { type FeatureState, featureState, sectionKeys, underHref } from "@/lib/features/state";
 import { type LicenseStatus, checkin, licenseRequired, licenseStatus, licensedSettings } from "@/lib/license/client";
+import { ownerMaskedPermissions } from "@/lib/license/sync";
 import { createClient, type SupabaseServerClient } from "@/lib/supabase/server";
 import type { HotelRow, UserProfileRow } from "@/lib/supabase/database.types";
 import type { Permission } from "./permissions";
@@ -83,6 +84,8 @@ export const getAppContext = cache(async (): Promise<AppContext | { user: Sessio
   };
   const settings = license.required && license.ok ? licensedSettings(base, license.license, sectionKeys()) : base;
   const features = featureState(settings);
+  // ما أوقفه صاحب النظام من الصلاحيات يسقط فورًا من الواجهة والخادم، ومن القاعدة عند أول مزامنة
+  if (license.required && license.ok) for (const p of ownerMaskedPermissions(license.license)) permissions.delete(p);
 
   return {
     supabase,

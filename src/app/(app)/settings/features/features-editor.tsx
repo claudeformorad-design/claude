@@ -137,7 +137,7 @@ function Row({ node, parentOn, depth, pending, busy, onToggle }: {
 /** مفتاح التشغيل، أو قفل لما لا يُطفأ */
 function Control({ node, disabled, busy, onChange }: { node: ViewNode; disabled: boolean; busy: boolean; onChange: (v: boolean) => void }) {
   if (node.locked) {
-    return <span className="flex items-center gap-1.5 text-[14px] text-slate-500" title={node.locked}><Lock className="size-4" />{node.unsold ? tr("غير مشمول") : tr("أساسي")}</span>;
+    return <span className="flex items-center gap-1.5 text-[14px] text-slate-500" title={node.locked}><Lock className="size-4" />{node.unsold ? (node.kind === "section" ? tr("غير مشمول") : tr("موقوف")) : tr("أساسي")}</span>;
   }
   return (
     <button type="button" role="switch" aria-checked={node.on} aria-label={node.label} disabled={disabled || busy}

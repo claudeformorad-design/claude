@@ -26,6 +26,10 @@ export type LicensePayload = {
   instance_id: string | null;
   machine: string | null;
   sections: string[];
+  /** أجزاء وخانات وأزرار أوقفها صاحب النظام لهذا الفندق (مفاتيح شجرة التخصيص)، فلا يشغّلها مدير الفندق */
+  blocked?: string[];
+  /** صلاحيات أوقفها صاحب النظام: تسقط من كل الموظفين حتى المدير العام */
+  blocked_permissions?: string[];
   status: "active" | "suspended";
   updates: "forever";
   issued_at: string;
@@ -230,16 +234,27 @@ export async function checkin(force = false, siteUrl: string | null = null): Pro
   }
 }
 
-/** أقسام الترخيص كإعدادات الفندق: الأساسيان في enabled_modules، والبقية تُطفأ إن لم تُشترَ */
-export function licensedSettings<T extends { enabled_modules: readonly string[]; blocked_sections: readonly string[] }>(
+/** أقسام الترخيص كإعدادات الفندق: الأساسيان في enabled_modules، والبقية تُطفأ إن لم تُشترَ، وما أوقفه صاحب النظام يُطفأ */
+export function licensedSettings<T extends { enabled_modules: readonly string[]; blocked_sections: readonly string[]; disabled_features?: readonly string[] }>(
   s: T, license: LicensePayload, allSections: readonly string[],
 ): T {
   const sold = new Set(license.sections);
   const modules = s.enabled_modules.filter((m) => sold.has(m));
+  const blocked = ownerBlocked(license);
   return {
     ...s,
+    ...(s.disabled_features && blocked.length ? { disabled_features: [...new Set([...s.disabled_features, ...blocked])] } : {}),
     // إن أطفأ الفندق كل ما اشتراه من الأساسيين يبقى المشترى منهما
     enabled_modules: modules.length ? modules : ["pms", "accounting"].filter((m) => sold.has(m)),
     blocked_sections: [...new Set([...s.blocked_sections, ...allSections.filter((k) => k !== "pms" && k !== "accounting" && k !== "general" && !sold.has(k))])],
   };
 }
+
+const keyList = (v: unknown): string[] =>
+  Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && /^[a-z_]+(\.[a-z_]+)*$/.test(x)) : [];
+
+/** ما أوقفه صاحب النظام من الأجزاء والخانات والأزرار */
+export const ownerBlocked = (license: LicensePayload): string[] => keyList(license.blocked);
+
+/** صلاحيات أوقفها صاحب النظام مباشرة */
+export const ownerBlockedPermissions = (license: LicensePayload): string[] => keyList(license.blocked_permissions);

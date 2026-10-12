@@ -1,10 +1,18 @@
 import "server-only";
 import type { AppContext } from "@/lib/auth/context";
 import type { HotelModule } from "@/lib/supabase/database.types";
-import { type FeatureSettings, maskedPermissions, sectionKeys } from "@/lib/features/state";
-import { licenseStatus, licensedSettings } from "./client";
+import { type FeatureSettings, maskedPermissions, permissionsUnder, sectionKeys } from "@/lib/features/state";
+import { type LicensePayload, licenseStatus, licensedSettings, ownerBlocked, ownerBlockedPermissions } from "./client";
 
 const KEEP = new Set(["settings.hotel.manage", "settings.users.manage"]);
+
+/**
+ * صلاحيات أوقفها صاحب النظام من اللوحة: ما أوقفه مباشرة، وصلاحيات ما أوقفه من الأجزاء والأزرار.
+ * تسقط من كل الموظفين حتى المدير العام. إدارة الفندق والمستخدمين لا تُوقف حتى لا يُغلق النظام على صاحبه.
+ */
+export function ownerMaskedPermissions(license: LicensePayload): string[] {
+  return [...new Set([...ownerBlockedPermissions(license), ...permissionsUnder(ownerBlocked(license))])].filter((p) => !KEEP.has(p)).sort();
+}
 
 /**
  * صلاحيات طبقة الأقسام التي تسقط في القاعدة: ما أطفأه الفندق بنفسه، وفوقه ما لم يشترِه في الترخيص
@@ -14,7 +22,7 @@ const KEEP = new Set(["settings.hotel.manage", "settings.users.manage"]);
 export async function sectionPermissions(ctx: AppContext, manual: FeatureSettings): Promise<string[]> {
   const lic = await licenseStatus();
   if (!lic.required || !lic.ok) return maskedPermissions(manual, "section");
-  const perms = new Set(maskedPermissions(licensedSettings(manual, lic.license, sectionKeys()), "section"));
+  const perms = new Set([...maskedPermissions(licensedSettings(manual, lic.license, sectionKeys()), "section"), ...ownerMaskedPermissions(lic.license)]);
   const unsold = (["pms", "accounting"] as const).filter((m) => !lic.license.sections.includes(m));
   if (unsold.length) {
     const { data } = await ctx.supabase.from("permissions").select("code, product").in("product", unsold);
