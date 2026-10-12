@@ -5,7 +5,7 @@ import { cookies, headers } from "next/headers";
 import { forbidden, redirect } from "next/navigation";
 import type { NavAccess } from "@/components/layout/nav-config";
 import { type FeatureState, featureState, sectionKeys, underHref } from "@/lib/features/state";
-import { type LicenseStatus, licenseStatus, licensedSettings } from "@/lib/license/client";
+import { type LicenseStatus, checkin, licenseRequired, licenseStatus, licensedSettings } from "@/lib/license/client";
 import { createClient, type SupabaseServerClient } from "@/lib/supabase/server";
 import type { HotelRow, UserProfileRow } from "@/lib/supabase/database.types";
 import type { Permission } from "./permissions";
@@ -67,6 +67,13 @@ export const getAppContext = cache(async (): Promise<AppContext | { user: Sessio
     supabase.rpc("my_interface", { p_hotel_id: hotel.id }),
   ]);
   const permissions = new Set<string>(perms ?? []);
+  // التواصل مع لوحة هوتيلنا قبل عرض الصفحة (كل نصف دقيقة على الأكثر): الإيقاف والفصل وتغيير الأقسام
+  // تصل مع أول ضغطة بعدها. لا يُترك لما بعد إرسال الصفحة، فخوادم Netlify قد تقطع العمل المؤجل.
+  if (licenseRequired()) {
+    const h = await headers();
+    const host = h.get("x-forwarded-host") ?? h.get("host");
+    await checkin(false, host ? `${h.get("x-forwarded-proto") ?? "https"}://${host}` : null).catch(() => false);
+  }
   // الأقسام غير المشمولة في الترخيص تُطفأ فوق ما اختاره الفندق
   const license = await licenseStatus();
   const base = {

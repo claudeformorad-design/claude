@@ -1,6 +1,6 @@
 import { currentLocale, tr } from "@/i18n/tr";
 import { Suspense } from "react";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { SIDEBAR_COOKIE } from "@/components/layout/nav-config";
 import { PointerEffects } from "@/components/layout/pointer-effects";
 import { RouteProgress } from "@/components/layout/route-progress";
@@ -11,9 +11,7 @@ import { HoverPrefetch } from "@/components/layout/hover-prefetch";
 import { PageFrame } from "@/components/layout/page-frame";
 import { FeaturesProvider } from "@/components/features/feature";
 import { PanelNotices } from "@/components/license/panel-notices";
-import { checkin } from "@/lib/license/client";
 import { syncLicenseToDatabase } from "@/lib/license/sync";
-import { after } from "next/server";
 import { requireAppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -54,14 +52,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // ترخيص لوحة هوتيلنا: المدير يطبّق أي تغيير وصل على قاعدة البيانات، ثم يُجدَّد التواصل بعد إرسال الصفحة
   const notices = ctx.license.required && ctx.license.ok
     ? ctx.license.notices.map(({ id, title, body, level }) => ({ id, title, body, level })) : [];
-  if (ctx.license.required) {
-    if (ctx.can(PERMISSIONS.hotelManage)) await syncLicenseToDatabase(ctx).catch(() => undefined);
-    // التواصل مع اللوحة مع استخدام أي موظف (لا المدير وحده)، فيصل الإيقاف خلال دقيقتين
-    const h = await headers();
-    const host = h.get("x-forwarded-host") ?? h.get("host");
-    const url = host ? `${h.get("x-forwarded-proto") ?? "https"}://${host}` : null;
-    after(() => checkin(false, url).then(() => undefined).catch(() => undefined));
-  }
+  // ما يصل من اللوحة يطبّقه المدير على قاعدة البيانات أيضًا (التواصل نفسه يجري قبل كل صفحة في سياق المستخدم)
+  if (ctx.license.required && ctx.can(PERMISSIONS.hotelManage)) await syncLicenseToDatabase(ctx).catch(() => undefined);
   const assistantOn = ctx.on("assistant") && (await getAssistantConfig().catch(() => null)) !== null;
 
   return (

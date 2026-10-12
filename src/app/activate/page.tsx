@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getAppContext, type AppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { checkin, licenseStatus, machineId } from "@/lib/license/client";
+import { machineId } from "@/lib/license/client";
 import { ActivateForm } from "./activate-form";
 
 export const dynamic = "force-dynamic";
@@ -16,11 +16,6 @@ export default async function ActivatePage() {
   if (!ctx.hotel) redirect("/onboarding");
   const full = ctx as AppContext;
   if (!full.license.required || full.license.ok) redirect("/");
-  // نظام مربوط موقوف: يُسأل صاحب النظام عند فتح الصفحة، فإن أُعيد تفعيله يفتح النظام دون ضغط أي زر
-  if (full.license.reason === "suspended" && (await checkin(false)) && (await licenseStatus()).required) {
-    const now = await licenseStatus();
-    if (now.required && now.ok) redirect("/");
-  }
   const reason = full.license.reason;
   return (
     <main className="flex min-h-screen items-center justify-center bg-content px-4 py-12">
@@ -31,6 +26,7 @@ export default async function ActivatePage() {
           <h1 className="text-[26px] font-bold text-ink">{tr("تفعيل هوتيلنا")}</h1>
           <p className="text-[16.5px] leading-relaxed text-slate-600">
             {reason === "suspended" ? tr("هذا الفندق موقوف من صاحب النظام. تواصل معه، وبعد إعادة التفعيل اضغط تحقق الآن.")
+              : reason === "unlinked" ? tr("فصل صاحب النظام هذا النظام من لوحة هوتيلنا. اكتب كود الربط الجديد الذي يعطيك إياه ليعمل من جديد.")
               : reason === "other_machine" ? tr("ترخيص هذا النظام لجهاز آخر. أرسل رقم هذا الجهاز لصاحب النظام ليعطيك مفتاحًا جديدًا.")
               : tr("اكتب كود الربط الذي أعطاك إياه صاحب النظام. مرة واحدة فقط، وبعدها يعمل النظام مباشرة.")}
           </p>

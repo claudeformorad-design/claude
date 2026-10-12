@@ -94,4 +94,32 @@ describe("license client", () => {
       delete process.env.NAZEEL_PANEL_URL;
     }
   });
+
+  it("a signed unlink notice from the panel stops the system; a forged one is ignored", async () => {
+    process.env.NAZEEL_PANEL_URL = "http://panel.test";
+    const revoke = (instance: string, key = privateKey) => {
+      const body = Buffer.from(JSON.stringify({ v: 1, kind: "nazeel-revocation", instance_id: instance, issued_at: new Date().toISOString() })).toString("base64url");
+      return `${body}.${sign(null, Buffer.from(body), key).toString("base64url")}`;
+    };
+    let answer: () => Response = () => Response.json({});
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => url.endsWith("/api/v1/activate")
+      ? Response.json({ instance_id: "inst-2", secret: "s2", license: issue({ instance_id: "inst-2" }), notices: [] })
+      : answer()));
+    try {
+      expect(await lic.activateWithCode("NZL-CCCC-DDDD", null)).toEqual({ ok: true });
+      // مزوّر: مفتاح آخر، أو لنظام آخر — لا يوقف شيئًا
+      answer = () => Response.json({ error: "revoked", revocation: revoke("inst-2", generateKeyPairSync("ed25519").privateKey) }, { status: 410 });
+      await lic.checkin(true);
+      answer = () => Response.json({ error: "revoked", revocation: revoke("other-instance") }, { status: 410 });
+      await lic.checkin(true);
+      expect(await lic.licenseStatus()).toMatchObject({ required: true, ok: true });
+      // حقيقي من اللوحة لهذا النظام: يتوقف ويطلب كودًا جديدًا
+      answer = () => Response.json({ error: "revoked", revocation: revoke("inst-2") }, { status: 410 });
+      expect(await lic.checkin(true)).toBe(true);
+      expect(await lic.licenseStatus()).toMatchObject({ required: true, ok: false, reason: "unlinked" });
+    } finally {
+      vi.unstubAllGlobals();
+      delete process.env.NAZEEL_PANEL_URL;
+    }
+  });
 });

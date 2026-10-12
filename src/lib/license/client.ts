@@ -34,6 +34,8 @@ export type LicensePayload = {
 export type PanelNotice = { id: string; title: string; body: string; level: "info" | "important"; starts_at: string; ends_at: string | null };
 
 type State = {
+  /** فصله صاحب النظام من اللوحة (نقل أو حذف): يحتاج كود ربط جديدًا */
+  revoked_at?: string | null;
   instance_id: string | null;
   secret: string | null;
   license: string | null;
@@ -43,8 +45,8 @@ type State = {
 };
 
 const KEY = "nazeel-instance";
-/** التواصل مع اللوحة كل دقيقتين أثناء استخدام النظام: الإيقاف وإعادة التفعيل وتغيير الأقسام تصل خلالهما */
-const CHECKIN_EVERY = Math.max(10, Number(process.env.NAZEEL_CHECKIN_SECONDS) || 120) * 1000;
+/** التواصل مع اللوحة كل نصف دقيقة أثناء استخدام النظام: الإيقاف والفصل وتغيير الأقسام والإشعارات تصل خلالها */
+const CHECKIN_EVERY = Math.max(10, Number(process.env.NAZEEL_CHECKIN_SECONDS) || 30) * 1000;
 /** بعد فشل التواصل (اللوحة أو الإنترنت متوقف) تُعاد المحاولة بعد 10 دقائق */
 const RETRY_AFTER = 10 * 60_000;
 export const APP_VERSION: string = pkg.version;
@@ -115,16 +117,32 @@ export function verifyLicense(token: string | null | undefined): LicensePayload 
   }
 }
 
+/** إشعار الفصل من اللوحة: موقّع بمفتاحها الخاص وللنظام نفسه، فلا يزوّره أحد */
+function verifyRevocation(token: unknown, instanceId: string): boolean {
+  const pub = process.env.NAZEEL_LICENSE_PUBLIC_KEY;
+  if (typeof token !== "string" || !pub) return false;
+  const [body, sig] = token.split(".");
+  if (!body || !sig) return false;
+  try {
+    const key = createPublicKey({ key: Buffer.from(pub, "base64"), format: "der", type: "spki" });
+    if (!verify(null, Buffer.from(body), key, Buffer.from(sig, "base64url"))) return false;
+    const p = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as { kind?: string; instance_id?: string };
+    return p.kind === "nazeel-revocation" && p.instance_id === instanceId;
+  } catch {
+    return false;
+  }
+}
+
 export type LicenseStatus =
   | { required: false }
   | { required: true; ok: true; license: LicensePayload; notices: PanelNotice[]; lastCheckin: string | null; lastError: string | null; linked: boolean }
-  | { required: true; ok: false; reason: "not_activated" | "invalid" | "other_machine" | "suspended"; license: LicensePayload | null };
+  | { required: true; ok: false; reason: "not_activated" | "invalid" | "other_machine" | "suspended" | "unlinked"; license: LicensePayload | null };
 
 /** حالة الترخيص الآن: صالح وفعّال، أو سبب المنع */
 export async function licenseStatus(): Promise<LicenseStatus> {
   if (!licenseRequired()) return { required: false };
   const s = await readState();
-  if (!s.license) return { required: true, ok: false, reason: "not_activated", license: null };
+  if (!s.license) return { required: true, ok: false, reason: s.revoked_at ? "unlinked" : "not_activated", license: null };
   const license = verifyLicense(s.license);
   if (!license) return { required: true, ok: false, reason: "invalid", license: null };
   // مفتاح جهاز يعمل على ذلك الجهاز فقط، وترخيص الربط لنظامه المربوط فقط
@@ -156,7 +174,7 @@ export async function activateWithCode(code: string, siteUrl: string | null): Pr
     return { ok: false, error: e };
   }
   if (!j.instance_id || !j.secret || !verifyLicense(j.license)) return { ok: false, error: "unreachable" };
-  await writeState({ instance_id: j.instance_id, secret: j.secret, license: j.license!, notices: j.notices ?? [], last_checkin: new Date().toISOString(), last_error: null });
+  await writeState({ revoked_at: null, instance_id: j.instance_id, secret: j.secret, license: j.license!, notices: j.notices ?? [], last_checkin: new Date().toISOString(), last_error: null });
   return { ok: true };
 }
 
@@ -185,17 +203,22 @@ export async function checkin(force = false, siteUrl: string | null = null): Pro
   const send = (now: number) => {
     const ts = String(now);
     return fetch(`${panelUrl()}/api/v1/checkin`, {
-      method: "POST", signal: AbortSignal.timeout(8000), body: raw,
+      method: "POST", signal: AbortSignal.timeout(5000), body: raw,
       headers: { "content-type": "application/json", "x-instance-id": s.instance_id!, "x-timestamp": ts, "x-signature": createHmac("sha256", s.secret!).update(`${ts}.${raw}`).digest("base64url") },
     });
   };
   try {
     let res = await send(Date.now());
-    let j = (await res.json().catch(() => ({}))) as { license?: string; notices?: PanelNotice[]; error?: string; now?: number };
+    let j = (await res.json().catch(() => ({}))) as { license?: string; notices?: PanelNotice[]; error?: string; now?: number; revocation?: string };
     // ساعة الجهاز خاطئة (أو منطقته الزمنية): يُعاد التوقيع مرة بوقت اللوحة
     if (res.status === 401 && j.error === "clock" && typeof j.now === "number") {
       res = await send(j.now);
       j = (await res.json().catch(() => ({}))) as typeof j;
+    }
+    // فصله صاحب النظام: يتوقف ويطلب كود ربط جديدًا (فقط بإشعار موقّع من اللوحة لهذا النظام)
+    if (res.status === 410 && verifyRevocation(j.revocation, s.instance_id)) {
+      await writeState({ ...EMPTY, revoked_at: new Date().toISOString() });
+      return true;
     }
     if (!res.ok || !verifyLicense(j.license)) throw new Error(j.error === "clock" ? "device clock is wrong" : `panel answered ${res.status}`);
     await writeState({ ...s, license: j.license!, notices: j.notices ?? [], last_checkin: new Date().toISOString(), last_error: null });
