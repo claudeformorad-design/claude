@@ -33,9 +33,11 @@ export function Stat({
           <Icon className="size-[17px] stroke-[1.9]" />
         </span>
         <p className="line-clamp-2 min-w-0 text-[16.5px] leading-tight font-medium text-slate-600">{label}</p>
-        {currency && <CurrencyTag code={currency} className="ms-auto" />}
+        {currency && <CurrencyTag code={currency} className="ms-auto max-sm:hidden" />}
       </div>
       <p className={cn("display-num mt-3 truncate text-[24px] font-bold leading-tight text-ink", valueClassName)}>{value}</p>
+      {/* الجوال: العملة تحت الرقم بدل أن تزاحم العنوان */}
+      {currency && <CurrencyTag code={currency} className="mt-1.5 sm:hidden" />}
       {hint && <p className="mt-1 line-clamp-2 text-[15.5px] leading-snug text-slate-500">{hint}</p>}
     </div>
   );

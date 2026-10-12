@@ -18,7 +18,7 @@ export function StatementTable({ rows, opening, debit, credit, closing, decimals
   const m = (v: Money, blank = true) => (blank && v.isZero() ? "" : formatMoney(v, { locale: "ar", decimals }));
   const cell = "border-b border-line px-3.5 py-2.5";
   return (
-    <div className="overflow-hidden rounded-lg">
+    <div data-mobile-cards className="overflow-hidden rounded-lg">
       <table className="report-doc-table w-full border-separate border-spacing-0 text-[13px]">
         <thead>
           <tr>

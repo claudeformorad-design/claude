@@ -522,3 +522,51 @@ tbody.rows-animate > tr:hover > td { background-color: #fbfaf8; }
 html[lang="en"] body { font-family: var(--font-digits), var(--font-thmanyah), ui-sans-serif, system-ui, sans-serif; }
 html[dir="ltr"] .lucide-chevron-left, html[dir="ltr"] .lucide-chevron-right,
 html[dir="ltr"] .lucide-arrow-left, html[dir="ltr"] .lucide-arrow-right { transform: scaleX(-1); }
+
+/* =============================================================================
+   الجوال فقط (أقل من 768px): لا يمس تصميم الكمبيوتر واللابتوب
+   ============================================================================= */
+@media (max-width: 767px) {
+  /* الجداول تصير بطاقات: كل صف بطاقة، وكل خانة سطر بعنوان عمودها (يضعه MobileTables من رأس الجدول) */
+  [data-cards] { overflow: visible; border: 0; background: transparent; border-radius: 0; }
+  [data-cards] > table,
+  [data-cards] > table > tbody,
+  [data-cards] > table > tfoot { display: block; width: 100%; }
+  [data-cards] > table > thead { display: none; }
+  [data-cards] > table > tbody > tr,
+  [data-cards] > table > tfoot > tr {
+    display: block; margin-bottom: 0.625rem; padding: 0.625rem 0.875rem;
+    border: 1px solid var(--color-line); border-radius: 14px; background: #fff;
+  }
+  [data-cards] > table > tfoot > tr { background: var(--color-group-row); }
+  [data-cards] > table > tbody > tr > td,
+  [data-cards] > table > tfoot > tr > td {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+    min-height: 2.25rem; padding: 0.3rem 0 !important; border: 0; text-align: end; font-size: 16.5px;
+    overflow-wrap: anywhere;
+  }
+  [data-cards] td[data-label]:not([data-label=""])::before {
+    content: attr(data-label); flex-shrink: 0; max-width: 45%; text-align: start;
+    font-size: 14.5px; font-weight: 500; color: var(--color-slate-500);
+  }
+  /* الخانة الأولى عنوان البطاقة (بلا عنوان عمود وبعرض كامل)، والخانات بلا عنوان (أزرار) بعرض كامل */
+  [data-cards] > table > tbody > tr > td:first-child { font-weight: 600; font-size: 17px; justify-content: flex-start; }
+  [data-cards] > table > tbody > tr > td:first-child::before { display: none; }
+  [data-cards] td, [data-cards] td .whitespace-nowrap { white-space: normal; }
+  [data-cards] td[data-label=""] { justify-content: flex-start; }
+  [data-cards] td[data-label=""]:empty { display: none; }
+  [data-cards] td[data-span] { display: block; text-align: start; }
+
+  /* داخل البطاقة الأسماء والقيم تظهر كاملة بلا قص */
+  [data-cards] td .truncate, [data-cards] td .line-clamp-1 {
+    overflow: visible; white-space: normal; text-overflow: clip; -webkit-line-clamp: unset; max-width: none;
+  }
+  [data-cards] td [class*="max-w-"] { max-width: none; }
+
+  /* بطاقات الأرقام: الرقم كامل بلا قص */
+  .stat-grid .display-num { font-size: 19px; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+
+  /* شرائط التبويب والفترات تتمرر أفقيًا بلا شريط ظاهر */
+  nav.overflow-x-auto, .overflow-x-auto { scrollbar-width: none; }
+  nav.overflow-x-auto::-webkit-scrollbar, .overflow-x-auto::-webkit-scrollbar { display: none; }
+}

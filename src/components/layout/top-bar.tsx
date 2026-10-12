@@ -54,9 +54,8 @@ export function TopBar({
 
   return (
     <header className="no-print relative flex h-[72px] shrink-0 items-center gap-3 px-4 md:px-10">
-      <button type="button" onClick={() => setDrawerOpen(true)} className={cn(iconBtn, "md:hidden")} aria-label={tr("القائمة")}>
-        <Menu className="size-[18px] stroke-[1.75]" />
-      </button>
+      {/* الجوال: الشعار بدل زر القائمة (القائمة في الشريط السفلي) */}
+      <Link href="/" aria-label={tr("الرئيسية")} className="shrink-0 md:hidden"><BrandMark className="size-10" /></Link>
 
       {/* مسار التنقّل */}
       <nav aria-label={tr("المسار")} className="flex min-w-0 flex-1 items-center gap-5 text-[16.5px] text-muted-foreground">
@@ -93,13 +92,11 @@ export function TopBar({
           </Link>
         )}
         {reachable.has("/settings/hotel") && (
-          <Link href="/settings/hotel" className={iconBtn} title={labels.hotelSettings} aria-label={labels.hotelSettings}>
+          <Link href="/settings/hotel" className={cn(iconBtn, "max-md:hidden")} title={labels.hotelSettings} aria-label={labels.hotelSettings}>
             <Settings className="size-[18px] stroke-[1.75]" />
           </Link>
         )}
-        <Link href="/" title={tr("{0}، {1}", userName || userEmail, roleLabel)} aria-label={tr("الرئيسية")} className="md:hidden">
-          <BrandMark className="size-10" />
-        </Link>
+
       </div>
 
       {searchOpen && (
@@ -107,10 +104,44 @@ export function TopBar({
           <SearchBox groups={groups} autoFocus onDone={() => setSearchOpen(false)} />
         </div>
       )}
+      <MobileTabBar groups={groups} pathname={pathname} onMenu={() => setDrawerOpen(true)} />
       <AnimatePresence>
-        {drawerOpen && <MobileDrawer groups={groups} pathname={pathname} hotelName={hotelName} signOut={signOut} onClose={() => setDrawerOpen(false)} />}
+        {drawerOpen && <MobileDrawer groups={groups} pathname={pathname} hotelName={hotelName} user={[userName || userEmail, roleLabel].filter(Boolean).join("، ")} signOut={signOut} onClose={() => setDrawerOpen(false)} />}
       </AnimatePresence>
     </header>
+  );
+}
+
+/** الجوال: شريط سفلي ثابت بأهم الشاشات لدور المستخدم وزر القائمة، يُستخدم بإبهام واحدة */
+const TAB_PRIORITY = ["/", "/front-desk", "/reservations", "/folios", "/cashier", "/pos", "/journal", "/vouchers", "/invoices", "/hr", "/housekeeping"];
+/** أسماء قصيرة تتسع للشريط السفلي */
+const SHORT: Record<string, () => string> = {
+  "/": () => tr("الرئيسية"), "/front-desk": () => tr("الاستقبال"), "/reservations": () => tr("الحجوزات"), "/folios": () => tr("الفوليو"),
+  "/cashier": () => tr("الصندوق"), "/pos": () => tr("البيع"), "/journal": () => tr("القيود"), "/vouchers": () => tr("السندات"),
+  "/invoices": () => tr("الفواتير"), "/hr": () => tr("الموظفون"), "/housekeeping": () => tr("التدبير"),
+};
+function MobileTabBar({ groups, pathname, onMenu }: { groups: ReturnType<typeof navGroups>; pathname: string; onMenu: () => void }) {
+  const items = groups.flatMap((g) => g.items);
+  const tabs = TAB_PRIORITY.map((h) => items.find((i) => i.href === h)).filter((i): i is (typeof items)[number] => !!i).slice(0, 4);
+  const active = items.filter((i) => isActivePath(pathname, i.href)).sort((a, b) => b.href.length - a.href.length)[0]?.href;
+  return (
+    <nav aria-label={tr("التنقل السريع")}
+      className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      {tabs.map((t) => {
+        const on = active === t.href;
+        return (
+          <Link key={t.href} href={t.href} aria-current={on ? "page" : undefined}
+            className={cn("flex min-w-0 flex-1 flex-col items-center gap-1 pb-2 pt-2.5 text-[12.5px]", on ? "font-semibold text-accent1" : "text-slate-500")}>
+            <t.icon className="size-[22px] stroke-[1.75]" />
+            <span className="w-full truncate px-1 text-center">{SHORT[t.href]?.() ?? t.label}</span>
+          </Link>
+        );
+      })}
+      <button type="button" onClick={onMenu} className="flex min-w-0 flex-1 flex-col items-center gap-1 pb-2 pt-2.5 text-[12.5px] text-slate-500">
+        <Menu className="size-[22px] stroke-[1.75]" />
+        <span>{tr("القائمة")}</span>
+      </button>
+    </nav>
   );
 }
 
@@ -135,7 +166,7 @@ function QuickActions({ actions }: { actions: { href: string; label: string }[] 
   );
 }
 
-function MobileDrawer({ groups, pathname, hotelName, signOut, onClose }: { groups: ReturnType<typeof navGroups>; pathname: string; hotelName: string; signOut?: () => Promise<void>; onClose: () => void }) {
+function MobileDrawer({ groups, pathname, hotelName, user, signOut, onClose }: { groups: ReturnType<typeof navGroups>; pathname: string; hotelName: string; user: string; signOut?: () => Promise<void>; onClose: () => void }) {
   return (
     <m.div className="fixed inset-0 z-50 bg-ink/20 md:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
       <m.nav
@@ -146,7 +177,11 @@ function MobileDrawer({ groups, pathname, hotelName, signOut, onClose }: { group
         transition={{ type: "spring", stiffness: 320, damping: 34 }}
         className="absolute inset-y-3 end-auto start-3 w-72 overflow-y-auto rounded-[20px] bg-sidebar p-4 shadow-lift"
       >
-        <p className="mb-3 flex items-center gap-2.5 px-2 text-[18.5px] font-semibold text-ink"><BrandMark className="size-8" />{hotelName}</p>
+        <div className="mb-4 flex items-center gap-2.5 px-2">
+          <BrandMark className="size-9 shrink-0" />
+          <span className="min-w-0"><span className="block truncate text-[18px] font-semibold text-ink">{hotelName}</span>
+            {user && <span className="block truncate text-[14px] text-slate-500">{user}</span>}</span>
+        </div>
         {groups.map((g, gi) => (
           <div key={gi} className="mb-3 space-y-1">
             {g.title && <p className="px-3 text-[14.5px] text-slate-400">{g.title}</p>}

@@ -48,8 +48,8 @@ export function RosterGrid({ days, employees, shifts, initial, canEdit, errors }
           <Button onClick={save} loading={pending} disabled={changed.size === 0}>{tr("حفظ الجدول")}</Button>
         </div>
       )}
-      <div className="surface overflow-x-auto">
-        <table className="w-full min-w-[900px] text-[15px]">
+      <div data-mobile-cards className="surface overflow-x-auto">
+        <table className="w-full min-w-[900px] text-[15px] max-md:min-w-0">
           <thead>
             <tr className="border-b border-line bg-panel text-slate-600">
               <th className="px-4 py-3 text-start font-medium">{tr("الموظف")}</th>

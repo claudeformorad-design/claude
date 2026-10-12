@@ -448,13 +448,15 @@ function Kpi({
         <span className="lift-icon flex size-9 items-center justify-center rounded-[10px] bg-ink text-white">
           <Icon className="size-[17px] stroke-[1.75]" />
         </span>
-        <p className="min-w-0 truncate text-[16.5px] font-medium text-slate-600">{label}</p>
-        <CurrencyTag code={currency} className="ms-auto" />
+        <p className="min-w-0 truncate text-[16.5px] font-medium text-slate-600 max-sm:whitespace-normal max-sm:leading-tight">{label}</p>
+        <CurrencyTag code={currency} className="ms-auto max-sm:hidden" />
       </div>
       <p className={cn("display-num truncate text-[22px] font-bold leading-tight text-ink sm:text-[30px]", tone === "neg" && "text-urgent")}>
         <AnimatedNumber value={value.toNumber()} text={formatAmount(value)} />
       </p>
       <p className="mt-1 truncate text-[16.5px] text-slate-600">{sub}</p>
+      {/* الجوال: العملة تحت الرقم بدل أن تقص العنوان */}
+      <CurrencyTag code={currency} className="mt-1.5 sm:hidden" />
       <div className="mt-3">
         {spark ? <Sparkline values={spark.values} months={spark.months} color={spark.color} /> : <p className="flex h-10 items-end text-[15px] text-slate-500">{tr("رصيد الصندوق والبنوك في الأستاذ")}</p>}
       </div>

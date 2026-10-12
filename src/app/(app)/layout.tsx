@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { SIDEBAR_COOKIE } from "@/components/layout/nav-config";
 import { PointerEffects } from "@/components/layout/pointer-effects";
+import { MobileTables } from "@/components/layout/mobile-tables";
 import { RouteProgress } from "@/components/layout/route-progress";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopBar } from "@/components/layout/top-bar";
@@ -65,6 +66,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <PointerEffects />
       <Toaster />
       <HoverPrefetch />
+      <MobileTables />
       <div className="flex min-w-0 flex-1 overflow-hidden">
         <Sidebar
           labels={t.nav}
@@ -86,7 +88,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             assistant={assistantOn}
             quickActions={quickActions}
           />
-          <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-12 pt-1 md:px-10"><PageFrame>{notices.length > 0 && <PanelNotices notices={notices} />}<FeaturesProvider off={[...ctx.features.off]}>{children}</FeaturesProvider></PageFrame></main>
+          <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-12 pt-1 max-md:pb-28 md:px-10"><PageFrame>{notices.length > 0 && <PanelNotices notices={notices} />}<FeaturesProvider off={[...ctx.features.off]}>{children}</FeaturesProvider></PageFrame></main>
         </div>
       </div>
     </div>

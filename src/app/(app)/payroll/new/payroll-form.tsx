@@ -44,7 +44,7 @@ export function PayrollForm({ t, locale, month, departments }: {
         <div className="field-group space-y-1.5"><Label htmlFor="pm">{t.payables.month}</Label><Input id="pm" type="month" dir="ltr" {...register("period_month")} /></div>
         <div className="field-group space-y-1.5"><Label htmlFor="pd">{t.common.date}</Label><Input id="pd" type="date" dir="ltr" {...register("posting_date")} /></div>
       </div>
-      <div className="overflow-x-auto">
+      <div data-mobile-cards className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="border-b-2 border-thead-line bg-thead font-bold text-thead-text"><tr>
             <th className="p-1 text-start">{t.payables.employee}</th><th className="p-1 text-start">{t.folio.department}</th>
