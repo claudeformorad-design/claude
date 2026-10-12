@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bankDate, bankLineKey, bankNumber, parseBankStatement } from "./bank-statement";
+import { bankDate, bankLineKey, bankNumber, detectDateOrder, parseBankStatement } from "./bank-statement";
 
 const sheet = (headers: string[], rows: string[][]) => ({ headers, rows: rows.map((cells, i) => ({ line: i + 2, cells })) });
 
@@ -61,5 +61,29 @@ describe("bank statement import", () => {
     expect(parseBankStatement(sheet(["التاريخ", "البيان"], []))).toHaveProperty("error");
     expect(bankLineKey({ txn_date: "2026-03-01", amount: "5000", reference: null, description: " إيداع " }))
       .toBe(bankLineKey({ txn_date: "2026-03-01", amount: "5000.0000", reference: "", description: "إيداع" }));
+  });
+
+  it("detects the date order from the whole file, and never guesses silently", () => {
+    expect(detectDateOrder(["31/01/2026", "05/02/2026"])).toBe("dmy");
+    expect(detectDateOrder(["01/31/2026", "02/05/2026"])).toBe("mdy");
+    expect(detectDateOrder(["01/02/2026", "2026-03-04"])).toBe("ambiguous");
+    expect(detectDateOrder(["31/01/2026", "01/31/2026"])).toBe("mixed");
+    expect(bankDate("01/31/2026", "mdy")).toBe("2026-01-31");
+    expect(bankDate("2026-01-31", "mdy")).toBe("2026-01-31");
+    // كشف أمريكي: يُقرأ صحيحًا تلقائيًا
+    const us = parseBankStatement(sheet(["Date", "Description", "Amount"], [["03/15/2026", "Deposit", "100"], ["03/02/2026", "Fee", "-5"]]));
+    if ("error" in us) throw new Error(us.error);
+    expect(us.dateOrder).toBe("mdy");
+    expect(us.dateAmbiguous).toBe(false);
+    expect(us.lines.map((l) => l.txn_date)).toEqual(["2026-03-15", "2026-03-02"]);
+    // ملتبس: يوم/شهر افتراضيًا مع علامة للتأكيد، ويمكن اختيار الترتيب الآخر
+    const amb = parseBankStatement(sheet(["التاريخ", "المبلغ"], [["03/02/2026", "100"]]));
+    if ("error" in amb) throw new Error(amb.error);
+    expect([amb.dateAmbiguous, amb.lines[0]!.txn_date]).toEqual([true, "2026-02-03"]);
+    const chosen = parseBankStatement(sheet(["التاريخ", "المبلغ"], [["03/02/2026", "100"]]), "mdy");
+    if ("error" in chosen) throw new Error(chosen.error);
+    expect(chosen.lines[0]!.txn_date).toBe("2026-03-02");
+    // مختلط: يُرفض الملف بدل استيراد تواريخ مقلوبة
+    expect(parseBankStatement(sheet(["التاريخ", "المبلغ"], [["31/01/2026", "1"], ["01/31/2026", "2"]]))).toHaveProperty("error");
   });
 });

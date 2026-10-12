@@ -14,6 +14,9 @@ export type BankParse = {
   skipped: number;
   /** الأعمدة التي عُرفت (للعرض) */
   columns: { date: string; description: string | null; reference: string | null; amount: string };
+  /** ترتيب التاريخ المستخدم، وهل اختير لأن الملف لا يحسمه (فيُعرض للتأكيد) */
+  dateOrder: DateOrder;
+  dateAmbiguous: boolean;
 };
 
 const norm = (h: string) => h.replace(/[*:‏‎]/g, "").replace(/[ً-ْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/\s+/g, " ").trim().toLowerCase();
@@ -65,19 +68,43 @@ export function bankNumber(raw: string): string | null {
   return n.isZero() ? "0" : (sign < 0 ? n.negated() : n).toFixed();
 }
 
-/** تاريخ من نص البنك: 2026-01-31، 31/01/2026، 31-01-2026، 31.01.2026 */
-export function bankDate(raw: string): string | null {
+export type DateOrder = "dmy" | "mdy";
+
+/** أجزاء التاريخ قبل تحديد الترتيب: سنة أولًا (لا لبس فيه) أو رقمان ثم السنة (يوم/شهر أو شهر/يوم) */
+function dateParts(raw: string): { y: string; a: string; b: string; yearFirst: boolean } | null {
   const v = raw.trim().replace(/[٠-٩]/g, (d) => String(DIGITS.indexOf(d))).split(/[ T]/)[0]!;
   const iso = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.exec(v);
-  const dmy = /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/.exec(v);
-  const [y, m, d] = iso ? [iso[1], iso[2], iso[3]] : dmy ? [dmy[3], dmy[2], dmy[1]] : [];
-  if (!y) return null;
-  const out = `${y}-${m!.padStart(2, "0")}-${d!.padStart(2, "0")}`;
+  if (iso) return { y: iso[1]!, a: iso[2]!, b: iso[3]!, yearFirst: true };
+  const xy = /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/.exec(v);
+  return xy ? { y: xy[3]!, a: xy[1]!, b: xy[2]!, yearFirst: false } : null;
+}
+
+/** تاريخ من نص البنك: 2026-01-31، 31/01/2026 (يوم/شهر، الافتراضي)، أو 01/31/2026 بترتيب شهر/يوم */
+export function bankDate(raw: string, order: DateOrder = "dmy"): string | null {
+  const p = dateParts(raw);
+  if (!p) return null;
+  const [m, d] = p.yearFirst ? [p.a, p.b] : order === "dmy" ? [p.b, p.a] : [p.a, p.b];
+  const out = `${p.y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
   const dt = new Date(`${out}T00:00:00Z`);
   return Number.isNaN(dt.getTime()) || dt.toISOString().slice(0, 10) !== out ? null : out;
 }
 
-export function parseBankStatement(sheet: RawSheet): BankParse | { error: string } {
+/**
+ * ترتيب التاريخ في الملف كله: رقم أكبر من 12 في الأول يعني يوم/شهر، وفي الثاني يعني شهر/يوم.
+ * إن لم يظهر أي منهما فالملف ملتبس (كل الأيام 12 أو أقل)، وإن ظهرا معًا فالتواريخ مختلطة.
+ */
+export function detectDateOrder(raws: string[]): DateOrder | "ambiguous" | "mixed" {
+  let dmy = false, mdy = false;
+  for (const r of raws) {
+    const p = dateParts(r);
+    if (!p || p.yearFirst) continue;
+    if (Number(p.a) > 12) dmy = true;
+    if (Number(p.b) > 12) mdy = true;
+  }
+  return dmy && mdy ? "mixed" : dmy ? "dmy" : mdy ? "mdy" : "ambiguous";
+}
+
+export function parseBankStatement(sheet: RawSheet, order: DateOrder | "auto" = "auto"): BankParse | { error: string } {
   const col = locate(sheet.headers);
   if (col.date === undefined) return { error: tr("لم يُعرف عمود التاريخ. اجعل عنوانه «التاريخ».") };
   const single = col.amount !== undefined;
@@ -85,8 +112,13 @@ export function parseBankStatement(sheet: RawSheet): BankParse | { error: string
     return { error: tr("لم يُعرف عمود المبلغ. اجعل عنوانه «المبلغ»، أو عمودين «إيداع» و«سحب».") };
   }
   const head = (i: number | undefined) => (i === undefined ? null : sheet.headers[i] ?? null);
+  const detected = detectDateOrder(sheet.rows.map((r) => (r.cells[col.date!] ?? "").trim()));
+  if (order === "auto" && detected === "mixed") {
+    return { error: tr("التواريخ في الملف مختلطة: بعضها يوم/شهر وبعضها شهر/يوم. صدّر الكشف من البنك مرة ثانية بصيغة واحدة.") };
+  }
+  const dateOrder: DateOrder = order !== "auto" ? order : detected === "mdy" ? "mdy" : "dmy";
   const out: BankParse = {
-    lines: [], errors: [], skipped: 0,
+    lines: [], errors: [], skipped: 0, dateOrder, dateAmbiguous: detected === "ambiguous",
     columns: {
       date: head(col.date)!, description: head(col.description), reference: head(col.reference),
       amount: single ? head(col.amount)! : [head(col.credit), head(col.debit)].filter(Boolean).join(" / "),
@@ -105,7 +137,7 @@ export function parseBankStatement(sheet: RawSheet): BankParse | { error: string
     const rawDate = at(cells, col.date);
     // صف رصيد أو مجموع أو فاصل: لا تاريخ أو لا مبلغ
     if (amount === null || toMoney(amount).isZero() || !rawDate) { out.skipped++; continue; }
-    const txn_date = bankDate(rawDate);
+    const txn_date = bankDate(rawDate, dateOrder);
     if (!txn_date) { out.errors.push({ line, message: tr("تاريخ غير مفهوم: {0}", rawDate) }); continue; }
     const description = at(cells, col.description).slice(0, 300) || tr("حركة بنكية");
     const reference = at(cells, col.reference).slice(0, 80) || null;

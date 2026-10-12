@@ -75,13 +75,16 @@ export function BankImport({ accountId, decimals }: { accountId: string; decimal
   const [check, setCheck] = useState<BankImportCheck | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
-  const form = (f: File, mode: "check" | "run") => { const fd = new FormData(); fd.set("account_id", accountId); fd.set("file", f); fd.set("mode", mode); return fd; };
+  const [order, setOrder] = useState<"auto" | "dmy" | "mdy">("auto");
+  const form = (f: File, mode: "check" | "run", o = order) => {
+    const fd = new FormData(); fd.set("account_id", accountId); fd.set("file", f); fd.set("mode", mode); fd.set("date_order", o); return fd;
+  };
   const money = (v: string) => Number(v).toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-  const pick = (f: File | undefined) => {
+  const pick = (f: File | undefined, o: "auto" | "dmy" | "mdy" = "auto") => {
     if (!f) return;
-    setFile(f); setCheck(null); setError(null);
+    setFile(f); setCheck(null); setError(null); setOrder(o);
     start(async () => {
-      const r = await callAction(importBankStatementAction(form(f, "check")));
+      const r = await callAction(importBankStatementAction(form(f, "check", o)));
       if (r.ok) setCheck(r.data as BankImportCheck); else setError(r.message ?? tr("تعذّرت قراءة الملف"));
     });
   };
@@ -114,6 +117,15 @@ export function BankImport({ accountId, decimals }: { accountId: string; decimal
             {check.duplicates > 0 && <span className="text-slate-500">{tr("مستوردة من قبل وتُتخطى")}{": "}<b className="num">{check.duplicates}</b></span>}
             {check.skipped > 0 && <span className="text-slate-500">{tr("صفوف أرصدة ومجاميع تُتخطى")}{": "}<b className="num">{check.skipped}</b></span>}
           </div>
+          {(check.dateAmbiguous || order !== "auto") && (
+            <div className="flex flex-wrap items-center gap-2 rounded-md bg-amber-tint/60 px-3 py-2 text-[14.5px]" data-testid="bank-date-order">
+              <span>{tr("كل الأيام في الملف 12 أو أقل، فتأكد من ترتيب التاريخ:")}</span>
+              <NativeSelect className="h-9 w-56" value={check.dateOrder} onChange={(e) => file && pick(file, e.target.value as "dmy" | "mdy")}>
+                <option value="dmy">{tr("يوم/شهر/سنة (31/01/2026)")}</option>
+                <option value="mdy">{tr("شهر/يوم/سنة (01/31/2026)")}</option>
+              </NativeSelect>
+            </div>
+          )}
           {check.errors.length > 0 && (
             <Alert variant="destructive">
               {tr("في الملف أخطاء، صحّحها ثم ارفعه مرة أخرى:")}
@@ -135,7 +147,7 @@ export function BankImport({ accountId, decimals }: { accountId: string; decimal
             <Button type="button" onClick={run} loading={pending} disabled={!check.fresh || check.errors.length > 0} data-testid="bank-import-run">
               {tr("استيراد {0} سطر ومطابقتها", check.fresh)}
             </Button>
-            <Button type="button" variant="ghost" onClick={() => { setCheck(null); setFile(null); if (input.current) input.current.value = ""; }}>{tr("إلغاء")}</Button>
+            <Button type="button" variant="ghost" onClick={() => { setCheck(null); setFile(null); setOrder("auto"); if (input.current) input.current.value = ""; }}>{tr("إلغاء")}</Button>
           </div>
         </div>
       )}

@@ -117,6 +117,41 @@ describe("license client", () => {
     }
   });
 
+  it("sends this version's catalog only when the panel asks for it, signed like any check-in", async () => {
+    process.env.NAZEEL_PANEL_URL = "http://panel.test";
+    const bodies: Record<string, unknown>[] = [];
+    let known = false;
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init: RequestInit) => {
+      if (url.endsWith("/api/v1/activate")) return Response.json({ instance_id: "inst-c", secret: "sc", license: issue({ instance_id: "inst-c" }), notices: [] });
+      const h = init.headers as Record<string, string>;
+      expect(h["x-signature"]).toBe(createHmac("sha256", "sc").update(`${h["x-timestamp"]}.${String(init.body)}`).digest("base64url"));
+      const b = JSON.parse(String(init.body)) as Record<string, unknown>;
+      bodies.push(b);
+      if (b.catalog) known = true;
+      return Response.json({ license: issue({ instance_id: "inst-c" }), notices: [], ...(known ? {} : { need_catalog: true }) });
+    }));
+    const source = async () => ({ hash: "a".repeat(64), catalog: { tree: [{ key: "pms" }] } });
+    try {
+      expect(await lic.activateWithCode("NZL-EEEE-FFFF", null)).toEqual({ ok: true });
+      await lic.checkin(true, null, source);
+      expect(bodies).toHaveLength(2);
+      expect(bodies[0]).toMatchObject({ catalog_hash: "a".repeat(64) });
+      expect(bodies[0]!.catalog).toBeUndefined();
+      expect(bodies[1]).toMatchObject({ catalog_hash: "a".repeat(64), catalog: { tree: [{ key: "pms" }] } });
+      // بعدها البصمة وحدها
+      await lic.checkin(true, null, source);
+      expect(bodies).toHaveLength(3);
+      expect(bodies[2]!.catalog).toBeUndefined();
+      // تعذّر بناء الفهرس لا يمنع التواصل
+      await lic.checkin(true, null, async () => { throw new Error("db down"); });
+      expect(bodies).toHaveLength(4);
+      expect((await lic.licenseStatus()) as { ok: boolean }).toMatchObject({ ok: true });
+    } finally {
+      vi.unstubAllGlobals();
+      delete process.env.NAZEEL_PANEL_URL;
+    }
+  });
+
   it("a signed unlink notice from the panel stops the system; a forged one is ignored", async () => {
     process.env.NAZEEL_PANEL_URL = "http://panel.test";
     const revoke = (instance: string, key = privateKey) => {

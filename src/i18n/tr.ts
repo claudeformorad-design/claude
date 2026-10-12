@@ -40,3 +40,17 @@ export function trList<T extends readonly string[]>(items: T): T {
     },
   });
 }
+
+/**
+ * تنفيذ دالة متزامنة بالنصوص العربية مهما كانت لغة الطلب (لما يُرسل خارج الواجهة، مثل فهرس لوحة هوتيلنا).
+ * متزامنة فقط: لا تتخللها طلبات أخرى، فلا يتأثر غيرها بتبديل اللغة المؤقت.
+ */
+export function inArabic<T>(fn: () => T): T {
+  const prev = g.__nazeelLocale;
+  g.__nazeelLocale = () => "ar";
+  try {
+    return fn();
+  } finally {
+    g.__nazeelLocale = prev;
+  }
+}

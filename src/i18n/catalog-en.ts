@@ -3124,4 +3124,10 @@ export const EN: Record<string, string> = {
   "لم يُعرف عمود المبلغ. اجعل عنوانه «المبلغ»، أو عمودين «إيداع» و«سحب».": "The amount column was not recognized. Name it \"Amount\", or use two columns \"Deposit\" and \"Withdrawal\".",
   "تاريخ غير مفهوم: {0}": "Unrecognized date: {0}",
   "حركة بنكية": "Bank transaction",
+  "التواريخ في الملف مختلطة: بعضها يوم/شهر وبعضها شهر/يوم. صدّر الكشف من البنك مرة ثانية بصيغة واحدة.": "The dates in the file are mixed: some are day/month and some month/day. Export the statement from the bank again in one format.",
+  "كل الأيام في الملف 12 أو أقل، فتأكد من ترتيب التاريخ:": "Every day in the file is 12 or less, so confirm the date order:",
+  "يوم/شهر/سنة (31/01/2026)": "Day/month/year (31/01/2026)",
+  "شهر/يوم/سنة (01/31/2026)": "Month/day/year (01/31/2026)",
+  "لم تُرحَّل هذه الأقساط، والباقي رُحّل:": "These installments were not posted; the rest were:",
+  "{0} (قسط {1}): {2}": "{0} (installment {1}): {2}",
 };

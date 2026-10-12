@@ -6,7 +6,7 @@ import { forbidden, redirect } from "next/navigation";
 import type { NavAccess } from "@/components/layout/nav-config";
 import { type FeatureState, featureState, sectionKeys, underHref } from "@/lib/features/state";
 import { type LicenseStatus, checkin, licenseRequired, licenseStatus, licensedSettings } from "@/lib/license/client";
-import { ownerMaskedPermissions } from "@/lib/license/sync";
+import { ownerMaskedPermissions, panelCatalog } from "@/lib/license/sync";
 import { createClient, type SupabaseServerClient } from "@/lib/supabase/server";
 import type { HotelRow, UserProfileRow } from "@/lib/supabase/database.types";
 import type { Permission } from "./permissions";
@@ -73,7 +73,7 @@ export const getAppContext = cache(async (): Promise<AppContext | { user: Sessio
   if (licenseRequired()) {
     const h = await headers();
     const host = h.get("x-forwarded-host") ?? h.get("host");
-    await checkin(false, host ? `${h.get("x-forwarded-proto") ?? "https"}://${host}` : null).catch(() => false);
+    await checkin(false, host ? `${h.get("x-forwarded-proto") ?? "https"}://${host}` : null, () => panelCatalog(supabase)).catch(() => false);
   }
   // الأقسام غير المشمولة في الترخيص تُطفأ فوق ما اختاره الفندق
   const license = await licenseStatus();

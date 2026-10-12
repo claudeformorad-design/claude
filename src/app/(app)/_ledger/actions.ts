@@ -331,12 +331,19 @@ export async function createPrepaidAction(input: z.input<typeof prepaidSchema>):
   return r;
 }
 
-export async function postDuePrepaidAction(): Promise<ActionResult<number>> {
+export type PrepaidRun = { posted: number; failed: { name: string; date: string; reason: string }[] };
+
+/** ترحيل الأقساط المستحقة: ما تعذّر منها يُذكر بسببه بالعربية، ولا يمنع ترحيل البقية */
+export async function postDuePrepaidAction(): Promise<ActionResult<PrepaidRun>> {
   const ctx = await requireAppContext(PERMISSIONS.journalPost);
+  const { describeDatabaseError } = await import("@/lib/accounting/errors");
   const r = await toActionResult(async () => {
     const { data, error } = await ctx.supabase.rpc("post_due_prepaid_expenses", { p_hotel_id: ctx.hotel.id });
     raise(error);
-    return data ?? 0;
+    return {
+      posted: data?.posted ?? 0,
+      failed: (data?.failed ?? []).map((f) => ({ name: f.name, date: f.date, reason: describeDatabaseError(f.error) ?? f.error })),
+    };
   });
   if (r.ok) { revalidatePath("/prepaid-expenses"); revalidatePath("/journal"); }
   return r;

@@ -35,6 +35,9 @@ export type LicensePayload = {
   issued_at: string;
 };
 
+/** فهرس هذه النسخة وبصمته، يُبنى مرة في العملية (src/lib/features/catalog.ts) */
+export type CatalogSource = () => Promise<{ hash: string; catalog: unknown } | null>;
+
 export type PanelNotice = { id: string; title: string; body: string; level: "info" | "important"; starts_at: string; ends_at: string | null };
 
 type State = {
@@ -198,12 +201,14 @@ export async function activateWithKey(key: string): Promise<ActivateResult> {
  * التواصل الدوري مع اللوحة. force: الآن مهما كان آخر تواصل.
  * يعيد true إن تغيّر الترخيص. الفشل يُسجَّل ولا يمس آخر ترخيص صالح.
  */
-export async function checkin(force = false, siteUrl: string | null = null): Promise<boolean> {
+export async function checkin(force = false, siteUrl: string | null = null, catalog: CatalogSource | null = null): Promise<boolean> {
   if (!licenseRequired() || !panelUrl()) return false;
   const s = await readState();
   if (!s.instance_id || !s.secret) return false;
   if (!force && s.last_checkin && Date.now() - Date.parse(s.last_checkin) < CHECKIN_EVERY) return false;
-  const raw = JSON.stringify({ version: APP_VERSION, url: siteUrl });
+  // بصمة فهرس هذه النسخة: إن لم تعرفها اللوحة طلبت الفهرس نفسه فيُرسل في نفس التواصل
+  const cat = catalog ? await catalog().catch(() => null) : null;
+  let raw = JSON.stringify({ version: APP_VERSION, url: siteUrl, ...(cat ? { catalog_hash: cat.hash } : {}) });
   const send = (now: number) => {
     const ts = String(now);
     return fetch(`${panelUrl()}/api/v1/checkin`, {
@@ -213,11 +218,20 @@ export async function checkin(force = false, siteUrl: string | null = null): Pro
   };
   try {
     let res = await send(Date.now());
-    let j = (await res.json().catch(() => ({}))) as { license?: string; notices?: PanelNotice[]; error?: string; now?: number; revocation?: string };
+    let j = (await res.json().catch(() => ({}))) as { license?: string; notices?: PanelNotice[]; error?: string; now?: number; revocation?: string; need_catalog?: boolean };
     // ساعة الجهاز خاطئة (أو منطقته الزمنية): يُعاد التوقيع مرة بوقت اللوحة
+    let skew = 0;
     if (res.status === 401 && j.error === "clock" && typeof j.now === "number") {
+      skew = j.now - Date.now();
       res = await send(j.now);
       j = (await res.json().catch(() => ({}))) as typeof j;
+    }
+    // اللوحة لا تعرف فهرس هذه النسخة (نسخة جديدة أو أول ربط): يُرسل مرة، ولا يمنع فشله التواصل
+    if (res.ok && j.need_catalog && cat) {
+      raw = JSON.stringify({ version: APP_VERSION, url: siteUrl, catalog_hash: cat.hash, catalog: cat.catalog });
+      const again = await send(Date.now() + skew).catch(() => null);
+      const k = again?.ok ? ((await again.json().catch(() => null)) as typeof j | null) : null;
+      if (k?.license) j = k;
     }
     // فصله صاحب النظام: يتوقف ويطلب كود ربط جديدًا (فقط بإشعار موقّع من اللوحة لهذا النظام)
     if (res.status === 410 && verifyRevocation(j.revocation, s.instance_id)) {

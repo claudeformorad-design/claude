@@ -168,6 +168,8 @@ export async function bankMatchAction(op: "auto" | "match" | "unmatch" | "delete
 
 export type BankImportCheck = {
   columns: { date: string; description: string | null; reference: string | null; amount: string };
+  dateOrder: "dmy" | "mdy";
+  dateAmbiguous: boolean;
   fresh: number;
   duplicates: number;
   skipped: number;
@@ -192,7 +194,8 @@ export async function importBankStatementAction(formData: FormData): Promise<Act
   const refuse = (message: string) => ({ ok: false as const, error: "unknown" as const, message });
   let sheet;
   try { sheet = await readSheet(file); } catch (e) { return e instanceof ImportFileError ? refuse(e.message) : { ok: false, error: "unknown" }; }
-  const parsed = parseBankStatement(sheet);
+  const order = formData.get("date_order");
+  const parsed = parseBankStatement(sheet, order === "dmy" || order === "mdy" ? order : "auto");
   if ("error" in parsed) return refuse(parsed.error);
   if (mode === "run" && parsed.errors.length) return refuse(tr("صحّح أخطاء الملف أولًا، فلا يُستورد شيء ما دام فيه خطأ"));
   const r = await toActionResult(async () => {
@@ -212,7 +215,7 @@ export async function importBankStatementAction(formData: FormData): Promise<Act
     if (mode === "check") {
       const sum = (out: boolean) => fresh.reduce((a, l) => (toMoney(l.amount).isNegative() === out ? a.plus(toMoney(l.amount).abs()) : a), toMoney("0")).toFixed();
       return {
-        columns: parsed.columns, fresh: fresh.length, duplicates: lines.length - fresh.length, skipped: parsed.skipped,
+        columns: parsed.columns, dateOrder: parsed.dateOrder, dateAmbiguous: parsed.dateAmbiguous, fresh: fresh.length, duplicates: lines.length - fresh.length, skipped: parsed.skipped,
         deposits: sum(false), withdrawals: sum(true), errors: parsed.errors.slice(0, 50), sample: lines.slice(0, 8),
       } satisfies BankImportCheck;
     }

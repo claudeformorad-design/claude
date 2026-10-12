@@ -11,7 +11,7 @@ import { NativeSelect } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
 import { actionErrorText, callAction } from "@/lib/action-error";
 import { isValidAmount, toMoney } from "@/lib/accounting/money";
-import { createPrepaidAction, postDuePrepaidAction, stopPrepaidAction } from "../_ledger/actions";
+import { type PrepaidRun, createPrepaidAction, postDuePrepaidAction, stopPrepaidAction } from "../_ledger/actions";
 
 type Errors = Record<string, string>;
 type Option = { id: string; label: string };
@@ -77,11 +77,23 @@ export function PrepaidForm({ expenseAccounts, prepaidAccounts, departments, def
 export function PostDuePrepaidButton({ due, errors }: { due: number; errors: Errors }) {
   const router = useRouter();
   const [pending, start] = useTransition();
+  const [failed, setFailed] = useState<PrepaidRun["failed"]>([]);
   return (
-    <Button disabled={pending || due === 0} loading={pending} onClick={() => start(async () => {
-      const r = await callAction(postDuePrepaidAction());
-      if (r.ok) { toast(tr("رُحّل {0} قسط", r.data)); router.refresh(); } else toast(actionErrorText(errors, r), "error");
-    })}>{due ? tr("ترحيل الأقساط المستحقة ({0})", due) : tr("لا أقساط مستحقة")}</Button>
+    <div className="space-y-2">
+      <Button disabled={pending || due === 0} loading={pending} onClick={() => start(async () => {
+        const r = await callAction(postDuePrepaidAction());
+        if (!r.ok) { toast(actionErrorText(errors, r), "error"); return; }
+        setFailed(r.data.failed);
+        toast(tr("رُحّل {0} قسط", r.data.posted), r.data.failed.length ? "error" : undefined);
+        router.refresh();
+      })}>{due ? tr("ترحيل الأقساط المستحقة ({0})", due) : tr("لا أقساط مستحقة")}</Button>
+      {failed.length > 0 && (
+        <Alert variant="destructive" data-testid="prepaid-failed">
+          {tr("لم تُرحَّل هذه الأقساط، والباقي رُحّل:")}
+          <ul className="mt-1 list-disc ps-5">{failed.map((f) => <li key={f.name + f.date}>{tr("{0} (قسط {1}): {2}", f.name, f.date, f.reason)}</li>)}</ul>
+        </Alert>
+      )}
+    </div>
   );
 }
 

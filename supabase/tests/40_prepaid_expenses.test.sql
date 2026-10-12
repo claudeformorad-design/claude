@@ -66,8 +66,8 @@ select pg_temp.check((select count(*) from public.prepaid_expenses where hotel_i
 select pg_temp.expect_error($q$ select public.post_due_prepaid_expenses((select id from h40)) $q$, 'Permission denied');
 select pg_temp.act_as('00000000-0000-0000-0000-000000004001');
 
-select pg_temp.check(public.post_due_prepaid_expenses((select id from h40)) = 4, 'four installments posted');
-select pg_temp.check(public.post_due_prepaid_expenses((select id from h40)) = 0, 'second run posts nothing');
+select pg_temp.check((public.post_due_prepaid_expenses((select id from h40)) ->> 'posted')::int = 4, 'four installments posted');
+select pg_temp.check((public.post_due_prepaid_expenses((select id from h40)) ->> 'posted')::int = 0, 'second run posts nothing');
 select pg_temp.check((select status = 'completed' and posted_months = 3 and amortized_amount = 1000 from public.prepaid_expenses where id = (select v from ids where k = 'ins')), 'insurance completed exactly');
 select pg_temp.check((select array_agg(l.debit order by j.entry_date) from public.journal_entry_lines l join public.journal_entries j on j.id = l.journal_entry_id
   where j.source = 'prepaid' and j.source_id = (select v from ids where k = 'ins') and l.debit > 0) = array[333.33, 333.33, 333.34]::numeric[], 'last installment takes the remainder');
@@ -80,7 +80,22 @@ select pg_temp.check((select status = 'active' and posted_months = 1 and amortiz
 select public.stop_prepaid_expense((select v from ids where k = 'rent'));
 select pg_temp.check((select status from public.prepaid_expenses where id = (select v from ids where k = 'rent')) = 'stopped', 'stopped');
 select pg_temp.expect_error($q$ select public.stop_prepaid_expense((select v from ids where k = 'rent')) $q$, 'not active');
-select pg_temp.check(public.post_due_prepaid_expenses((select id from h40)) = 0, 'stopped posts nothing');
+select pg_temp.check((public.post_due_prepaid_expenses((select id from h40)) ->> 'posted')::int = 0, 'stopped posts nothing');
+
+-- قسط متعذر (حساب مصروفه أُوقف بعد إنشاء الجدول) لا يوقف الجداول الأخرى: يُذكر سببه ولا يُرحَّل، والآخر يُرحَّل
+insert into ids select 'closed', public.create_prepaid_expense((select id from h40), 'ترخيص قديم', pg_temp.acc('5205'), null, 300, 3,
+  (date_trunc('month', current_date) - interval '3 month')::date);
+insert into ids select 'open2', public.create_prepaid_expense((select id from h40), 'صيانة سنوية', pg_temp.acc('5301'), null, 600, 6,
+  (date_trunc('month', current_date) - interval '1 month')::date);
+select pg_temp.act_as(null);
+update public.chart_of_accounts set is_active = false where id = pg_temp.acc('5205');
+select pg_temp.act_as('00000000-0000-0000-0000-000000004001');
+create temp table r40 as select public.post_due_prepaid_expenses((select id from h40)) as r;
+grant all on r40 to authenticated;
+select pg_temp.check((select (r ->> 'posted')::int from r40) = 1, 'other schedule still posted');
+select pg_temp.check((select jsonb_array_length(r -> 'failed') from r40) = 1 and (select r -> 'failed' -> 0 ->> 'name' from r40) = 'ترخيص قديم', 'failure reported with its name');
+select pg_temp.check((select posted_months from public.prepaid_expenses where id = (select v from ids where k = 'closed')) = 0, 'failed schedule untouched');
+select pg_temp.check((select posted_months from public.prepaid_expenses where id = (select v from ids where k = 'open2')) = 1, 'second schedule posted');
 
 select pg_temp.act_as(null);
 \o

@@ -3,6 +3,7 @@ import type { AppContext } from "@/lib/auth/context";
 import type { HotelModule } from "@/lib/supabase/database.types";
 import { type FeatureSettings, maskedPermissions, permissionsUnder, sectionKeys } from "@/lib/features/state";
 import { type LicensePayload, licenseStatus, licensedSettings, ownerBlocked, ownerBlockedPermissions } from "./client";
+import { type Catalog, type PermissionRow, buildCatalog, catalogHash } from "@/lib/features/catalog";
 
 const KEEP = new Set(["settings.hotel.manage", "settings.users.manage"]);
 
@@ -46,4 +47,19 @@ export async function syncLicenseToDatabase(ctx: AppContext): Promise<void> {
   await ctx.supabase.rpc("save_hotel_sections", {
     p_hotel_id: h.id, p_modules: [...manual.enabled_modules] as HotelModule[], p_blocked: [...manual.blocked_sections], p_permissions: perms,
   });
+}
+
+/**
+ * فهرس هذه النسخة للوحة هوتيلنا وبصمته: يُبنى مرة في عمر العملية (الصلاحيات من القاعدة نفسها).
+ * إن تعذّرت قراءة الصلاحيات لا يُحفظ الفشل، فيُعاد المحاولة في التواصل التالي.
+ */
+let catalogCache: Promise<{ hash: string; catalog: Catalog } | null> | null = null;
+export function panelCatalog(supabase: AppContext["supabase"]): Promise<{ hash: string; catalog: Catalog } | null> {
+  catalogCache ??= (async () => {
+    const { data, error } = await supabase.from("permissions").select("code, module, name_ar, product").order("module").order("sort_order").order("code");
+    if (error || !data?.length) { catalogCache = null; return null; }
+    const catalog = buildCatalog(data as PermissionRow[]);
+    return { hash: catalogHash(catalog), catalog };
+  })();
+  return catalogCache;
 }
