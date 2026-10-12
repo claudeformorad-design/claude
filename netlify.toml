@@ -2,6 +2,9 @@
 #   NEXT_PUBLIC_SUPABASE_URL و NEXT_PUBLIC_SUPABASE_ANON_KEY (عامة بطبيعتها)، و GEMINI_API_KEY (سرّي، للمساعد الذكي)
 [build]
   command = "npm run build"
+  # توفير حد الباقة المجانية: لا يُبنى الموقع إلا لتحديث رسالته فيها [deploy]
+  # (تُجمع التحديثات وتُنشر مرة واحدة). خروج 0 = تخطي البناء، 1 = بناء.
+  ignore = "git log -1 --pretty=%B | grep -qF '[deploy]' && exit 1 || exit 0"
 
 [build.environment]
   NODE_VERSION = "22"
