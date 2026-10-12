@@ -553,6 +553,12 @@ html[dir="ltr"] .lucide-arrow-left, html[dir="ltr"] .lucide-arrow-right { transf
   [data-cards] > table > tbody > tr > td:first-child { font-weight: 600; font-size: 17px; justify-content: flex-start; }
   [data-cards] > table > tbody > tr > td:first-child::before { display: none; }
   [data-cards] td, [data-cards] td .whitespace-nowrap { white-space: normal; }
+  /* قيمة الخانة تأخذ باقي السطر بجانب عنوانها (لا تنضغط في عمود ضيق)، ومحاذاة لطرف البطاقة */
+  [data-cards] td[data-label]:not([data-label=""]) > * { flex: 0 1 auto; min-width: 0; margin-inline-start: auto; text-align: end; }
+  [data-cards] td[data-label]:not([data-label=""]) > .flex,
+  [data-cards] td[data-label]:not([data-label=""]) > .inline-flex,
+  [data-cards] td[data-label]:not([data-label=""]) > a > .flex { justify-content: flex-end; }
+  [data-cards] > table > tbody > tr > td[data-label]:first-child > * { margin-inline-start: 0; }
   [data-cards] td[data-label=""] { justify-content: flex-start; }
   [data-cards] td[data-label=""]:empty { display: none; }
   [data-cards] td[data-span] { display: block; text-align: start; }
@@ -562,6 +568,13 @@ html[dir="ltr"] .lucide-arrow-left, html[dir="ltr"] .lucide-arrow-right { transf
     overflow: visible; white-space: normal; text-overflow: clip; -webkit-line-clamp: unset; max-width: none;
   }
   [data-cards] td [class*="max-w-"] { max-width: none; }
+  [data-cards] td.cell-fluid { width: auto; max-width: none; min-width: 0; overflow: visible; }
+
+  /* شريط البحث فوق الجداول يأخذ عرض الشاشة ولا يخرج عنها */
+  main form:has(input[name="q"]) { flex: 1 1 100%; width: 100%; min-width: 0; }
+  main form:has(input[name="q"]) > :has(input[name="q"]),
+  main form:has(input[name="q"]) > input[name="q"] { flex: 1 1 12rem; width: auto; min-width: 0; }
+  main form:has(input[name="q"]) > :has(input[name="q"]) input[name="q"] { width: 100%; }
 
   /* بطاقات الأرقام: الرقم كامل بلا قص */
   .stat-grid .display-num { font-size: 19px; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
