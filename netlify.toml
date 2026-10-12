@@ -1,5 +1,6 @@
 # النشر على Netlify (النسخة المرتبطة بـ Supabase). المتغيرات في إعدادات الموقع، لا في المستودع:
 #   NEXT_PUBLIC_SUPABASE_URL و NEXT_PUBLIC_SUPABASE_ANON_KEY (عامة بطبيعتها)، و GEMINI_API_KEY (سرّي، للمساعد الذكي)
+#   الترخيص من لوحة هوتيلنا: NAZEEL_REQUIRE_LICENSE=1 و NAZEEL_PANEL_URL و NAZEEL_LICENSE_PUBLIC_KEY (المفتاح العام من إعدادات اللوحة)
 [build]
   command = "npm run build"
   # توفير حد الباقة المجانية: لا يُبنى الموقع إلا لتحديث رسالته فيها [deploy]
