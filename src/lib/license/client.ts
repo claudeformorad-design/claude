@@ -14,7 +14,7 @@ import pkg from "../../../package.json";
  * - الربط: كود الربط من اللوحة مرة واحدة، أو مفتاح يدوي لجهاز بلا إنترنت (مربوط ببصمة الجهاز).
  * - الترخيص موقّع بمفتاح اللوحة الخاص (Ed25519)، والنظام يحمل المفتاح العام فقط (NAZEEL_LICENSE_PUBLIC_KEY):
  *   يتحقق ولا يستطيع الإصدار، وأي تعديل على الأقسام يكسر التوقيع.
- * - التواصل الدوري (كل 6 ساعات) موقّع بالسر المشترك، ويأخذ الأقسام والحالة والإشعارات.
+ * - التواصل الدوري (كل دقيقتين أثناء الاستخدام) موقّع بالسر المشترك، ويأخذ الأقسام والحالة والإشعارات.
  *   إن تعذر التواصل يبقى آخر ترخيص صالح: البيع دائم ولا تاريخ انتهاء.
  * حالة الربط تُحفظ على الخادم وحده (مخزن الأسرار)، لا في قاعدة البيانات.
  */
@@ -43,7 +43,10 @@ type State = {
 };
 
 const KEY = "nazeel-instance";
-const CHECKIN_EVERY = 6 * 3600_000;
+/** التواصل مع اللوحة كل دقيقتين أثناء استخدام النظام: الإيقاف وإعادة التفعيل وتغيير الأقسام تصل خلالهما */
+const CHECKIN_EVERY = Math.max(10, Number(process.env.NAZEEL_CHECKIN_SECONDS) || 120) * 1000;
+/** بعد فشل التواصل (اللوحة أو الإنترنت متوقف) تُعاد المحاولة بعد 10 دقائق */
+const RETRY_AFTER = 10 * 60_000;
 export const APP_VERSION: string = pkg.version;
 
 export const licenseRequired = () => process.env.NAZEEL_REQUIRE_LICENSE === "1";
@@ -198,8 +201,8 @@ export async function checkin(force = false, siteUrl: string | null = null): Pro
     await writeState({ ...s, license: j.license!, notices: j.notices ?? [], last_checkin: new Date().toISOString(), last_error: null });
     return j.license !== s.license;
   } catch (e) {
-    // تأجيل المحاولة التالية ساعة، مع بقاء الترخيص كما هو
-    await writeState({ ...s, last_checkin: new Date(Date.now() - CHECKIN_EVERY + 3600_000).toISOString(), last_error: e instanceof Error ? e.message : String(e) });
+    // تأجيل المحاولة التالية، مع بقاء الترخيص كما هو
+    await writeState({ ...s, last_checkin: new Date(Date.now() - CHECKIN_EVERY + RETRY_AFTER).toISOString(), last_error: e instanceof Error ? e.message : String(e) });
     return false;
   }
 }

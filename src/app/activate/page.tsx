@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getAppContext, type AppContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { machineId } from "@/lib/license/client";
+import { checkin, licenseStatus, machineId } from "@/lib/license/client";
 import { ActivateForm } from "./activate-form";
 
 export const dynamic = "force-dynamic";
@@ -16,9 +16,16 @@ export default async function ActivatePage() {
   if (!ctx.hotel) redirect("/onboarding");
   const full = ctx as AppContext;
   if (!full.license.required || full.license.ok) redirect("/");
+  // نظام مربوط موقوف: يُسأل صاحب النظام عند فتح الصفحة، فإن أُعيد تفعيله يفتح النظام دون ضغط أي زر
+  if (full.license.reason === "suspended" && (await checkin(false)) && (await licenseStatus()).required) {
+    const now = await licenseStatus();
+    if (now.required && now.ok) redirect("/");
+  }
   const reason = full.license.reason;
   return (
     <main className="flex min-h-screen items-center justify-center bg-content px-4 py-12">
+      {/* الموقوف يُعاد فحصه كل دقيقة: يفتح النظام وحده بعد إعادة التفعيل */}
+      {reason === "suspended" && <meta httpEquiv="refresh" content="60" />}
       <div className="surface w-full max-w-lg space-y-6 p-8">
         <div className="space-y-1.5">
           <h1 className="text-[26px] font-bold text-ink">{tr("تفعيل هوتيلنا")}</h1>

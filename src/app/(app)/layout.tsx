@@ -54,8 +54,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // ترخيص لوحة هوتيلنا: المدير يطبّق أي تغيير وصل على قاعدة البيانات، ثم يُجدَّد التواصل بعد إرسال الصفحة
   const notices = ctx.license.required && ctx.license.ok
     ? ctx.license.notices.map(({ id, title, body, level }) => ({ id, title, body, level })) : [];
-  if (ctx.license.required && ctx.can(PERMISSIONS.hotelManage)) {
-    await syncLicenseToDatabase(ctx).catch(() => undefined);
+  if (ctx.license.required) {
+    if (ctx.can(PERMISSIONS.hotelManage)) await syncLicenseToDatabase(ctx).catch(() => undefined);
+    // التواصل مع اللوحة مع استخدام أي موظف (لا المدير وحده)، فيصل الإيقاف خلال دقيقتين
     const h = await headers();
     const host = h.get("x-forwarded-host") ?? h.get("host");
     const url = host ? `${h.get("x-forwarded-proto") ?? "https"}://${host}` : null;
