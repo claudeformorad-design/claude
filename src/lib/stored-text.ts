@@ -55,6 +55,7 @@ const PHRASES: [string, string][] = [
   ["خصم المناسبة", "Event discount"],
   ["سلفة موظف", "Employee advance"],
   ["صرف رواتب", "Salaries payment"],
+  ["تسوية مدفوعات البطاقات", "Card payments settlement"],
   ["دفع طلب", "Order payment"],
   ["بعد خصم", "after discount"],
   ["غسيل", "Laundry"],
@@ -63,7 +64,7 @@ const PHRASES: [string, string][] = [
   ["غرفة", "Room"],
   ["جرد", "Stock count"],
   // أسماء طرق الدفع وبنود الخدمات الافتراضية (يكتبها النظام في أوصاف القيود؛ ما يضيفه الفندق يبقى كما كتبه)
-  ["بطاقة ائتمان / مدى", "Credit / debit card"],
+  ["بطاقة ائتمان / مدى", "Credit/debit card"],
   ["تحويل بنكي", "Bank transfer"],
   ["محفظة إلكترونية", "E-wallet"],
   ["آجل (حساب شركة)", "City ledger (credit)"],
@@ -71,7 +72,7 @@ const PHRASES: [string, string][] = [
   ["شيك وارد مؤجل", "Post-dated cheque received"],
   ["شيك صادر مؤجل", "Post-dated cheque issued"],
   ["إقامة / ليلة", "Room night"],
-  ["مطعم - أطعمة", "Restaurant - food"],
+  ["مطعم - أطعمة", "Restaurant food"],
   ["خدمات السبا", "Spa services"],
   ["قاعات ومؤتمرات", "Banquets & events"],
   ["جولات سياحية", "Tours"],
@@ -90,10 +91,10 @@ const PHRASES: [string, string][] = [
 /** أوصاف كاملة شائعة (البيانات التجريبية وما يكتبه النظام كاملًا) */
 const WHOLE: Record<string, string> = {
   "تحصيل فاتورة": "Invoice collection",
-  "تسوية مدفوعات البطاقات": "Card payments settlement",
   "إيداع رأس المال": "Capital deposit",
   "حوالة مسبقة": "Advance transfer",
   "حركة بنكية": "Bank transaction",
+  "إيجار المبنى": "Building rent",
 };
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

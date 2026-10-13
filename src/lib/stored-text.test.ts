@@ -29,6 +29,7 @@ describe("localizeStored", () => {
   it("known whole descriptions", () => {
     expect(localizeStored("تحصيل فاتورة", "en")).toBe("Invoice collection");
     expect(localizeStored("تحصيل فاتورة", "ar")).toBe("تحصيل فاتورة");
+    expect(localizeStored("تسوية مدفوعات البطاقات — بنك التسوية", "en")).toBe("Card payments settlement — بنك التسوية");
   });
 
   it("user-typed text is left alone", () => {
@@ -42,9 +43,9 @@ describe("localizeStored", () => {
 describe("default charge codes and payment methods", () => {
   it("translates seeded names inside system descriptions", () => {
     expect(localizeStored("ميني بار — F-2026-000299 خالد", "en")).toBe("Minibar — F-2026-000299 خالد");
-    expect(localizeStored("بطاقة ائتمان / مدى — F-1", "en")).toBe("Credit / debit card — F-1");
+    expect(localizeStored("بطاقة ائتمان / مدى — F-1", "en")).toBe("Credit/debit card — F-1");
     expect(localizeStored("إقامة / ليلة — F-1", "en")).toBe("Room night — F-1");
-    expect(localizeStored("مطعم - أطعمة — F-1", "en")).toBe("Restaurant - food — F-1");
+    expect(localizeStored("مطعم - أطعمة — F-1", "en")).toBe("Restaurant food — F-1");
     expect(localizeStored("مشروبات الضيافة", "en")).toBe("مشروبات الضيافة");
   });
 });
