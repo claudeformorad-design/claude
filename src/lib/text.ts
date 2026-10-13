@@ -1,12 +1,14 @@
 import { currentLocale } from "@/i18n/tr";
+import { localizeStored } from "./stored-text";
 
 /**
  * تنظيف النصوص الآلية القادمة من قاعدة البيانات (أوصاف القيود والحركات) قبل عرضها:
- * لا شرطات ولا أسهم ولا نقاط فاصلة ولا أقواس؛ تُستبدل بفاصلة عربية أو مسافة.
+ * العبارات الثابتة تُعرض بلغة الواجهة (stored-text.ts)، ولا شرطات ولا أسهم ولا نقاط فاصلة ولا أقواس؛ تُستبدل بفاصلة عربية أو مسافة.
  */
 export function plainText(text: string | null | undefined): string {
   if (!text) return "";
-  const out = text
+  const locale = currentLocale();
+  const out = localizeStored(text, locale)
     .replace(/\s*[—–]\s*/g, "، ")
     .replace(/\s+-\s+/g, "، ")
     .replace(/\s+\/\s+/g, "، ")
@@ -19,5 +21,5 @@ export function plainText(text: string | null | undefined): string {
     .replace(/\s{2,}/g, " ")
     .trim();
   // الواجهة الإنجليزية: فاصلة لاتينية بين النصوص اللاتينية
-  return currentLocale() === "en" ? out.replace(/\s*،\s*/g, ", ").replace(/ إلى /g, " to ") : out;
+  return locale === "en" ? out.replace(/\s*،\s*/g, ", ").replace(/ إلى /g, " to ") : out;
 }
