@@ -6,5 +6,7 @@ export default defineConfig({
   test: {
     include: ["src/**/*.test.ts"],
     environment: "node",
+    // أول تشغيل على قرص بارد قد يتجاوز 5 ثوانٍ (اختبار الترجمة يقرأ كل ملفات الترحيل)
+    testTimeout: 30000,
   },
 });
